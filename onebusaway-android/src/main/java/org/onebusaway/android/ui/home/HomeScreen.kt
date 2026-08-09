@@ -244,6 +244,7 @@ fun HomeScreen(
                 val stopFocus = currentFocus as? CurrentFocus.Stop
                 val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
                 val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
+                val selectedTripBandColor by mapViewModel.selectedTripBandColor.collectAsStateWithLifecycle()
                 val focusBannerViewModel = hiltViewModel<FocusBannerViewModel>()
                 // The transit-centre drawer's query (#2107). Created here — the sheet is this screen's
                 // — and fed the settled viewport + zoom band by MapFeature, which holds the map VM.
@@ -684,6 +685,7 @@ fun HomeScreen(
                                             state = arrivalsState,
                                             selectedRoute = stopFocus?.selectedRoute,
                                             mapRouteColors = mapRouteColors,
+                                            selectedTripBandColor = selectedTripBandColor,
                                             onContentHeight = { px -> contentPx = px }
                                         )
                                     }

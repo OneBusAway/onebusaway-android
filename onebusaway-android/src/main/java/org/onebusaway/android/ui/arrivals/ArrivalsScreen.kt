@@ -360,6 +360,8 @@ internal fun ArrivalsList(
     modifier: Modifier = Modifier,
     /** Stop-focus map colors keyed by route-direction. Empty outside the home drawer. */
     mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    // The selected trip's band tint (#1990), or null when no vehicle is selected.
+    selectedTripBandColor: Int? = null,
     /** Exact route-direction row selected over the home map's stop focus; null outside that state. */
     selectedRowKey: String? = null,
     /** Origin route used to resolve an unambiguous row when map and arrivals headsign labels differ. */
@@ -440,6 +442,7 @@ internal fun ArrivalsList(
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
                     mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
+                    selectedTripBandColor = selectedTripBandColor,
                     selected = isSelectedRow,
                     selectedRouteNames = if (isSelectedRow) selectedRouteNames else emptyList(),
                     selectedTripId = selectedTripId.takeIf { isSelectedRow },

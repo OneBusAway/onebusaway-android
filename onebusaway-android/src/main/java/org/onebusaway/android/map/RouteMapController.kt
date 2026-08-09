@@ -362,6 +362,20 @@ class RouteMapController(
     // so a republish that recolours the line recolours the band with it.
     private var selectedTripLineColor: Int = DEFAULT_ROUTE_LINE_COLOR
 
+    private val _selectedTripBandColor = MutableStateFlow<Int?>(null)
+
+    /**
+     * The selected trip's uncertainty-band tint — the contrast of the line as drawn ([contrastingColor])
+     * — or null when no vehicle is selected.
+     *
+     * Published because the band's colour is no longer only the map's: the arrivals row outlines the
+     * focused trip's ETA pill in it (#1990), so the pill and the band it names are one object. Exposed as
+     * the resolved tint rather than as the line colour it derives from, so there is exactly one place
+     * that decides what contrasts what — a second caller applying [contrastingColor] itself would be free
+     * to apply it to a different basis, which is the bug this issue started as.
+     */
+    val selectedTripBandColor: StateFlow<Int?> = _selectedTripBandColor.asStateFlow()
+
     // A pending arrivals ETA-pill focus: the trip id whose live vehicle should be fit together with the
     // originating stop once it appears. Held until the first vehicle set arrives, then resolved once by
     // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box;
@@ -892,6 +906,7 @@ class RouteMapController(
         // this session is leaving, and the next session's first publish is what should decide it.
         renderState.setTripOverlaySampler(null)
         selectedTripLineColor = DEFAULT_ROUTE_LINE_COLOR
+        _selectedTripBandColor.value = null
         renderState.setRouteContinuation(null)
         _loadedRoute.value = null
     }
@@ -934,6 +949,10 @@ class RouteMapController(
         )
         val recoloured = selectedTripLineColor != (plan.selectedTripColor ?: routeColor)
         selectedTripLineColor = plan.selectedTripColor ?: routeColor
+        // Republished here rather than from the selection collector alone, because both of its inputs land
+        // here: this publish is what settles the line's colour, and it is also what every selection change
+        // runs through ([showSelectionPresentation]). A deselect passes through it too and clears this.
+        _selectedTripBandColor.value = renderState.selectedVehicleTripId.value?.let { contrastingColor(selectedTripLineColor) }
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: the route's approach to the boarding point first, the rider's
             // remaining itinerary at a middle weight, then the ridden span(s) cased on top (#2048, #2082).

@@ -274,6 +274,29 @@ internal fun ArrivalRowContent(
 }
 
 /**
+ * The colour of the focused trip's ETA-pill rim, or null when no pill should be outlined.
+ *
+ * The pill's rim and the row card's own selection stroke mark **different selections**, and since #1990
+ * they say so in different colours. The card's says *this route* is the one the map is showing, and keeps
+ * the colour that route's line is drawn in ([cardSelectionColor]). The pill's says *this trip* is the one
+ * drilled into — and the map draws that trip's whole estimate (the uncertainty band, the fix it starts
+ * from, the fast estimate it ends at, and the vehicle in the middle) in one contrasting colour. Wearing
+ * that colour is what makes the pill a member of that set rather than a second, differently-scoped copy
+ * of the route highlight, which is what it was when #2205 first gave it the card's stroke to borrow.
+ *
+ * [bandColor] is null whenever the map has no band to name — nothing selected yet, or a trip with no
+ * real-time fix to extrapolate — and the pill falls back to borrowing the card's stroke as it used to.
+ *
+ * [selected] gates both, because [bandColor] arrives as one map-wide value rather than per row: without
+ * the gate a stale trip id would outline a pill in a row that isn't the focused one.
+ */
+internal fun focusedPillRimColor(
+    selected: Boolean,
+    bandColor: Int?,
+    cardSelectionColor: Int?
+): Int? = if (selected) bandColor ?: cardSelectionColor else null
+
+/**
  * One arrivals row for a single (route, direction): the route badge on the left, and on the right
  * the direction name over a horizontally-scrollable strip of per-trip ETA pills (soonest first).
  * The unified row (issue #1707) — replaces the old per-trip Style A row and Style B card.
@@ -306,6 +329,9 @@ fun RouteArrivalRow(
     // meaningful on the selected row, and gated on [selected] below so a stale id can't outline a pill
     // in a row that isn't the focused one.
     selectedTripId: String? = null,
+    // The uncertainty band's tint for [selectedTripId] on the map, or null when no vehicle is selected.
+    // The focused pill's rim wears it (#1990) — see [pillFocus] below.
+    selectedTripBandColor: Int? = null,
     etaAnchor: Modifier = Modifier,
     // Whether a live countdown is running for this row (#2166) — the row's menu picks its verb and
     // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
@@ -334,9 +360,9 @@ fun RouteArrivalRow(
     val selectionBorder = selectionColor
         ?.takeIf { selected }
         ?.let { BorderStroke(2.dp, Color(it)) }
-    // The focused trip's pill wears the card's own selection border — the same stroke object — so the
-    // two outlines read as one focus rather than two unrelated highlights (#2205).
-    val pillFocus = selectionBorder?.let { border -> selectedTripId?.let { EtaPillFocus(it, border) } }
+    val pillBorder = focusedPillRimColor(selected, selectedTripBandColor, selectionColor)
+        ?.let { BorderStroke(2.dp, Color(it)) }
+    val pillFocus = pillBorder?.let { border -> selectedTripId?.let { EtaPillFocus(it, border) } }
     ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(

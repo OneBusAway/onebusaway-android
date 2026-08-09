@@ -22,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.api.data.RoutesNearResult
+import org.onebusaway.android.api.data.VehicleAssignment
 import org.onebusaway.android.api.data.VehicleMatch
 import org.onebusaway.android.api.data.VehicleSearchDataSource
 import org.onebusaway.android.database.oba.ImportGate
@@ -148,14 +149,19 @@ class DefaultSearchResultsRepository @Inject constructor(
         id = match.vehicleId,
         coachNumber = match.coachNumber,
         agency = match.agencyName,
-        ride = match.trip?.let {
-            SearchResultItem.Vehicle.Ride(
-                routeId = it.routeId,
-                tripId = it.tripId,
-                routeShortName = it.routeShortName,
-                routeColor = it.routeColor,
-                headsign = it.headsign
+        status = when (val assignment = match.assignment) {
+            is VehicleAssignment.OnTrip -> SearchResultItem.Vehicle.Status.OnRide(
+                SearchResultItem.Vehicle.Ride(
+                    routeId = assignment.trip.routeId,
+                    tripId = assignment.trip.tripId,
+                    routeShortName = assignment.trip.routeShortName,
+                    routeColor = assignment.trip.routeColor,
+                    headsign = assignment.trip.headsign
+                )
             )
+
+            VehicleAssignment.NotInService -> SearchResultItem.Vehicle.Status.NotInService
+            VehicleAssignment.Unknown -> SearchResultItem.Vehicle.Status.Unknown
         }
     )
 

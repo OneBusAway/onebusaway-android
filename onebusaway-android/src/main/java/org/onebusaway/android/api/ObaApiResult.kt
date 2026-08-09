@@ -19,6 +19,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
+import retrofit2.HttpException
 
 /**
  * Thrown when an OBA response carries a non-OK app-level [code] (a standard HTTP status mirrored in
@@ -40,6 +41,24 @@ fun <T> ObaEnvelope<T>.requireData(): T {
     }
     return data
 }
+
+/**
+ * True when this failure is the API's definitive "no such resource" answer rather than a transport,
+ * server or decode failure — the distinction a caller needs to tell "the server says there is none"
+ * from "we couldn't ask".
+ *
+ * An OBA server sets the HTTP status from the envelope code (`trip-for-vehicle` for an unassigned
+ * vehicle answers HTTP 404 with `{"code":404,...}`), and Retrofit raises [HttpException] on a non-2xx
+ * status before the body is ever decoded — so that is the form a 404 normally takes. [ObaApiException]
+ * is the same answer read off the decoded envelope by [requireData], which is what a response carrying
+ * the code under a 2xx status would produce; both mean not-found, so both count here.
+ */
+val Throwable.isNotFound: Boolean
+    get() = when (this) {
+        is ObaApiException -> code == HttpURLConnection.HTTP_NOT_FOUND
+        is HttpException -> code() == HttpURLConnection.HTTP_NOT_FOUND
+        else -> false
+    }
 
 /**
  * Asserts an OK app-level code, throwing [ObaApiException] otherwise — for endpoints whose response

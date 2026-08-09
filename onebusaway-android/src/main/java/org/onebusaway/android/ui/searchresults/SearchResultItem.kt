@@ -56,15 +56,32 @@ sealed interface SearchResultItem {
      * @param id the agency-prefixed OBA vehicle id (`1_4531`), used only as the row key
      * @param coachNumber the number as a rider reads it off the vehicle, shown as the row's title
      * @param agency the operating agency's display name
-     * @param ride what the vehicle is running, or null when it isn't running anything right now —
-     *   which makes the row unselectable rather than hiding the match
+     * @param status what it is running, or why there's nothing to open — anything but [Status.OnRide]
+     *   makes the row unselectable rather than hiding the match
      */
     data class Vehicle(
         val id: String,
         val coachNumber: String,
         val agency: String,
-        val ride: Ride?
+        val status: Status
     ) : SearchResultItem {
+
+        /**
+         * What the row can say about the vehicle. The two rideless cases stay distinct because they
+         * caption differently: the server telling us a coach is off duty is not the same as our
+         * failing to ask it.
+         */
+        sealed interface Status {
+
+            /** On [ride] — the row opens the map on it. */
+            data class OnRide(val ride: Ride) : Status
+
+            /** The server says it isn't running a trip right now. */
+            data object NotInService : Status
+
+            /** Its status couldn't be looked up, so the row reports the match and nothing more. */
+            data object Unknown : Status
+        }
 
         /**
          * The ride a matched vehicle is on: the ids the map needs to drill into it, plus the labels

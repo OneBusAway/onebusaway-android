@@ -29,27 +29,52 @@ import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.TripDetailsEntry
 import org.onebusaway.android.api.contract.VehicleSearchWebService
 import org.onebusaway.android.api.contract.activeOrOwnTripId
+import org.onebusaway.android.api.isNotFound
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
- * A vehicle the region's sidecar matched on its coach number, and the trip it is running right now.
+ * A vehicle the region's sidecar matched on its coach number, and what it is doing right now.
  *
  * @param vehicleId the agency-prefixed id (`1_4531`) — the OBA key, not what's painted on the bus
  * @param coachNumber the un-prefixed number as a rider reads it off the vehicle
  * @param agencyName the operating agency's display name
- * @param trip what the vehicle is running, or null when it isn't running anything (deadheading, in
- *   the yard, or its real-time feed has gone quiet) — such a match is still reported, because a
- *   rider who typed a real coach number is better served by "not in service" than by "no results"
+ * @param assignment the ride it is running, or why there isn't one to show — a match is reported
+ *   either way, because a rider who typed a real coach number is better served by knowing the
+ *   vehicle exists than by "no results"
  */
 data class VehicleMatch(
     val vehicleId: String,
     val coachNumber: String,
     val agencyName: String,
-    val trip: VehicleTrip?
+    val assignment: VehicleAssignment
 )
+
+/**
+ * What a matched vehicle is doing, as far as `trip-for-vehicle` could tell us. [NotInService] and
+ * [Unknown] are deliberately separate: only the first is something the server actually told us, and
+ * captioning a failed lookup "not in service" would state as fact something we never asked
+ * successfully.
+ */
+sealed interface VehicleAssignment {
+
+    /** Running [trip] right now — the ride the map can drill into. */
+    data class OnTrip(val trip: VehicleTrip) : VehicleAssignment
+
+    /**
+     * The server answered that this vehicle has no trip: deadheading, in the yard, or its real-time
+     * feed has gone quiet.
+     */
+    data object NotInService : VehicleAssignment
+
+    /**
+     * The lookup didn't produce an answer — a transport, server or decode failure, or a response that
+     * names a trip its own references don't describe. The vehicle may well be in service; we don't know.
+     */
+    data object Unknown : VehicleAssignment
+}
 
 /** The live trip behind a [VehicleMatch] — enough to drill the map into the vehicle on its route. */
 data class VehicleTrip(
@@ -64,7 +89,7 @@ data class VehicleTrip(
 interface VehicleSearchDataSource {
 
     /**
-     * Vehicles whose id matches [query], each resolved to its current trip. Empty when nothing
+     * Vehicles whose id matches [query], each carrying what it is running. Empty when nothing
      * matches (including any query the sidecar considers too short to index).
      */
     suspend fun vehiclesMatching(query: String): Result<List<VehicleMatch>>
@@ -75,7 +100,8 @@ interface VehicleSearchDataSource {
  * sidecar ([VehicleSearchWebService]) turns the coach number into agency-prefixed vehicle ids, then
  * the OBA `trip-for-vehicle` endpoint turns each of those into the route + trip the map needs. The
  * second hop runs concurrently across the matches and never fails the search — a vehicle whose trip
- * can't be resolved is reported as not-in-service rather than dropped.
+ * can't be resolved is reported with an unknown assignment rather than dropped,
+ * so one flaky lookup costs neither the match nor the other matches beside it.
  *
  * A region with no sidecar host configured has no vehicle index at all, so the search fails rather
  * than returning empty: "we can't look coach numbers up here" is not the same as "no such coach".
@@ -111,7 +137,7 @@ class DefaultVehicleSearchDataSource @Inject constructor(
                             vehicleId = vehicleId,
                             coachNumber = coachNumberOf(vehicleId, hit.agencyId),
                             agencyName = hit.agencyName,
-                            trip = tripForVehicle(vehicleId)
+                            assignment = assignmentOf(vehicleId)
                         )
                     }
                 }
@@ -120,12 +146,22 @@ class DefaultVehicleSearchDataSource @Inject constructor(
     }.onFailure { Log.e(TAG, "vehiclesMatching($query) failed", it) }
 
     /**
-     * The vehicle's current trip, or null when the lookup didn't produce one — a vehicle between
-     * assignments answers with a non-OK code, which [requireData] turns into a failure here.
+     * What the vehicle is running, per `trip-for-vehicle` — see [vehicleAssignment] for the mapping.
+     * A [VehicleAssignment.Unknown] is logged with what caused it, since it's the one outcome the row
+     * can't explain to the rider.
      */
-    private suspend fun tripForVehicle(vehicleId: String): VehicleTrip? = api.call {
-        it.tripForVehicle(vehicleId).requireData().toVehicleTrip()
-    }.getOrNull()
+    private suspend fun assignmentOf(vehicleId: String): VehicleAssignment {
+        val result = api.call { it.tripForVehicle(vehicleId).requireData().toVehicleTrip() }
+        return vehicleAssignment(result).also { assignment ->
+            if (assignment != VehicleAssignment.Unknown) return@also
+            val cause = result.exceptionOrNull()
+            if (cause != null) {
+                Log.w(TAG, "trip-for-vehicle($vehicleId) failed", cause)
+            } else {
+                Log.w(TAG, "trip-for-vehicle($vehicleId) named a trip its own references don't describe")
+            }
+        }
+    }
 
     private companion object {
 
@@ -140,6 +176,20 @@ class DefaultVehicleSearchDataSource @Inject constructor(
         const val MAX_MATCHES = 5
     }
 }
+
+/**
+ * Reads a `trip-for-vehicle` outcome as an assignment. The server answers an unassigned vehicle with
+ * a 404 ([isNotFound]) — that, and only that, is [VehicleAssignment.NotInService]; every other failure
+ * (transport, server error, decode) is [VehicleAssignment.Unknown], so a lookup we never got an answer
+ * to is never captioned as one. A success with no usable trip (see [toVehicleTrip]) is unknown too:
+ * the server said the vehicle *is* on a trip, just not one it described.
+ *
+ * Pure, so it's exercised directly in JVM tests.
+ */
+internal fun vehicleAssignment(lookup: Result<VehicleTrip?>): VehicleAssignment = lookup.fold(
+    onSuccess = { trip -> trip?.let(VehicleAssignment::OnTrip) ?: VehicleAssignment.Unknown },
+    onFailure = { if (it.isNotFound) VehicleAssignment.NotInService else VehicleAssignment.Unknown }
+)
 
 /**
  * Adapts a trip-for-vehicle payload to [VehicleTrip], or null when the response names a trip that

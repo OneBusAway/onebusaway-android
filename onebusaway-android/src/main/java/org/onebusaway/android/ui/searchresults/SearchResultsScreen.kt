@@ -154,19 +154,21 @@ private fun StopResultRow(
 
 /**
  * A matched vehicle: its coach number as the title, with the ride it is running (route badge +
- * headsign) beneath, or the operating agency when it isn't running one. A vehicle between
- * assignments has no ride to open, so the row reports the match but isn't clickable.
+ * headsign) beneath, or — when there is no ride to show — why not, over the operating agency. Only a
+ * ride is something to open, so the other two rows report the match without being clickable, and they
+ * caption differently: "not in service" is the server's answer, and is not claimed for a status we
+ * couldn't look up.
  */
 @Composable
 private fun VehicleResultRow(
     vehicle: SearchResultItem.Vehicle,
     onShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
 ) {
-    val ride = vehicle.ride
+    val status = vehicle.status
+    val ride = (status as? SearchResultItem.Vehicle.Status.OnRide)?.ride
     ResultRow(
         painter = painterResource(R.drawable.ic_bus),
         contentDescription = stringResource(R.string.search_result_coach_icon),
-        // Only a resolved ride is something to open, so the unactionable row simply isn't clickable.
         onClick = ride?.let { { onShowOnMap(it) } }
     ) {
         Column(Modifier.weight(1f)) {
@@ -185,7 +187,13 @@ private fun VehicleResultRow(
                 )
             } else {
                 Text(
-                    text = stringResource(R.string.search_result_coach_not_in_service),
+                    text = stringResource(
+                        if (status is SearchResultItem.Vehicle.Status.NotInService) {
+                            R.string.search_result_coach_not_in_service
+                        } else {
+                            R.string.search_result_coach_status_unavailable
+                        }
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -203,7 +211,7 @@ private fun VehicleResultRow(
  * A combined-search list row: a leading result-type glyph (a route, stop or vehicle marker in a
  * consistent tinted column, so they're distinguishable at a glance), the type-specific [content], and
  * a trailing divider. The whole row is clickable via [onClick]; a null [onClick] is a row with
- * nothing to open (a matched vehicle that isn't running a trip).
+ * nothing to open (a matched vehicle with no ride behind it).
  */
 @Composable
 private fun ResultRow(
@@ -256,19 +264,27 @@ private fun SearchResultsScreenSuccessPreview() {
                         id = "1_4531",
                         coachNumber = "4531",
                         agency = "King County Metro",
-                        ride = SearchResultItem.Vehicle.Ride(
-                            routeId = "1_100263",
-                            tripId = "1_800587510",
-                            routeShortName = "7",
-                            routeColor = 0xFDB71A.toInt(),
-                            headsign = "Prentice St Via Rainier Ave S"
+                        status = SearchResultItem.Vehicle.Status.OnRide(
+                            SearchResultItem.Vehicle.Ride(
+                                routeId = "1_100263",
+                                tripId = "1_800587510",
+                                routeShortName = "7",
+                                routeColor = 0xFDB71A.toInt(),
+                                headsign = "Prentice St Via Rainier Ave S"
+                            )
                         )
                     ),
                     SearchResultItem.Vehicle(
                         id = "1_4532",
                         coachNumber = "4532",
                         agency = "King County Metro",
-                        ride = null
+                        status = SearchResultItem.Vehicle.Status.NotInService
+                    ),
+                    SearchResultItem.Vehicle(
+                        id = "1_4533",
+                        coachNumber = "4533",
+                        agency = "King County Metro",
+                        status = SearchResultItem.Vehicle.Status.Unknown
                     )
                 )
             ),

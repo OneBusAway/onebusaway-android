@@ -47,9 +47,14 @@ data class DataAgeMarker(val point: GeoPoint, val ageMillis: Long)
  * @property band the graded uncertainty band over the route shape (empty when no estimate)
  * @property fixTimeMs the latest AVL fix's timestamp — constant between fixes, so a change signals
  *   fresh data; the renderer animates the marker to its new position when it changes
+ * @property markerColorArgb the band's own colour, opaque — the fill for the markers that bound the
+ *   band (the fast estimate at its leading end, the most-recent-data dot at its origin), so the three
+ *   read as one data object rather than as unrelated decorations (#1990). Carried even on a frame with
+ *   no estimate at all, because the data dot is drawn from the selection, not from the band
  */
 data class TripOverlay(
     val fastEstimatePoint: GeoPoint? = null,
     val band: List<BandSegment> = emptyList(),
-    val fixTimeMs: Long = 0L
+    val fixTimeMs: Long = 0L,
+    val markerColorArgb: Int = TripMarkerBitmaps.DEFAULT_FILL_COLOR
 )

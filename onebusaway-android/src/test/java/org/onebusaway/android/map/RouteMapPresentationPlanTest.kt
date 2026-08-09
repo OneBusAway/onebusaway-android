@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -176,6 +177,7 @@ class RouteMapPresentationPlanTest {
         assertEquals(0xFF00FF00.toInt(), trip.color)
         assertEquals(listOf(trip), plan.framingPolylines)
         assertSame(selectedStops, plan.stopPresentation)
+        assertEquals(trip.color, plan.selectedTripColor)
     }
 
     @Test
@@ -199,6 +201,9 @@ class RouteMapPresentationPlanTest {
         // reads via its adjacency colour (the #1899 regression case).
         assertEquals(1, plan.polylines.size)
         assertEquals(adjacencyColor, plan.polylines.single().color)
+        // ...and that adjacency colour, not the route's own, is what the band contrasts (#1990): the
+        // reported colour is the one the line was actually drawn in.
+        assertEquals(adjacencyColor, plan.selectedTripColor)
     }
 
     @Test
@@ -244,6 +249,9 @@ class RouteMapPresentationPlanTest {
 
         assertSame(basePolylines, plan.polylines)
         assertSame(baseStops, plan.stopPresentation)
+        // Nothing was drawn for the selection, so there is no drawn colour to report and the band falls
+        // back to contrasting the base route it actually lies over (#1990).
+        assertNull(plan.selectedTripColor)
     }
 
     @Test

@@ -34,7 +34,15 @@ internal data class RouteMapPresentation(
     val framingPolylines: List<RoutePolyline>,
     val routeModeScalesStopsWithZoom: Boolean,
     val badges: List<RouteBadge>,
-    val stopPresentation: RouteStopPresentation?
+    val stopPresentation: RouteStopPresentation?,
+    /**
+     * The colour this plan drew the selected trip's own line in, or null when no selected trip line was
+     * drawn. Reported rather than left implicit because the uncertainty band is tinted to contrast the
+     * line it lies over, and the line's colour is decided here — a selection inside stop focus takes an
+     * adjacency hue, not the shown route's ([selectedTripStyle]), so the controller re-deriving it would
+     * be a second copy of that rule, free to disagree (#1990).
+     */
+    val selectedTripColor: Int? = null
 )
 
 /** A selected vehicle's exact trip, as read fresh after its shape/schedule resolve. */
@@ -124,7 +132,8 @@ internal fun assembleRouteMapPresentation(
                 framingPolylines = listOf(selectedTrip),
                 routeModeScalesStopsWithZoom = isActive,
                 badges = badges,
-                stopPresentation = selected.stopPresentation()
+                stopPresentation = selected.stopPresentation(),
+                selectedTripColor = style.color
             )
         }
         // A resolved-but-undrawable (< 2-point) trip falls through to the base/focus branches.

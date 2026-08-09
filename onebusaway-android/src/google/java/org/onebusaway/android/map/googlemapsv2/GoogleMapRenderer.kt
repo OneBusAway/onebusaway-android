@@ -64,6 +64,7 @@ import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
+import org.onebusaway.android.map.render.STOP_ROUTE_LABEL_Z_INDEX
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
@@ -694,7 +695,7 @@ class GoogleMapRenderer(
                     .position(target.toLatLng())
                     .icon(dataAgeIcon(fillColor))
                     .anchor(0.5f, 0.5f)
-                    .zIndex(0.5f)
+                    .zIndex(DATA_AGE_Z_INDEX)
                     .title(MOST_RECENT_DATA_TITLE)
                     .snippet(formatDataAge(context.resources, ageSeconds))
             )
@@ -921,10 +922,32 @@ class GoogleMapRenderer(
         private const val DEFAULT_ROUTE_WIDTH_PX = 10f
         private const val TRIP_BAND_WIDTH_PX = 44f
 
-        // z-index used to show vehicle markers on top of stop markers (default marker z-index is 0).
-        private const val VEHICLE_Z_INDEX = 1f
+        /**
+         * The vehicle and the two markers of its estimate sit above the **whole** stop group, and this is
+         * a tappability decision before it is a drawing one: gms delivers a tap to the topmost marker
+         * under the finger and [routeMarkerTap] then asks what that marker is, so a stop drawn over one of
+         * these doesn't merely cover it — it answers for it, and the tap focuses the stop instead.
+         *
+         * The stop group's ceiling is [STOP_ROUTE_LABEL_Z_INDEX], not [stopZIndex]: a stop's route label
+         * (#2107) is a wide pill floating above its point, registered as a tap target for that stop, and
+         * it is the highest thing the group draws. Both of these are therefore expressed relative to it
+         * rather than as literals, so a change to the stop scale can't silently sink them back under it —
+         * which is what each had done:
+         *
+         *  - the vehicle sat exactly *on* [STOP_ROUTE_LABEL_Z_INDEX], and gms leaves ties undefined, so a
+         *    label overlapping a vehicle took its taps unpredictably;
+         *  - the most-recent-data dot sat at 0.5, under every route stop (0.75) and tied with favourites,
+         *    so a stop anywhere near the last fix swallowed the dot outright.
+         *
+         * The vehicle outranks the dot where the two coincide (a just-fixed vehicle sits on its own last
+         * fix): the vehicle's tap selects the trip and opens its details, the dot's only shows a bubble.
+         */
+        private const val DATA_AGE_Z_INDEX = STOP_ROUTE_LABEL_Z_INDEX + 0.1f
+        private const val VEHICLE_Z_INDEX = STOP_ROUTE_LABEL_Z_INDEX + 0.2f
 
         // The uncertainty band draws above the static route line; the fast-estimate marker above the band.
+        // The fast estimate was already clear of the stop group and stays where it is — it is the one of
+        // the three that never needed lifting.
         private const val TRIP_BAND_Z_INDEX = 2f
         private const val FAST_ESTIMATE_Z_INDEX = 4f
 

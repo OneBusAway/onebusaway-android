@@ -126,8 +126,8 @@ class VehicleMarkerOutlineTest {
      * Every pixel of a square inscribed in the disc, centered on it.
      *
      * [INSCRIBED_HALF_GRID] is stated here rather than derived from the marker's geometry: it has to be
-     * wide enough to hold the glyph and narrow enough that its corners stay off the rim, and both of
-     * those are claims *about* that geometry — a bound computed from it would follow a mistake in it
+     * wide enough to hold the glyph's edges and narrow enough that its corners stay off the rim, and both
+     * of those are claims *about* that geometry — a bound computed from it would follow a mistake in it
      * instead of catching one. Only the scale reads production, and only to locate the square.
      */
     private fun Bitmap.insideTheDisc(): List<Int> {
@@ -167,10 +167,14 @@ class VehicleMarkerOutlineTest {
         const val MIN_INK_ALPHA = 32
 
         /**
-         * Half the side of the square sampled inside the disc, in grid units. Comfortably wider than the
-         * glyph's 5.4-unit half-extent, and its corners land 10.2 units from the center — inside the
-         * 24-unit disc's 12-unit radius with the rim to spare.
+         * Half the side of the square sampled inside the disc, in grid units — chosen to sit between two
+         * bounds rather than to frame the glyph exactly.
+         *
+         * Its corners land 10.6 units from the center, clear of the rim's inner edge at 11.5, so nothing
+         * the *body* draws is in the sample. And it is wide enough to hold the glyph's edges, which is
+         * where a dilate would put its black — a square that held only the glyph's interior could pass
+         * while the halo sat just outside it.
          */
-        const val INSCRIBED_HALF_GRID = 7.2f
+        const val INSCRIBED_HALF_GRID = 7.5f
     }
 }

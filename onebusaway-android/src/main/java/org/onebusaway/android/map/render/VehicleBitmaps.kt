@@ -86,7 +86,18 @@ object VehicleBitmaps {
     @VisibleForTesting
     internal const val PAD_GRID = 0.6f
 
-    private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
+    /**
+     * The mode glyph's box, in 24-grid units. The artwork doesn't fill it — the mode drawables leave a
+     * margin of their own, so the ink runs to roughly 70-85% of this depending on which one it is.
+     *
+     * Sized so the box itself is inscribed in the disc, not merely the ink: its half-diagonal is
+     * `16.2/2 * √2 ≈ 11.46`, inside the 11.625 fill radius [DISC_RADIUS_GRID] works out to. That's the
+     * bound worth holding, because it doesn't depend on how much of its box any one mode's artwork
+     * happens to use — a future glyph drawn edge to edge still lands on the disc rather than over its
+     * rim. It leaves no headroom to speak of, so this is about as large as the glyph goes without the
+     * disc growing with it.
+     */
+    private const val GLYPH_SIZE = 16.2f
 
     /**
      * The occupancy tab (grid units): a rounded rectangle centered under the disc, unioned with it.

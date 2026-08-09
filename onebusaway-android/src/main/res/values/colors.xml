@@ -38,6 +38,13 @@
          Selected stops override this with the orange focus fill. -->
     <color name="route_stop_fill">#FFFFFF</color>
 
+    <!-- The vehicle marker's rim around its disc/occupancy-tab silhouette: black in light mode, white in
+         dark mode (see values-night), the same flip route_stop_outline makes and for the same reason —
+         the rim's job is to separate the marker from the base map, and a black hairline vanishes into
+         the dark base map (#2055). It does *not* govern the mode glyph's outline, which separates the
+         glyph from the route-colored disc and so is mode-independent; see VehicleBitmaps. -->
+    <color name="vehicle_marker_outline">#000000</color>
+
     <!-- The starred (favorite) stop marker's star: a gold gradient (light top, dark bottom), #1680. -->
     <color name="map_stop_favorite_light">#FFD54F</color>
     <color name="map_stop_favorite_dark">#FFA000</color>

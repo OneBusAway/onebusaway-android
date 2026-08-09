@@ -82,7 +82,7 @@ object VehicleBitmaps {
     @VisibleForTesting
     internal const val MARKER_SIZE_DP = 40f
 
-    /** Transparent padding (grid units) around the disc so the black outline halo isn't clipped. */
+    /** Transparent padding (grid units) around the disc so the outline halo isn't clipped. */
     @VisibleForTesting
     internal const val PAD_GRID = 0.6f
 
@@ -100,7 +100,7 @@ object VehicleBitmaps {
     private const val TAB_BOTTOM_GRID = MarkerRendering.GRID + TAB_DEPTH_GRID
     private const val TAB_CORNER_RADIUS_GRID = 2.8f
 
-    /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
+    /** Hairline outline width, in 24-grid units (scales with the marker); ~1px on screen. */
     private const val OUTLINE_GRID = 0.25f
 
     /**
@@ -108,7 +108,7 @@ object VehicleBitmaps {
      *
      * [MarkerRendering.drawOutlinedPath] strokes the rim **centered on the path**, so half of it eats
      * inward; insetting by 1.5x the outline puts the rim's outer edge exactly where the disc's rim sat
-     * before the tab existed (fill to `r - 2*outline`, black out to `r - outline`). Named rather than
+     * before the tab existed (fill to `r - 2*outline`, rim out to `r - outline`). Named rather than
      * inlined because it shrinks the tab's *effective* half-width too, which the fit rule below has to
      * account for — that omission is what let the tab's corners drift outside the disc.
      */
@@ -176,13 +176,14 @@ object VehicleBitmaps {
         context,
         vehicleType(vehicle, response),
         discColor(context, vehicle),
+        outlineColor(context),
         occupancyBucket(vehicle),
         sizeScale
     )
 
     /**
      * A stable key identifying the icon [vehicleBitmap] returns for this vehicle — its type, disc color,
-     * fullness, and size scale, the only inputs that change the bitmap. A renderer caches one wrapper (a
+     * rim color, fullness, and size scale, the only inputs that change the bitmap. A renderer caches one wrapper (a
      * Google `BitmapDescriptor`) per key so it reuses it across frames even when the bounded bitmap LRU
      * evicts and recreates the underlying [Bitmap] on a busy route.
      *
@@ -191,11 +192,13 @@ object VehicleBitmaps {
      * the arrow gone the icon no longer varies with bearing, which is why neither renderer re-stamps a
      * gliding vehicle's icon between polls any more.
      *
-     * The color component is the **resolved ARGB value**, not a color resource id: a route color
+     * Both color components are the **resolved ARGB value**, not a color resource id: a route color
      * (#2043) is a raw ARGB int off the wire with no resource id to name it. Keying on the resolved
      * value also closes a latent staleness bug the resource-id key had — the same id resolves to a
-     * different color after a light/dark switch, which the old key could not tell apart. Only the
-     * disc takes part — the glyph color is derived from it, so it adds no distinguishing power.
+     * different color after a light/dark switch, which the old key could not tell apart. That is not
+     * hypothetical for the rim, whose whole point is to differ by mode (#2055): it is the reason the
+     * rim is keyed on at all, since it is otherwise constant across every vehicle in a frame. The
+     * glyph and pip colors are derived from the disc/rim, so they add no distinguishing power.
      */
     fun iconKey(
         context: Context,
@@ -206,6 +209,7 @@ object VehicleBitmaps {
         createBitmapCacheKey(
             vehicleType(vehicle, response),
             discColor(context, vehicle),
+            outlineColor(context),
             occupancyBucket(vehicle),
             sizeScale
         )
@@ -282,34 +286,54 @@ object VehicleBitmaps {
         ContextCompat.getColor(context, ScheduleDeviation.Status.SCHEDULED.displayColorRes)
     }
 
+    /**
+     * The rim drawn around the marker's silhouette: black in light mode, white in dark (#2055).
+     *
+     * The rim's job is to hold the marker apart from what's *behind* it, and what's behind it is a base
+     * map the app restyles by mode (`R.raw.light_map` / `R.raw.dark_map`) — so a rim fixed at black
+     * separated the marker from a pale basemap and then dissolved into the dark one, taking the disc's
+     * edge with it on any route color dark enough to sit close to the night basemap. It resolves from a
+     * qualified resource rather than branching on `ThemeUtils.isInDarkMode` so it flips the same way, in
+     * the same place, as the route-stop circles' `route_stop_outline` next to it on the same map.
+     *
+     * Deliberately *not* extended to the mode glyph or the occupancy pips: those sit on the disc, whose
+     * color comes off the wire and doesn't move with the theme, so they keep deriving their ink from it
+     * ([MarkerRendering.legibleOn] and the fixed pip polarity respectively) — see [renderMarker].
+     */
+    @VisibleForTesting
+    internal fun outlineColor(context: Context): Int = ContextCompat.getColor(context, R.color.vehicle_marker_outline)
+
     private fun getBitmap(
         context: Context,
         vehicleType: Int,
         color: Int,
+        outlineColor: Int,
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
-        val key = createBitmapCacheKey(vehicleType, color, occupancy, sizeScale)
+        val key = createBitmapCacheKey(vehicleType, color, outlineColor, occupancy, sizeScale)
         return sColoredIconCache.get(key)
-            ?: renderMarker(context, vehicleType, color, occupancy, sizeScale)
+            ?: renderMarker(context, vehicleType, color, outlineColor, occupancy, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
-    /** [color] is a resolved ARGB value — see [iconKey] for why it can't be a resource id. */
+    /** [color] and [outlineColor] are resolved ARGB values — see [iconKey] for why they can't be resource ids. */
     private fun createBitmapCacheKey(
         vehicleType: Int,
         color: Int,
+        outlineColor: Int,
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
         // "none" rather than an empty slot: the tabless marker is its own icon, distinct from an empty one.
-        return "$type $color ${occupancy?.name ?: "none"} ${sizeScale.toBits()}"
+        return "$type $color $outlineColor ${occupancy?.name ?: "none"} ${sizeScale.toBits()}"
     }
 
     /**
-     * Uncached render of a single marker for a given type/color/fullness. Exposed for the `@Preview`
-     * grid (and tests); the production path goes through [vehicleBitmap] which caches.
+     * Uncached render of a single marker for a given type/color/fullness, rimmed for [context]'s current
+     * mode. Exposed for the `@Preview` grid (and tests); the production path goes through [vehicleBitmap]
+     * which caches.
      */
     @VisibleForTesting
     internal fun previewBitmap(
@@ -317,13 +341,16 @@ object VehicleBitmaps {
         vehicleType: Int,
         color: Int,
         occupancy: OccupancyBucket?
-    ): Bitmap = renderMarker(context, vehicleType, color, occupancy, 1f)
+    ): Bitmap = renderMarker(context, vehicleType, color, outlineColor(context), occupancy, 1f)
 
     /**
      * Composites the marker body — a disc, unioned with the occupancy tab when [occupancy] is non-null —
-     * then the mode glyph centered on the disc, then the tab's pips. The body is stroked and the glyph
-     * given a cheap 8-way dilate at [OUTLINE_GRID] offsets, so both carry a hairline black outline and
-     * read distinctly against each other and the map; the pips deliberately don't (see the pip loop).
+     * then the mode glyph centered on the disc, then the tab's pips. The body is stroked in
+     * [outlineColor] and the glyph given a cheap 8-way black dilate at [OUTLINE_GRID] offsets, so both
+     * carry a hairline outline and read distinctly against each other and the map; the pips deliberately
+     * don't (see the pip loop). The two rims differ in color on purpose: the body's holds the marker off
+     * the mode-restyled base map and so follows the mode, while the glyph's holds it off the disc's
+     * wire-supplied color and so does not — see [outlineColor].
      *
      * A tabbed bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below; a tabless one reserves
      * neither, since with no tab both bands would be empty — 39% of the bitmap, on the marker every
@@ -341,6 +368,7 @@ object VehicleBitmaps {
         context: Context,
         vehicleType: Int,
         color: Int,
+        outlineColor: Int,
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
@@ -362,8 +390,8 @@ object VehicleBitmaps {
         canvas.translate(pad, pad + reserve)
 
         // The body: disc ∪ tab, filled with the route's display color (gray when not real-time) and
-        // stroked black as one silhouette, so no seam shows where the tab meets the disc.
-        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline)
+        // stroked as one silhouette, so no seam shows where the tab meets the disc.
+        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline, outlineColor)
         MarkerRendering.drawGlyph(
             canvas,
             context,
@@ -385,7 +413,7 @@ object VehicleBitmaps {
         // white "full" pip would be indistinguishable from a white "empty" one; the row would stop
         // saying anything at all.
         //
-        // Unlike the body and the glyph, the pips carry **no black rim**. They sit inside the tab, which
+        // Unlike the body and the glyph, the pips carry **no rim at all**. They sit inside the tab, which
         // is itself rimmed and holds nothing else, so they have no neighbour to be separated from — and
         // at this size a rim on a 5-unit silhouette thickens it more than it defines it. Dropping it
         // also lets the wash go down in one pass: with no dilate laying black under the silhouette, a
@@ -416,7 +444,7 @@ object VehicleBitmaps {
 
     /**
      * The marker's silhouette in the translated content space: the disc, unioned with the occupancy tab
-     * when [hasTab]. Built inset by [PATH_INSET_GRID] so that stroking it puts the black rim's outer edge
+     * when [hasTab]. Built inset by [PATH_INSET_GRID] so that stroking it puts the rim's outer edge
      * exactly where the disc's rim used to sit — the tabless marker is pixel-wise the disc this replaced.
      */
     private fun bodyPath(scale: Float, hasTab: Boolean): Path {

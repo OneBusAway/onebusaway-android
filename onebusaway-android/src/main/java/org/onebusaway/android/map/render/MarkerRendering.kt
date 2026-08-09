@@ -155,25 +155,30 @@ object MarkerRendering {
     }
 
     /**
-     * Fills [path] with [fillColor] on [canvas] and rims it with a black hairline [outline] wide (when
-     * that is > 0), stroked **centered on the path**, so a compound silhouette is outlined once around
-     * its union rather than once per part.
+     * Fills [path] with [fillColor] on [canvas] and rims it with an [outlineColor] hairline [outline]
+     * wide (when that is > 0), stroked **centered on the path**, so a compound silhouette is outlined
+     * once around its union rather than once per part.
      *
      * Centered means half the rim falls *inside* [path], so the path is not the drawn silhouette: a
      * caller that needs the rim to sit within a bound must build the path already inset by half the
      * outline (see `VehicleBitmaps.PATH_INSET_GRID`, which does exactly that and explains the rest).
+     *
+     * [outlineColor] is a parameter rather than the black the rest of this file stamps because this rim
+     * is the one that separates a marker from the **base map**, which the app restyles for dark mode —
+     * so its color is the caller's call (#2055). The glyph/pin dilates below stay black: they separate
+     * artwork from a marker's own fill, which no theme moves.
      *
      * The path counterpart of [drawPinAndGlyph]'s teardrop: the route/trip maps center a vehicle badge
      * on the route line rather than floating a pin off it (#1752), and since #2194 that badge is a disc
      * optionally unioned with an occupancy tab. What goes *on* the body — glyph, occupancy pips — the
      * caller layers itself with [drawGlyph] / [drawOutlined], since only it knows how those stack.
      */
-    fun drawOutlinedPath(canvas: Canvas, path: Path, fillColor: Int, outline: Float) {
+    fun drawOutlinedPath(canvas: Canvas, path: Path, fillColor: Int, outline: Float, outlineColor: Int) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         paint.color = fillColor
         canvas.drawPath(path, paint)
         if (outline > 0f) {
-            paint.color = Color.BLACK
+            paint.color = outlineColor
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = outline
             canvas.drawPath(path, paint)

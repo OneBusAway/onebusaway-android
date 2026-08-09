@@ -19,7 +19,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,7 +38,11 @@ import org.onebusaway.android.models.ObaRoute
 @RunWith(AndroidJUnit4::class)
 class VehicleMarkerPipTest {
 
-    private val context: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
+    // Pinned to light mode rather than taken bare, so the band this samples holds a *black* rim whatever
+    // mode the emulator runs in. The pips' polarity is mode-independent, but the rim around the tab is
+    // not (#2055), and a white rim would answer to the `empty` predicate below — making these counts a
+    // reading of the device's theme rather than of the pip row.
+    private val context: Context get() = lightContext()
 
     /** A disc dark enough that [MarkerRendering.legibleOn] inks the *glyph* white. */
     private val disc = 0xFF1050C0.toInt()

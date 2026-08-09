@@ -30,6 +30,9 @@
     <!-- Route-stop circle fill is a 70% gray in dark mode (paired with the white outline). -->
     <color name="route_stop_fill">#4D4D4D</color>
 
+    <!-- The vehicle marker's rim is white in dark mode, for contrast against the dark base map (#2055). -->
+    <color name="vehicle_marker_outline">#FFFFFF</color>
+
     <!-- The selected-stop highlight is a deeper orange in dark mode. -->
     <color name="map_stop_focus">#FB8C00</color>
 

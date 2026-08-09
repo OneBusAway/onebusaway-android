@@ -18,6 +18,7 @@ package org.onebusaway.android.extrapolation.math.prob
 import kotlin.math.exp
 import kotlin.math.ln
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -186,6 +187,11 @@ class GammaDistributionTest {
     @Test(expected = IllegalArgumentException::class)
     fun `scale must be positive`() {
         GammaDistribution(1.0, 0.0)
+    }
+
+    @Test
+    fun `a spread distribution is not a point mass`() {
+        assertFalse(GammaDistribution(2.0, 3.0).isPointMass)
     }
 
     /**

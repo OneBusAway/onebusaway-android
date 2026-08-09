@@ -40,7 +40,8 @@ data class WeightedBandSegment(val points: List<GeoPoint>, val weight: Float)
  * the optimistic [fastEstimatePoint] ("best case"), the graded uncertainty [band], the last server
  * fix ([dataAge]), and the latest AVL fix instant ([fixTimeMs], constant between fixes so a change
  * signals fresh data). On a frame with no usable estimate the points are null and the band empty, but
- * [dataAge] still reports the last fix.
+ * [dataAge] still reports the last fix. A point-mass extrapolation (schedule replay) likewise draws no
+ * [fastEstimatePoint] and no [band] — it has no spread, so there is no uncertainty to show.
  */
 data class TripExtrapolation(
     val vehiclePoint: GeoPoint? = null,

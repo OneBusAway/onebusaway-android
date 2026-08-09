@@ -45,6 +45,11 @@ fun buildTripExtrapolation(
 ): TripExtrapolation? {
     val polyline = state.polyline ?: return null
     val distribution = (result as? ExtrapolationResult.Success)?.distribution
+    // The extrapolation only when it has spread. A point mass (schedule replay, which replays one
+    // deterministic trajectory) has none, so there is no uncertainty to draw: its band would be a
+    // zero-width sliver and its q0.90 "best case" is its median, putting the fast marker exactly on the
+    // vehicle marker and covering it. Both of those consumers draw nothing there (#2213).
+    val spread = distribution?.takeUnless { it.isPointMass }
 
     return TripExtrapolation(
         // The median estimate + data-age marker are only wanted by a caller that draws them itself; the
@@ -52,8 +57,8 @@ fun buildTripExtrapolation(
         // it draws the live vehicle disc + most-recent-data dot separately — so we skip the extra
         // projection + allocation on its ~20–120Hz path (#1752).
         vehiclePoint = if (includeMarkers) distribution?.let { polyline.pointAtDistance(it.median()) } else null,
-        fastEstimatePoint = distribution?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
-        band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
+        fastEstimatePoint = spread?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
+        band = spread?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
         dataAge = if (includeMarkers) dataAgeMarker(state, nowMs) else null,
         // A domain-agnostic *change token*, not a displayed instant: the renderer only compares it for
         // `!=` (a change means fresh AVL data) — never formats or subtracts it. 0 is the token's own

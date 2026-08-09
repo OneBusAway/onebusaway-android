@@ -118,11 +118,7 @@ internal fun NearbyArrivalsSheetHost(
 
     // The laid-out height, so the host can fit the peek to a short list — the same measurement the
     // per-stop panel makes, so both go through the one helper.
-    ReportListContentHeight(
-        listState,
-        contentKey = rows.takeIf { it.isNotEmpty() },
-        onContentHeight = onContentHeight
-    )
+    ReportListContentHeight(listState, onContentHeight)
 }
 
 /**

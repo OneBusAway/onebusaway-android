@@ -72,7 +72,7 @@ fun ArrivalsPanel(
 
     // The panel's total content height (px), for the host's fit-the-peek-to-short-stops shrink. Shared
     // with the nearby drawer, which makes the same measurement — see [ReportListContentHeight].
-    ReportListContentHeight(listState, contentKey = content, onContentHeight = onContentHeight)
+    ReportListContentHeight(listState, onContentHeight)
 
     Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {

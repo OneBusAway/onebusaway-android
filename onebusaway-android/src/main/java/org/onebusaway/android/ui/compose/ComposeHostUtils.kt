@@ -31,8 +31,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 
 /**
  * A [ViewModelStoreOwner] backed by a fresh [ViewModelStore] per [key], cleared when the key changes
@@ -77,31 +77,41 @@ fun navigationBarBottomPadding(): Dp = WindowInsets.navigationBars.asPaddingValu
  * the sheet's collapsed peek to short content. Emits nothing — it is an effect wearing a composable's
  * clothes, hoisted here because both arrivals sheets need the identical measurement.
  *
- * Real layout, not an estimate, and not a magnitude heuristic. Material3 measures sheet content at full
- * container height regardless of the peek, so [listState]'s `layoutInfo` reflects the whole list: when
- * the last item is present its bottom edge *is* the content height; when it isn't, the content is taller
- * than the screen (well past any peek cap) and an exact number buys nothing.
+ * Real layout, not an estimate, and not a magnitude heuristic: the reading is the bottom edge of the
+ * last laid-out item. Material3 measures sheet content at full container height regardless of the peek,
+ * so when the whole list fits that edge *is* the content height. When it doesn't, the last visible item
+ * is the one straddling the viewport's bottom, so the same expression yields roughly the viewport
+ * extent — a floor rather than a measurement, which is all a caller clamping to a peek cap can use.
  *
- * [contentKey] identifies what is being measured — null means "nothing to measure yet", and a new
- * non-null value re-measures. Exactly one measurement is reported per key: `last.offset` moves every
- * frame while the final item is on screen and scrolling, and republishing it would invalidate the host
- * once a frame for a number whose consumer (a peek that has long since pinned to its cap) cannot change.
+ * Two things make the measurement trustworthy rather than merely cheap:
+ *
+ *  - **One collector, keyed only on [listState].** It is deliberately *not* restarted when the content
+ *    changes. A restart does not wait for the new content's layout pass — the effect's coroutine can
+ *    run before it — so a restarted collector's first reading still describes the outgoing list, and
+ *    reporting that would publish the wrong height. Observing layout continuously instead means a
+ *    content swap needs no special handling: the new list's height simply arrives when it is measured.
+ *  - **It only measures from the top.** Item offsets are viewport-relative, so once a list is scrolled
+ *    `last.offset + last.size` is the last item's bottom *on screen*, not the content height. Skipping
+ *    those readings is what makes the value correct — and, since the offsets that move every frame are
+ *    exactly the ones being skipped, it is also what keeps a scroll gesture from republishing (and
+ *    re-invalidating the host) once a frame.
+ *
+ * A list with nothing laid out reports nothing, so a caller still showing a spinner keeps whatever it
+ * last had rather than being handed a zero.
  */
 @Composable
 fun ReportListContentHeight(
     listState: LazyListState,
-    contentKey: Any?,
     onContentHeight: (heightPx: Int) -> Unit
 ) {
-    // Read through the latest lambda so a caller's inline `{ px -> … }` doesn't restart the effect (and
-    // re-report) on every recomposition.
+    // Read through the latest lambda so a caller's inline `{ px -> … }` doesn't restart the effect.
     val report = rememberUpdatedState(onContentHeight)
-    LaunchedEffect(listState, contentKey) {
-        if (contentKey == null) return@LaunchedEffect
+    LaunchedEffect(listState) {
         snapshotFlow {
-            val info = listState.layoutInfo
-            val last = info.visibleItemsInfo.lastOrNull()
-            if (last != null && last.index == info.totalItemsCount - 1) last.offset + last.size else null
-        }.filterNotNull().first().let { report.value(it) }
+            val atTop = listState.firstVisibleItemIndex == 0 &&
+                listState.firstVisibleItemScrollOffset == 0
+            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            if (atTop && last != null) last.offset + last.size else null
+        }.filterNotNull().distinctUntilChanged().collect { report.value(it) }
     }
 }

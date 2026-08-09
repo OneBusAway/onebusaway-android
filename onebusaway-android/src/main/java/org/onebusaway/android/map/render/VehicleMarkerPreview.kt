@@ -15,16 +15,20 @@
  */
 package org.onebusaway.android.map.render
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,10 +51,17 @@ import org.onebusaway.android.models.ObaRoute
  * which is the shape to check a disc-geometry change against. The rest are the tab, filling left to
  * right, and the pair to look hardest at is "empty" vs "1 of 3" — an all-hollow row and a row with one
  * inked pip are the closest two readings on the scale.
+ *
+ * The grid stands the markers on a ground that follows the mode, pale in light and near-black in dark,
+ * because the marker's rim follows the mode too (#2055) — on a fixed white ground the dark-mode rim
+ * would be invisible here and legible in the app, which is the wrong way round for a tuning tool. The
+ * grounds are flat stand-ins for the base map, not samples of it.
  */
 @Composable
 fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
     val argb = color.toArgb()
+    val dark = isSystemInDarkTheme()
+    val ground = if (dark) Color(0xFF212121) else Color.White
     val modes = listOf(
         ObaRoute.TYPE_BUS to "bus",
         ObaRoute.TYPE_RAIL to "rail",
@@ -59,10 +70,14 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
         ObaRoute.TYPE_FERRY to "ferry"
     )
 
-    Column(Modifier.background(Color.White).padding(8.dp)) {
-        FullnessHeader()
-        modes.forEach { (type, name) ->
-            MarkerRow(label = name, vehicleType = type, argb = argb)
+    // The labels are provided a contrasting ink rather than left to the default, since this catalog is
+    // drawn bare (no app theme) and Material3's fallback content color is black in both modes.
+    CompositionLocalProvider(LocalContentColor provides if (dark) Color.White else Color.Black) {
+        Column(Modifier.background(ground).padding(8.dp)) {
+            FullnessHeader()
+            modes.forEach { (type, name) ->
+                MarkerRow(label = name, vehicleType = type, argb = argb, dark = dark)
+            }
         }
     }
 }
@@ -77,8 +92,14 @@ private fun FullnessHeader() {
     }
 }
 
+/**
+ * One mode's row of markers. [dark] is passed in rather than read here, and is a `remember` key: the
+ * bitmap's rim color comes from [context]'s mode (#2055), so a composition that survives a mode change
+ * instead of being disposed — an interactive preview toggling the theme — would otherwise keep showing
+ * the rim it was first drawn with.
+ */
 @Composable
-private fun MarkerRow(label: String, vehicleType: Int, argb: Int) {
+private fun MarkerRow(label: String, vehicleType: Int, argb: Int, dark: Boolean) {
     val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.width(56.dp), fontSize = 12.sp)
@@ -86,7 +107,7 @@ private fun MarkerRow(label: String, vehicleType: Int, argb: Int) {
             // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
             // (not a production render path), so calling it here is intentional.
             @Suppress("VisibleForTests")
-            val bmp = remember(vehicleType, argb, occupancy) {
+            val bmp = remember(vehicleType, argb, occupancy, dark) {
                 VehicleBitmaps.previewBitmap(context, vehicleType, argb, occupancy).asImageBitmap()
             }
             Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(56.dp))
@@ -100,5 +121,12 @@ private val PREVIEW_OCCUPANCIES = listOf(null) + OccupancyBucket.entries
 @Preview(showBackground = true, widthDp = 300, heightDp = 340)
 @Composable
 private fun VehicleMarkerGridPreview() {
+    VehicleMarkerGrid()
+}
+
+/** The same grid in dark mode, where the rim is white rather than black (#2055). */
+@Preview(showBackground = true, widthDp = 300, heightDp = 340, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun VehicleMarkerGridDarkPreview() {
     VehicleMarkerGrid()
 }

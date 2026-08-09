@@ -55,8 +55,7 @@ object PinnedTripBitmaps {
             pinColor = ContextCompat.getColor(context, R.color.theme_accent),
             glyphRes = R.drawable.ic_pin_filled,
             glyphColor = Color.WHITE,
-            glyphSize = GLYPH_SIZE,
-            outline = 0f
+            glyphSize = GLYPH_SIZE
         )
         return bitmap
     }

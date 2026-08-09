@@ -51,8 +51,13 @@ object TripMarkerBitmaps {
     @VisibleForTesting
     internal const val ICON_PADDING_DP = 4
 
+    /**
+     * The shared map-marker rim width (#2055) — the vehicle badge that these markers bracket converts
+     * the same dp through its own geometry, so the two read as one family rather than a 2 dp ring beside
+     * a hairline.
+     */
     @VisibleForTesting
-    internal const val STROKE_WIDTH_DP = 2f
+    internal const val STROKE_WIDTH_DP = MarkerRendering.MARKER_STROKE_DP
 
     /**
      * Bounded in **bytes**, not entries, for the reason [VehicleBitmaps]' cache is: a disc is ~28 KiB at

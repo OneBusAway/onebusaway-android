@@ -82,11 +82,9 @@ object VehicleBitmaps {
     @VisibleForTesting
     internal const val MARKER_SIZE_DP = 40f
 
-    /** Transparent padding (grid units) around the disc so the black outline halo isn't clipped. */
+    /** Transparent padding (grid units) around the disc so the outline halo isn't clipped. */
     @VisibleForTesting
     internal const val PAD_GRID = 0.6f
-
-    private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
 
     /**
      * The occupancy tab (grid units): a rounded rectangle centered under the disc, unioned with it.
@@ -100,22 +98,64 @@ object VehicleBitmaps {
     private const val TAB_BOTTOM_GRID = MarkerRendering.GRID + TAB_DEPTH_GRID
     private const val TAB_CORNER_RADIUS_GRID = 2.8f
 
-    /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
-    private const val OUTLINE_GRID = 0.25f
+    /**
+     * The rim's width in grid units, converted from the shared [MarkerRendering.MARKER_STROKE_DP] through
+     * this marker's own size — so a vehicle badge and the fast-estimate / last-fix markers beside it on
+     * the trip map carry the same drawn rim, rather than this one's hairline against their 2 dp.
+     *
+     * Derived rather than written out so the two can't drift apart when either size moves.
+     */
+    private const val OUTLINE_GRID = MarkerRendering.MARKER_STROKE_DP * MarkerRendering.GRID / MARKER_SIZE_DP
+
+    /**
+     * The margin between the drawn silhouette and the nominal 24-grid box — enough that the antialiased
+     * rim isn't flush with the bounds.
+     *
+     * Deliberately **independent of [OUTLINE_GRID]**, which is the whole point of naming it. The geometry
+     * used to hang off the rim's width (the path was inset 1.5x the outline, putting the drawn edge at
+     * `12 - outline`), a rule inherited from when the rim was a hairline and the difference didn't show.
+     * Widening the rim under that rule would have pulled the entire silhouette inward — an 8% smaller
+     * marker as a side effect of a stroke change. Anchoring the outer edge instead lets the rim thicken
+     * *inward*, which is what "make the rim wider" means.
+     */
+    private const val SILHOUETTE_MARGIN_GRID = 0.25f
+
+    /** Where the rim's outer edge lands: the marker's drawn radius, whatever the rim's width. */
+    private const val SILHOUETTE_RADIUS_GRID = MarkerRendering.GRID / 2f - SILHOUETTE_MARGIN_GRID
+
+    /**
+     * The radius [bodyPath] is built at: half a stroke inside the silhouette, since
+     * [MarkerRendering.drawOutlinedPath] strokes the rim **centered on the path** — so half of it falls
+     * outside, and the outer half is what has to land on [SILHOUETTE_RADIUS_GRID].
+     */
+    private const val DISC_RADIUS_GRID = SILHOUETTE_RADIUS_GRID - OUTLINE_GRID / 2f
 
     /**
      * How far inside its nominal bounds [bodyPath] is built, in grid units.
      *
-     * [MarkerRendering.drawOutlinedPath] strokes the rim **centered on the path**, so half of it eats
-     * inward; insetting by 1.5x the outline puts the rim's outer edge exactly where the disc's rim sat
-     * before the tab existed (fill to `r - 2*outline`, black out to `r - outline`). Named rather than
-     * inlined because it shrinks the tab's *effective* half-width too, which the fit rule below has to
-     * account for — that omission is what let the tab's corners drift outside the disc.
+     * Named rather than inlined because it shrinks the tab's *effective* half-width too, which the fit
+     * rule below has to account for — that omission is what let the tab's corners drift outside the disc.
      */
-    private const val PATH_INSET_GRID = 1.5f * OUTLINE_GRID
+    private const val PATH_INSET_GRID = MarkerRendering.GRID / 2f - DISC_RADIUS_GRID
 
-    /** The disc's drawn radius: the 24-grid half-width, less what the centered rim takes back. */
-    private const val DISC_RADIUS_GRID = MarkerRendering.GRID / 2f - PATH_INSET_GRID
+    /**
+     * The mode glyph's box, **derived** as the largest square that fits inside the rim.
+     *
+     * The bound is stated on the box rather than on the ink because the ink is not knowable here: each
+     * mode drawable leaves a margin of its own, and they don't agree (the five run to roughly 70-85% of
+     * their viewport). Fitting the box means a glyph drawn edge to edge would still land on the fill
+     * rather than lap the rim, so this holds for artwork that doesn't exist yet.
+     *
+     * Derived for the same reason [TAB_TOP_GRID] is: the fit depends on [SILHOUETTE_RADIUS_GRID] and
+     * [OUTLINE_GRID], and a literal with the arithmetic in prose beside it goes quietly wrong the next
+     * time one of those moves. The square's half-diagonal is `GLYPH_SIZE/2 * √2`, so setting that equal
+     * to the rim's inner edge and solving gives the expression below.
+     *
+     * It therefore *falls* when the rim widens — the rim eats its room from the inside. Matching the rim
+     * to the trip markers' 2 dp cost the glyph about 8%, leaving it ~14.9 units against the 10.8 it sat
+     * at before #2055.
+     */
+    private val GLYPH_SIZE: Float = (SILHOUETTE_RADIUS_GRID - OUTLINE_GRID) * 2f / sqrt(2f)
 
     /**
      * The tab's top edge, **derived** so its upper corners stay buried in the disc.
@@ -182,7 +222,7 @@ object VehicleBitmaps {
 
     /**
      * A stable key identifying the icon [vehicleBitmap] returns for this vehicle — its type, disc color,
-     * fullness, and size scale, the only inputs that change the bitmap. A renderer caches one wrapper (a
+     * rim color, fullness, and size scale, the only inputs that change the bitmap. A renderer caches one wrapper (a
      * Google `BitmapDescriptor`) per key so it reuses it across frames even when the bounded bitmap LRU
      * evicts and recreates the underlying [Bitmap] on a busy route.
      *
@@ -191,11 +231,13 @@ object VehicleBitmaps {
      * the arrow gone the icon no longer varies with bearing, which is why neither renderer re-stamps a
      * gliding vehicle's icon between polls any more.
      *
-     * The color component is the **resolved ARGB value**, not a color resource id: a route color
+     * Both color components are the **resolved ARGB value**, not a color resource id: a route color
      * (#2043) is a raw ARGB int off the wire with no resource id to name it. Keying on the resolved
      * value also closes a latent staleness bug the resource-id key had — the same id resolves to a
-     * different color after a light/dark switch, which the old key could not tell apart. Only the
-     * disc takes part — the glyph color is derived from it, so it adds no distinguishing power.
+     * different color after a light/dark switch, which the old key could not tell apart. That is not
+     * hypothetical for the rim, whose whole point is to differ by mode (#2055): it is the reason the
+     * rim is keyed on at all, since it is otherwise constant across every vehicle in a frame. The
+     * glyph and pip colors are derived from the disc/rim, so they add no distinguishing power.
      */
     fun iconKey(
         context: Context,
@@ -308,8 +350,9 @@ object VehicleBitmaps {
     }
 
     /**
-     * Uncached render of a single marker for a given type/color/fullness. Exposed for the `@Preview`
-     * grid (and tests); the production path goes through [vehicleBitmap] which caches.
+     * Uncached render of a single marker for a given type/color/fullness, rimmed for [context]'s current
+     * mode. Exposed for the `@Preview` grid (and tests); the production path goes through [vehicleBitmap]
+     * which caches.
      */
     @VisibleForTesting
     internal fun previewBitmap(
@@ -321,17 +364,21 @@ object VehicleBitmaps {
 
     /**
      * Composites the marker body — a disc, unioned with the occupancy tab when [occupancy] is non-null —
-     * then the mode glyph centered on the disc, then the tab's pips. The body is stroked and the glyph
-     * given a cheap 8-way dilate at [OUTLINE_GRID] offsets, so both carry a hairline black outline and
-     * read distinctly against each other and the map; the pips deliberately don't (see the pip loop).
+     * then the mode glyph centered on the disc, then the tab's pips. **Only the body is rimmed**, at
+     * [OUTLINE_GRID] wide: the glyph and pips sit on a surface already chosen to carry them, so a rim
+     * around either had nothing to separate it from (see the glyph and pip comments below).
      *
      * A tabbed bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below; a tabless one reserves
      * neither, since with no tab both bands would be empty — 39% of the bitmap, on the marker every
      * scheduled vehicle and every occupancy-less feed draws. Either way the disc lands at the bitmap's
      * center, which is the property the anchor depends on — see the class KDoc.
      *
-     * The **glyph** takes whichever of black/white reads on [color] rather than a hardcoded white, since
-     * a route may be drawn in a shade too pale to carry white. The **pips** deliberately do not: they use
+     * The rim and the **glyph** take the same ink: whichever of black/white reads on [color]
+     * ([MarkerRendering.legibleOn]), the rule [TripMarkerBitmaps] applies to the estimate markers that
+     * bracket this one on the trip map (#1990). A rim keyed to the *theme* instead — the first answer to
+     * #2055 — went white in dark mode and then vanished on any pale route colour, which is the failure
+     * it was added to prevent, only moved. Reading the disc catches both cases at once: the rim is light
+     * exactly when the disc is dark, whatever the base map is doing. The **pips** deliberately do not: they use
      * a fixed white-empty / black-full polarity (see the pip loop), so a rider learns one reading of the
      * row rather than one per route colour. Neither uses a colour ramp of its own — the disc's colour
      * already means route identity (#2043), and a second colour scale on a 40 dp icon would compete with
@@ -362,8 +409,10 @@ object VehicleBitmaps {
         canvas.translate(pad, pad + reserve)
 
         // The body: disc ∪ tab, filled with the route's display color (gray when not real-time) and
-        // stroked black as one silhouette, so no seam shows where the tab meets the disc.
-        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline)
+        // stroked as one silhouette, so no seam shows where the tab meets the disc.
+        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline, onColor)
+        // The mode glyph, rimless: a black dilate under a black glyph — which is what a light route
+        // colour asks for — thickened it into a blot rather than defining it.
         MarkerRendering.drawGlyph(
             canvas,
             context,
@@ -371,8 +420,7 @@ object VehicleBitmaps {
             MarkerRendering.GRID / 2f * scale,
             MarkerRendering.GRID / 2f * scale,
             GLYPH_SIZE / 2f * scale,
-            outline,
-            onColor
+            glyphColor = onColor
         )
 
         // The pip row: all [MAX_PIPS] silhouettes always drawn, the first [OccupancyBucket.pips] of them
@@ -385,7 +433,7 @@ object VehicleBitmaps {
         // white "full" pip would be indistinguishable from a white "empty" one; the row would stop
         // saying anything at all.
         //
-        // Unlike the body and the glyph, the pips carry **no black rim**. They sit inside the tab, which
+        // Like the glyph, and unlike the body, the pips carry **no rim**. They sit inside the tab, which
         // is itself rimmed and holds nothing else, so they have no neighbour to be separated from — and
         // at this size a rim on a 5-unit silhouette thickens it more than it defines it. Dropping it
         // also lets the wash go down in one pass: with no dilate laying black under the silhouette, a
@@ -416,7 +464,7 @@ object VehicleBitmaps {
 
     /**
      * The marker's silhouette in the translated content space: the disc, unioned with the occupancy tab
-     * when [hasTab]. Built inset by [PATH_INSET_GRID] so that stroking it puts the black rim's outer edge
+     * when [hasTab]. Built inset by [PATH_INSET_GRID] so that stroking it puts the rim's outer edge
      * exactly where the disc's rim used to sit — the tabless marker is pixel-wise the disc this replaced.
      */
     private fun bodyPath(scale: Float, hasTab: Boolean): Path {

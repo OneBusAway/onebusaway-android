@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.searchresults
 
+import org.onebusaway.android.api.data.VehicleAssignment
+
 /**
  * One row of the combined search results list — a matching route, stop, or vehicle. The screen
  * renders these into a single heterogeneous list (routes first, then stops, then vehicles; the first
@@ -53,50 +55,21 @@ sealed interface SearchResultItem {
      * A vehicle matched by its coach number — the number painted on the bus, which riders use to
      * find a specific vehicle (e.g. to meet someone riding it).
      *
+     * [assignment] is the data layer's [VehicleAssignment] as-is: it already carries exactly what the
+     * row renders (the ride, or which of the two rideless cases this is — the server's own "no trip"
+     * answer captions differently from a lookup that never got one), so mirroring it into a parallel
+     * UI enum would only add a hand-synced copy to keep in step.
+     *
      * @param id the agency-prefixed OBA vehicle id (`1_4531`), used only as the row key
      * @param coachNumber the number as a rider reads it off the vehicle, shown as the row's title
      * @param agency the operating agency's display name
-     * @param status what it is running, or why there's nothing to open — anything but [Status.OnRide]
-     *   makes the row unselectable rather than hiding the match
+     * @param assignment what it is running; anything but [VehicleAssignment.OnTrip] makes the row
+     *   unselectable rather than hiding the match
      */
     data class Vehicle(
         val id: String,
         val coachNumber: String,
         val agency: String,
-        val status: Status
-    ) : SearchResultItem {
-
-        /**
-         * What the row can say about the vehicle. The two rideless cases stay distinct because they
-         * caption differently: the server telling us a coach is off duty is not the same as our
-         * failing to ask it.
-         */
-        sealed interface Status {
-
-            /** On [ride] — the row opens the map on it. */
-            data class OnRide(val ride: Ride) : Status
-
-            /** The server says it isn't running a trip right now. */
-            data object NotInService : Status
-
-            /** Its status couldn't be looked up, so the row reports the match and nothing more. */
-            data object Unknown : Status
-        }
-
-        /**
-         * The ride a matched vehicle is on: the ids the map needs to drill into it, plus the labels
-         * that let a rider recognize it in the list before tapping.
-         *
-         * @param routeShortName the route's badge text, or null when unknown
-         * @param routeColor the route's GTFS color as an Android ARGB int, or null when unset
-         * @param headsign where the vehicle is headed, or null when unknown
-         */
-        data class Ride(
-            val routeId: String,
-            val tripId: String,
-            val routeShortName: String?,
-            val routeColor: Int?,
-            val headsign: String?
-        )
-    }
+        val assignment: VehicleAssignment
+    ) : SearchResultItem
 }

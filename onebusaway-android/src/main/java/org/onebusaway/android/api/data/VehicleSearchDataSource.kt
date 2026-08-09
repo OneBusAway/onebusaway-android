@@ -24,11 +24,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.R
+import org.onebusaway.android.api.adapters.activeOrOwnTripId
 import org.onebusaway.android.api.adapters.colorArgb
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.TripDetailsEntry
 import org.onebusaway.android.api.contract.VehicleSearchWebService
-import org.onebusaway.android.api.contract.activeOrOwnTripId
+import org.onebusaway.android.api.contract.sidecarV1RegionUrl
 import org.onebusaway.android.api.isNotFound
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
@@ -115,14 +116,22 @@ class DefaultVehicleSearchDataSource @Inject constructor(
 
     override suspend fun vehiclesMatching(query: String): Result<List<VehicleMatch>> = runCatchingCancellable {
         val region = regionRepository.region.value
-        val base = region?.sidecarBaseUrl
+        // A blank base is as much "this region has no vehicle index" as a missing one — without the
+        // guard it would build a relative URL and quietly query the throwaway Retrofit base instead.
+        val base = region?.sidecarBaseUrl?.takeIf { it.isNotBlank() }
             ?: throw IOException("No sidecar base URL for vehicle search")
-        val url = base +
-            context.getString(R.string.vehicles_api_endpoint)
-                .replace("regionID", region.sidecarId.toString())
+        val url = sidecarV1RegionUrl(
+            sidecarBaseUrl = base,
+            endpoint = context.getString(R.string.vehicles_api_endpoint),
+            regionId = region.sidecarId.toString()
+        )
 
+        // The index is external, so the same vehicle can come back twice (an agency indexed twice, a
+        // rebuild in flight); de-duplicate before the cap, so a repeat costs neither a lookup, a
+        // MAX_MATCHES slot, nor a duplicate list key.
         val matched = vehicleSearch.searchVehicles(url, query)
             .mapNotNull { hit -> hit.vehicleId?.takeIf { it.isNotBlank() }?.let { it to hit } }
+            .distinctBy { (vehicleId, _) -> vehicleId }
         // A short query can match a lot of the fleet, and each match costs a trip-for-vehicle round
         // trip. Cap the fan-out, and log the drop rather than let a truncated list read as the whole
         // answer.
@@ -212,6 +221,11 @@ internal fun EntryWithReferences<TripDetailsEntry>.toVehicleTrip(): VehicleTrip?
  * The coach number as painted on the vehicle: the OBA id minus its `{agencyId}_` prefix. The prefix is
  * built from the agency id the same response states rather than by splitting on the first underscore,
  * so a vehicle id that itself contains one survives. An id that doesn't carry the prefix (a feed that
- * doesn't follow the OBA id convention) is passed through unchanged.
+ * doesn't follow the OBA id convention) is passed through unchanged, as is any id whose hit named no
+ * agency — there is no prefix to strip then, and stripping a bare `_` would maul ids either way.
  */
-internal fun coachNumberOf(vehicleId: String, agencyId: String): String = vehicleId.removePrefix("${agencyId}_")
+internal fun coachNumberOf(vehicleId: String, agencyId: String): String = if (agencyId.isBlank()) {
+    vehicleId
+} else {
+    vehicleId.removePrefix("${agencyId}_")
+}

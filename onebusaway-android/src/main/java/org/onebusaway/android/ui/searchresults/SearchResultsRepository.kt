@@ -22,7 +22,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.api.data.RoutesNearResult
-import org.onebusaway.android.api.data.VehicleAssignment
 import org.onebusaway.android.api.data.VehicleMatch
 import org.onebusaway.android.api.data.VehicleSearchDataSource
 import org.onebusaway.android.database.oba.ImportGate
@@ -71,9 +70,13 @@ class DefaultSearchResultsRepository @Inject constructor(
         val stopResult = stops.await()
         val vehicleResult = vehicles.await()
 
-        // A true failure only when EVERY search failed; otherwise show whatever came back.
-        val results = listOf(routeResult, stopResult, vehicleResult)
-        if (results.all { it.isFailure }) {
+        // A true failure when both near-me legs failed and the vehicle leg has nothing to put in their
+        // place. The vehicle leg answering "no coach by that name" is not an answer about the routes and
+        // stops we couldn't reach, so an empty vehicle success must not turn an outage into the
+        // no-results screen (which offers no retry) — only actual vehicle hits do.
+        val matchedVehicles = vehicleResult.getOrNull().orEmpty()
+        if (routeResult.isFailure && stopResult.isFailure && matchedVehicles.isEmpty()) {
+            val results = listOf(routeResult, stopResult, vehicleResult)
             return@coroutineScope Result.failure(
                 results.firstNotNullOfOrNull { it.exceptionOrNull() } ?: IOException("Search failed")
             )
@@ -86,7 +89,7 @@ class DefaultSearchResultsRepository @Inject constructor(
             }
             val userInfo = stopUserInfo(matchedStops)
             matchedStops.forEach { add(toStop(it, userInfo[it.id])) }
-            vehicleResult.getOrNull()?.forEach { add(toVehicle(it)) }
+            matchedVehicles.forEach { add(toVehicle(it)) }
         }
         Result.success(items)
     }
@@ -149,20 +152,7 @@ class DefaultSearchResultsRepository @Inject constructor(
         id = match.vehicleId,
         coachNumber = match.coachNumber,
         agency = match.agencyName,
-        status = when (val assignment = match.assignment) {
-            is VehicleAssignment.OnTrip -> SearchResultItem.Vehicle.Status.OnRide(
-                SearchResultItem.Vehicle.Ride(
-                    routeId = assignment.trip.routeId,
-                    tripId = assignment.trip.tripId,
-                    routeShortName = assignment.trip.routeShortName,
-                    routeColor = assignment.trip.routeColor,
-                    headsign = assignment.trip.headsign
-                )
-            )
-
-            VehicleAssignment.NotInService -> SearchResultItem.Vehicle.Status.NotInService
-            VehicleAssignment.Unknown -> SearchResultItem.Vehicle.Status.Unknown
-        }
+        assignment = match.assignment
     )
 
     private fun toStop(stop: ObaStop, userInfo: StopUserInfo?) = SearchResultItem.Stop(

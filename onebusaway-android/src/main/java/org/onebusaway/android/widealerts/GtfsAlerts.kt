@@ -11,6 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.sidecarV1RegionUrl
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
@@ -91,9 +92,11 @@ class GtfsAlerts @Inject constructor(
             context.getString(R.string.preferences_display_test_alerts),
             false
         )
-        return (baseUrl + context.getString(R.string.alerts_api_endpoint))
-            .replace("regionID", regionId)
-            .let { if (testAlert) "$it?test=1" else it }
+        return sidecarV1RegionUrl(
+            sidecarBaseUrl = baseUrl,
+            endpoint = context.getString(R.string.alerts_api_endpoint),
+            regionId = regionId
+        ).let { if (testAlert) "$it?test=1" else it }
     }
 
     private companion object {

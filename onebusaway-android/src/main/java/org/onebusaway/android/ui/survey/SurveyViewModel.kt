@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.sidecarV1RegionUrl
 import org.onebusaway.android.api.data.SurveyDataSource
 import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.database.survey.SurveyRepository
@@ -296,9 +297,11 @@ class SurveyViewModel @Inject constructor(
     private fun studyUrl(): String? {
         val region = regionRepository.region.value ?: return null
         val base = region.sidecarBaseUrl ?: return null
-        return base +
-            context.getString(R.string.studies_api_endpoint)
-                .replace("regionID", region.sidecarId.toString())
+        return sidecarV1RegionUrl(
+            sidecarBaseUrl = base,
+            endpoint = context.getString(R.string.studies_api_endpoint),
+            regionId = region.sidecarId.toString()
+        )
     }
 
     private fun submitUrl(hero: Boolean): String {

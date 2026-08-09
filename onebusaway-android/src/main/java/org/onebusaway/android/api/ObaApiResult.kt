@@ -17,6 +17,9 @@ package org.onebusaway.android.api
 
 import java.io.IOException
 import java.net.HttpURLConnection
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import retrofit2.HttpException
@@ -47,18 +50,41 @@ fun <T> ObaEnvelope<T>.requireData(): T {
  * server or decode failure — the distinction a caller needs to tell "the server says there is none"
  * from "we couldn't ask".
  *
- * An OBA server sets the HTTP status from the envelope code (`trip-for-vehicle` for an unassigned
- * vehicle answers HTTP 404 with `{"code":404,...}`), and Retrofit raises [HttpException] on a non-2xx
- * status before the body is ever decoded — so that is the form a 404 normally takes. [ObaApiException]
- * is the same answer read off the decoded envelope by [requireData], which is what a response carrying
- * the code under a 2xx status would produce; both mean not-found, so both count here.
+ * Only [ObaApiException] can carry that answer: it's what [requireData] raises off a decoded envelope,
+ * and what [asObaFailure] maps a non-2xx response to *once it has confirmed the body is an OBA
+ * envelope stating the same code*. A bare [HttpException] deliberately doesn't count — a 404 from a
+ * proxy, or from a deployment that doesn't serve the endpoint at all, says nothing about the resource.
  */
 val Throwable.isNotFound: Boolean
-    get() = when (this) {
-        is ObaApiException -> code == HttpURLConnection.HTTP_NOT_FOUND
-        is HttpException -> code() == HttpURLConnection.HTTP_NOT_FOUND
-        else -> false
+    get() = this is ObaApiException && code == HttpURLConnection.HTTP_NOT_FOUND
+
+/**
+ * The OBA answer behind a non-2xx response, as an [ObaApiException] — or this throwable unchanged when
+ * the response didn't come from the OBA API itself.
+ *
+ * An OBA server sets the HTTP status from the envelope code and still writes the envelope as the body
+ * (`trip-for-vehicle` for an unassigned vehicle answers HTTP 404 with
+ * `{"code":404,"currentTime":…,"text":"resource not found","version":2}`), but Retrofit raises
+ * [HttpException] on a non-2xx status before that body is ever decoded. Normalizing here — in the one
+ * place every call passes through ([org.onebusaway.android.api.net.ObaApiProvider.call]) — gives
+ * callers a single failure type to classify codes on, instead of each rediscovering that the same
+ * app-level code arrives as two different exception types.
+ *
+ * The body is required to decode as an envelope **whose code equals the HTTP status**, so only the OBA
+ * layer's own answer is adopted: a proxy's HTML 404, or a JSON error object from something else, fails
+ * that check and stays an [HttpException]. Reading the error body is safe and non-blocking — Retrofit
+ * buffers it in memory before constructing the [HttpException].
+ */
+internal fun Throwable.asObaFailure(json: Json): Throwable {
+    if (this !is HttpException) return this
+    val body = response()?.errorBody()?.string().orEmpty()
+    val envelope = try {
+        json.decodeFromString<ObaEnvelope<JsonElement>>(body)
+    } catch (_: SerializationException) {
+        null
     }
+    return if (envelope != null && envelope.code == code()) ObaApiException(envelope.code) else this
+}
 
 /**
  * Asserts an OK app-level code, throwing [ObaApiException] otherwise — for endpoints whose response

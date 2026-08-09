@@ -40,6 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.api.data.VehicleAssignment
+import org.onebusaway.android.api.data.VehicleTrip
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.ListScreenScaffold
 import org.onebusaway.android.ui.compose.components.RouteRowContent
@@ -56,7 +58,7 @@ fun SearchResultsRoute(
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
     onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
-    onVehicleShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
+    onVehicleShowOnMap: (VehicleTrip) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SearchResultsScreen(
@@ -79,7 +81,7 @@ fun SearchResultsScreen(
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
     onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
-    onVehicleShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
+    onVehicleShowOnMap: (VehicleTrip) -> Unit
 ) {
     ListScreenScaffold(
         title = title,
@@ -162,10 +164,10 @@ private fun StopResultRow(
 @Composable
 private fun VehicleResultRow(
     vehicle: SearchResultItem.Vehicle,
-    onShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
+    onShowOnMap: (VehicleTrip) -> Unit
 ) {
-    val status = vehicle.status
-    val ride = (status as? SearchResultItem.Vehicle.Status.OnRide)?.ride
+    val assignment = vehicle.assignment
+    val ride = (assignment as? VehicleAssignment.OnTrip)?.trip
     ResultRow(
         painter = painterResource(R.drawable.ic_bus),
         contentDescription = stringResource(R.string.search_result_coach_icon),
@@ -188,7 +190,7 @@ private fun VehicleResultRow(
             } else {
                 Text(
                     text = stringResource(
-                        if (status is SearchResultItem.Vehicle.Status.NotInService) {
+                        if (assignment == VehicleAssignment.NotInService) {
                             R.string.search_result_coach_not_in_service
                         } else {
                             R.string.search_result_coach_status_unavailable
@@ -211,7 +213,9 @@ private fun VehicleResultRow(
  * A combined-search list row: a leading result-type glyph (a route, stop or vehicle marker in a
  * consistent tinted column, so they're distinguishable at a glance), the type-specific [content], and
  * a trailing divider. The whole row is clickable via [onClick]; a null [onClick] is a row with
- * nothing to open (a matched vehicle with no ride behind it).
+ * nothing to open (a matched vehicle with no ride behind it) — kept `clickable(enabled = false)`
+ * rather than un-clickable, so it still merges its glyph, title and caption into one focusable node
+ * like every neighbouring row, and announces itself as disabled instead of as four loose fragments.
  */
 @Composable
 private fun ResultRow(
@@ -224,7 +228,7 @@ private fun ResultRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .clickable(enabled = onClick != null) { onClick?.invoke() }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -264,10 +268,10 @@ private fun SearchResultsScreenSuccessPreview() {
                         id = "1_4531",
                         coachNumber = "4531",
                         agency = "King County Metro",
-                        status = SearchResultItem.Vehicle.Status.OnRide(
-                            SearchResultItem.Vehicle.Ride(
-                                routeId = "1_100263",
+                        assignment = VehicleAssignment.OnTrip(
+                            VehicleTrip(
                                 tripId = "1_800587510",
+                                routeId = "1_100263",
                                 routeShortName = "7",
                                 routeColor = 0xFDB71A.toInt(),
                                 headsign = "Prentice St Via Rainier Ave S"
@@ -278,13 +282,13 @@ private fun SearchResultsScreenSuccessPreview() {
                         id = "1_4532",
                         coachNumber = "4532",
                         agency = "King County Metro",
-                        status = SearchResultItem.Vehicle.Status.NotInService
+                        assignment = VehicleAssignment.NotInService
                     ),
                     SearchResultItem.Vehicle(
                         id = "1_4533",
                         coachNumber = "4533",
                         agency = "King County Metro",
-                        status = SearchResultItem.Vehicle.Status.Unknown
+                        assignment = VehicleAssignment.Unknown
                     )
                 )
             ),

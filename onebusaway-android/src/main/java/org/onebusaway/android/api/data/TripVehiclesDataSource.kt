@@ -20,6 +20,7 @@ import javax.inject.Inject
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoTrip
 import org.onebusaway.android.api.adapters.DtoTripDetails
+import org.onebusaway.android.api.adapters.activeOrOwnTripId
 import org.onebusaway.android.api.adapters.colorArgb
 import org.onebusaway.android.api.adapters.toObaTripSchedule
 import org.onebusaway.android.api.contract.EntryWithReferences
@@ -27,7 +28,6 @@ import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.TripDetailsEntry
-import org.onebusaway.android.api.contract.activeOrOwnTripId
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.ObaRoute

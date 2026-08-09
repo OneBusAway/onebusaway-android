@@ -41,6 +41,24 @@ import org.onebusaway.android.util.locationOf
 
 private fun Position.toLocation(): Location = locationOf(lat, lon)
 
+/**
+ * The trip the vehicle is currently serving, or null when the status names none — the wire sends an
+ * absent active trip as `""`, and this is the one place that reads that as absent, so every consumer
+ * agrees on which trip a vehicle is on.
+ */
+internal val TripStatus.activeTripIdOrNull: String?
+    get() = activeTripId.ifBlank { null }
+
+/**
+ * Which trip this entry's vehicle is actually serving: the status's [TripStatus.activeTripId] when it
+ * names one, else the entry's own [TripDetailsEntry.tripId]. They differ during a block rollover,
+ * where the entry still names the trip the vehicle just finished — so anything keyed on "the trip the
+ * vehicle is on right now" (the trips-for-route dedup, the coach-number search) reads this, rather
+ * than each re-deciding the rule.
+ */
+internal val TripDetailsEntry.activeOrOwnTripId: String
+    get() = status?.activeTripIdOrNull ?: tripId
+
 /** Presents a [TripStatus] DTO as an [ObaTripStatus]. */
 internal class DtoTripStatus(private val dto: TripStatus) : ObaTripStatus {
     override val serviceDate: Long get() = dto.serviceDate
@@ -54,7 +72,7 @@ internal class DtoTripStatus(private val dto: TripStatus) : ObaTripStatus {
     override val position: Location? get() = dto.position?.toLocation()
 
     // Absent active-trip id reads as null, like the legacy element (callers skip on it).
-    override val activeTripId: String? get() = dto.activeTripId.ifBlank { null }
+    override val activeTripId: String? get() = dto.activeTripIdOrNull
     override val distanceAlongTrip: Double? get() = dto.distanceAlongTrip
     override val scheduledDistanceAlongTrip: Double? get() = dto.scheduledDistanceAlongTrip
     override val totalDistanceAlongTrip: Double? get() = dto.totalDistanceAlongTrip

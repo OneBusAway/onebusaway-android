@@ -22,6 +22,8 @@ import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import org.onebusaway.android.api.ObaApiException
+import org.onebusaway.android.api.asObaFailure
 import org.onebusaway.android.api.contract.ObaWebService
 import org.onebusaway.android.util.runCatchingCancellable
 import retrofit2.Retrofit
@@ -50,10 +52,14 @@ class ObaApiProvider @Inject constructor(
      * [Result]. Yields [Result.failure] when there's no endpoint to contact (no current region and no
      * custom API URL) or when [block] throws (a non-OK app code, transport, or parse failure) — so the
      * common "no region is an error" callers get one uniform failure path without a try/catch.
+     *
+     * A failure the OBA layer itself stated is normalized to [ObaApiException] here (see
+     * [asObaFailure]), whichever side of the HTTP status/envelope divide it arrived on, so callers
+     * classify app-level codes on one type.
      */
     suspend fun <T> call(block: suspend (ObaWebService) -> T): Result<T> {
         val service = service() ?: return Result.failure(noEndpoint())
-        return runCatchingCancellable { block(service) }
+        return attempt { block(service) }
     }
 
     /**
@@ -62,8 +68,12 @@ class ObaApiProvider @Inject constructor(
      */
     suspend fun <T> callOrNull(block: suspend (ObaWebService) -> T): Result<T?> {
         val service = service() ?: return Result.success(null)
-        return runCatchingCancellable { block(service) }
+        return attempt { block(service) }
     }
+
+    /** Runs [block], mapping an OBA-stated failure to [ObaApiException] and keeping cancellation out. */
+    private suspend fun <T> attempt(block: suspend () -> T): Result<T> = runCatchingCancellable { block() }
+        .recoverCatching { throw it.asObaFailure(json) }
 
     /**
      * The [ObaWebService] bound to the current region's base URL, or null when there's no endpoint to

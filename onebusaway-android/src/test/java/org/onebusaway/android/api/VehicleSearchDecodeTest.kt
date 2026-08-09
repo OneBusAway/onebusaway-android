@@ -68,6 +68,9 @@ class VehicleSearchDecodeTest {
         assertEquals("103_897453", coachNumberOf("40_103_897453", "40"))
         // An id that doesn't carry the OBA agency prefix is passed through rather than guessed at.
         assertEquals("4531", coachNumberOf("4531", "1"))
+        // A hit that named no agency has no prefix to strip — not a bare "_" to strip either.
+        assertEquals("1_4531", coachNumberOf("1_4531", ""))
+        assertEquals("_4531", coachNumberOf("_4531", ""))
     }
 
     @Test

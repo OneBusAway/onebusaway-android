@@ -47,10 +47,8 @@ class VehicleAssignmentTest {
 
     @Test
     fun theServers404IsNotInService() {
-        // How an unassigned vehicle actually answers: OBA sets the HTTP status from the envelope code,
-        // so Retrofit raises this before the body is decoded.
-        assertEquals(VehicleAssignment.NotInService, vehicleAssignment(Result.failure(httpError(404))))
-        // The same answer read off a decoded envelope, which is what requireData raises.
+        // The one form that means it: an ObaApiException(404), which is either what requireData raises
+        // off a decoded envelope or what ObaApiProvider normalizes an OBA-stated HTTP 404 into.
         assertEquals(VehicleAssignment.NotInService, vehicleAssignment(Result.failure(ObaApiException(404))))
     }
 
@@ -59,6 +57,9 @@ class VehicleAssignmentTest {
         listOf(
             SocketTimeoutException("timeout"),
             IOException("connection reset"),
+            // A bare HTTP 404 the OBA layer never claimed — a proxy, or a deployment that doesn't serve
+            // trip-for-vehicle at all. Not grounds for reporting the coach off duty.
+            httpError(404),
             httpError(500),
             ObaApiException(500),
             IllegalArgumentException("malformed body")

@@ -232,16 +232,6 @@ data class TripDetailsEntry(
 )
 
 /**
- * Which trip this entry's vehicle is actually serving: the status's [TripStatus.activeTripId] when it
- * names one, else the entry's own [TripDetailsEntry.tripId]. They differ during a block rollover,
- * where the entry still names the trip the vehicle just finished — so anything keyed on "the trip the
- * vehicle is on right now" (the trips-for-route dedup, the coach-number search) reads this, rather
- * than each re-deciding the rule.
- */
-internal val TripDetailsEntry.activeOrOwnTripId: String
-    get() = status?.activeTripId?.ifBlank { null } ?: tripId
-
-/**
  * Real-time status for a trip. Only the fields the trip-details screen reads are modeled; times are
  * epoch millis, [scheduleDeviation] is seconds (+late/−early), [status] is the wire string (e.g.
  * "CANCELED"), and [activeTripId] is the trip the vehicle is currently serving.

@@ -93,7 +93,7 @@
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
     <string name="browser_error">Unable to launch browser.</string>
-    <string name="search_hint">Search stops, routes or coach numbers</string>
+    <string name="search_hint">Search stop or route IDs</string>
     <string name="checkmark_description">Selection checkmark</string>
 
     <!--  Option strings -->

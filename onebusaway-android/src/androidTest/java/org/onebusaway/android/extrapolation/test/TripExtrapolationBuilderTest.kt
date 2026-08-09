@@ -27,6 +27,7 @@ import org.onebusaway.android.extrapolation.BAND_SEGMENT_COUNT
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.buildTripExtrapolation
 import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
@@ -173,6 +174,22 @@ class TripExtrapolationBuilderTest {
         assertNull(
             buildTripExtrapolation(TripState("t"), ExtrapolationResult.Success(UniformDist(1000.0)), WallTime(0L))
         )
+    }
+
+    @Test
+    fun pointMassEstimateDrawsNoFastMarker() {
+        // Schedule replay (grade-separated routes) replays one deterministic trajectory, so its
+        // distribution is a point mass: the q0.90 "fast estimate" is the median, and the marker would
+        // sit on top of the vehicle. It's dropped, leaving only the vehicle point (#2213).
+        val extrapolation = buildTripExtrapolation(
+            TripState("t", polyline = northLine()),
+            ExtrapolationResult.Success(DiracDistribution(1500.0)),
+            nowMs = WallTime(0L)
+        )!!
+
+        assertEquals(-122.0, extrapolation.vehiclePoint!!.longitude, 1e-6)
+        assertNull("point mass has no distinct best case", extrapolation.fastEstimatePoint)
+        assertTrue("point mass has no spread to band", extrapolation.band.isEmpty())
     }
 
     @Test

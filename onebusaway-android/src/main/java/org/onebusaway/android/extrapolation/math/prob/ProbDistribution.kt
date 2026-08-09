@@ -19,6 +19,16 @@ package org.onebusaway.android.extrapolation.math.prob
 interface ProbDistribution {
     val mean: Double
 
+    /**
+     * Whether the distribution is a point mass — all its probability sits at one value, so every
+     * quantile returns that same value and there is no spread to report. Declared by the
+     * implementation rather than inferred by comparing quantiles, so consumers that only make sense
+     * for a spread distribution (the uncertainty band, the optimistic "fast estimate") can opt out
+     * on a fact instead of a numeric guess. Continuous distributions leave this false.
+     */
+    val isPointMass: Boolean
+        get() = false
+
     /** The 0.5 [quantile]; shares its contract, including the [Double.NaN] degenerate case. */
     fun median(): Double = quantile(0.5)
 

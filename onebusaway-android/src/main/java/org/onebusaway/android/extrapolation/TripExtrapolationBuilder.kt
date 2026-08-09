@@ -52,7 +52,12 @@ fun buildTripExtrapolation(
         // it draws the live vehicle disc + most-recent-data dot separately — so we skip the extra
         // projection + allocation on its ~20–120Hz path (#1752).
         vehiclePoint = if (includeMarkers) distribution?.let { polyline.pointAtDistance(it.median()) } else null,
-        fastEstimatePoint = distribution?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
+        // A point-mass extrapolation (schedule replay, which replays one deterministic trajectory) has
+        // no spread, so its q0.90 is its median: the fast marker would land exactly on the vehicle and
+        // just cover it. Drop it there and draw the vehicle alone (#2213).
+        fastEstimatePoint = distribution
+            ?.takeUnless { it.isPointMass }
+            ?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
         band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
         dataAge = if (includeMarkers) dataAgeMarker(state, nowMs) else null,
         // A domain-agnostic *change token*, not a displayed instant: the renderer only compares it for

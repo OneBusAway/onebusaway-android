@@ -19,6 +19,8 @@ package org.onebusaway.android.extrapolation.math.prob
 class DiracDistribution(val value: Double) : ProbDistribution {
     override val mean: Double
         get() = value
+    override val isPointMass: Boolean
+        get() = true
     override fun pdf(x: Double): Double = 0.0
     override fun cdf(x: Double): Double = if (x >= value) 1.0 else 0.0
     override fun quantile(p: Double): Double = value

@@ -97,6 +97,20 @@ private val FAVORITE_ICON_SIZE = 26.4.dp
 private val FAVORITE_RAIL_LEADING_INSET = 10.8.dp
 private val BANNER_MIN_HEIGHT = 64.dp
 
+// The gap between the rail's star and whatever the banner body leads with — the stop name, or the
+// route roundel. Shared so the two focus kinds can't drift apart; the rail contributes nothing to
+// it (see FavoriteRail), so this is the whole gap.
+private val BANNER_CONTENT_START_PADDING = 8.dp
+
+// The route roundel's gap to the name/direction column beside it. Trailing-only: the roundel's
+// leading gap is BANNER_CONTENT_START_PADDING's job, and when this was `horizontal` the two stacked
+// into a 14dp leading gap against the stop's 8dp (#2216).
+private val ROUTE_BADGE_TEXT_GAP = 10.dp
+
+// The route roundel's square tile. Internal so FocusBannerTest can locate the tile's leading edge
+// from its centered label — the roundel carries no semantics of its own to measure.
+internal val ROUTE_BADGE_WIDTH = 64.dp
+
 // Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.
 private val SUBTITLE_ICON_SIZE = 16.dp
 private val SUBTITLE_ICON_OPTICAL_LIFT = 1.dp
@@ -228,7 +242,12 @@ private fun StopFocusBanner(
     Row(
         Modifier
             .fillMaxSize()
-            .padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 4.dp),
+            .padding(
+                start = BANNER_CONTENT_START_PADDING,
+                top = 4.dp,
+                end = 4.dp,
+                bottom = 4.dp
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val subtitle = stopSubtitleText(state.stopCode, state.direction)
@@ -347,8 +366,16 @@ private fun RouteFocusBanner(
     val scheduleUrl = header.scheduleUrl
     var menuExpanded by remember { mutableStateOf(false) }
     val scheduleLabel = stringResource(R.string.bus_options_menu_show_route_schedule)
+    // The loading spinner needs more breathing room from the card edges than the laid-out header
+    // does, but the leading gap is the star's and stays fixed either way.
+    val edgePadding = if (header.loading) 8.dp else 4.dp
     Row(
-        Modifier.fillMaxWidth().padding(if (header.loading) 8.dp else 4.dp),
+        Modifier.fillMaxWidth().padding(
+            start = BANNER_CONTENT_START_PADDING,
+            top = edgePadding,
+            end = edgePadding,
+            bottom = edgePadding
+        ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (header.loading) {
@@ -384,11 +411,11 @@ private fun RouteFocusBanner(
                 LineBadge(
                     text = header.shortName,
                     maxFontSize = 45.sp,
-                    width = 64.dp,
+                    width = ROUTE_BADGE_WIDTH,
                     square = true,
                     color = badgeContent,
                     containerColor = badgeContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp)
+                    modifier = Modifier.padding(end = ROUTE_BADGE_TEXT_GAP)
                 )
                 Column(Modifier.weight(1f)) {
                     if (header.longName.isNotEmpty()) {

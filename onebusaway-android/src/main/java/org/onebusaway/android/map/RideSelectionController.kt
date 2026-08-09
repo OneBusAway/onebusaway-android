@@ -18,6 +18,7 @@ package org.onebusaway.android.map
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.data.forEachActiveTrip
 import org.onebusaway.android.models.RouteTrips
@@ -133,11 +134,9 @@ internal class RideSelectionController(
     fun rideChanged() {
         queue = RideQueue.Pending
         admitted = emptySet()
-        continuations = emptySet()
         visibleTrips = emptyList()
         lastInputs = null
-        continuationJob?.cancel()
-        continuationJob = null
+        clearContinuations()
     }
 
     /** Leave route mode: forget the ride entirely and stop drawing a selection. */
@@ -146,13 +145,11 @@ internal class RideSelectionController(
     private fun reset() {
         queue = RideQueue.Pending
         admitted = emptySet()
-        continuations = emptySet()
         seed = emptySet()
         visibility = RideVisibility.All
         visibleTrips = emptyList()
         lastInputs = null
-        continuationJob?.cancel()
-        continuationJob = null
+        clearContinuations()
     }
 
     /** Fresh arrivals for the ride's boarding stop: re-derive the queue against [ride]. */
@@ -231,10 +228,17 @@ internal class RideSelectionController(
      * selection; the result lands in [continuations] and is picked up by the next pass. That lag is
      * harmless — a continuation only matters once the vehicle reaches the seam, minutes in, by which
      * time many polls have landed.
+     *
+     * The walk is seeded from [admitted], which carries its own previous answer forward; what keeps that
+     * from feeding on itself is that `rideContinuations` narrows the seed to what [schedules] can answer
+     * for — see its KDoc for why (#2206). What follows from it *here* is the bound on the republish
+     * chain below: [schedules] is this poll's own, so while one poll stands the seed can only *grow*
+     * (each pass unions the previous admitted set with the queue) and is bounded by the trips that poll
+     * reports — the walk reaches its fixed point in at most that many passes.
      */
     private fun refreshContinuations(ride: RideFocus, pollTrips: List<RideTrip>) {
         if (ride.stayAboardHops == 0 || admitted.isEmpty()) {
-            continuations = emptySet()
+            clearContinuations()
             return
         }
         val schedules = pollTrips.associate { it.tripId to it.schedule }
@@ -247,9 +251,26 @@ internal class RideSelectionController(
                 neighbourRouteOf = neighbourRouteOf
             )
             if (resolved != continuations) {
+                // Hand the republish back to the event loop before making it. The scope is
+                // `Main.immediate`, and `onSelectionChanged` lands back in `refresh` (the renderer must
+                // see a resolved continuation without waiting a poll, #2149) — so without this the whole
+                // cycle runs as one synchronous stack, and a non-convergent pair of inputs spins the main
+                // thread to an ANR rather than merely flickering (#2206).
+                yield()
                 continuations = resolved
                 onSelectionChanged()
             }
         }
+    }
+
+    /**
+     * Forget the continuations. The in-flight walk is cancelled as well as the answer cleared: it
+     * belongs to a state that no longer holds, and letting it report would reinstate continuations
+     * nothing is riding on.
+     */
+    private fun clearContinuations() {
+        continuationJob?.cancel()
+        continuationJob = null
+        continuations = emptySet()
     }
 }

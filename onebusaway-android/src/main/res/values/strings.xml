@@ -709,6 +709,9 @@
     <string name="preferences_experimental_regions_summary">Enables regions that may be unstable
     </string>
     <string name="map_zoom_in_for_more_stops">Zoom in to see all stops</string>
+    <!-- Title at the head of the nearby-arrivals drawer, which lists the routes leaving every stop in
+         view at transit-centre zoom (#2107). "Routes", not "stops": the list is one row per route. -->
+    <string name="nearby_arrivals_title">Nearby routes</string>
     <!-- Shown at the end of the nearby-arrivals drawer when the server truncated its response, so
          some stops in view are missing from the list entirely (#2107). -->
     <string name="nearby_arrivals_limit_exceeded">Some stops in view aren\'t listed. Zoom in to see them.</string>

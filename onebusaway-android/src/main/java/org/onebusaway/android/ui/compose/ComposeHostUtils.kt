@@ -21,12 +21,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 
 /**
  * A [ViewModelStoreOwner] backed by a fresh [ViewModelStore] per [key], cleared when the key changes
@@ -65,3 +71,37 @@ tailrec fun Context.findActivity(): AppCompatActivity = when (this) {
  */
 @Composable
 fun navigationBarBottomPadding(): Dp = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+/**
+ * Reports a bottom-sheet list's fully-laid-out height in px to [onContentHeight], so the host can fit
+ * the sheet's collapsed peek to short content. Emits nothing — it is an effect wearing a composable's
+ * clothes, hoisted here because both arrivals sheets need the identical measurement.
+ *
+ * Real layout, not an estimate, and not a magnitude heuristic. Material3 measures sheet content at full
+ * container height regardless of the peek, so [listState]'s `layoutInfo` reflects the whole list: when
+ * the last item is present its bottom edge *is* the content height; when it isn't, the content is taller
+ * than the screen (well past any peek cap) and an exact number buys nothing.
+ *
+ * [contentKey] identifies what is being measured — null means "nothing to measure yet", and a new
+ * non-null value re-measures. Exactly one measurement is reported per key: `last.offset` moves every
+ * frame while the final item is on screen and scrolling, and republishing it would invalidate the host
+ * once a frame for a number whose consumer (a peek that has long since pinned to its cap) cannot change.
+ */
+@Composable
+fun ReportListContentHeight(
+    listState: LazyListState,
+    contentKey: Any?,
+    onContentHeight: (heightPx: Int) -> Unit
+) {
+    // Read through the latest lambda so a caller's inline `{ px -> … }` doesn't restart the effect (and
+    // re-report) on every recomposition.
+    val report = rememberUpdatedState(onContentHeight)
+    LaunchedEffect(listState, contentKey) {
+        if (contentKey == null) return@LaunchedEffect
+        snapshotFlow {
+            val info = listState.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull()
+            if (last != null && last.index == info.totalItemsCount - 1) last.offset + last.size else null
+        }.filterNotNull().first().let { report.value(it) }
+    }
+}

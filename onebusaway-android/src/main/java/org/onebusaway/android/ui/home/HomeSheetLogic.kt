@@ -26,7 +26,7 @@ import org.onebusaway.android.map.render.showsNearbyArrivals
  * from inside a `@Composable`) is unit-testable. [HomeScreen] does the Compose plumbing — keying the
  * effect, reading the live `SheetState`, animating — and defers every *decision* to these functions.
  *
- * The model: **visibility is business state** ([shouldShowSheet]); **expansion is ephemeral UI**
+ * The model: **visibility is business state** ([homeSheetContent]); **expansion is ephemeral UI**
  * toggled by [toggleSheetTarget] and unwound by [sheetBackAction].
  */
 
@@ -93,6 +93,29 @@ internal val HomeSheetContent.sheetKey: String?
     }
 
 /**
+ * How much of the window the collapsed peek may cover. A property of what the sheet holds, because the
+ * two drawers are *asked for* differently:
+ *
+ *  - A tapped stop is a deliberate request to read that stop, so its peek is worth real screen — it
+ *    opens showing actual arrival rows.
+ *  - The transit-centre list (#2107) is ambient: it appears on zoom without anyone asking, over a map
+ *    the rider is still reading. Its peek is only wide enough to advertise that a list is there (a row
+ *    or so under the handle); dragging up is how you read it.
+ *
+ * [HomeSheetContent.None] is retracting to zero anyway, so its value is never seen — it takes the stop
+ * fraction so the number is stable if a hide is interrupted by a re-show.
+ */
+internal val HomeSheetContent.peekHeightFraction: Float
+    get() = when (this) {
+        HomeSheetContent.NearbyRoutes -> NEARBY_PEEK_HEIGHT_FRACTION
+        HomeSheetContent.None, is HomeSheetContent.Stop -> STOP_PEEK_HEIGHT_FRACTION
+    }
+
+private const val STOP_PEEK_HEIGHT_FRACTION = 0.30f
+
+private const val NEARBY_PEEK_HEIGHT_FRACTION = 0.15f
+
+/**
  * Bottom edge used to keep map content below the active top chrome: the stop/route focus banner, or —
  * in directions — the trip-plan form card ([directionsFormBottomPx]), so the map's top content padding
  * reflects the form/FAB and a focused itinerary step centers in the band below it.
@@ -117,9 +140,9 @@ internal fun focusBannerTopEdge(
  * settled height, or zero when that drawer isn't shown; it always counts, because the drawer rests at a
  * fraction of the window and the controls belong above it in either of its two positions (#2155).
  *
- * The two sheets are mutually exclusive today — directions focus is not stop focus, so [shouldShowSheet]
- * keeps the arrivals sheet hidden for the whole of directions mode — but taking the larger clears either
- * one without depending on that.
+ * The two sheets are mutually exclusive today — directions focus is neither a stop focus nor the
+ * no-focus state the nearby list needs, so [homeSheetContent] resolves to [HomeSheetContent.None] for
+ * the whole of directions mode — but taking the larger clears either one without depending on that.
  */
 internal fun mapControlsBottomInset(
     arrivalsPeek: Dp,

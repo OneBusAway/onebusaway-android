@@ -403,7 +403,6 @@ fun RouteArrivalRow(
                 Column(Modifier.weight(1f)) {
                     if (direction.isNotBlank()) {
                         DirectionHeadsign(direction)
-                        Spacer(Modifier.height(2.dp))
                     }
                     if (stopLabel != null) {
                         Text(
@@ -411,7 +410,11 @@ fun RouteArrivalRow(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            // Gap between the headsign and the bay, when both show. Carried by the label
+                            // rather than an unconditional spacer under the headsign, which would also
+                            // shift every stop-scoped row — none of which passes a stopLabel.
+                            modifier = Modifier.padding(top = if (direction.isNotBlank()) 2.dp else 0.dp)
                         )
                     }
                     if (direction.isNotBlank() || stopLabel != null) {

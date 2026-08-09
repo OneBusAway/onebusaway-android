@@ -33,7 +33,8 @@ import org.onebusaway.android.util.ExternalIntents
  *
  * The two taps a rider actually makes here — the row body and an ETA pill — do what this drawer is
  * for: show that route on the map, scoped to the bay the row named, in one focus push so Back returns
- * straight to the list.
+ * straight to the list. They differ the same way they do in the per-stop drawer: the row body stops at
+ * the route, while the pill drills to its trip and fits that vehicle together with the bay.
  *
  * **The long-press menu's per-stop actions (star, reminder, tracking, report a problem) and the alert
  * glyph are not wired to their own dialogs in this first version**: each needs the stop-scoped
@@ -64,8 +65,10 @@ internal fun rememberNearbyRowCallbacks(
 
         fun focusedStop(bay: NearbyBay) = FocusedStop(bay.id, bay.name, bay.code, bay.point)
 
-        // Show the arrival's route on the map, scoped to the bay its row named.
-        fun revealAtBay(arrival: ArrivalInfo) {
+        // Show the arrival's route on the map, scoped to the bay its row named. [focusTripId] carries the
+        // pill's trip when the tap was a pill, which is what makes it the deeper of the two gestures —
+        // see [HomeViewModel.showNearbyRouteOnMap].
+        fun revealAtBay(arrival: ArrivalInfo, focusTripId: String? = null) {
             val bay = bayOf(arrival) ?: return
             homeViewModel.showNearbyRouteOnMap(
                 bay = focusedStop(bay),
@@ -73,6 +76,7 @@ internal fun rememberNearbyRowCallbacks(
                 shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
                 directionId = arrival.directionId,
                 headsign = arrival.headsign,
+                focusTripId = focusTripId,
                 undoViewport = currentUndoViewport.value()
             )
         }
@@ -83,9 +87,22 @@ internal fun rememberNearbyRowCallbacks(
             homeViewModel.revealStop(focusedStop(bay), animate = true)
         }
 
+        // Same landing, for the actions whose callback carries [ArrivalActions] instead of an arrival.
+        // Those name no stop, so the bay is recovered through the row whose group holds the trip.
+        fun openBayForRoute(actions: ArrivalActions) {
+            val bay = currentRows.value
+                .firstOrNull { row -> row.group.trips.any { it.tripId == actions.tripId } }
+                ?.bay ?: return
+            homeViewModel.revealStop(focusedStop(bay), animate = true)
+        }
+
         ArrivalRowCallbacks(
-            onShowVehiclesOnMap = ::revealAtBay,
-            onEtaClick = ::revealAtBay,
+            // The row body names no trip and stops at the route; the pill names one and drills to it,
+            // fitting that vehicle with the bay. The same split the per-stop drawer makes between
+            // `onShowVehiclesOnMap` and `onFocusVehicleOnMap`. A blank tripId (a partial response) falls
+            // back to the row-body behaviour rather than asking the map to focus a trip that has no id.
+            onShowVehiclesOnMap = { arrival -> revealAtBay(arrival) },
+            onEtaClick = { arrival -> revealAtBay(arrival, focusTripId = arrival.tripId.ifBlank { null }) },
             // The badge long-press reveals the whole route, unscoped — the same meaning it has in the
             // per-stop drawer, where it deliberately drops the stop/direction scoping.
             onShowRouteOnMap = { arrival ->
@@ -98,24 +115,11 @@ internal fun rememberNearbyRowCallbacks(
                 currentOnShowTrip.value(arrival.tripId, arrival.stopId)
             },
             onShowRouteSchedule = { scheduleUrl -> ExternalIntents.goToUrl(context, scheduleUrl) },
-            onRouteFavorite = { actions -> openBayForRoute(currentRows.value, actions, homeViewModel) },
+            onRouteFavorite = ::openBayForRoute,
             onSetReminder = ::openBay,
             onToggleTracking = ::openBay,
-            onReportArrivalProblem = { actions ->
-                openBayForRoute(currentRows.value, actions, homeViewModel)
-            },
+            onReportArrivalProblem = ::openBayForRoute,
             onShowAlert = { /* Alerts are shown by the focused stop's banner; see the KDoc above. */ }
         )
     }
-}
-
-/** [ArrivalActions] carries no stop, so the bay is found through the row that produced it. */
-private fun openBayForRoute(
-    rows: List<NearbyRouteRow>,
-    actions: ArrivalActions,
-    homeViewModel: HomeViewModel
-) {
-    val bay = rows.firstOrNull { row -> row.group.trips.any { it.tripId == actions.tripId } }?.bay
-        ?: return
-    homeViewModel.revealStop(FocusedStop(bay.id, bay.name, bay.code, bay.point), animate = true)
 }

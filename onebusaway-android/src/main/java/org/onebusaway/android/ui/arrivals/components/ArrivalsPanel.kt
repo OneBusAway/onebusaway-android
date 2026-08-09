@@ -29,10 +29,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
@@ -40,6 +36,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
+import org.onebusaway.android.ui.compose.ReportListContentHeight
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 
 /**
@@ -73,25 +70,9 @@ fun ArrivalsPanel(
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content
 
-    // The panel's total content height (px), or null until the whole list is laid out. Material3
-    // measures the sheet content at full container height regardless of the peek, so listState's
-    // layoutInfo reflects the full list: if the last item is present, its bottom is the true content
-    // height; if it isn't, the content is taller than the screen (well past the peek cap) and an exact
-    // number isn't needed. This reads real layout — not a magnitude heuristic.
-    val contentHeightPx by remember(listState, content) {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val last = info.visibleItemsInfo.lastOrNull()
-            if (content != null && last != null && last.index == info.totalItemsCount - 1) {
-                last.offset + last.size
-            } else {
-                null
-            }
-        }
-    }
-    contentHeightPx?.let { px ->
-        LaunchedEffect(px) { onContentHeight(px) }
-    }
+    // The panel's total content height (px), for the host's fit-the-peek-to-short-stops shrink. Shared
+    // with the nearby drawer, which makes the same measurement — see [ReportListContentHeight].
+    ReportListContentHeight(listState, contentKey = content, onContentHeight = onContentHeight)
 
     Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {

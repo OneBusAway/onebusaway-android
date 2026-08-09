@@ -27,7 +27,6 @@ import org.onebusaway.android.api.requireData
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.time.ServerTime
 import retrofit2.HttpException
@@ -81,19 +80,6 @@ class NearbyArrivals internal constructor(
 
     /** Resolves a route's agency name from the references pool, or null. */
     fun agencyName(id: String): String? = refs.agency(id)?.name
-
-    /**
-     * Every service alert this response references: the box-level ones plus every alert an arrival
-     * names, de-duplicated by id with order preserved — matching [StopArrivals.situations].
-     */
-    fun situations(): List<ObaSituation> {
-        val entry = data.entry ?: return emptyList()
-        val arrivalSituationIds = entry.arrivalsAndDepartures.flatMap { it.situationIds }
-        return (entry.situationIds + arrivalSituationIds)
-            .distinct()
-            .mapNotNull { refs.situation(it) }
-            .map(::DtoSituation)
-    }
 }
 
 /** One viewport's arrivals fetch, or the verdict that this region cannot serve them. */

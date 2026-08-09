@@ -547,6 +547,17 @@ class HomeViewModel @Inject constructor(
      * list rather than parking them on a per-stop panel they never asked for. It can't go through
      * [selectArrivalRoute], which requires a stop focus to already exist; here there is none, which is
      * exactly the condition that put the nearby list on screen.
+     *
+     * [focusTripId] is what separates the drawer's two taps, exactly as it does in the per-stop drawer
+     * (see [selectStopRoute]):
+     *  - **null — the row body.** The camera only *pans* onto the bay. This drawer exists only at
+     *    transit-centre zoom, so the rider is already looking at the place they are standing in; framing
+     *    the whole line would zoom out to its full extent and throw that view away to answer a question
+     *    they didn't ask. The route still draws, and the banner can reframe it on request.
+     *  - **non-null — an ETA pill.** The pill names one trip, so this is the stop→route→trip level
+     *    (#2205) and the map fits that trip's live vehicle together with this bay. `RouteMapController`
+     *    performs that fit off `focusTripId` and ignores `frameRoute` while one is set, so the pill gets
+     *    the vehicle+stop bounding box here for the same reason it does from a stop's own drawer.
      */
     fun showNearbyRouteOnMap(
         bay: FocusedStop,
@@ -554,35 +565,52 @@ class HomeViewModel @Inject constructor(
         shortName: String,
         directionId: Int?,
         headsign: String?,
+        focusTripId: String? = null,
         undoViewport: MapViewport? = null
     ) {
         presentedRoutes = emptySet()
-        // Drop any restore/deep-link latch first, the way [clearMapFocus] and [enterDirections] do. A
-        // restore that set one and then had its stop unfocused before the arrivals landed leaves it
-        // armed with no focus — which is exactly the state that puts this list on screen — and this
-        // bay's own load would consume it and recenter on a focus the rider never asked to return to.
-        // The map is told what to show here explicitly, so nothing needs the latch.
-        pendingFocus = null
-        pushFocus(
-            CurrentFocus.Stop(
-                stop = bay,
-                selectedRoute = StopRouteSelection(
-                    originHeadsign = headsign,
-                    legs = listOf(RouteLeg(routeId, shortName, directionId))
-                )
+        // Arm the latch for *this* bay, so the load that follows emits `MapDirective.FocusStop` and the
+        // map renders the bay as the selected stop — the marker a rider expects after tapping a row, and
+        // which nothing else here would set (`ShowRoute` draws the route, not the stop focus).
+        //
+        // `preserveViewport = true` is what makes arming it safe. Overwriting rather than clearing also
+        // disposes of a stale restore/deep-link latch (one whose stop was unfocused before its arrivals
+        // landed — exactly the state that puts this list on screen); clearing it was the old behaviour,
+        // and the reason it was cleared was that consuming it would recenter on a focus the rider never
+        // asked to return to. A preserved viewport can't: it suppresses both that recenter and the
+        // route-framing, leaving this method's own camera move the only one.
+        markPendingMapFocus(preserveViewport = true)
+        val selection = StopRouteSelection(
+            originHeadsign = headsign,
+            legs = listOf(RouteLeg(routeId, shortName, directionId)),
+            // An ETA-pill tap names the trip it belongs to, and that *is* the trip level (#2205) — the
+            // same rule [selectStopRoute] applies to the per-stop drawer's two taps.
+            selectedTripId = focusTripId
+        )
+        pushFocus(CurrentFocus.Stop(stop = bay, selectedRoute = selection), undoViewport)
+        // Through [showStopRoute] rather than emitting ShowRoute directly, so this path can't be the one
+        // that breaks its pairing invariant: the route directive always travels with a SelectVehicle,
+        // null included, so a row-body tap clears any vehicle a previous pill left selected.
+        showStopRoute(
+            bay.id,
+            selection,
+            request = ShowRouteRequest(
+                routeId = routeId,
+                directionStopId = bay.id,
+                focusTripId = focusTripId,
+                initialDirectionId = directionId
             ),
-            undoViewport
+            // Never frame the whole line from this drawer. With a focusTripId set the controller ignores
+            // this anyway and fits vehicle+bay instead; without one, the pan below is the move we want.
+            frameRoute = false
         )
-        emitMapDirective(
-            MapDirective.ShowRoute(
-                ShowRouteRequest(
-                    routeId = routeId,
-                    directionStopId = bay.id,
-                    initialDirectionId = directionId
-                ),
-                stopScoped = true
-            )
-        )
+        if (focusTripId == null) {
+            // Row body only — the pill's vehicle+bay fit owns the camera and a recenter would fight it.
+            // Emitted after the route so the recenter picks up route mode's header bias, landing the bay
+            // where a stop focused in route mode always does. `CameraCommand.Recenter` keeps the current
+            // zoom/bearing/tilt, so this is a pan and nothing more.
+            emitMapDirective(MapDirective.RecenterOnFocusedStop(bay.point))
+        }
     }
 
     private fun selectStopRoute(

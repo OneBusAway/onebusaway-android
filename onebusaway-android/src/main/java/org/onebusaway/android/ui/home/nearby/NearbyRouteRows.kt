@@ -76,13 +76,15 @@ fun nearbyRouteRows(
 ): List<NearbyRouteRow> {
     val bays = HashMap<String, NearbyBay?>()
     fun bay(stopId: String) = bays.getOrPut(stopId) { bayOf(stopId) }
+    // One guard, at the end. Pre-filtering the arrivals too would be a second spelling of the same rule
+    // that the reader has to prove agrees with this one — and a bay-less group is dropped here whether
+    // or not its arrivals were filtered first (a null sort key just orders it blank-last on the way).
     return groupByRouteDirectionAndStop(
-        items = arrivals.filter { bay(it.stopId) != null },
+        items = arrivals,
         agencyNameOf = agencyNameOf,
         stopIdOf = { it.stopId },
         stopSortKeyOf = { bay(it.stopId)?.sortKey }
     ).mapNotNull { trips ->
-        val resolved = bay(trips.first().stopId) ?: return@mapNotNull null
-        NearbyRouteRow(RouteRowGroup(trips), resolved)
+        bay(trips.first().stopId)?.let { NearbyRouteRow(RouteRowGroup(trips), it) }
     }
 }

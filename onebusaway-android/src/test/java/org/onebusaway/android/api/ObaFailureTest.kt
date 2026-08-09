@@ -17,8 +17,11 @@ package org.onebusaway.android.api
 
 import java.io.IOException
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okio.BufferedSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -71,6 +74,24 @@ class ObaFailureTest {
     fun anEnvelopeCodeThatContradictsTheStatusIsNotAdopted() {
         // A body whose code doesn't match the status it arrived under isn't this response's answer.
         val failure = httpError(502, """{"code":404,"text":"resource not found","version":2}""")
+
+        assertSame(failure, failure.asObaFailure(json))
+    }
+
+    @Test
+    fun aBodyThatCantBeReadLeavesTheFailureAlone() {
+        val failure = HttpException(
+            Response.error<Unit>(
+                404,
+                object : ResponseBody() {
+                    override fun contentType(): MediaType = "application/json".toMediaType()
+
+                    override fun contentLength(): Long = -1
+
+                    override fun source(): BufferedSource = throw IOException("stream closed")
+                }
+            )
+        )
 
         assertSame(failure, failure.asObaFailure(json))
     }

@@ -72,12 +72,18 @@ val Throwable.isNotFound: Boolean
  *
  * The body is required to decode as an envelope **whose code equals the HTTP status**, so only the OBA
  * layer's own answer is adopted: a proxy's HTML 404, or a JSON error object from something else, fails
- * that check and stays an [HttpException]. Reading the error body is safe and non-blocking — Retrofit
- * buffers it in memory before constructing the [HttpException].
+ * that check and stays an [HttpException]. Reading the error body is safe to do on the calling thread —
+ * Retrofit buffers it in memory before constructing the [HttpException], so no I/O happens here — and a
+ * body that can't be read anyway leaves the transport failure exactly as it arrived, since a body we
+ * never saw states nothing about the resource.
  */
 internal fun Throwable.asObaFailure(json: Json): Throwable {
     if (this !is HttpException) return this
-    val body = response()?.errorBody()?.string().orEmpty()
+    val body = try {
+        response()?.errorBody()?.string().orEmpty()
+    } catch (_: IOException) {
+        return this
+    }
     val envelope = try {
         json.decodeFromString<ObaEnvelope<JsonElement>>(body)
     } catch (_: SerializationException) {

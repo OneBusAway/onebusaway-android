@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.BottomSheetScaffold
@@ -111,8 +113,8 @@ import org.onebusaway.android.ui.home.map.MapFeature
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsSheetHost
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
 import org.onebusaway.android.ui.home.nearby.limitExceeded
-import org.onebusaway.android.ui.home.nearby.rememberNearbyActionsFor
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRouteRows
+import org.onebusaway.android.ui.home.nearby.rememberNearbyRowActions
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRowCallbacks
 import org.onebusaway.android.ui.home.weather.WeatherFeature
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
@@ -343,12 +345,17 @@ fun HomeScreen(
                 // sheet's content clears the bottom chrome; the panel matches this with its own content inset.
                 val peekBottomPadding = navigationBarBottomPadding()
 
-                // The collapsed peek is capped at a fixed fraction of the window height — a constant known up
-                // front, so the open slide has a stable target that can't strand the drag (unlike a measured
-                // height that grows as content loads). Short stops shrink below it to fit (see collapsedPeekDp).
-                // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
-                val capPeekDp = with(density) {
-                    (LocalWindowInfo.current.containerSize.height * PEEK_HEIGHT_FRACTION).toDp()
+                // The expanded sheet's ceiling, so its top edge stops below the status bar / notch instead
+                // of sliding under it. Material3 derives the Expanded anchor from the sheet's *measured*
+                // height (anchor y = containerHeight - sheetHeight), so a content list that measures the
+                // full window pins the top edge at y=0 — capping the content is what stops it short; there
+                // is no sheet-max-height parameter to set. safeDrawing rather than statusBars because the
+                // cutout is what we're clearing, and it can exceed the status bar. The drag handle sits
+                // above this slot inside the same sheet Surface, so it comes out of the same budget.
+                val topSystemInsetPx = WindowInsets.safeDrawing.getTop(density)
+                val maxSheetContentDp = with(density) {
+                    val availablePx = LocalWindowInfo.current.containerSize.height - topSystemInsetPx
+                    availablePx.toDp() - DRAG_HANDLE_HEIGHT
                 }
 
                 // The panel's fully-laid-out list height in px, reported once
@@ -362,7 +369,7 @@ fun HomeScreen(
                 // The transit-centre drawer's rows, built from the query's last response (#2107). Needed
                 // before the sheet decision below, which gates on there being rows to show.
                 val nearbyRows = rememberNearbyRouteRows(nearbyArrivalsState)
-                val nearbyActionsFor = rememberNearbyActionsFor(nearbyArrivalsState)
+                val nearbyActionsFor = rememberNearbyRowActions(nearbyArrivalsState, nearbyRows)
                 val nearbyLimitExceeded = nearbyArrivalsState.limitExceeded
                 val nearbyRowCallbacks = rememberNearbyRowCallbacks(
                     homeViewModel = homeViewModel,
@@ -521,6 +528,17 @@ fun HomeScreen(
                 // animateDpAsState finished-listener below; reset when the sheet slides back to 0 on hide).
                 var openSettled by remember { mutableStateOf(false) }
 
+                // The collapsed peek is capped at a fixed fraction of the window height — a constant known up
+                // front, so the open slide has a stable target that can't strand the drag (unlike a measured
+                // height that grows as content loads). Short stops shrink below it to fit (see collapsedPeekDp).
+                // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
+                // How much of the window it may cover is a property of what the sheet holds — see
+                // [HomeSheetContent.peekHeightFraction] for why the two drawers differ.
+                val capPeekDp = with(density) {
+                    val height = LocalWindowInfo.current.containerSize.height
+                    (height * sheetContent.peekHeightFraction).toDp()
+                }
+
                 // The full collapsed peek: the fixed cap while loading or still opening, then min(content, cap)
                 // once settled — fitting short stops without dead space, clipping tall ones at the cap. The
                 // scaffold peek, the FAB lift, and the map's bottom inset all use this.
@@ -644,26 +662,31 @@ fun HomeScreen(
                                 )
                             },
                             sheetContent = {
-                                // The nearby list only while it *is* the sheet's subject; otherwise the
-                                // per-stop panel, which stays composed through the hide animation (it
-                                // returns early on a null session) so the sheet doesn't blank mid-slide.
-                                if (sheetContent == HomeSheetContent.NearbyRoutes) {
-                                    NearbyArrivalsSheetHost(
-                                        rows = nearbyRows,
-                                        actionsFor = nearbyActionsFor,
-                                        favoriteRouteIds = favoriteRouteIds,
-                                        callbacks = nearbyRowCallbacks,
-                                        limitExceeded = nearbyLimitExceeded,
-                                        onContentHeight = { px -> contentPx = px }
-                                    )
-                                } else {
-                                    ArrivalsSheetHost(
-                                        session = arrivalsSession,
-                                        state = arrivalsState,
-                                        selectedRoute = stopFocus?.selectedRoute,
-                                        mapRouteColors = mapRouteColors,
-                                        onContentHeight = { px -> contentPx = px }
-                                    )
+                                // Bounded so a long list can't grow the sheet past maxSheetContentDp — that
+                                // measured height is what sets the expanded top edge. A short list still
+                                // wraps below it, keeping the fit-to-content peek.
+                                Box(Modifier.heightIn(max = maxSheetContentDp)) {
+                                    // The nearby list only while it *is* the sheet's subject; otherwise the
+                                    // per-stop panel, which stays composed through the hide animation (it
+                                    // returns early on a null session) so the sheet doesn't blank mid-slide.
+                                    if (sheetContent == HomeSheetContent.NearbyRoutes) {
+                                        NearbyArrivalsSheetHost(
+                                            rows = nearbyRows,
+                                            actionsFor = nearbyActionsFor,
+                                            favoriteRouteIds = favoriteRouteIds,
+                                            callbacks = nearbyRowCallbacks,
+                                            limitExceeded = nearbyLimitExceeded,
+                                            onContentHeight = { px -> contentPx = px }
+                                        )
+                                    } else {
+                                        ArrivalsSheetHost(
+                                            session = arrivalsSession,
+                                            state = arrivalsState,
+                                            selectedRoute = stopFocus?.selectedRoute,
+                                            mapRouteColors = mapRouteColors,
+                                            onContentHeight = { px -> contentPx = px }
+                                        )
+                                    }
                                 }
                             }
                         ) {
@@ -1258,10 +1281,6 @@ private fun SheetValue.toArrivalsSheetState() = when (this) {
     SheetValue.PartiallyExpanded -> ArrivalsSheetState.Collapsed
     SheetValue.Expanded -> ArrivalsSheetState.Expanded
 }
-
-// The collapsed drawer peek is capped at this fraction of the screen height (short stops shrink to
-// fit their content below it). A starting value to tune by eye.
-private const val PEEK_HEIGHT_FRACTION = 0.30f
 
 /**
  * The arrivals sheet's drag handle: a short grab bar tinted to sit on the panel surface (paired with

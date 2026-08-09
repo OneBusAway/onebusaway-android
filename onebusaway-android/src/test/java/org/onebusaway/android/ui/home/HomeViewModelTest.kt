@@ -932,6 +932,74 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a nearby row tap marks the bay focused so its marker renders, without recentering`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+
+        vm.showNearbyRouteOnMap(
+            bay = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)),
+            routeId = "42",
+            shortName = "42",
+            directionId = 0,
+            headsign = "Downtown"
+        )
+        advanceUntilIdle()
+        // The tap draws the route straight away; the stop focus waits on the bay's own arrivals, which
+        // are what carry the ObaStop the map needs to build the marker.
+        assertEquals(listOf("42"), map.routesShown)
+        assertEquals(0, map.focusStops.size)
+        // The drawer only exists at transit-centre zoom, so the camera pans onto the bay rather than
+        // framing the whole line — which would zoom out to its full extent and discard that view.
+        assertEquals(false, map.routeCommands.single().frameRoute)
+        assertEquals(listOf(47.6 to -122.3), map.recenters)
+        // The row body names no trip, so it stops at the route rather than the trip level (#2205).
+        assertEquals(null, map.routeCommands.single().request.focusTripId)
+        assertEquals(null, vm.stopRouteSelection()?.selectedTripId)
+
+        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        advanceUntilIdle()
+
+        // The bay is now the map's rendered focus — this is the selected-stop marker. recenter is false
+        // so it cannot fight the framing the ShowRoute above already did.
+        val focused = map.focusStops.single()
+        assertEquals("1", focused.stop.id)
+        assertEquals(false, focused.recenter)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `a nearby pill tap drills to the trip and lets the vehicle-plus-bay fit own the camera`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+
+        vm.showNearbyRouteOnMap(
+            bay = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)),
+            routeId = "42",
+            shortName = "42",
+            directionId = 0,
+            headsign = "Downtown",
+            focusTripId = "trip-7"
+        )
+        advanceUntilIdle()
+
+        // The trip rides on the request, which is what makes RouteMapController fit that vehicle
+        // together with the bay instead of framing the line.
+        val request = map.routeCommands.single().request
+        assertEquals("trip-7", request.focusTripId)
+        assertEquals("1", request.directionStopId)
+        // No pan: the fit owns the camera, and a recenter would fight it.
+        assertEquals(emptyList<Pair<Double, Double>>(), map.recenters)
+        assertEquals(listOf("trip-7"), map.vehicleSelections)
+        // The pill is one level deeper than the row body — the stop->route->trip focus (#2205).
+        assertEquals("trip-7", vm.stopRouteSelection()?.selectedTripId)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `standalone route focus shows the route`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

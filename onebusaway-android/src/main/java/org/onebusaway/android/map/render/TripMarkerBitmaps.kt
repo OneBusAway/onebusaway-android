@@ -20,6 +20,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.annotation.VisibleForTesting
+import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 
@@ -53,13 +54,30 @@ object TripMarkerBitmaps {
     @VisibleForTesting
     internal const val STROKE_WIDTH_DP = 2f
 
-    private val cache = HashMap<Long, Bitmap>()
+    /**
+     * Bounded in **bytes**, not entries, for the reason [VehicleBitmaps]' cache is: a disc is ~28 KiB at
+     * xxhdpi and ~50 KiB at xxxhdpi, so an entry count would mean wildly different memory on different
+     * devices for the same nominal size.
+     *
+     * An LRU rather than the plain map this was, because taking the caller's fill turned a fixed key
+     * space into an open one: it used to be two drawables x two tints — four bitmaps, for the life of the
+     * process — and is now two drawables x however many band colours a session ever shows, which is a
+     * fresh hue per route and per stop-focus adjacency slot. This is an `object`, so unbounded it would
+     * outlive every renderer that filled it. 512 KiB holds ~18 discs at xxhdpi, against a working set of
+     * exactly two (one selection's dot + fast estimate); the slack is what keeps flipping between
+     * recently-visited selections off the render path. Overflow only costs a re-render.
+     */
+    private val cache = object : LruCache<Long, Bitmap>(MAX_CACHE_BYTES) {
+        override fun sizeOf(key: Long, value: Bitmap): Int = value.allocationByteCount
+    }
+
+    private const val MAX_CACHE_BYTES = 512 * 1024
 
     /** A circular marker for [drawableRes] centered on a disc filled [fillColor] (forced opaque). */
     fun circle(context: Context, drawableRes: Int, fillColor: Int = DEFAULT_FILL_COLOR): Bitmap {
         val opaqueFill = fillColor or OPAQUE_ALPHA
         val key = (drawableRes.toLong() shl 32) or (opaqueFill.toLong() and 0xFFFFFFFFL)
-        return cache.getOrPut(key) { draw(context, drawableRes, opaqueFill) }
+        return cache.get(key) ?: draw(context, drawableRes, opaqueFill).also { cache.put(key, it) }
     }
 
     private fun draw(context: Context, drawableRes: Int, fillColor: Int): Bitmap {

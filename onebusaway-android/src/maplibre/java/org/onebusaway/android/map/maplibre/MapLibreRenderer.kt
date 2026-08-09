@@ -221,10 +221,16 @@ class MapLibreRenderer(
 
     private val iconFactory = IconFactory.getInstance(context)
 
-    // Trip-marker icons by (drawable, fill). Cached because every `iconFactory.fromBitmap` mints a fresh
-    // native sprite id, and these are asked for on the per-frame path; the set is tiny (two glyphs x the
-    // handful of band colours a session sees).
-    private val tripCircleIcons = HashMap<Pair<Int, Int>, Icon>()
+    // Trip-marker icons by (drawable, fill). Cached because every `iconFactory.fromBitmap` carries a full
+    // ARGB copy of its bitmap and mints a fresh native sprite id, and these sit on the per-frame path.
+    //
+    // An LRU rather than a plain map, for the same reason [routeBadgeIcons] is one: the fill dimension of
+    // the key is the band's colour, which turns over with every route and every stop-focus adjacency slot
+    // the session shows, so unbounded this retains a bitmap and a sprite per colour it ever drew. Only one
+    // selection exists at a time, so the live working set is two entries — the slack is what keeps
+    // flipping between recently-visited selections off the render path. Evicting is safe for the reason it
+    // is there: a marker holds its own reference to the Icon it was given. Freed in [dispose].
+    private val tripCircleIcons = LruCache<Pair<Int, Int>, Icon>(TRIP_ICON_CACHE_SIZE)
 
     // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION],
     // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
@@ -424,7 +430,7 @@ class MapLibreRenderer(
         vehicleMarkersByTripId.clear()
         tripMarkersByRole.clear()
         tripMarkerFills.clear()
-        tripCircleIcons.clear()
+        tripCircleIcons.evictAll()
         bandPolylines.clear()
         vehicleByMarker.clear()
         rentalByMarker.clear()
@@ -731,8 +737,11 @@ class MapLibreRenderer(
 
     private fun dataAgeIcon(fillColor: Int): Icon = tripCircleIcon(R.drawable.ic_signal_indicator, fillColor)
 
-    private fun tripCircleIcon(drawableRes: Int, fillColor: Int): Icon = tripCircleIcons.getOrPut(drawableRes to fillColor) {
-        iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, drawableRes, fillColor))
+    private fun tripCircleIcon(drawableRes: Int, fillColor: Int): Icon {
+        val key = drawableRes to fillColor
+        return tripCircleIcons.get(key)
+            ?: iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, drawableRes, fillColor))
+                .also { tripCircleIcons.put(key, it) }
     }
     fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker)
 
@@ -794,6 +803,11 @@ class MapLibreRenderer(
         // either theme. Matches the Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges
         // alongside its other icons.
         private const val BADGE_ICON_CACHE_SIZE = 256
+
+        // Two glyphs (the fast estimate, the most-recent-data dot) across the last several band colours.
+        // Far smaller than the badge cache because only one vehicle is selected at a time, so exactly two
+        // of these are ever on the map at once; this is reuse across selections, not a working set.
+        private const val TRIP_ICON_CACHE_SIZE = 16
     }
 }
 

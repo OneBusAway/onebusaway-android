@@ -21,11 +21,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.withTranslation
 import org.onebusaway.android.R
 import org.onebusaway.android.util.requireDrawable
 
@@ -68,18 +66,6 @@ object MarkerRendering {
 
     private const val OPAQUE_ALPHA = 0xFF000000.toInt()
 
-    /** 8-way unit offsets used to stamp a black outline around an element (a cheap dilate). */
-    private val OUTLINE_OFFSETS = arrayOf(
-        floatArrayOf(-1f, 0f),
-        floatArrayOf(1f, 0f),
-        floatArrayOf(0f, -1f),
-        floatArrayOf(0f, 1f),
-        floatArrayOf(-0.7f, -0.7f),
-        floatArrayOf(0.7f, -0.7f),
-        floatArrayOf(-0.7f, 0.7f),
-        floatArrayOf(0.7f, 0.7f)
-    )
-
     /**
      * Rasterizes [resId] into a square [sizePx] bitmap, optionally recolored by [tint] and inset by
      * [insetPx] on every side (a positive inset shrinks the artwork; a negative one zooms/crops it).
@@ -95,9 +81,7 @@ object MarkerRendering {
 
     /**
      * Draws a pin_base teardrop tinted [pinColor] filling `[0,contentPx]` on [canvas], then a
-     * [glyphRes] glyph tinted [glyphColor] centered on the head at [glyphSize] grid units. When
-     * [outline] > 0 each is given a black hairline outline of that width. The heading arrow (vehicles)
-     * is layered on top by the caller.
+     * [glyphRes] glyph tinted [glyphColor] centered on the head at [glyphSize] grid units.
      */
     fun drawPinAndGlyph(
         canvas: Canvas,
@@ -107,21 +91,20 @@ object MarkerRendering {
         pinColor: Int,
         @DrawableRes glyphRes: Int,
         glyphColor: Int,
-        glyphSize: Float,
-        outline: Float
+        glyphSize: Float
     ) {
         val pin = requireDrawable(context, R.drawable.pin_base).mutate()
         pin.setBounds(0, 0, contentPx, contentPx)
-        drawOutlined(canvas, pin, outline, pinColor)
+        pin.setTint(pinColor)
+        pin.draw(canvas)
 
         // Glyph centered on the pin head.
-        drawGlyph(canvas, context, glyphRes, HEAD_CX * scale, HEAD_CY * scale, glyphSize / 2f * scale, outline, glyphColor)
+        drawGlyph(canvas, context, glyphRes, HEAD_CX * scale, HEAD_CY * scale, glyphSize / 2f * scale, glyphColor)
     }
 
     /**
      * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], then a [glyphRes]
-     * glyph tinted [glyphColor] centered on it at [glyphSize] grid units. When [outline] > 0 the disc
-     * gets a black hairline ring of that width and the glyph a matching outline.
+     * glyph tinted [glyphColor] centered on it at [glyphSize] grid units.
      *
      * The circular counterpart of [drawPinAndGlyph]'s teardrop, drawn for the rental badge that sits
      * inside its charge ring ([RentalBitmaps]). The vehicle badge is a disc too, but it stacks occupancy
@@ -135,23 +118,13 @@ object MarkerRendering {
         fillColor: Int,
         @DrawableRes glyphRes: Int,
         glyphColor: Int,
-        glyphSize: Float,
-        outline: Float
+        glyphSize: Float
     ) {
         val center = contentPx / 2f
-        val radius = center - outline
-        // One Paint, filled (the default style); recolored between the ring and the fill.
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        if (outline > 0f) {
-            // Black disc slightly larger than the fill, so an `outline`-wide black ring shows around it.
-            paint.color = Color.BLACK
-            canvas.drawCircle(center, center, radius, paint)
-        }
-        paint.color = fillColor
-        canvas.drawCircle(center, center, radius - outline, paint)
+        canvas.drawCircle(center, center, center, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fillColor })
 
         // Glyph centered on the disc.
-        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
+        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, glyphColor)
     }
 
     /**
@@ -163,10 +136,10 @@ object MarkerRendering {
      * caller that needs the rim to sit within a bound must build the path already inset by half the
      * outline (see `VehicleBitmaps.PATH_INSET_GRID`, which does exactly that and explains the rest).
      *
-     * [outlineColor] is a parameter rather than the black the rest of this file stamps because this rim
-     * is the one that separates a marker from the **base map**, which the app restyles for dark mode —
-     * so its color is the caller's call (#2055). The glyph/pin dilates below stay black: they separate
-     * artwork from a marker's own fill, which no theme moves.
+     * This is the only rim this file draws, and [outlineColor] is a parameter because it is the caller's
+     * call: the rim separates a marker from the **base map**, which the app restyles for dark mode
+     * (#2055). Marker *artwork* — [drawPinAndGlyph]'s glyph, [drawCircleAndGlyph]'s — carries no rim at
+     * all; it sits on a fill chosen to contrast with it, so a hairline had nothing to separate it from.
      *
      * The path counterpart of [drawPinAndGlyph]'s teardrop: the route/trip maps center a vehicle badge
      * on the route line rather than floating a pin off it (#1752), and since #2194 that badge is a disc
@@ -187,8 +160,7 @@ object MarkerRendering {
 
     /**
      * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
-     * in pixels), outlined when [outline] > 0. The shared stamp behind [drawPinAndGlyph]'s glyph and the
-     * vehicle marker's mode glyph.
+     * in pixels). The shared stamp behind [drawPinAndGlyph]'s glyph and the vehicle marker's mode glyph.
      */
     internal fun drawGlyph(
         canvas: Canvas,
@@ -197,7 +169,6 @@ object MarkerRendering {
         cxPx: Float,
         cyPx: Float,
         halfPx: Float,
-        outline: Float,
         glyphColor: Int
     ) {
         val glyph = requireDrawable(context, glyphRes).mutate()
@@ -207,32 +178,7 @@ object MarkerRendering {
             (cxPx + halfPx).toInt(),
             (cyPx + halfPx).toInt()
         )
-        drawOutlined(canvas, glyph, outline, glyphColor)
-    }
-
-    /**
-     * Draws [drawable] tinted [fill], preceded (when [outline] > 0) by a black-outline dilate.
-     *
-     * Private on purpose. The dilate stamps the artwork black at eight offsets, which lays solid black
-     * under the whole silhouette rather than only around it — so a *translucent* fill drawn through here
-     * composites over black and comes out grey. That trap cost the vehicle pips a redraw before they
-     * dropped their rim; it is not an extension point worth offering.
-     */
-    private fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
-        if (outline > 0f) {
-            drawable.setTint(Color.BLACK)
-            stampOffsets(canvas, outline) { drawable.draw(canvas) }
-        }
-        drawable.setTint(fill)
-        drawable.draw(canvas)
-    }
-
-    /** Runs [draw] once per [OUTLINE_OFFSETS] entry, translated by [outline] — the black-outline dilate. */
-    private fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
-        for (o in OUTLINE_OFFSETS) {
-            canvas.withTranslation(o[0] * outline, o[1] * outline) {
-                draw()
-            }
-        }
+        glyph.setTint(glyphColor)
+        glyph.draw(canvas)
     }
 }

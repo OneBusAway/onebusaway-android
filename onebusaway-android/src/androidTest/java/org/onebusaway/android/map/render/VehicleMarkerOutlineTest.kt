@@ -43,13 +43,6 @@ import org.onebusaway.android.models.ObaRoute
 @RunWith(AndroidJUnit4::class)
 class VehicleMarkerOutlineTest {
 
-    /**
-     * A disc dark enough for a black rim to be nearly lost against a night base map, and mid enough that
-     * both a lighter and a darker rim are unambiguously on the far side of it in every channel — which is
-     * what the pixel assertions below compare against.
-     */
-    private val disc = 0xFF1050C0.toInt()
-
     /** The resolved color: what the renderer is handed, before any drawing can misuse it. */
     @Test
     fun theRimColorFlipsWithTheMode() {
@@ -62,7 +55,7 @@ class VehicleMarkerOutlineTest {
      * whatever its antialiased coverage, the first ink the map sees above the disc is the rim's outer
      * edge, and nothing else is up there on a tabless marker.
      *
-     * Asserted structurally against [disc] (strictly darker / strictly lighter in every channel) rather
+     * Asserted structurally against [SAMPLE_DISC] (strictly darker / strictly lighter in every channel) rather
      * than as an exact black and white: that edge pixel may be partly blended with the fill beneath it,
      * and pinning the blend would restate production's arithmetic. Blending cannot cross the disc, so
      * the direction is the whole claim and needs no tolerance.
@@ -83,25 +76,12 @@ class VehicleMarkerOutlineTest {
     }
 
     /**
-     * The two modes are different bitmaps, which is why the mode has to reach the icon cache key — see
-     * [VehicleBitmaps.iconKey], where the rim color is keyed on for exactly this reason. A key that
-     * ignored it would serve a marker its previous mode's rim until the process died.
-     */
-    @Test
-    fun theTwoModesAreDifferentBitmaps() {
-        assertFalse(
-            "the light- and dark-mode markers must not be the same bitmap",
-            marker(lightContext()).sameAs(marker(darkContext()))
-        )
-    }
-
-    /**
      * The glyph draws flat: nowhere inside the disc is there any of the black the dilate used to lay
      * around it. Read over a square inscribed in the disc — it holds the whole glyph and nothing else,
      * since the rim is outside it and the tab (absent here anyway) is below.
      *
-     * On this deliberately dark [disc] the glyph is white, so every pixel in the square is white, the
-     * disc, or a blend of the two — and no blend of those two is black. That the glyph is *there* is
+     * On the deliberately dark [SAMPLE_DISC] the glyph is white, so every pixel in the square is white,
+     * the disc, or a blend of the two — and no blend of those two is black. That the glyph is *there* is
      * asserted alongside, since "no black in the disc" is also what an empty disc looks like.
      */
     @Test
@@ -120,7 +100,7 @@ class VehicleMarkerOutlineTest {
 
     // previewBitmap is @VisibleForTesting — this is that test.
     @Suppress("VisibleForTests")
-    private fun marker(context: Context): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, occupancy = null)
+    private fun marker(context: Context): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, SAMPLE_DISC, occupancy = null)
 
     /**
      * Every pixel of a square inscribed in the disc, centered on it.
@@ -130,15 +110,14 @@ class VehicleMarkerOutlineTest {
      * of those are claims *about* that geometry — a bound computed from it would follow a mistake in it
      * instead of catching one. Only the scale reads production, and only to locate the square.
      */
-    private fun Bitmap.insideTheDisc(): List<Int> {
-        // Density is a property of the device, not of the mode, so either context answers for it.
-        val scale = lightContext().resources.displayMetrics.density * VehicleBitmaps.MARKER_SIZE_DP / MarkerRendering.GRID
-        val half = INSCRIBED_HALF_GRID * scale
+    private fun Bitmap.insideTheDisc(): IntArray {
+        val half = INSCRIBED_HALF_GRID * markerScale
         val from = (width / 2f - half).toInt()
         val to = (width / 2f + half).toInt()
         assertTrue("the sampled square must be inside the bitmap", from >= 0 && to <= width && to > from)
-        // The bitmap is square (a tabless marker), so one range indexes both axes.
-        return (from until to).flatMap { y -> (from until to).map { x -> getPixel(x, y) } }
+        // The bitmap is square (a tabless marker), so one range bounds both axes.
+        val side = to - from
+        return IntArray(side * side).also { getPixels(it, 0, side, from, from, side, side) }
     }
 
     /** The first non-transparent pixel scanning down the bitmap's center column. */
@@ -153,13 +132,13 @@ class VehicleMarkerOutlineTest {
         throw AssertionError("the marker's center column carried no ink at all")
     }
 
-    private fun Int.darkerThanDiscEverywhere(): Boolean = Color.red(this) < Color.red(disc) &&
-        Color.green(this) < Color.green(disc) &&
-        Color.blue(this) < Color.blue(disc)
+    private fun Int.darkerThanDiscEverywhere(): Boolean = Color.red(this) < Color.red(SAMPLE_DISC) &&
+        Color.green(this) < Color.green(SAMPLE_DISC) &&
+        Color.blue(this) < Color.blue(SAMPLE_DISC)
 
-    private fun Int.lighterThanDiscEverywhere(): Boolean = Color.red(this) > Color.red(disc) &&
-        Color.green(this) > Color.green(disc) &&
-        Color.blue(this) > Color.blue(disc)
+    private fun Int.lighterThanDiscEverywhere(): Boolean = Color.red(this) > Color.red(SAMPLE_DISC) &&
+        Color.green(this) > Color.green(SAMPLE_DISC) &&
+        Color.blue(this) > Color.blue(SAMPLE_DISC)
 
     private fun Int.hex(): String = "#%08X".format(this)
 

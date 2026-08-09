@@ -87,19 +87,6 @@ object VehicleBitmaps {
     internal const val PAD_GRID = 0.6f
 
     /**
-     * The mode glyph's box, in 24-grid units. The artwork doesn't fill it — the mode drawables leave a
-     * margin of their own, so the ink runs to roughly 70-85% of this depending on which one it is.
-     *
-     * Sized so the box itself is inscribed in the disc, not merely the ink: its half-diagonal is
-     * `16.2/2 * √2 ≈ 11.46`, inside the 11.625 fill radius [DISC_RADIUS_GRID] works out to. That's the
-     * bound worth holding, because it doesn't depend on how much of its box any one mode's artwork
-     * happens to use — a future glyph drawn edge to edge still lands on the disc rather than over its
-     * rim. It leaves no headroom to speak of, so this is about as large as the glyph goes without the
-     * disc growing with it.
-     */
-    private const val GLYPH_SIZE = 16.2f
-
-    /**
      * The occupancy tab (grid units): a rounded rectangle centered under the disc, unioned with it.
      * [TAB_DEPTH_GRID] is how far it hangs below the disc, and so also the transparent padding mirrored
      * above the disc that keeps a tabbed bitmap symmetric about the disc's center — see the class KDoc.
@@ -127,6 +114,23 @@ object VehicleBitmaps {
 
     /** The disc's drawn radius: the 24-grid half-width, less what the centered rim takes back. */
     private const val DISC_RADIUS_GRID = MarkerRendering.GRID / 2f - PATH_INSET_GRID
+
+    /**
+     * The mode glyph's box, **derived** as the largest square that fits inside the rim.
+     *
+     * The bound is stated on the box rather than on the ink because the ink is not knowable here: each
+     * mode drawable leaves a margin of its own, and they don't agree (the five run to roughly 70-85% of
+     * their viewport). Fitting the box means a glyph drawn edge to edge would still land on the fill
+     * rather than lap the rim, so this holds for artwork that doesn't exist yet.
+     *
+     * Derived for the same reason [TAB_TOP_GRID] is: the fit depends on [OUTLINE_GRID] and
+     * [PATH_INSET_GRID] through [DISC_RADIUS_GRID], and a literal with the arithmetic in prose beside it
+     * goes quietly wrong the next time one of those moves. The square's half-diagonal is
+     * `GLYPH_SIZE/2 * √2`, so setting that equal to the rim's *inner* edge — the radius less the half of
+     * the centered stroke that eats inward — and solving gives the expression below (~16.3 units, half
+     * again the 10.8 the glyph sat at before #2055).
+     */
+    private val GLYPH_SIZE: Float = (DISC_RADIUS_GRID - OUTLINE_GRID / 2f) * 2f / sqrt(2f)
 
     /**
      * The tab's top edge, **derived** so its upper corners stay buried in the disc.
@@ -187,7 +191,6 @@ object VehicleBitmaps {
         context,
         vehicleType(vehicle, response),
         discColor(context, vehicle),
-        outlineColor(context),
         occupancyBucket(vehicle),
         sizeScale
     )
@@ -307,9 +310,8 @@ object VehicleBitmaps {
      * qualified resource rather than branching on `ThemeUtils.isInDarkMode` so it flips the same way, in
      * the same place, as the route-stop circles' `route_stop_outline` next to it on the same map.
      *
-     * Deliberately *not* extended to the mode glyph or the occupancy pips: those sit on the disc, whose
-     * color comes off the wire and doesn't move with the theme, so they keep deriving their ink from it
-     * ([MarkerRendering.legibleOn] and the fixed pip polarity respectively) — see [renderMarker].
+     * Nothing *on* the marker follows the mode: the glyph and pips sit on the disc, whose color comes off
+     * the wire and doesn't move with the theme, so they keep taking their ink from it — see [renderMarker].
      */
     @VisibleForTesting
     internal fun outlineColor(context: Context): Int = ContextCompat.getColor(context, R.color.vehicle_marker_outline)
@@ -318,13 +320,14 @@ object VehicleBitmaps {
         context: Context,
         vehicleType: Int,
         color: Int,
-        outlineColor: Int,
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
-        val key = createBitmapCacheKey(vehicleType, color, outlineColor, occupancy, sizeScale)
+        // The rim isn't threaded through as a value: both the key and the render read it from this same
+        // context through [outlineColor], so they can't name different icons (as `routeTypeFor` below).
+        val key = createBitmapCacheKey(vehicleType, color, outlineColor(context), occupancy, sizeScale)
         return sColoredIconCache.get(key)
-            ?: renderMarker(context, vehicleType, color, outlineColor, occupancy, sizeScale)
+            ?: renderMarker(context, vehicleType, color, occupancy, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
@@ -352,7 +355,7 @@ object VehicleBitmaps {
         vehicleType: Int,
         color: Int,
         occupancy: OccupancyBucket?
-    ): Bitmap = renderMarker(context, vehicleType, color, outlineColor(context), occupancy, 1f)
+    ): Bitmap = renderMarker(context, vehicleType, color, occupancy, 1f)
 
     /**
      * Composites the marker body — a disc, unioned with the occupancy tab when [occupancy] is non-null —
@@ -378,7 +381,6 @@ object VehicleBitmaps {
         context: Context,
         vehicleType: Int,
         color: Int,
-        outlineColor: Int,
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
@@ -392,6 +394,7 @@ object VehicleBitmaps {
         val widthPx = (MarkerRendering.GRID * scale + 2f * pad).toInt()
         val heightPx = (MarkerRendering.GRID * scale + 2f * reserve + 2f * pad).toInt()
         val outline = OUTLINE_GRID * scale
+        val outlineColor = outlineColor(context)
         val onColor = MarkerRendering.legibleOn(color)
         val bitmap = createBitmap(widthPx, heightPx)
         val canvas = Canvas(bitmap)
@@ -402,11 +405,8 @@ object VehicleBitmaps {
         // The body: disc ∪ tab, filled with the route's display color (gray when not real-time) and
         // stroked as one silhouette, so no seam shows where the tab meets the disc.
         MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline, outlineColor)
-        // The mode glyph, rimless. It sits alone on a disc it was already picked to contrast with
-        // ([MarkerRendering.legibleOn]), so a rim had nothing to separate it from — and a black dilate on
-        // a black glyph, which is what a light route colour asks for, only thickened it into a blot. The
-        // pips shed theirs for the same reason (see the pip loop); the body keeps its own because it is
-        // the only part with a base map behind it.
+        // The mode glyph, rimless: a black dilate under a black glyph — which is what a light route
+        // colour asks for — thickened it into a blot rather than defining it.
         MarkerRendering.drawGlyph(
             canvas,
             context,
@@ -414,7 +414,6 @@ object VehicleBitmaps {
             MarkerRendering.GRID / 2f * scale,
             MarkerRendering.GRID / 2f * scale,
             GLYPH_SIZE / 2f * scale,
-            outline = 0f,
             glyphColor = onColor
         )
 

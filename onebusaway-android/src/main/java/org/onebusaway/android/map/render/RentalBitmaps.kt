@@ -187,8 +187,7 @@ object RentalBitmaps {
                 tint,
                 glyphFor(layer, kind),
                 Color.WHITE,
-                GLYPH_SIZE,
-                outline = 0f
+                GLYPH_SIZE
             )
         }
         return bitmap

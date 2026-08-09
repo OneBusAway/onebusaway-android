@@ -42,10 +42,10 @@ class VehicleMarkerPipTest {
     // mode the emulator runs in. The pips' polarity is mode-independent, but the rim around the tab is
     // not (#2055), and a white rim would answer to the `empty` predicate below — making these counts a
     // reading of the device's theme rather than of the pip row.
-    private val context: Context get() = lightContext()
+    private val context: Context = lightContext()
 
-    /** A disc dark enough that [MarkerRendering.legibleOn] inks the *glyph* white. */
-    private val disc = 0xFF1050C0.toInt()
+    /** A disc dark enough that [MarkerRendering.legibleOn] inks the *glyph* white — see [SAMPLE_DISC]. */
+    private val disc = SAMPLE_DISC
 
     // The pips' polarity is fixed rather than derived from the disc: a full pip is black, an empty one a
     // white wash. Both are asserted, in opposite directions, so a regression that collapsed the two
@@ -158,9 +158,6 @@ class VehicleMarkerPipTest {
     @Suppress("VisibleForTests")
     private fun marker(occupancy: OccupancyBucket?): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, occupancy)
 
-    private val scale: Float
-        get() = context.resources.displayMetrics.density * VehicleBitmaps.MARKER_SIZE_DP / MarkerRendering.GRID
-
     /**
      * Counts [color]-colored pixels across the tab band. The bitmap carries a transparent border of
      * [VehicleBitmaps.PAD_GRID] *and* reserves [VehicleBitmaps.TAB_DEPTH_GRID] above the disc, so grid
@@ -175,8 +172,8 @@ class VehicleMarkerPipTest {
 
     /** Matching pixels in the pip row, restricted to one of three equal columns of the tab (0, 1 or 2). */
     private fun Bitmap.countOfInThird(match: (Int) -> Boolean, third: Int): Int {
-        val tabLeft = (VehicleBitmaps.PAD_GRID + MarkerRendering.GRID / 2f - TAB_HALF_WIDTH_GRID) * scale
-        val tabWidth = 2f * TAB_HALF_WIDTH_GRID * scale
+        val tabLeft = (VehicleBitmaps.PAD_GRID + MarkerRendering.GRID / 2f - TAB_HALF_WIDTH_GRID) * markerScale
+        val tabWidth = 2f * TAB_HALF_WIDTH_GRID * markerScale
         val from = (tabLeft + third * tabWidth / 3f).toInt()
         val to = (tabLeft + (third + 1) * tabWidth / 3f).toInt()
         return countInTab(from, to, match)
@@ -186,10 +183,10 @@ class VehicleMarkerPipTest {
         // Grid row 0 sits below the transparent border and, on a tabbed marker, below the mirrored tab
         // depth reserved above the disc. A tabless marker reserves none, so its origin is just the border
         // — which is why this reads the bitmap's own height rather than assuming the taller geometry.
-        val reserved = (height - MarkerRendering.GRID * scale - 2f * VehicleBitmaps.PAD_GRID * scale) / 2f
-        val originPx = VehicleBitmaps.PAD_GRID * scale + reserved
-        val top = (originPx + TAB_BAND_TOP_GRID * scale).toInt().coerceIn(0, height)
-        val bottom = (originPx + TAB_BAND_BOTTOM_GRID * scale).toInt().coerceIn(top, height)
+        val reserved = (height - MarkerRendering.GRID * markerScale - 2f * VehicleBitmaps.PAD_GRID * markerScale) / 2f
+        val originPx = VehicleBitmaps.PAD_GRID * markerScale + reserved
+        val top = (originPx + TAB_BAND_TOP_GRID * markerScale).toInt().coerceIn(0, height)
+        val bottom = (originPx + TAB_BAND_BOTTOM_GRID * markerScale).toInt().coerceIn(top, height)
         val left = fromX.coerceIn(0, width)
         val right = toX.coerceIn(left, width)
         assertTrue("the sampled band must be at least a pixel tall", bottom > top)

@@ -26,6 +26,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -434,9 +435,9 @@ class VehicleIconAllocationTest {
             VehicleBitmaps.iconKey(lightContext(), live, response),
             VehicleBitmaps.iconKey(darkContext(), live, response)
         )
-        assertTrue(
+        assertFalse(
             "...and the two modes must not render the same marker either",
-            !VehicleBitmaps.vehicleBitmap(lightContext(), live, response)
+            VehicleBitmaps.vehicleBitmap(lightContext(), live, response)
                 .sameAs(VehicleBitmaps.vehicleBitmap(darkContext(), live, response))
         )
     }

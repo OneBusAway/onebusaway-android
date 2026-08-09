@@ -442,6 +442,10 @@ class RouteMapController(
             renderState.selectedVehicleTripId.collectLatest { tripId ->
                 showSelectionOverlay(tripId)
                 showSelectionPresentation(tripId)
+                // Re-stamp the vehicle discs: the newly selected one takes the band's colour and the
+                // previously selected one gives it back (#1990). After the presentation, because that is
+                // what settles [selectedTripLineColor] — the tint's basis — for this selection.
+                publishVehicleSet()
                 showContinuation(tripId)
             }
         }
@@ -604,8 +608,12 @@ class RouteMapController(
         // other (#2149).
         val colors = RouteColorInputs(poll, extraPolls, stopFocus.routeColors.value, palette)
         refreshRouteColorMemo(colors)
+        // Resolved once per sample, not per vehicle: at most one vehicle is selected, and the tint is an
+        // HSV round trip we'd otherwise repeat for every marker on the 20 Hz sampler.
+        val selectedId = renderState.selectedVehicleTripId.value
+        val bandColor = selectedId?.let { contrastingColor(selectedTripLineColor) }
         return MapVehicles(
-            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors) },
+            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors, selectedId, bandColor) },
             response = poll.response
         )
     }
@@ -924,6 +932,7 @@ class RouteMapController(
             selected = selectedTripRenderInput(routeColor),
             projectedFocusStops = focus::projectedStops
         )
+        val recoloured = selectedTripLineColor != (plan.selectedTripColor ?: routeColor)
         selectedTripLineColor = plan.selectedTripColor ?: routeColor
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: the route's approach to the boarding point first, the rider's
@@ -940,6 +949,12 @@ class RouteMapController(
         )
         renderState.setRouteBadges(plan.badges)
         stopsController.setRoutePresentation(plan.stopPresentation)
+        // The band's tint is derived from the colour just settled above, and the selected vehicle's disc
+        // is drawn in it (#1990) — so a publish that recolours the trip's line has to re-stamp that disc
+        // too, or the vehicle keeps a tint of the line it *used* to be drawn over. Gated on an actual
+        // change (and on there being a selection to re-stamp), which is also what keeps this from
+        // bouncing: the republish reaches [publishVehicleSet], never back here.
+        if (recoloured && renderState.selectedVehicleTripId.value != null) publishVehicleSet()
     }
 
     /**
@@ -1283,8 +1298,17 @@ class RouteMapController(
      *
      * [response] is the poll this vehicle came out of — one of [colors]' own polls, since that pairing is
      * what [sampleVehicles] builds the vehicle list from.
+     *
+     * [bandColor] is the uncertainty band's tint, and reaches only the vehicle running [selectedTripId] —
+     * the one vehicle that has a band — so its disc joins the band's colour rather than its route's
+     * (#1990). Both are resolved once by [sampleVehicles] rather than per vehicle here.
      */
-    private fun ExtrapolatedVehicle.toMarker(response: RouteTrips, colors: RouteColorInputs): VehicleMarker = VehicleMarker(
+    private fun ExtrapolatedVehicle.toMarker(
+        response: RouteTrips,
+        colors: RouteColorInputs,
+        selectedTripId: String?,
+        bandColor: Int?
+    ): VehicleMarker = VehicleMarker(
         // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
         activeTripId = status.activeTripId.orEmpty(),
         point = point,
@@ -1293,7 +1317,8 @@ class RouteMapController(
         fixTimeMs = fixTimeMs,
         bearing = bearing,
         dataFixPoint = dataFixPoint,
-        routeColor = displayedRouteColor(colors, response, status.activeTripId)
+        routeColor = displayedRouteColor(colors, response, status.activeTripId),
+        bandColor = bandColor?.takeIf { status.activeTripId == selectedTripId }
     )
 
     /**

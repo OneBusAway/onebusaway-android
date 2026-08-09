@@ -228,7 +228,14 @@ data class VehicleMarker(
     // color (#2043). Resolved by the controller from the same map the polylines use, so the two
     // cannot disagree. Null when the route carries no color and none was assigned; the renderer applies
     // [DEFAULT_ROUTE_LINE_COLOR], exactly as [RoutePolyline.resolvedColor] does.
-    val routeColor: Int? = null
+    val routeColor: Int? = null,
+    // The uncertainty band's colour, on the **selected** vehicle only; null on every other one. Its disc
+    // is drawn in this instead of [routeColor], so the live estimate reads as part of the same data
+    // object as the band it sits in and the two markers that bound that band (#1990). Kept separate from
+    // [routeColor] rather than overwriting it: that field states which line this vehicle travels with,
+    // and it is still true of the selected vehicle — this only says what its disc is *drawn* in while it
+    // is the one carrying a band.
+    val bandColor: Int? = null
 )
 
 /**

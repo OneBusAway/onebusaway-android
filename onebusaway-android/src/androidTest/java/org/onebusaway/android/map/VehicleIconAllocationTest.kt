@@ -271,6 +271,45 @@ class VehicleIconAllocationTest {
     }
 
     /**
+     * The selected vehicle's disc takes its band's colour over its route's (#1990) — and does so through
+     * the icon key, so a selection genuinely re-stamps the marker instead of leaving it on the cached
+     * route-coloured bitmap.
+     */
+    @Test
+    fun aSelectedVehiclesBandColourTakesOverItsDisc() {
+        val (response, vehicle) = fixture()
+        val unselected = pinned(vehicle).copy(routeColor = 0xFF1050C0.toInt())
+        val selected = unselected.copy(bandColor = 0xFFC05010.toInt())
+
+        assertNotEquals(
+            "the band colour must be part of the icon key",
+            VehicleBitmaps.iconKey(context, unselected, response),
+            VehicleBitmaps.iconKey(context, selected, response)
+        )
+        assertEquals(
+            "the selected vehicle's disc must be drawn in the band's colour",
+            0xFFC05010.toInt(),
+            VehicleBitmaps.discColor(context, selected)
+        )
+    }
+
+    /**
+     * Liveness still outranks the band colour: a scheduled vehicle stays gray. It has no real-time fix to
+     * extrapolate, so it has no band either — a selection must not paint one on by recolouring its disc.
+     */
+    @Test
+    fun aScheduledVehicleKeepsItsGrayDiscWhenSelected() {
+        val (response, vehicle) = fixture()
+        val scheduled = pinned(vehicle, isRealtime = false).copy(routeColor = 0xFF1050C0.toInt())
+
+        assertEquals(
+            "a band colour must not reach a scheduled vehicle's disc",
+            VehicleBitmaps.iconKey(context, scheduled, response),
+            VehicleBitmaps.iconKey(context, scheduled.copy(bandColor = 0xFFC05010.toInt()), response)
+        )
+    }
+
+    /**
      * The cache's eviction + [BitmapDescriptorCache.clear] contract, which the production [CACHE_SIZE] is
      * deliberately large enough to never hit. Drive past `maxSize` distinct keys and confirm an evicted key
      * re-invokes its supplier, and that a `get` after `clear()` is a miss.

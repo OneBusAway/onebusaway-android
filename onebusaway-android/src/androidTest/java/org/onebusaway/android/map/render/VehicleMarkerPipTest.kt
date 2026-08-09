@@ -19,6 +19,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -38,11 +39,7 @@ import org.onebusaway.android.models.ObaRoute
 @RunWith(AndroidJUnit4::class)
 class VehicleMarkerPipTest {
 
-    // Pinned to light mode rather than taken bare, so the band this samples holds a *black* rim whatever
-    // mode the emulator runs in. The pips' polarity is mode-independent, but the rim around the tab is
-    // not (#2055), and a white rim would answer to the `empty` predicate below — making these counts a
-    // reading of the device's theme rather than of the pip row.
-    private val context: Context = lightContext()
+    private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
 
     /** A disc dark enough that [MarkerRendering.legibleOn] inks the *glyph* white — see [SAMPLE_DISC]. */
     private val disc = SAMPLE_DISC
@@ -159,24 +156,46 @@ class VehicleMarkerPipTest {
     private fun marker(occupancy: OccupancyBucket?): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, occupancy)
 
     /**
-     * Counts [color]-colored pixels across the tab band. The bitmap carries a transparent border of
-     * [VehicleBitmaps.PAD_GRID] *and* reserves [VehicleBitmaps.TAB_DEPTH_GRID] above the disc, so grid
-     * row `g` sits at `(PAD_GRID + TAB_DEPTH_GRID + g) * scale` pixels down. The transform reads the
-     * production constants — it only *locates* the band and is not what's under test; the band bounds
+     * Counts [color]-colored pixels across the tab's **interior**. The bitmap carries a transparent
+     * border of [VehicleBitmaps.PAD_GRID] *and* reserves [VehicleBitmaps.TAB_DEPTH_GRID] above the disc,
+     * so grid row `g` sits at `(PAD_GRID + TAB_DEPTH_GRID + g) * scale` pixels down. The transform reads
+     * the production constants — it only *locates* the band and is not what's under test; the band bounds
      * below are the independent expectation and stay local.
      */
-    private fun Bitmap.countOf(match: (Int) -> Boolean): Int = countInTab(0, width, match)
+    private fun Bitmap.countOf(match: (Int) -> Boolean): Int {
+        val interior = tabInterior()
+        return countInTab(interior.first, interior.last, match)
+    }
 
-    /** Any non-transparent pixel in the tab band — the tab's body, not just what the pips ink. */
-    private fun Bitmap.opaqueInTab(): Int = countInTab(0, width) { Color.alpha(it) > 0 }
+    /** Any non-transparent pixel in the sampled band — the tab's body, not just what the pips ink. */
+    private fun Bitmap.opaqueInTab(): Int {
+        val interior = tabInterior()
+        return countInTab(interior.first, interior.last) { Color.alpha(it) > 0 }
+    }
 
     /** Matching pixels in the pip row, restricted to one of three equal columns of the tab (0, 1 or 2). */
     private fun Bitmap.countOfInThird(match: (Int) -> Boolean, third: Int): Int {
+        val interior = tabInterior()
+        val width = (interior.last - interior.first).toFloat()
+        val from = (interior.first + third * width / 3f).toInt()
+        val to = (interior.first + (third + 1) * width / 3f).toInt()
+        return countInTab(from, to, match)
+    }
+
+    /**
+     * The tab's horizontal span with [RIM_CLEARANCE_GRID] taken off each side, so the sampling stays off
+     * the tab's own rim.
+     *
+     * The rim is not pip ink, but it answers to the same predicates: it takes whichever of black/white
+     * reads on the disc, so on this deliberately dark disc it is *white* and would be counted as a washed
+     * "empty" pip — enough on its own to break "a full row leaves no washed pips". Excluding it keeps
+     * these counts a reading of the pip row, which is the only thing they mean to measure.
+     */
+    private fun Bitmap.tabInterior(): IntRange {
         val tabLeft = (VehicleBitmaps.PAD_GRID + MarkerRendering.GRID / 2f - TAB_HALF_WIDTH_GRID) * markerScale
         val tabWidth = 2f * TAB_HALF_WIDTH_GRID * markerScale
-        val from = (tabLeft + third * tabWidth / 3f).toInt()
-        val to = (tabLeft + (third + 1) * tabWidth / 3f).toInt()
-        return countInTab(from, to, match)
+        val clearance = RIM_CLEARANCE_GRID * markerScale
+        return (tabLeft + clearance).toInt()..(tabLeft + tabWidth - clearance).toInt()
     }
 
     private fun Bitmap.countInTab(fromX: Int, toX: Int, match: (Int) -> Boolean): Int {
@@ -208,8 +227,14 @@ class VehicleMarkerPipTest {
         // The tab hangs below the disc from grid y 24 to 31.6, holding a pip row centered at 26.1.
         // Sampled just inside so a half-pixel of rounding at the edges can't decide the count — and
         // starting below 24 keeps the disc itself, which is opaque everywhere, out of the area counts.
+        //
+        // The bottom stops short of the tab's lower rim for the reason `tabInterior` gives about the
+        // side rims: rim ink is not pip ink, and on a dark disc it reads as a washed pip.
         const val TAB_BAND_TOP_GRID = 24.3f
-        const val TAB_BAND_BOTTOM_GRID = 31.3f
+        const val TAB_BAND_BOTTOM_GRID = 29.5f
+
+        /** How far in from the tab's edge the sampling starts — comfortably wider than the rim. */
+        const val RIM_CLEARANCE_GRID = 2f
 
         /** The tab's half-width, for locating its thirds. Independent of the production constant. */
         const val TAB_HALF_WIDTH_GRID = 10.7f

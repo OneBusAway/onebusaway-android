@@ -41,8 +41,6 @@ import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
-import org.onebusaway.android.map.render.darkContext
-import org.onebusaway.android.map.render.lightContext
 import org.onebusaway.android.mock.Resources
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
@@ -410,35 +408,6 @@ class VehicleIconAllocationTest {
             "a scheduled vehicle renders the identical tabless disc whatever occupancy says",
             VehicleBitmaps.vehicleBitmap(context, plain, response)
                 .sameAs(VehicleBitmaps.vehicleBitmap(context, crowded, response))
-        )
-    }
-
-    // --- The rim's mode flip (#2055) --------------------------------------------------------------
-
-    /**
-     * The marker's rim is black over the light base map and white over the dark one, so a light/dark
-     * switch has to reach the key: both caches outlive the switch (the bitmap LRU is a process-wide
-     * object, the descriptor cache lives as long as the renderer), and a key that ignored the rim would
-     * hand every already-drawn vehicle its previous mode's rim indefinitely.
-     *
-     * The bitmaps are asserted to differ as well, since a key that varied while the render didn't would
-     * satisfy the first claim and still draw the wrong marker. What the rim actually *is* in each mode
-     * is [VehicleMarkerOutlineTest][org.onebusaway.android.map.render.VehicleMarkerOutlineTest]'s job.
-     */
-    @Test
-    fun aModeSwitchMintsANewDescriptor() {
-        val (response, vehicle) = fixture()
-        val live = withLiveness(vehicle, isRealtime = true)
-
-        assertNotEquals(
-            "the rim color must be part of the icon key",
-            VehicleBitmaps.iconKey(lightContext(), live, response),
-            VehicleBitmaps.iconKey(darkContext(), live, response)
-        )
-        assertFalse(
-            "...and the two modes must not render the same marker either",
-            VehicleBitmaps.vehicleBitmap(lightContext(), live, response)
-                .sameAs(VehicleBitmaps.vehicleBitmap(darkContext(), live, response))
         )
     }
 

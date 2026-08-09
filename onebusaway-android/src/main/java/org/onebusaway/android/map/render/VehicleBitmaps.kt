@@ -248,7 +248,6 @@ object VehicleBitmaps {
         createBitmapCacheKey(
             vehicleType(vehicle, response),
             discColor(context, vehicle),
-            outlineColor(context),
             occupancyBucket(vehicle),
             sizeScale
         )
@@ -325,29 +324,6 @@ object VehicleBitmaps {
         ContextCompat.getColor(context, ScheduleDeviation.Status.SCHEDULED.displayColorRes)
     }
 
-    /**
-     * The rim drawn around the marker's silhouette: gray in light mode, white in dark (#2055).
-     *
-     * The rim's job is to hold the marker apart from what's *behind* it, and what's behind it is a base
-     * map the app restyles by mode (`R.raw.light_map` / `R.raw.dark_map`) — so a rim fixed at one dark
-     * value separated the marker from a pale basemap and then dissolved into the dark one, taking the
-     * disc's edge with it on any route color close to the night basemap. It resolves from a qualified
-     * resource rather than branching on `ThemeUtils.isInDarkMode`, so it flips in the same place as the
-     * other rims on the same map.
-     *
-     * The gray is the one the route-stop circles beside it already use (`route_stop_outline` carries the
-     * same pair), so the two rims a rider sees over the base map agree. It is deliberately *not* shared
-     * with [TripMarkerBitmaps]: those discs take the uncertainty band's colour as their fill (#1990), so
-     * their ring answers to that fill via [MarkerRendering.legibleOn] rather than to the base map, and a
-     * rim that went white in dark mode would vanish on a pale band. What the two families do share is the
-     * width, [MarkerRendering.MARKER_STROKE_DP].
-     *
-     * Nothing *on* the marker follows the mode: the glyph and pips sit on the disc, whose color comes off
-     * the wire and doesn't move with the theme, so they keep taking their ink from it — see [renderMarker].
-     */
-    @VisibleForTesting
-    internal fun outlineColor(context: Context): Int = ContextCompat.getColor(context, R.color.map_marker_outline)
-
     private fun getBitmap(
         context: Context,
         vehicleType: Int,
@@ -355,25 +331,22 @@ object VehicleBitmaps {
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
-        // The rim isn't threaded through as a value: both the key and the render read it from this same
-        // context through [outlineColor], so they can't name different icons (as `routeTypeFor` below).
-        val key = createBitmapCacheKey(vehicleType, color, outlineColor(context), occupancy, sizeScale)
+        val key = createBitmapCacheKey(vehicleType, color, occupancy, sizeScale)
         return sColoredIconCache.get(key)
             ?: renderMarker(context, vehicleType, color, occupancy, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
-    /** [color] and [outlineColor] are resolved ARGB values — see [iconKey] for why they can't be resource ids. */
+    /** [color] is a resolved ARGB value — see [iconKey] for why it can't be a resource id. */
     private fun createBitmapCacheKey(
         vehicleType: Int,
         color: Int,
-        outlineColor: Int,
         occupancy: OccupancyBucket?,
         sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
         // "none" rather than an empty slot: the tabless marker is its own icon, distinct from an empty one.
-        return "$type $color $outlineColor ${occupancy?.name ?: "none"} ${sizeScale.toBits()}"
+        return "$type $color ${occupancy?.name ?: "none"} ${sizeScale.toBits()}"
     }
 
     /**
@@ -391,19 +364,21 @@ object VehicleBitmaps {
 
     /**
      * Composites the marker body — a disc, unioned with the occupancy tab when [occupancy] is non-null —
-     * then the mode glyph centered on the disc, then the tab's pips. **Only the body is rimmed**, stroked
-     * in [outlineColor] at [OUTLINE_GRID]: it is the one part with a base map behind it, and the rim is
-     * what holds its silhouette off that map. What goes on top of it — glyph, pips — is already on a
-     * surface chosen to carry it, so each of those draws flat (see the glyph and pip comments below).
+     * then the mode glyph centered on the disc, then the tab's pips. **Only the body is rimmed**, at
+     * [OUTLINE_GRID] wide: the glyph and pips sit on a surface already chosen to carry them, so a rim
+     * around either had nothing to separate it from (see the glyph and pip comments below).
      *
      * A tabbed bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below; a tabless one reserves
      * neither, since with no tab both bands would be empty — 39% of the bitmap, on the marker every
      * scheduled vehicle and every occupancy-less feed draws. Either way the disc lands at the bitmap's
      * center, which is the property the anchor depends on — see the class KDoc.
      *
-     * The **glyph** takes whichever of black/white reads on [color] rather than a hardcoded white, since
-     * a route may be drawn in a shade too pale to carry white — and with the glyph now drawn flat, that
-     * choice is the only thing keeping it off the disc. The **pips** deliberately do not: they use
+     * The rim and the **glyph** take the same ink: whichever of black/white reads on [color]
+     * ([MarkerRendering.legibleOn]), the rule [TripMarkerBitmaps] applies to the estimate markers that
+     * bracket this one on the trip map (#1990). A rim keyed to the *theme* instead — the first answer to
+     * #2055 — went white in dark mode and then vanished on any pale route colour, which is the failure
+     * it was added to prevent, only moved. Reading the disc catches both cases at once: the rim is light
+     * exactly when the disc is dark, whatever the base map is doing. The **pips** deliberately do not: they use
      * a fixed white-empty / black-full polarity (see the pip loop), so a rider learns one reading of the
      * row rather than one per route colour. Neither uses a colour ramp of its own — the disc's colour
      * already means route identity (#2043), and a second colour scale on a 40 dp icon would compete with
@@ -426,7 +401,6 @@ object VehicleBitmaps {
         val widthPx = (MarkerRendering.GRID * scale + 2f * pad).toInt()
         val heightPx = (MarkerRendering.GRID * scale + 2f * reserve + 2f * pad).toInt()
         val outline = OUTLINE_GRID * scale
-        val outlineColor = outlineColor(context)
         val onColor = MarkerRendering.legibleOn(color)
         val bitmap = createBitmap(widthPx, heightPx)
         val canvas = Canvas(bitmap)
@@ -436,7 +410,7 @@ object VehicleBitmaps {
 
         // The body: disc ∪ tab, filled with the route's display color (gray when not real-time) and
         // stroked as one silhouette, so no seam shows where the tab meets the disc.
-        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline, outlineColor)
+        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline, onColor)
         // The mode glyph, rimless: a black dilate under a black glyph — which is what a light route
         // colour asks for — thickened it into a blot rather than defining it.
         MarkerRendering.drawGlyph(

@@ -38,16 +38,6 @@
          Selected stops override this with the orange focus fill. -->
     <color name="route_stop_fill">#FFFFFF</color>
 
-    <!-- The rim the vehicle badge draws around its disc/occupancy-tab silhouette to hold it off the base
-         map: gray in light mode, white in dark (see values-night), because the base map is restyled by
-         mode and a dark rim vanishes into the dark one (#2055). Same pair as route_stop_outline above,
-         the other rim drawn against the base map.
-
-         Only rims facing the base map. Ink drawn *on* a marker — the vehicle's mode glyph, the trip
-         markers' ring and glyph over their band-coloured fill (#1990) — answers to the fill under it,
-         which no theme moves, and takes MarkerRendering.legibleOn instead. -->
-    <color name="map_marker_outline">#616161</color>
-
     <!-- The starred (favorite) stop marker's star: a gold gradient (light top, dark bottom), #1680. -->
     <color name="map_stop_favorite_light">#FFD54F</color>
     <color name="map_stop_favorite_dark">#FFA000</color>

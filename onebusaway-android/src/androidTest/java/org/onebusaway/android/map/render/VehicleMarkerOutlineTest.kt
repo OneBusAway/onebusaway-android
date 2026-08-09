@@ -21,6 +21,7 @@ import android.graphics.Color
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,14 +29,13 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 
 /**
- * Which parts of the vehicle marker are rimmed, in what color, and how wide (#2055).
+ * Which parts of the vehicle marker are rimmed, in what colour, and how wide (#2055).
  *
- * **The body is**, and its rim follows the mode — gray over the light base map, white over the dark one
- * — so the marker's edge survives a restyled map instead of dissolving into it. Both halves of that are
- * checked, because either alone can pass while the marker stays broken: the resolved color can flip
- * while the renderer keeps stamping one value, and the rendered rim can differ between the two modes for
- * some reason other than the color the app asked for. Its *width* is checked against the trip map's
- * estimate markers, the family it shares a screen with.
+ * **The body is**, in whichever of black/white reads against its disc — the rule the trip map's estimate
+ * markers apply to their own fill (#1990), so the markers a rider sees together are drawn one way. That
+ * is what makes the rim light on a dark marker, which is what #2055 asked for; keying it to the *theme*
+ * instead only moved the failure onto pale route colours. Its *width* is checked against those same
+ * estimate markers.
  *
  * **The glyph is not.** It sits on a disc already chosen to contrast with it, so the rim it used to carry
  * separated it from nothing and thickened it into a blot on a light route color.
@@ -45,31 +45,43 @@ import org.onebusaway.android.models.ObaRoute
 @RunWith(AndroidJUnit4::class)
 class VehicleMarkerOutlineTest {
 
-    /** The resolved color: what the renderer is handed, before any drawing can misuse it. */
+    /**
+     * The rim as drawn takes the disc's own contrasting ink: white on a dark disc, black on a pale one.
+     * Both directions, since a rim hardcoded to either would satisfy one of them.
+     *
+     * Matched **exactly** against [MarkerRendering.legibleOn], which is available because the rim is
+     * [MarkerRendering.MARKER_STROKE_DP] wide — several pixels at any real density — so it has a solid
+     * interior no antialiasing touches. (While it was a hairline this could only be a structural
+     * "darker/lighter than the disc" comparison.)
+     */
     @Test
-    fun theRimColorFlipsWithTheMode() {
-        assertEquals("a light-mode rim is the shared gray", LIGHT_RIM, VehicleBitmaps.outlineColor(lightContext()))
-        assertEquals("a dark-mode rim is white", Color.WHITE, VehicleBitmaps.outlineColor(darkContext()))
+    fun theRimTakesTheDiscsContrastingInk() {
+        for (disc in listOf(SAMPLE_DISC, PALE_DISC)) {
+            assertEquals(
+                "the rim on disc ${disc.hex()} must be legibleOn it",
+                MarkerRendering.legibleOn(disc).hex(),
+                marker(disc = disc).solidRimPixel().hex()
+            )
+        }
+        // ...and those two discs must actually disagree, or the loop above proves nothing.
+        assertNotEquals(
+            "the sample discs must call for opposite ink",
+            MarkerRendering.legibleOn(SAMPLE_DISC),
+            MarkerRendering.legibleOn(PALE_DISC)
+        )
     }
 
     /**
-     * The rim as drawn, in each mode, matched **exactly** against the color the renderer resolved.
-     *
-     * An exact match is available because the rim is [MarkerRendering.MARKER_STROKE_DP] wide — several
-     * pixels at any real density — so it has a solid interior that no antialiasing touches. (While it
-     * was a hairline this had to be a structural "darker/lighter than the disc" comparison, which a gray
-     * rim on a mid-tone disc would no longer satisfy in either direction.)
+     * The rim reads the disc, not the theme — so the same vehicle is the same marker in light and dark
+     * mode. This is what lets the icon cache key stay free of the mode: keying on the disc colour already
+     * determines the rim.
      */
     @Test
-    fun theDrawnRimFlipsWithTheMode() {
-        for (context in listOf(lightContext(), darkContext())) {
-            val expected = VehicleBitmaps.outlineColor(context)
-            assertEquals(
-                "the drawn rim must be the resolved rim color",
-                expected.hex(),
-                marker(context).solidRimPixel().hex()
-            )
-        }
+    fun theRimDoesNotFollowTheTheme() {
+        assertTrue(
+            "a mode switch must not change the marker",
+            marker(lightContext()).sameAs(marker(darkContext()))
+        )
     }
 
     /**
@@ -82,16 +94,15 @@ class VehicleMarkerOutlineTest {
      * that had them 5x apart while both "used 2 dp". Comparing the artifacts tests the conversion;
      * comparing each to the constant would not.
      *
-     * Each is measured in **its own rim colour**, which is the point of the two families being separate:
-     * the vehicle's answers to the base map and flips with the mode, while a trip marker's answers to the
-     * band colour filling its disc ([MarkerRendering.legibleOn], #1990). Only the width is shared.
+     * Each is measured in its own rim colour — the same [MarkerRendering.legibleOn] rule, applied to the
+     * disc colour each family fills with.
      *
      * One pixel of tolerance, for the rounding each geometry does independently on the way to integers.
      */
     @Test
     fun theRimMatchesTheTripMarkersWidth() {
         val context = lightContext()
-        val vehicle = marker(context).rimThickness(VehicleBitmaps.outlineColor(context))
+        val vehicle = marker(context).rimThickness(MarkerRendering.legibleOn(SAMPLE_DISC))
         val estimate = TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate)
             .rimThickness(MarkerRendering.legibleOn(TripMarkerBitmaps.DEFAULT_FILL_COLOR))
 
@@ -127,7 +138,7 @@ class VehicleMarkerOutlineTest {
 
     // previewBitmap is @VisibleForTesting — this is that test.
     @Suppress("VisibleForTests")
-    private fun marker(context: Context): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, SAMPLE_DISC, occupancy = null)
+    private fun marker(context: Context = lightContext(), disc: Int = SAMPLE_DISC): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, occupancy = null)
 
     /**
      * Every pixel of a square inscribed in the disc, centered on it.
@@ -190,8 +201,8 @@ class VehicleMarkerOutlineTest {
     private companion object {
         const val OPAQUE = 255
 
-        /** The light-mode rim, stated here rather than read from resources — that value is the claim. */
-        val LIGHT_RIM = 0xFF616161.toInt()
+        /** A pale disc, the counterpart to [SAMPLE_DISC]: it calls for the opposite ink. */
+        val PALE_DISC = 0xFFFFEB3B.toInt()
 
         /**
          * Half the side of the square sampled inside the disc, in grid units — chosen to sit between two

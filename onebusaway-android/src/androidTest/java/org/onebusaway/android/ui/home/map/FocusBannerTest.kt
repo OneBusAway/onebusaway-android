@@ -15,8 +15,10 @@
  */
 package org.onebusaway.android.ui.home.map
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -24,6 +26,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -57,7 +60,7 @@ class FocusBannerTest {
         composeRule.setContent {
             FocusBanner(
                 state = FocusBannerState.Stop(
-                    title = "Pine St & 3rd Ave",
+                    title = STOP_NAME,
                     direction = direction,
                     stopCode = stopCode,
                     isFavorite = false,
@@ -76,17 +79,27 @@ class FocusBannerTest {
         }
     }
 
+    /**
+     * The star draws small but must still be tappable: it's laid out at the icon's own size so it
+     * doesn't bloat the rail, and relies on touch-target expansion for the accessible target. This
+     * pins both halves — the drawn size *and* the touch bounds — so a layout change can't quietly
+     * shrink the thing you actually have to hit.
+     */
     @Test
     fun stopChromeUsesCompactStarAndAccessibleAlertTarget() {
         setStopBanner()
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.stop_shortcut)
-        ).assertIsDisplayed()
-        val starBounds = composeRule.onNodeWithContentDescription(
+        val star = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
-        ).assertHasClickAction().getUnclippedBoundsInRoot()
+        ).assertHasClickAction()
+        val starBounds = star.getUnclippedBoundsInRoot()
         assertTrue((starBounds.right - starBounds.left).value in 25.9f..26.9f)
         assertTrue((starBounds.bottom - starBounds.top).value in 25.9f..26.9f)
+
+        val starTouch = star.fetchSemanticsNode().touchBoundsInRoot
+        with(composeRule.density) {
+            assertTrue(starTouch.width.toDp().value >= 47.5f)
+            assertTrue(starTouch.height.toDp().value >= 47.5f)
+        }
 
         val alertBounds = composeRule.onNodeWithContentDescription(
             context.getString(R.string.stop_info_show_alerts)
@@ -189,16 +202,17 @@ class FocusBannerTest {
             .assertDoesNotExist()
     }
 
+    /** The route banner's leading rail carries the star and nothing else (#2216). */
     @Test
-    fun routeBannerUsesRouteOrientationIcon() {
+    fun routeBannerRailIsJustTheStar() {
         setRouteBanner()
 
         composeRule.onNodeWithContentDescription(
-            context.getString(R.string.route_shortcut)
-        ).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertIsDisplayed().assertHasClickAction()
+        composeRule.onNodeWithContentDescription(
+            context.getString(R.string.route_shortcut)
+        ).assertDoesNotExist()
     }
 
     @Test
@@ -227,15 +241,119 @@ class FocusBannerTest {
         assertTrue(framed)
     }
 
+    /**
+     * The star is inset from the card edge by the rail and separated from the stop name by the
+     * content's own start padding — nothing else. The rail used to center the star in a fixed-width
+     * column, adding a trailing gutter on top of that padding and leaving the right-hand gap about
+     * twice the left inset (#2216). Pinning the two against each other states the intent (balanced,
+     * with the text side no looser than the edge side) without hardcoding either dp.
+     */
+    @Test
+    fun starIsNoFurtherFromTheStopNameThanFromTheCardEdge() {
+        setStopBanner()
+        val leadingInset = starBounds().left.value
+        val gap = gapFromStarTo(composeRule.onNodeWithText(STOP_NAME))
+        assertTrue("star should be inset from the card edge", leadingInset > 4f)
+        assertTrue(
+            "gap to the stop name ($gap) should not exceed the leading inset ($leadingInset)",
+            gap <= leadingInset + 0.5f
+        )
+        assertTrue("star and stop name should not collide", gap > 4f)
+    }
+
+    /**
+     * Both focus kinds put the same gap between the star and what the body leads with. The route
+     * roundel used to sit 14dp out — the row's start padding plus the roundel's own `horizontal`
+     * padding — against the stop name's 8dp (#2216).
+     *
+     * The route side is measured to the roundel *tile*, derived from its centered label and the
+     * tile's known width, rather than to the clickable row that wraps it. The row's edge would miss
+     * exactly the regression this guards: padding re-added to the roundel's leading side moves the
+     * tile the user sees while the row stays put.
+     */
+    @Test
+    fun stopAndRouteBannersShareTheGapAfterTheStar() {
+        composeRule.setContent {
+            Column {
+                FocusBanner(
+                    state = FocusBannerState.Stop(
+                        title = STOP_NAME,
+                        direction = "N",
+                        stopCode = "12345",
+                        isFavorite = false,
+                        favoriteEnabled = true,
+                        hasAlerts = false
+                    ),
+                    onClose = {},
+                    onToggleFavorite = {},
+                    onShowAlerts = {},
+                    onRecenterStop = {},
+                    onSelectDirection = {},
+                    onFrameRoute = {},
+                    onShowSchedule = {},
+                    onHeight = {}
+                )
+                FocusBanner(
+                    state = FocusBannerState.Route(
+                        header = org.onebusaway.android.map.RouteHeader(
+                            loading = false,
+                            shortName = "40",
+                            longName = ROUTE_LONG_NAME,
+                            agency = "Metro",
+                            routeId = "1_40"
+                        ),
+                        isFavorite = false
+                    ),
+                    onClose = {},
+                    onToggleFavorite = {},
+                    onShowAlerts = {},
+                    onRecenterStop = {},
+                    onSelectDirection = {},
+                    onFrameRoute = {},
+                    onShowSchedule = {},
+                    onHeight = {}
+                )
+            }
+        }
+
+        val stars = composeRule.onAllNodesWithContentDescription(
+            context.getString(R.string.bus_options_menu_add_star)
+        )
+        stars.assertCountEquals(2)
+        val stopGap = composeRule.onNodeWithText(STOP_NAME).getUnclippedBoundsInRoot().left.value -
+            stars[0].getUnclippedBoundsInRoot().right.value
+        // The roundel's label is centered in a ROUTE_BADGE_WIDTH-wide square, so the tile's leading
+        // edge is half a tile left of the label's center. Unmerged, or the label resolves to the
+        // clickable row that merges it.
+        val badgeLabel = composeRule.onNodeWithText("40", useUnmergedTree = true)
+            .getUnclippedBoundsInRoot()
+        val badgeTileLeft =
+            (badgeLabel.left.value + badgeLabel.right.value) / 2f - ROUTE_BADGE_WIDTH.value / 2f
+        val routeGap = badgeTileLeft - stars[1].getUnclippedBoundsInRoot().right.value
+
+        assertEquals(stopGap, routeGap, 0.5f)
+    }
+
+    private fun starBounds() = composeRule.onNodeWithContentDescription(
+        context.getString(R.string.bus_options_menu_add_star)
+    ).getUnclippedBoundsInRoot()
+
+    /** Horizontal distance from the star's trailing edge to [content]'s leading edge, in dp. */
+    private fun gapFromStarTo(content: SemanticsNodeInteraction): Float = content.getUnclippedBoundsInRoot().left.value - starBounds().right.value
+
     @Test
     fun stopBannerShowsStopIdentity() {
         setStopBanner()
-        composeRule.onNodeWithText("Pine St & 3rd Ave").assertIsDisplayed()
+        composeRule.onNodeWithText(STOP_NAME).assertIsDisplayed()
         val expectedSubtitle = "${context.getString(R.string.stop_details_code, "12345")} · " +
             context.getString(R.string.direction_n)
         composeRule.onNodeWithText(expectedSubtitle).assertIsDisplayed()
     }
 
+    /**
+     * A stop still loading its details shows a disabled star rather than an empty rail, and that
+     * star sits on the stop name's line — the rail's only occupant since #2216.
+     */
     @Test
     fun loadingStopBannerReservesTheFavoriteStar() {
         setStopBanner(
@@ -248,20 +366,19 @@ class FocusBannerTest {
         val star = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertIsDisplayed().assertIsNotEnabled().getUnclippedBoundsInRoot()
-        val typeIcon = composeRule.onNodeWithContentDescription(
+        composeRule.onNodeWithContentDescription(
             context.getString(R.string.stop_shortcut)
-        ).getUnclippedBoundsInRoot()
-        val stopName = composeRule.onNodeWithText("Pine St & 3rd Ave")
+        ).assertDoesNotExist()
+        val stopName = composeRule.onNodeWithText(STOP_NAME)
             .getUnclippedBoundsInRoot()
 
-        val typeIconCenter = (typeIcon.top.value + typeIcon.bottom.value) / 2f
         val starCenter = (star.top.value + star.bottom.value) / 2f
         val stopNameCenter = (stopName.top.value + stopName.bottom.value) / 2f
-        val railCenter = (typeIconCenter + starCenter) / 2f
-        assertTrue(abs(stopNameCenter - railCenter) < 1f)
+        assertTrue(abs(stopNameCenter - starCenter) < 1f)
     }
 
     private companion object {
+        const val STOP_NAME = "Pine St & 3rd Ave"
         const val ROUTE_LONG_NAME = "Downtown - Northgate"
         const val SCHEDULE_URL = "https://example.org/route/40/schedule"
         const val DOWNTOWN = "to Downtown"

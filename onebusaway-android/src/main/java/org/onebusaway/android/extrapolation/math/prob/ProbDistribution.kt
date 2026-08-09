@@ -15,16 +15,18 @@
  */
 package org.onebusaway.android.extrapolation.math.prob
 
-/** A continuous probability distribution. */
+/** A probability distribution, usually but not necessarily continuous (see [isPointMass]). */
 interface ProbDistribution {
     val mean: Double
 
     /**
-     * Whether the distribution is a point mass — all its probability sits at one value, so every
-     * quantile returns that same value and there is no spread to report. Declared by the
-     * implementation rather than inferred by comparing quantiles, so consumers that only make sense
-     * for a spread distribution (the uncertainty band, the optimistic "fast estimate") can opt out
-     * on a fact instead of a numeric guess. Continuous distributions leave this false.
+     * Whether all this distribution's probability sits at one value, so every quantile returns that
+     * same value and there is no spread to report. Consumers that only make sense over a spread —
+     * the uncertainty band, the optimistic "fast estimate" — opt out on this declared fact rather
+     * than inferring it by comparing quantiles.
+     *
+     * Answered per *instance*, not per class: a distribution that collapses at particular parameters
+     * should say so, which is why the false default is only a default.
      */
     val isPointMass: Boolean
         get() = false

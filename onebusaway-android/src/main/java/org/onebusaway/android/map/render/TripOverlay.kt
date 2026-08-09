@@ -43,8 +43,7 @@ data class DataAgeMarker(val point: GeoPoint, val ageMillis: Long)
  * renderers draw the same overlay. On a frame with no usable estimate [fastEstimatePoint] is null and
  * [band] is empty.
  *
- * @property fastEstimatePoint the optimistic (high-quantile) "best case" position, or null — also null
- *   for a point-mass extrapolation (schedule replay), whose best case is its median (#2213)
+ * @property fastEstimatePoint the optimistic (high-quantile) "best case" position, or null
  * @property band the graded uncertainty band over the route shape (empty when no estimate)
  * @property fixTimeMs the latest AVL fix's timestamp — constant between fixes, so a change signals
  *   fresh data; the renderer animates the marker to its new position when it changes

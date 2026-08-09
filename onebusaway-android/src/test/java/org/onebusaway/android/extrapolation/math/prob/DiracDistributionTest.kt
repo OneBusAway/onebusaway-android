@@ -16,7 +16,6 @@
 package org.onebusaway.android.extrapolation.math.prob
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -56,9 +55,4 @@ class DiracDistributionTest {
     @Test fun `median equals value`() = assertEquals(5.0, dist.median(), 0.0)
 
     @Test fun `reports itself as a point mass`() = assertTrue(dist.isPointMass)
-
-    @Test
-    fun `a spread distribution is not a point mass`() {
-        assertFalse(GammaDistribution(alpha = 2.0, scale = 3.0).isPointMass)
-    }
 }

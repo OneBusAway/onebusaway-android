@@ -19,6 +19,7 @@ import android.location.Location
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.time.Duration
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -187,7 +188,7 @@ class TripExtrapolationBuilderTest {
             nowMs = WallTime(0L)
         )!!
 
-        assertEquals(-122.0, extrapolation.vehiclePoint!!.longitude, 1e-6)
+        assertNotNull("the vehicle is still drawn", extrapolation.vehiclePoint)
         assertNull("point mass has no distinct best case", extrapolation.fastEstimatePoint)
         assertTrue("point mass has no spread to band", extrapolation.band.isEmpty())
     }

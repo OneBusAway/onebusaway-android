@@ -27,13 +27,18 @@ import org.junit.runner.RunWith
 import org.onebusaway.android.models.ObaRoute
 
 /**
- * The vehicle marker's rim follows the mode (#2055): black over the light base map, white over the dark
- * one, so the marker's edge survives a restyled map instead of dissolving into it.
+ * Which parts of the vehicle marker are rimmed, and in what color (#2055).
  *
- * Both halves are checked, because either alone can pass while the marker stays broken — the resolved
- * color can flip while the renderer keeps stamping black, and the rendered rim can differ between the
- * two modes for some reason other than the color the app asked for. Rendering is `Canvas` work, so
- * reading the pixels back means an instrumented test.
+ * **The body is**, and its rim follows the mode — black over the light base map, white over the dark one
+ * — so the marker's edge survives a restyled map instead of dissolving into it. Both halves of that are
+ * checked, because either alone can pass while the marker stays broken: the resolved color can flip
+ * while the renderer keeps stamping black, and the rendered rim can differ between the two modes for
+ * some reason other than the color the app asked for.
+ *
+ * **The glyph is not.** It sits on a disc already chosen to contrast with it, so the rim it used to carry
+ * separated it from nothing and thickened it into a blot on a light route color.
+ *
+ * Rendering is `Canvas` work, so reading the pixels back means an instrumented test.
  */
 @RunWith(AndroidJUnit4::class)
 class VehicleMarkerOutlineTest {
@@ -90,9 +95,51 @@ class VehicleMarkerOutlineTest {
         )
     }
 
+    /**
+     * The glyph draws flat: nowhere inside the disc is there any of the black the dilate used to lay
+     * around it. Read over a square inscribed in the disc — it holds the whole glyph and nothing else,
+     * since the rim is outside it and the tab (absent here anyway) is below.
+     *
+     * On this deliberately dark [disc] the glyph is white, so every pixel in the square is white, the
+     * disc, or a blend of the two — and no blend of those two is black. That the glyph is *there* is
+     * asserted alongside, since "no black in the disc" is also what an empty disc looks like.
+     */
+    @Test
+    fun theGlyphCarriesNoRim() {
+        val square = marker(lightContext()).insideTheDisc()
+
+        assertFalse(
+            "the glyph must lay no black inside the disc",
+            square.any { it == Color.BLACK }
+        )
+        assertTrue(
+            "...but must still be drawn there",
+            square.any { it.lighterThanDiscEverywhere() }
+        )
+    }
+
     // previewBitmap is @VisibleForTesting — this is that test.
     @Suppress("VisibleForTests")
     private fun marker(context: Context): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, occupancy = null)
+
+    /**
+     * Every pixel of a square inscribed in the disc, centered on it.
+     *
+     * [INSCRIBED_HALF_GRID] is stated here rather than derived from the marker's geometry: it has to be
+     * wide enough to hold the glyph and narrow enough that its corners stay off the rim, and both of
+     * those are claims *about* that geometry — a bound computed from it would follow a mistake in it
+     * instead of catching one. Only the scale reads production, and only to locate the square.
+     */
+    private fun Bitmap.insideTheDisc(): List<Int> {
+        // Density is a property of the device, not of the mode, so either context answers for it.
+        val scale = lightContext().resources.displayMetrics.density * VehicleBitmaps.MARKER_SIZE_DP / MarkerRendering.GRID
+        val half = INSCRIBED_HALF_GRID * scale
+        val from = (width / 2f - half).toInt()
+        val to = (width / 2f + half).toInt()
+        assertTrue("the sampled square must be inside the bitmap", from >= 0 && to <= width && to > from)
+        // The bitmap is square (a tabless marker), so one range indexes both axes.
+        return (from until to).flatMap { y -> (from until to).map { x -> getPixel(x, y) } }
+    }
 
     /** The first non-transparent pixel scanning down the bitmap's center column. */
     private fun Bitmap.topmostInk(): Int {
@@ -118,5 +165,12 @@ class VehicleMarkerOutlineTest {
 
     private companion object {
         const val MIN_INK_ALPHA = 32
+
+        /**
+         * Half the side of the square sampled inside the disc, in grid units. Comfortably wider than the
+         * glyph's 5.4-unit half-extent, and its corners land 10.2 units from the center — inside the
+         * 24-unit disc's 12-unit radius with the rim to spare.
+         */
+        const val INSCRIBED_HALF_GRID = 7.2f
     }
 }

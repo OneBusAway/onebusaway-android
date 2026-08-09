@@ -345,12 +345,10 @@ object VehicleBitmaps {
 
     /**
      * Composites the marker body — a disc, unioned with the occupancy tab when [occupancy] is non-null —
-     * then the mode glyph centered on the disc, then the tab's pips. The body is stroked in
-     * [outlineColor] and the glyph given a cheap 8-way black dilate at [OUTLINE_GRID] offsets, so both
-     * carry a hairline outline and read distinctly against each other and the map; the pips deliberately
-     * don't (see the pip loop). The two rims differ in color on purpose: the body's holds the marker off
-     * the mode-restyled base map and so follows the mode, while the glyph's holds it off the disc's
-     * wire-supplied color and so does not — see [outlineColor].
+     * then the mode glyph centered on the disc, then the tab's pips. **Only the body is rimmed**, stroked
+     * in [outlineColor] at [OUTLINE_GRID]: it is the one part with a base map behind it, and the rim is
+     * what holds its silhouette off that map. What goes on top of it — glyph, pips — is already on a
+     * surface chosen to carry it, so each of those draws flat (see the glyph and pip comments below).
      *
      * A tabbed bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below; a tabless one reserves
      * neither, since with no tab both bands would be empty — 39% of the bitmap, on the marker every
@@ -358,7 +356,8 @@ object VehicleBitmaps {
      * center, which is the property the anchor depends on — see the class KDoc.
      *
      * The **glyph** takes whichever of black/white reads on [color] rather than a hardcoded white, since
-     * a route may be drawn in a shade too pale to carry white. The **pips** deliberately do not: they use
+     * a route may be drawn in a shade too pale to carry white — and with the glyph now drawn flat, that
+     * choice is the only thing keeping it off the disc. The **pips** deliberately do not: they use
      * a fixed white-empty / black-full polarity (see the pip loop), so a rider learns one reading of the
      * row rather than one per route colour. Neither uses a colour ramp of its own — the disc's colour
      * already means route identity (#2043), and a second colour scale on a 40 dp icon would compete with
@@ -392,6 +391,11 @@ object VehicleBitmaps {
         // The body: disc ∪ tab, filled with the route's display color (gray when not real-time) and
         // stroked as one silhouette, so no seam shows where the tab meets the disc.
         MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline, outlineColor)
+        // The mode glyph, rimless. It sits alone on a disc it was already picked to contrast with
+        // ([MarkerRendering.legibleOn]), so a rim had nothing to separate it from — and a black dilate on
+        // a black glyph, which is what a light route colour asks for, only thickened it into a blot. The
+        // pips shed theirs for the same reason (see the pip loop); the body keeps its own because it is
+        // the only part with a base map behind it.
         MarkerRendering.drawGlyph(
             canvas,
             context,
@@ -399,8 +403,8 @@ object VehicleBitmaps {
             MarkerRendering.GRID / 2f * scale,
             MarkerRendering.GRID / 2f * scale,
             GLYPH_SIZE / 2f * scale,
-            outline,
-            onColor
+            outline = 0f,
+            glyphColor = onColor
         )
 
         // The pip row: all [MAX_PIPS] silhouettes always drawn, the first [OccupancyBucket.pips] of them
@@ -413,7 +417,7 @@ object VehicleBitmaps {
         // white "full" pip would be indistinguishable from a white "empty" one; the row would stop
         // saying anything at all.
         //
-        // Unlike the body and the glyph, the pips carry **no rim at all**. They sit inside the tab, which
+        // Like the glyph, and unlike the body, the pips carry **no rim**. They sit inside the tab, which
         // is itself rimmed and holds nothing else, so they have no neighbour to be separated from — and
         // at this size a rim on a 5-unit silhouette thickens it more than it defines it. Dropping it
         // also lets the wash go down in one pass: with no dilate laying black under the silhouette, a

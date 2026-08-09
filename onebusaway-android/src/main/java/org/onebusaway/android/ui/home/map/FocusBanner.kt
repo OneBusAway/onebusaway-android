@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.home.map
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -44,7 +42,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -92,7 +89,11 @@ import org.onebusaway.android.util.DisplayFormat
 // (below Material's 48dp default — a conscious trade-off for a compact header banner).
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
-private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
+
+// The favorite star and the rail it sits in, on the banner's leading edge.
+private val FAVORITE_ICON_SIZE = 26.4.dp
+private val FAVORITE_RAIL_WIDTH = 48.dp
+private val BANNER_MIN_HEIGHT = 64.dp
 
 // Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.
 private val SUBTITLE_ICON_SIZE = 16.dp
@@ -108,10 +109,6 @@ sealed interface FocusBannerState {
     val isFavorite: Boolean
     val favoriteEnabled: Boolean
 
-    @get:DrawableRes val focusIconRes: Int
-
-    @get:StringRes val focusDescriptionRes: Int
-
     data class Stop(
         val title: String,
         val direction: String?,
@@ -120,18 +117,13 @@ sealed interface FocusBannerState {
         override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
         val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
-    ) : FocusBannerState {
-        override val focusIconRes = R.drawable.stop_flag
-        override val focusDescriptionRes = R.string.stop_shortcut
-    }
+    ) : FocusBannerState
 
     data class Route(
         val header: RouteHeader,
         override val isFavorite: Boolean
     ) : FocusBannerState {
         override val favoriteEnabled: Boolean get() = header.routeId != null
-        override val focusIconRes = R.drawable.ic_route
-        override val focusDescriptionRes = R.string.route_shortcut
     }
 }
 
@@ -163,14 +155,11 @@ fun FocusBanner(
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
         ) {
-            FocusIdentityRail(
-                iconRes = state.focusIconRes,
-                iconDescription = stringResource(state.focusDescriptionRes),
+            FavoriteRail(
                 isFavorite = state.isFavorite,
                 favoriteEnabled = state.favoriteEnabled,
                 onToggleFavorite = onToggleFavorite
             )
-            VerticalDivider(Modifier.fillMaxHeight())
             Box(Modifier.weight(1f)) {
                 when (state) {
                     is FocusBannerState.Stop -> StopFocusBanner(
@@ -192,26 +181,27 @@ fun FocusBanner(
     }
 }
 
-/** Shared left-side orientation chrome: focus type above favorite, separated from content by a rule. */
+/**
+ * The banner's leading rail: just the favorite star, centered. It carried a focus-type glyph (stop
+ * flag / route icon) above the star and a divider beside it until #2216 — orientation the banner's
+ * own content already gives, since a stop shows a stop name and a route shows a route roundel.
+ *
+ * It keeps a fixed width so both focus kinds start their content at the same inset, and sets the
+ * banner's minimum height so a still-loading stop doesn't collapse to a sliver.
+ */
 @Composable
-private fun FocusIdentityRail(
-    @DrawableRes iconRes: Int,
-    iconDescription: String,
+private fun FavoriteRail(
     isFavorite: Boolean,
     favoriteEnabled: Boolean,
     onToggleFavorite: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxHeight().width(48.dp).heightIn(min = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(FAVORITE_RAIL_WIDTH)
+            .heightIn(min = BANNER_MIN_HEIGHT),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = iconDescription,
-            tint = colorResource(R.color.navdrawer_icon_tint),
-            modifier = Modifier.size(FOCUS_RAIL_ICON_SIZE)
-        )
         BannerFavoriteAction(
             isFavorite = isFavorite,
             enabled = favoriteEnabled,
@@ -469,7 +459,7 @@ private fun BannerFavoriteAction(
         ),
         tint = colorResource(R.color.navdrawer_icon_tint),
         modifier = Modifier
-            .size(FOCUS_RAIL_ICON_SIZE)
+            .size(FAVORITE_ICON_SIZE)
             .clickable(enabled = enabled, onClick = onClick)
     )
 }

@@ -79,9 +79,6 @@ class FocusBannerTest {
     @Test
     fun stopChromeUsesCompactStarAndAccessibleAlertTarget() {
         setStopBanner()
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.stop_shortcut)
-        ).assertIsDisplayed()
         val starBounds = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertHasClickAction().getUnclippedBoundsInRoot()
@@ -189,16 +186,17 @@ class FocusBannerTest {
             .assertDoesNotExist()
     }
 
+    /** The route banner's leading rail carries the star and nothing else (#2216). */
     @Test
-    fun routeBannerUsesRouteOrientationIcon() {
+    fun routeBannerRailIsJustTheStar() {
         setRouteBanner()
 
         composeRule.onNodeWithContentDescription(
-            context.getString(R.string.route_shortcut)
-        ).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertIsDisplayed().assertHasClickAction()
+        composeRule.onNodeWithContentDescription(
+            context.getString(R.string.route_shortcut)
+        ).assertDoesNotExist()
     }
 
     @Test
@@ -236,6 +234,10 @@ class FocusBannerTest {
         composeRule.onNodeWithText(expectedSubtitle).assertIsDisplayed()
     }
 
+    /**
+     * A stop still loading its details shows a disabled star rather than an empty rail, and that
+     * star sits on the stop name's line — the rail's only occupant since #2216.
+     */
     @Test
     fun loadingStopBannerReservesTheFavoriteStar() {
         setStopBanner(
@@ -248,17 +250,15 @@ class FocusBannerTest {
         val star = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertIsDisplayed().assertIsNotEnabled().getUnclippedBoundsInRoot()
-        val typeIcon = composeRule.onNodeWithContentDescription(
+        composeRule.onNodeWithContentDescription(
             context.getString(R.string.stop_shortcut)
-        ).getUnclippedBoundsInRoot()
+        ).assertDoesNotExist()
         val stopName = composeRule.onNodeWithText("Pine St & 3rd Ave")
             .getUnclippedBoundsInRoot()
 
-        val typeIconCenter = (typeIcon.top.value + typeIcon.bottom.value) / 2f
         val starCenter = (star.top.value + star.bottom.value) / 2f
         val stopNameCenter = (stopName.top.value + stopName.bottom.value) / 2f
-        val railCenter = (typeIconCenter + starCenter) / 2f
-        assertTrue(abs(stopNameCenter - railCenter) < 1f)
+        assertTrue(abs(stopNameCenter - starCenter) < 1f)
     }
 
     private companion object {

@@ -626,10 +626,9 @@ class RouteMapController(
         // HSV round trip we'd otherwise repeat for every marker on the 20 Hz sampler.
         val selectedId = renderState.selectedVehicleTripId.value
         val bandColor = selectedId?.let { contrastingColor(selectedTripLineColor) }
-        return MapVehicles(
-            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors, selectedId, bandColor) },
-            response = poll.response
-        )
+        // Each marker keeps the poll it came out of, not just the leader's: that pairing is what lets the
+        // renderer resolve an extra route's vehicle at all (see [VehicleMarker.source]).
+        return MapVehicles(vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors, selectedId, bandColor) })
     }
 
     // The vehicle set to push whenever it changes (a poll, a direction switch, the load resolving the
@@ -1333,6 +1332,7 @@ class RouteMapController(
         point = point,
         isRealtime = isRealtime,
         status = status,
+        source = response,
         fixTimeMs = fixTimeMs,
         bearing = bearing,
         dataFixPoint = dataFixPoint,

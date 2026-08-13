@@ -74,8 +74,9 @@ object VehicleBitmaps {
     // it was 8 heading octants x 4 pip levels = 32 icons per (mode, disc colour), and is now 5 fullness
     // states (absent + 0..3 filled) — a handful for one route once its scheduled vehicles are counted, and
     // stop-focus/continuation views draw several routes at once, so this is sized for a few of those
-    // rather than one. Overflow only costs a re-render. The Google flavor has a second-level
-    // BitmapDescriptor cache in front of this; maplibre doesn't, which is why the bound lives here.
+    // rather than one. Overflow only costs a re-render. Both flavors put a second-level icon cache in
+    // front of this, keyed by [iconKey] — the Google flavor's BitmapDescriptor cache and maplibre's
+    // vehicleIcons — since re-wrapping even a cached Bitmap mints a fresh native texture/sprite.
     private const val MAX_CACHE_BYTES = 4 * 1024 * 1024
 
     /** The composited marker fills a square this many dp on a side (the former raster's size). */
@@ -210,11 +211,10 @@ object VehicleBitmaps {
     fun vehicleBitmap(
         context: Context,
         vehicle: VehicleMarker,
-        response: RouteTrips,
         sizeScale: Float = 1f
     ): Bitmap = getBitmap(
         context,
-        vehicleType(vehicle, response),
+        vehicleType(vehicle),
         discColor(context, vehicle),
         occupancyBucket(vehicle),
         sizeScale
@@ -242,18 +242,23 @@ object VehicleBitmaps {
     fun iconKey(
         context: Context,
         vehicle: VehicleMarker,
-        response: RouteTrips,
         sizeScale: Float = 1f
     ): String = "veh:" +
         createBitmapCacheKey(
-            vehicleType(vehicle, response),
+            vehicleType(vehicle),
             discColor(context, vehicle),
             occupancyBucket(vehicle),
             sizeScale
         )
 
-    /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
-    private fun vehicleType(vehicle: VehicleMarker, response: RouteTrips): Int = routeTypeFor(response, vehicle.status.activeTripId)
+    /**
+     * The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree.
+     *
+     * Resolved against the vehicle's **own** poll ([VehicleMarker.source]) rather than a pool handed in
+     * beside it: a set can merge several route polls, and another route's references answer for this
+     * vehicle only by luck — which is exactly how a whole line's trains came to be drawn as buses.
+     */
+    private fun vehicleType(vehicle: VehicleMarker): Int = routeTypeFor(vehicle.source, vehicle.status.activeTripId)
 
     /**
      * The route type behind [activeTripId], or [DEFAULT_VEHICLE_TYPE] when it can't be resolved.

@@ -66,7 +66,7 @@ class VehicleBitmapsTest {
 
     @Test
     fun resolvesTheRouteTypeWhenReferencesCarryTripAndRoute() {
-        val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = FakeRoute(ObaRoute.TYPE_FERRY))
+        val response = pool(mapOf("trip1" to "routeA"), mapOf("routeA" to ObaRoute.TYPE_FERRY))
         assertEquals(ObaRoute.TYPE_FERRY, VehicleBitmaps.routeTypeFor(response, "trip1"))
     }
 
@@ -77,29 +77,53 @@ class VehicleBitmapsTest {
      */
     @Test
     fun missingTripFallsBackToTheDefaultGlyphInsteadOfThrowing() {
-        val response = routeTrips(trip = null, route = FakeRoute(ObaRoute.TYPE_RAIL))
+        val response = pool(emptyMap(), mapOf("routeA" to ObaRoute.TYPE_RAIL))
         assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, "absent-trip"))
     }
 
     /** The trip resolved but its route didn't — the second half of the old `!!` chain. */
     @Test
     fun missingRouteFallsBackToTheDefaultGlyphInsteadOfThrowing() {
-        val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = null)
+        val response = pool(mapOf("trip1" to "routeA"), emptyMap())
         assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, "trip1"))
     }
 
     /** A blank/absent id (cf. #2003, where OBA sends "" rather than null for block-edge trip ids). */
     @Test
     fun blankOrNullTripIdFallsBackToTheDefaultGlyph() {
-        val response = routeTrips(trip = null, route = null)
+        val response = pool(emptyMap(), emptyMap())
         assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, ""))
         assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, null))
+    }
+
+    /**
+     * The bug this pairing exists to prevent: a vehicle set can merge several route polls (interchangeable
+     * routes #2042, stay-aboard interlines #2000), and a poll's references answer for **its own** vehicles.
+     * Resolved against a sibling route's pool a train silently becomes a bus — which is exactly what a Link
+     * 2 Line train did on a "whichever comes first" leg while the 1 Line beside it drew correctly.
+     *
+     * So this asserts both halves: own pool → tram, sibling pool → the bus fallback. The second is not an
+     * endorsement of that outcome; it pins that the wrong pool is *silently* wrong, which is why each
+     * marker carries the poll it came out of ([VehicleMarker.source]) rather than the set sharing one.
+     */
+    @Test
+    fun aPollResolvesOnlyItsOwnVehicles() {
+        val linkTypes = mapOf("routeOne" to ObaRoute.TYPE_TRAM, "routeTwo" to ObaRoute.TYPE_TRAM)
+        val onePoll = pool(mapOf("trip-1line" to "routeOne"), linkTypes)
+        val twoPoll = pool(mapOf("trip-2line" to "routeTwo"), linkTypes)
+
+        assertEquals(ObaRoute.TYPE_TRAM, VehicleBitmaps.routeTypeFor(twoPoll, "trip-2line"))
+        assertEquals(
+            "another route's poll cannot answer for this vehicle",
+            ObaRoute.TYPE_BUS,
+            VehicleBitmaps.routeTypeFor(onePoll, "trip-2line")
+        )
     }
 
     /** Cablecar still collapses onto tram when it *is* resolvable, fallback path notwithstanding. */
     @Test
     fun resolvedCablecarStillNormalizesToTram() {
-        val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = FakeRoute(ObaRoute.TYPE_CABLECAR))
+        val response = pool(mapOf("trip1" to "routeA"), mapOf("routeA" to ObaRoute.TYPE_CABLECAR))
         assertEquals(ObaRoute.TYPE_TRAM, VehicleBitmaps.routeTypeFor(response, "trip1"))
     }
 
@@ -145,11 +169,14 @@ class VehicleBitmapsTest {
         assertEquals("the fullest bucket must fill the row", VehicleBitmaps.MAX_PIPS, OccupancyBucket.FULL.pips)
     }
 
-    /** A [RouteTrips] whose references pool holds at most the given trip/route. */
-    private fun routeTrips(trip: ObaTrip?, route: ObaRoute?): RouteTrips = object : RouteTrips {
+    /**
+     * A [RouteTrips] standing in for one poll's references: it resolves the trips it was fetched with
+     * and nothing else, which is what makes the wrong poll a wrong answer.
+     */
+    private fun pool(routeIdByTripId: Map<String, String>, routeTypes: Map<String, Int>): RouteTrips = object : RouteTrips {
         override val trips: List<ObaTripDetails> = emptyList()
-        override fun trip(tripId: String?): ObaTrip? = trip.takeIf { !tripId.isNullOrEmpty() }
-        override fun route(routeId: String): ObaRoute? = route
+        override fun trip(tripId: String?): ObaTrip? = routeIdByTripId[tripId]?.let { FakeTrip(tripId.orEmpty(), it) }
+        override fun route(routeId: String): ObaRoute? = routeTypes[routeId]?.let { FakeRoute(it) }
         override val currentTimeMs: Long = 0L
     }
 

@@ -199,17 +199,31 @@ data class RoutePolyline(
 data class GenericMarker(val point: GeoPoint, val hue: Float?)
 
 /**
- * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the
- * icon, color, occupancy pips, and title from it, paired with the shared [MapVehicles.response]);
- * [activeTripId] is the stable key used for marker identity + animation; [isRealtime] is the
- * draw-time decision (from whatever produced the drawn point — the extrapolation anchor or the current
- * status) that selects the live-vs-scheduled icon.
+ * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the icon,
+ * color, occupancy pips, and title from it, resolved against [source]); [activeTripId] is the stable key
+ * used for marker identity + animation; [isRealtime] is the draw-time decision (from whatever produced
+ * the drawn point — the extrapolation anchor or the current status) that selects the live-vs-scheduled
+ * icon.
  */
 data class VehicleMarker(
     val activeTripId: String,
     val point: GeoPoint,
     val isRealtime: Boolean,
     val status: ObaTripStatus,
+    /**
+     * The poll this vehicle came out of — the references pool its trip, and through it its route type and
+     * name, resolve from.
+     *
+     * Carried per vehicle rather than once for the set, because a set is not always one poll's worth of
+     * vehicles: a route-focus session with interchangeable routes (#2042) or a stay-aboard interline
+     * (#2000) merges the leader poll with an extra poll per extra route, and a poll's references answer
+     * for its **own** vehicles. Held as one shared response, every extra route's vehicle missed both hops
+     * and silently took the default bus glyph and an "unidentified" accessible name — a 2 Line train drawn
+     * as a bus while the 1 Line beside it drew correctly. #2043 fixed the same mismatch for the disc
+     * *colour* by pairing each vehicle with its poll; this is that pairing kept on the marker, so the
+     * renderer cannot reach for the wrong pool.
+     */
+    val source: RouteTrips,
     // The latest fix's instant — constant between fixes (so [point] is extrapolated forward from it),
     // changing when fresh AVL data arrives. The renderer animates the marker across the fix jump.
     val fixTimeMs: Long = 0L,
@@ -518,18 +532,15 @@ data class MapRenderSnapshot(
 }
 
 /**
- * The route-mode vehicle **set**: which vehicles exist and the [response] their icons and titles
- * derive from. This is discrete state — it changes only at events (a new poll, a direction switch,
- * leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer reconciles
- * markers from each emission. Per-frame *motion* is a separate concern (see
+ * The route-mode vehicle **set**: which vehicles exist, each carrying the poll it came out of (see
+ * [VehicleMarker.source]). This is discrete state — it changes only at events (a new poll, a direction
+ * switch, leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer
+ * reconciles markers from each emission. Per-frame *motion* is a separate concern (see
  * [MapRenderState.vehiclesSampler]); the [markers] here carry only a seed position for a freshly-added
  * marker, which the motion sampler immediately supersedes. The selected vehicle is tracked separately
  * (see [MapRenderState.selectedVehicleTripId]).
  */
-data class MapVehicles(
-    val markers: List<VehicleMarker> = emptyList(),
-    val response: RouteTrips? = null
-)
+data class MapVehicles(val markers: List<VehicleMarker> = emptyList())
 
 /**
  * Produces a renderable frame [T] — the trip-focus overlay or the live vehicle layer — for a frame

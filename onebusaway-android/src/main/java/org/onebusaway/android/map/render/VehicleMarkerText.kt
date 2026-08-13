@@ -33,9 +33,10 @@ import org.onebusaway.android.util.getRouteDisplayName
  * accessible name is exactly the thing that must not quietly drift between flavors (only the `oba`
  * *Google* variant runs in the routine test grid, so a maplibre-side divergence would be invisible).
  */
-internal fun vehicleTitle(context: Context, vehicle: VehicleMarker, response: RouteTrips): String {
-    val trip = response.trip(vehicle.status.activeTripId)
-    val route = trip?.let { response.route(it.routeId) }
+internal fun vehicleTitle(context: Context, vehicle: VehicleMarker): String {
+    // Resolved against the vehicle's own poll, for the reason [VehicleMarker.source] gives.
+    val trip = vehicle.source.trip(vehicle.status.activeTripId)
+    val route = trip?.let { vehicle.source.route(it.routeId) }
     // Assembled from whatever resolved rather than bailing on the first null, because the marker is
     // drawn either way: a vehicle mid-block-interline reports an activeTripId this route's poll never
     // fetched (#2020), and it still gets a default-glyph marker with its pips. Returning "" there left

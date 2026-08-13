@@ -66,7 +66,6 @@ import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.rental.rentalChargeFraction
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
@@ -188,8 +187,7 @@ class MapLibreRenderer(
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
-    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
-    // each vehicle-set reconcile, so a scale change can re-stamp the retained markers' icons.
+    // (interaction-free) polylines re-added each frame.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
 
@@ -197,7 +195,6 @@ class MapLibreRenderer(
     // band colour changes (#1990); dropped with the marker.
     private val tripMarkerFills = HashMap<String, Int>()
     private val bandPolylines = mutableListOf<Polyline>()
-    private var lastVehicleResponse: RouteTrips? = null
 
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
@@ -231,6 +228,23 @@ class MapLibreRenderer(
     // flipping between recently-visited selections off the render path. Evicting is safe for the reason it
     // is there: a marker holds its own reference to the Icon it was given. Freed in [dispose].
     private val tripCircleIcons = LruCache<Pair<Int, Int>, Icon>(TRIP_ICON_CACHE_SIZE)
+
+    // Vehicle marker icons by [VehicleBitmaps.iconKey] — the maplibre counterpart of the Google flavor's
+    // descriptorCache on the same path, keyed the same way, and cached for the reason [routeBadgeIcons]
+    // and [tripCircleIcons] are: `iconFactory.fromBitmap` mints a fresh native sprite id per call (two
+    // icons made from equal bitmaps never dedupe) and `Marker.icon =` does not release the icon it
+    // replaces. [VehicleBitmaps]'s own LRU bounds the *bitmaps*, which is why this flavor got away
+    // without a second level for so long — but that cache hands back the same Bitmap, and re-wrapping it
+    // still registers another sprite. So a reconcile re-stamping every retained vehicle each poll, and
+    // [updateVehicleScale] re-stamping them on each camera settle, leaked a sprite per vehicle per pass
+    // for the life of the map — an unbounded climb toward the SDK's TooManyIconsException on a long
+    // session in route mode. Freed in [dispose].
+    //
+    // Sized like the badges rather than the trip glyphs: a busy route's vehicles span several fullness
+    // states per disc colour, and a stop-focus or continuation view draws several routes' worth at once.
+    // Evicting is safe for the same reason it is there — a marker holds its own reference to the Icon it
+    // was given, so a still-drawn vehicle keeps its sprite and an evicted key is merely re-minted.
+    private val vehicleIcons = LruCache<String, Icon>(VEHICLE_ICON_CACHE_SIZE)
 
     // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION],
     // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
@@ -433,13 +447,13 @@ class MapLibreRenderer(
         tripCircleIcons.evictAll()
         bandPolylines.clear()
         vehicleByMarker.clear()
+        vehicleIcons.evictAll()
         rentalByMarker.clear()
         rentalIcons.clear()
         pinnedTripByMarker = null
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
         mostRecentDataMarker = null
-        lastVehicleResponse = null
     }
 
     /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
@@ -504,8 +518,7 @@ class MapLibreRenderer(
      * published rather than being inferred from the per-frame motion sample.
      */
     fun reconcileVehicles(set: MapVehicles?) {
-        reconcileVehicleMarkers(set?.markers.orEmpty(), set?.response)
-        lastVehicleResponse = set?.response
+        reconcileVehicleMarkers(set?.markers.orEmpty())
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
@@ -597,7 +610,7 @@ class MapLibreRenderer(
     }
 
     /** Add/remove vehicle markers to match [markers], (re)setting their icons, titles, and tap data. */
-    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
+    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
@@ -609,20 +622,19 @@ class MapLibreRenderer(
                 gone.remove()
             }
         }
-        if (response == null) return
         for (vehicle in markers) {
             val existing = vehicleMarkersByTripId[vehicle.activeTripId]
             if (existing == null) {
                 val marker = map.addMarker(
                     MarkerOptions().position(vehicle.point.toLatLng())
-                        .icon(vehicleIcon(vehicle, response))
-                        .title(vehicleTitle(context, vehicle, response))
+                        .icon(vehicleIcon(vehicle))
+                        .title(vehicleTitle(context, vehicle))
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
-                existing.icon = vehicleIcon(vehicle, response)
-                existing.title = vehicleTitle(context, vehicle, response)
+                existing.icon = vehicleIcon(vehicle)
+                existing.title = vehicleTitle(context, vehicle)
                 vehicleByMarker[existing] = vehicle
             }
         }
@@ -633,16 +645,18 @@ class MapLibreRenderer(
     // no-adjustment-available constraint is why the bitmap reserves the occupancy tab's depth above the
     // disc as well as below: it keeps the disc on the bitmap's center even for a marker whose tab hangs
     // off the bottom, so this flavor needs no anchor it cannot express (see [VehicleBitmaps]).
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon = iconFactory.fromBitmap(
-        VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
-    )
+    private fun vehicleIcon(vehicle: VehicleMarker): Icon {
+        val key = VehicleBitmaps.iconKey(context, vehicle, renderedVehicleScale)
+        return vehicleIcons.get(key)
+            ?: iconFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, renderedVehicleScale))
+                .also { vehicleIcons.put(key, it) }
+    }
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
         if (scale == renderedVehicleScale) return
         renderedVehicleScale = scale
-        val response = lastVehicleResponse ?: return
-        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle, response)
+        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle)
     }
 
     /**
@@ -808,6 +822,12 @@ class MapLibreRenderer(
         // Far smaller than the badge cache because only one vehicle is selected at a time, so exactly two
         // of these are ever on the map at once; this is reuse across selections, not a working set.
         private const val TRIP_ICON_CACHE_SIZE = 16
+
+        // A busy route's vehicles span the five fullness states across the handful of disc colours a
+        // stop-focus or continuation view draws at once, times the settle-time detail scales
+        // [routeLineWidthScale] resolves to. Sized like the badges rather than the trip glyphs because
+        // this is a genuine working set, not reuse across selections.
+        private const val VEHICLE_ICON_CACHE_SIZE = 256
     }
 }
 

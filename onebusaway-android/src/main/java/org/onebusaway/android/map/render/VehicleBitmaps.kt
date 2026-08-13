@@ -210,11 +210,10 @@ object VehicleBitmaps {
     fun vehicleBitmap(
         context: Context,
         vehicle: VehicleMarker,
-        response: RouteTrips,
         sizeScale: Float = 1f
     ): Bitmap = getBitmap(
         context,
-        vehicleType(vehicle, response),
+        vehicleType(vehicle),
         discColor(context, vehicle),
         occupancyBucket(vehicle),
         sizeScale
@@ -242,18 +241,23 @@ object VehicleBitmaps {
     fun iconKey(
         context: Context,
         vehicle: VehicleMarker,
-        response: RouteTrips,
         sizeScale: Float = 1f
     ): String = "veh:" +
         createBitmapCacheKey(
-            vehicleType(vehicle, response),
+            vehicleType(vehicle),
             discColor(context, vehicle),
             occupancyBucket(vehicle),
             sizeScale
         )
 
-    /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
-    private fun vehicleType(vehicle: VehicleMarker, response: RouteTrips): Int = routeTypeFor(response, vehicle.status.activeTripId)
+    /**
+     * The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree.
+     *
+     * Resolved against the vehicle's **own** poll ([VehicleMarker.source]) rather than a pool handed in
+     * beside it: a set can merge several route polls, and another route's references answer for this
+     * vehicle only by luck — which is exactly how a whole line's trains came to be drawn as buses.
+     */
+    private fun vehicleType(vehicle: VehicleMarker): Int = routeTypeFor(vehicle.source, vehicle.status.activeTripId)
 
     /**
      * The route type behind [activeTripId], or [DEFAULT_VEHICLE_TYPE] when it can't be resolved.

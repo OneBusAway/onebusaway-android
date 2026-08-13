@@ -76,7 +76,6 @@ import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.rental.rentalChargeFraction
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
@@ -141,12 +140,6 @@ class GoogleMapRenderer(
     // The zoom the route-badge icons above were last stamped at. Synced to the live camera by each static
     // redraw and moved by each settle, so the scale a label draws at always answers the camera it's under.
     private var renderedBadgeZoom = map.cameraPosition.zoom
-
-    // The latest trips-for-route poll, kept so a scale change can re-stamp the retained markers' icons
-    // without waiting for the next one. Plain state rather than a StateFlow (matching the maplibre
-    // flavor): the vehicle bubble that used to collect it, to re-render itself from each fresh poll, is
-    // gone — the marker carries what it said (#2194).
-    private var lastVehicleResponse: RouteTrips? = null
 
     // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on
     // the next so the retained route and per-frame dynamic layers survive a static redraw.
@@ -627,8 +620,7 @@ class GoogleMapRenderer(
      * published rather than being inferred from the per-frame motion sample.
      */
     fun reconcileVehicles(set: MapVehicles?) {
-        reconcileVehicleMarkers(set?.markers.orEmpty(), set?.response)
-        lastVehicleResponse = set?.response
+        reconcileVehicleMarkers(set?.markers.orEmpty())
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position (a
@@ -730,7 +722,7 @@ class GoogleMapRenderer(
     }
 
     /** Add/remove vehicle markers to match [markers], (re)setting their icons, titles, and tap data. */
-    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
+    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
@@ -742,43 +734,41 @@ class GoogleMapRenderer(
                 gone.remove()
             }
         }
-        if (response == null) return
         for (vehicle in markers) {
             val existing = vehicleMarkersByTripId[vehicle.activeTripId]
             if (existing == null) {
                 val marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(vehicle.point.toLatLng())
-                        .icon(vehicleIcon(vehicle, response))
+                        .icon(vehicleIcon(vehicle))
                         // Center the disc badge on the vehicle location, so it sits on the route
                         // centerline like the trip map's estimate marker rather than floating off it (#1752).
                         // A plain center anchor is right for both marker shapes: the bitmap reserves the
                         // occupancy tab's depth above the disc as well as below, so its center *is* the
                         // disc's center whether or not a tab is drawn (see [VehicleBitmaps]).
                         .anchor(0.5f, 0.5f)
-                        .title(vehicleTitle(context, vehicle, response))
+                        .title(vehicleTitle(context, vehicle))
                         .zIndex(VEHICLE_Z_INDEX)
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
-                existing.setIcon(vehicleIcon(vehicle, response))
-                existing.title = vehicleTitle(context, vehicle, response)
+                existing.setIcon(vehicleIcon(vehicle))
+                existing.title = vehicleTitle(context, vehicle)
                 vehicleByMarker[existing] = vehicle
             }
         }
     }
 
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor = descriptorCache.get(VehicleBitmaps.iconKey(context, vehicle, response, renderedVehicleScale)) {
-        VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
+    private fun vehicleIcon(vehicle: VehicleMarker): BitmapDescriptor = descriptorCache.get(VehicleBitmaps.iconKey(context, vehicle, renderedVehicleScale)) {
+        VehicleBitmaps.vehicleBitmap(context, vehicle, renderedVehicleScale)
     }
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
         if (scale == renderedVehicleScale) return
         renderedVehicleScale = scale
-        val response = lastVehicleResponse ?: return
-        for ((marker, vehicle) in vehicleByMarker) marker.setIcon(vehicleIcon(vehicle, response))
+        for ((marker, vehicle) in vehicleByMarker) marker.setIcon(vehicleIcon(vehicle))
     }
 
     private fun updateTripOverlay(overlay: TripOverlay?, nowMs: Long) {

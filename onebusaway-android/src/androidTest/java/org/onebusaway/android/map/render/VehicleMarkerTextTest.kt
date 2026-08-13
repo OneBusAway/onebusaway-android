@@ -54,7 +54,7 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = FakeTrip(headsign = "Ballard"), route = FakeRoute(shortName = "44"))
         assertEquals(
             "44 - Ballard - " + context.getString(R.string.realtime_standing_room),
-            vehicleTitle(context, vehicle(Occupancy.STANDING_ROOM_ONLY), response)
+            vehicleTitle(context, vehicle(Occupancy.STANDING_ROOM_ONLY, response))
         )
     }
 
@@ -68,7 +68,7 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = null, route = FakeRoute(shortName = "44"))
         assertEquals(
             context.getString(R.string.vehicle_marker_unidentified) + " - " + context.getString(R.string.realtime_full),
-            vehicleTitle(context, vehicle(Occupancy.FULL), response)
+            vehicleTitle(context, vehicle(Occupancy.FULL, response))
         )
     }
 
@@ -78,7 +78,7 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = FakeTrip(headsign = "Ballard"), route = null)
         assertEquals(
             "Ballard - " + context.getString(R.string.realtime_full),
-            vehicleTitle(context, vehicle(Occupancy.FULL), response)
+            vehicleTitle(context, vehicle(Occupancy.FULL, response))
         )
     }
 
@@ -91,7 +91,7 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = FakeTrip(headsign = null), route = FakeRoute(shortName = null))
         assertEquals(
             context.getString(R.string.vehicle_marker_unidentified) + " - " + context.getString(R.string.realtime_full),
-            vehicleTitle(context, vehicle(Occupancy.FULL), response)
+            vehicleTitle(context, vehicle(Occupancy.FULL, response))
         )
     }
 
@@ -101,7 +101,7 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = null, route = null)
         assertEquals(
             context.getString(R.string.vehicle_marker_unidentified),
-            vehicleTitle(context, vehicle(occupancy = null), response)
+            vehicleTitle(context, vehicle(occupancy = null, response = response))
         )
     }
 
@@ -111,7 +111,7 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = FakeTrip(headsign = "Ballard"), route = FakeRoute(shortName = "44"))
         assertEquals(
             "44 - Ballard",
-            vehicleTitle(context, vehicle(Occupancy.FULL, isRealtime = false), response)
+            vehicleTitle(context, vehicle(Occupancy.FULL, response, isRealtime = false))
         )
     }
 
@@ -125,19 +125,24 @@ class VehicleMarkerTextTest {
         val response = routeTrips(trip = FakeTrip(headsign = "Ballard"), route = FakeRoute(shortName = "44"))
         assertEquals(
             "44 - Ballard - " + context.getString(R.string.realtime_empty),
-            vehicleTitle(context, vehicle(Occupancy.EMPTY), response)
+            vehicleTitle(context, vehicle(Occupancy.EMPTY, response))
         )
         assertEquals(
             "44 - Ballard",
-            vehicleTitle(context, vehicle(occupancy = null), response)
+            vehicleTitle(context, vehicle(occupancy = null, response = response))
         )
     }
 
-    private fun vehicle(occupancy: Occupancy?, isRealtime: Boolean = true): VehicleMarker = VehicleMarker(
+    private fun vehicle(
+        occupancy: Occupancy?,
+        response: RouteTrips,
+        isRealtime: Boolean = true
+    ): VehicleMarker = VehicleMarker(
         activeTripId = "trip1",
         point = GeoPoint(47.6, -122.3),
         isRealtime = isRealtime,
-        status = FakeStatus(occupancy)
+        status = FakeStatus(occupancy),
+        source = response
     )
 
     /** A [RouteTrips] whose references pool holds at most the given trip/route. */

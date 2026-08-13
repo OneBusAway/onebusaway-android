@@ -66,7 +66,6 @@ import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.rental.rentalChargeFraction
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
@@ -188,8 +187,7 @@ class MapLibreRenderer(
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
-    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
-    // each vehicle-set reconcile, so a scale change can re-stamp the retained markers' icons.
+    // (interaction-free) polylines re-added each frame.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
 
@@ -197,7 +195,6 @@ class MapLibreRenderer(
     // band colour changes (#1990); dropped with the marker.
     private val tripMarkerFills = HashMap<String, Int>()
     private val bandPolylines = mutableListOf<Polyline>()
-    private var lastVehicleResponse: RouteTrips? = null
 
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
@@ -439,7 +436,6 @@ class MapLibreRenderer(
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
         mostRecentDataMarker = null
-        lastVehicleResponse = null
     }
 
     /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
@@ -504,8 +500,7 @@ class MapLibreRenderer(
      * published rather than being inferred from the per-frame motion sample.
      */
     fun reconcileVehicles(set: MapVehicles?) {
-        reconcileVehicleMarkers(set?.markers.orEmpty(), set?.response)
-        lastVehicleResponse = set?.response
+        reconcileVehicleMarkers(set?.markers.orEmpty())
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
@@ -597,7 +592,7 @@ class MapLibreRenderer(
     }
 
     /** Add/remove vehicle markers to match [markers], (re)setting their icons, titles, and tap data. */
-    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
+    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
@@ -609,20 +604,19 @@ class MapLibreRenderer(
                 gone.remove()
             }
         }
-        if (response == null) return
         for (vehicle in markers) {
             val existing = vehicleMarkersByTripId[vehicle.activeTripId]
             if (existing == null) {
                 val marker = map.addMarker(
                     MarkerOptions().position(vehicle.point.toLatLng())
-                        .icon(vehicleIcon(vehicle, response))
-                        .title(vehicleTitle(context, vehicle, response))
+                        .icon(vehicleIcon(vehicle))
+                        .title(vehicleTitle(context, vehicle))
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
-                existing.icon = vehicleIcon(vehicle, response)
-                existing.title = vehicleTitle(context, vehicle, response)
+                existing.icon = vehicleIcon(vehicle)
+                existing.title = vehicleTitle(context, vehicle)
                 vehicleByMarker[existing] = vehicle
             }
         }
@@ -633,16 +627,15 @@ class MapLibreRenderer(
     // no-adjustment-available constraint is why the bitmap reserves the occupancy tab's depth above the
     // disc as well as below: it keeps the disc on the bitmap's center even for a marker whose tab hangs
     // off the bottom, so this flavor needs no anchor it cannot express (see [VehicleBitmaps]).
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon = iconFactory.fromBitmap(
-        VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
+    private fun vehicleIcon(vehicle: VehicleMarker): Icon = iconFactory.fromBitmap(
+        VehicleBitmaps.vehicleBitmap(context, vehicle, renderedVehicleScale)
     )
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
         if (scale == renderedVehicleScale) return
         renderedVehicleScale = scale
-        val response = lastVehicleResponse ?: return
-        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle, response)
+        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle)
     }
 
     /**

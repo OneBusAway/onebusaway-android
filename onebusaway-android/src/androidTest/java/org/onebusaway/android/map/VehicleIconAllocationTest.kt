@@ -93,6 +93,7 @@ class VehicleIconAllocationTest {
                     point = v.point,
                     isRealtime = v.status.isLocationRealtime,
                     status = v.status,
+                    source = response,
                     fixTimeMs = v.fixTimeMs
                 )
             }
@@ -129,11 +130,11 @@ class VehicleIconAllocationTest {
             for ((index, vehicle) in vehicles.withIndex()) {
                 val filling = withOccupancy(vehicle, OCCUPANCY_CYCLE[(poll + index) % OCCUPANCY_CYCLE.size])
                 counts.requests++
-                val key = VehicleBitmaps.iconKey(context, filling, response)
+                val key = VehicleBitmaps.iconKey(context, filling)
                 counts.keys.add(key)
                 cache.get(key) {
                     counts.bitmapDecodes++
-                    VehicleBitmaps.vehicleBitmap(context, filling, response)
+                    VehicleBitmaps.vehicleBitmap(context, filling)
                 }
             }
         }
@@ -203,8 +204,8 @@ class VehicleIconAllocationTest {
         val samples = vehicles.flatMap { vehicle ->
             OCCUPANCY_CYCLE.map { occupancy ->
                 val reporting = withOccupancy(vehicle, occupancy)
-                VehicleBitmaps.iconKey(context, reporting, response) to
-                    VehicleBitmaps.vehicleBitmap(context, reporting, response)
+                VehicleBitmaps.iconKey(context, reporting) to
+                    VehicleBitmaps.vehicleBitmap(context, reporting)
             }
         }
         val byKey = samples.groupBy({ it.first }, { it.second })
@@ -237,14 +238,14 @@ class VehicleIconAllocationTest {
         val live = withLiveness(vehicle, isRealtime = true)
         val stale = withLiveness(vehicle, isRealtime = false)
 
-        val liveKey = VehicleBitmaps.iconKey(context, live, response)
-        val staleKey = VehicleBitmaps.iconKey(context, stale, response)
+        val liveKey = VehicleBitmaps.iconKey(context, live)
+        val staleKey = VehicleBitmaps.iconKey(context, stale)
         assertNotEquals("liveness must be part of the icon key", liveKey, staleKey)
 
         val counts = Counts()
         val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
-        cache.get(liveKey) { VehicleBitmaps.vehicleBitmap(context, live, response) }
-        cache.get(staleKey) { VehicleBitmaps.vehicleBitmap(context, stale, response) }
+        cache.get(liveKey) { VehicleBitmaps.vehicleBitmap(context, live) }
+        cache.get(staleKey) { VehicleBitmaps.vehicleBitmap(context, stale) }
         assertEquals("a changed disc color must mint a second descriptor", 2, counts.allocations)
     }
 
@@ -261,13 +262,13 @@ class VehicleIconAllocationTest {
 
         assertEquals(
             "schedule deviation must not reach the marker icon",
-            VehicleBitmaps.iconKey(context, early, response),
-            VehicleBitmaps.iconKey(context, late, response)
+            VehicleBitmaps.iconKey(context, early),
+            VehicleBitmaps.iconKey(context, late)
         )
         assertTrue(
             "an early and a late vehicle must render the identical disc",
-            VehicleBitmaps.vehicleBitmap(context, early, response)
-                .sameAs(VehicleBitmaps.vehicleBitmap(context, late, response))
+            VehicleBitmaps.vehicleBitmap(context, early)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, late))
         )
     }
 
@@ -284,8 +285,8 @@ class VehicleIconAllocationTest {
 
         assertNotEquals(
             "the band colour must be part of the icon key",
-            VehicleBitmaps.iconKey(context, unselected, response),
-            VehicleBitmaps.iconKey(context, selected, response)
+            VehicleBitmaps.iconKey(context, unselected),
+            VehicleBitmaps.iconKey(context, selected)
         )
         assertEquals(
             "the selected vehicle's disc must be drawn in the band's colour",
@@ -305,8 +306,8 @@ class VehicleIconAllocationTest {
 
         assertEquals(
             "a band colour must not reach a scheduled vehicle's disc",
-            VehicleBitmaps.iconKey(context, scheduled, response),
-            VehicleBitmaps.iconKey(context, scheduled.copy(bandColor = 0xFFC05010.toInt()), response)
+            VehicleBitmaps.iconKey(context, scheduled),
+            VehicleBitmaps.iconKey(context, scheduled.copy(bandColor = 0xFFC05010.toInt()))
         )
     }
 
@@ -354,14 +355,14 @@ class VehicleIconAllocationTest {
         val empty = withOccupancy(vehicle, Occupancy.EMPTY)
         val full = withOccupancy(vehicle, Occupancy.FULL)
 
-        val emptyKey = VehicleBitmaps.iconKey(context, empty, response)
-        val fullKey = VehicleBitmaps.iconKey(context, full, response)
+        val emptyKey = VehicleBitmaps.iconKey(context, empty)
+        val fullKey = VehicleBitmaps.iconKey(context, full)
         assertNotEquals("occupancy must be part of the icon key", emptyKey, fullKey)
 
         val counts = Counts()
         val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
-        cache.get(emptyKey) { VehicleBitmaps.vehicleBitmap(context, empty, response) }
-        cache.get(fullKey) { VehicleBitmaps.vehicleBitmap(context, full, response) }
+        cache.get(emptyKey) { VehicleBitmaps.vehicleBitmap(context, empty) }
+        cache.get(fullKey) { VehicleBitmaps.vehicleBitmap(context, full) }
         assertEquals("a changed fill level must mint a second descriptor", 2, counts.allocations)
     }
 
@@ -378,13 +379,13 @@ class VehicleIconAllocationTest {
 
         assertNotEquals(
             "a vehicle reporting no occupancy must not share an icon with an empty one",
-            VehicleBitmaps.iconKey(context, unreported, response),
-            VehicleBitmaps.iconKey(context, empty, response)
+            VehicleBitmaps.iconKey(context, unreported),
+            VehicleBitmaps.iconKey(context, empty)
         )
         assertTrue(
             "...and must not render the same bitmap either",
-            !VehicleBitmaps.vehicleBitmap(context, unreported, response)
-                .sameAs(VehicleBitmaps.vehicleBitmap(context, empty, response))
+            !VehicleBitmaps.vehicleBitmap(context, unreported)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, empty))
         )
     }
 
@@ -401,13 +402,13 @@ class VehicleIconAllocationTest {
 
         assertEquals(
             "occupancy must not reach a scheduled vehicle's icon",
-            VehicleBitmaps.iconKey(context, plain, response),
-            VehicleBitmaps.iconKey(context, crowded, response)
+            VehicleBitmaps.iconKey(context, plain),
+            VehicleBitmaps.iconKey(context, crowded)
         )
         assertTrue(
             "a scheduled vehicle renders the identical tabless disc whatever occupancy says",
-            VehicleBitmaps.vehicleBitmap(context, plain, response)
-                .sameAs(VehicleBitmaps.vehicleBitmap(context, crowded, response))
+            VehicleBitmaps.vehicleBitmap(context, plain)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, crowded))
         )
     }
 

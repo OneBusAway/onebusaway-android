@@ -24,7 +24,7 @@ agp = "9.3.1"
 kotlin = "2.4.10"
 # KSP2 is versioned independently of Kotlin — plain semver, not the old kotlinVersion-kspVersion
 # format. Bump on its own cadence against the compatibility range in the KSP release notes.
-ksp = "2.3.10"
+ksp = "2.3.11"
 googleServices = "4.5.0"
 hilt = "2.60.1"
 # Apollo: the Gradle plugin and apollo-runtime share this version.

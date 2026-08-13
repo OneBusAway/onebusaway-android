@@ -229,6 +229,23 @@ class MapLibreRenderer(
     // is there: a marker holds its own reference to the Icon it was given. Freed in [dispose].
     private val tripCircleIcons = LruCache<Pair<Int, Int>, Icon>(TRIP_ICON_CACHE_SIZE)
 
+    // Vehicle marker icons by [VehicleBitmaps.iconKey] — the maplibre counterpart of the Google flavor's
+    // descriptorCache on the same path, keyed the same way, and cached for the reason [routeBadgeIcons]
+    // and [tripCircleIcons] are: `iconFactory.fromBitmap` mints a fresh native sprite id per call (two
+    // icons made from equal bitmaps never dedupe) and `Marker.icon =` does not release the icon it
+    // replaces. [VehicleBitmaps]'s own LRU bounds the *bitmaps*, which is why this flavor got away
+    // without a second level for so long — but that cache hands back the same Bitmap, and re-wrapping it
+    // still registers another sprite. So a reconcile re-stamping every retained vehicle each poll, and
+    // [updateVehicleScale] re-stamping them on each camera settle, leaked a sprite per vehicle per pass
+    // for the life of the map — an unbounded climb toward the SDK's TooManyIconsException on a long
+    // session in route mode. Freed in [dispose].
+    //
+    // Sized like the badges rather than the trip glyphs: a busy route's vehicles span several fullness
+    // states per disc colour, and a stop-focus or continuation view draws several routes' worth at once.
+    // Evicting is safe for the same reason it is there — a marker holds its own reference to the Icon it
+    // was given, so a still-drawn vehicle keeps its sprite and an evicted key is merely re-minted.
+    private val vehicleIcons = LruCache<String, Icon>(VEHICLE_ICON_CACHE_SIZE)
+
     // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION],
     // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
     // classic annotation API has no circle). [pingStart] is null until the first tick stamps it; null id = no ping.
@@ -430,6 +447,7 @@ class MapLibreRenderer(
         tripCircleIcons.evictAll()
         bandPolylines.clear()
         vehicleByMarker.clear()
+        vehicleIcons.evictAll()
         rentalByMarker.clear()
         rentalIcons.clear()
         pinnedTripByMarker = null
@@ -627,9 +645,12 @@ class MapLibreRenderer(
     // no-adjustment-available constraint is why the bitmap reserves the occupancy tab's depth above the
     // disc as well as below: it keeps the disc on the bitmap's center even for a marker whose tab hangs
     // off the bottom, so this flavor needs no anchor it cannot express (see [VehicleBitmaps]).
-    private fun vehicleIcon(vehicle: VehicleMarker): Icon = iconFactory.fromBitmap(
-        VehicleBitmaps.vehicleBitmap(context, vehicle, renderedVehicleScale)
-    )
+    private fun vehicleIcon(vehicle: VehicleMarker): Icon {
+        val key = VehicleBitmaps.iconKey(context, vehicle, renderedVehicleScale)
+        return vehicleIcons.get(key)
+            ?: iconFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, renderedVehicleScale))
+                .also { vehicleIcons.put(key, it) }
+    }
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
@@ -801,6 +822,12 @@ class MapLibreRenderer(
         // Far smaller than the badge cache because only one vehicle is selected at a time, so exactly two
         // of these are ever on the map at once; this is reuse across selections, not a working set.
         private const val TRIP_ICON_CACHE_SIZE = 16
+
+        // A busy route's vehicles span the five fullness states across the handful of disc colours a
+        // stop-focus or continuation view draws at once, times the settle-time detail scales
+        // [routeLineWidthScale] resolves to. Sized like the badges rather than the trip glyphs because
+        // this is a genuine working set, not reuse across selections.
+        private const val VEHICLE_ICON_CACHE_SIZE = 256
     }
 }
 

@@ -74,8 +74,9 @@ object VehicleBitmaps {
     // it was 8 heading octants x 4 pip levels = 32 icons per (mode, disc colour), and is now 5 fullness
     // states (absent + 0..3 filled) — a handful for one route once its scheduled vehicles are counted, and
     // stop-focus/continuation views draw several routes at once, so this is sized for a few of those
-    // rather than one. Overflow only costs a re-render. The Google flavor has a second-level
-    // BitmapDescriptor cache in front of this; maplibre doesn't, which is why the bound lives here.
+    // rather than one. Overflow only costs a re-render. Both flavors put a second-level icon cache in
+    // front of this, keyed by [iconKey] — the Google flavor's BitmapDescriptor cache and maplibre's
+    // vehicleIcons — since re-wrapping even a cached Bitmap mints a fresh native texture/sprite.
     private const val MAX_CACHE_BYTES = 4 * 1024 * 1024
 
     /** The composited marker fills a square this many dp on a side (the former raster's size). */

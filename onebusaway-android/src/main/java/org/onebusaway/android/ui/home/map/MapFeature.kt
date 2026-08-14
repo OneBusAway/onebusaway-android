@@ -260,14 +260,11 @@ fun MapFeature(
                     )
                     return
                 }
-                // Over a stop's focused route the tapped vehicle is a focus level of its own (#2205), so
-                // HOME owns the transition and the selection arrives as its directive; a background tap
-                // then unwinds it. Anywhere else (standalone route focus, directions) the tap stays what
-                // it has always been: a bare render selection with nothing to unwind. Same ask-HOME-then-
-                // render shape as the stop and bike taps above.
-                if (!homeViewModel.selectFocusedRouteTrip(tripId)) {
-                    mapViewModel.selectVehicleTrip(tripId)
-                }
+                // The tapped vehicle is a focus level of its own wherever a route is drawn — over a
+                // focused stop, a standalone route, or a directions leg (#2205, #2224) — so HOME owns the
+                // transition and the selection arrives as its directive; a background tap then unwinds
+                // it. Same ask-HOME-then-render shape as the stop and bike taps above.
+                homeViewModel.selectFocusedRouteTrip(tripId)
             }
 
             override fun onRouteContinuationClick(
@@ -353,13 +350,18 @@ fun MapFeature(
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
                     mapViewModel.recenterOnFocusedStop(directive.point)
-                is MapDirective.ShowRoute ->
+                is MapDirective.ShowRoute -> {
                     mapViewModel.toRoute(
                         directive.request,
                         directive.stopScoped,
                         directive.frameRoute,
                         directive.withinDirections
                     )
+                    // After the route, always, and null included: entering a route tears the previous
+                    // session's selection down, so this is what restores the focus's own — and what
+                    // stops a route change from leaving a previous trip selected (#2224).
+                    mapViewModel.selectVehicleTrip(directive.selectedTripId)
+                }
                 is MapDirective.RestoreViewport ->
                     mapViewModel.restoreViewport(directive.viewport)
                 MapDirective.FrameRoute -> mapViewModel.frameRoute()

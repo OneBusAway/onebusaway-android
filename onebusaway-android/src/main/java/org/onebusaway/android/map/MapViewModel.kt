@@ -426,9 +426,9 @@ class MapViewModel @Inject constructor(
     /**
      * Select the vehicle running [tripId] (null clears), driving its most-recent-data marker, exact
      * shape/stops, extrapolation confidence band and block continuation. The map's only vehicle-selection
-     * entry point: over a stop's focused route, Home drives it from its stop→route→trip focus level
-     * (#2205) so the selection is undone by the same background tap that peels that level; elsewhere a
-     * vehicle tap sets it directly.
+     * entry point, and it is never called from a tap: Home drives it from the trip rung of whichever
+     * focus draws the route — a stop's, a standalone one, or a directions leg's (#2205, #2224) — so the
+     * selection is a projection of that focus and is undone by the same background tap that peels it.
      */
     fun selectVehicleTrip(tripId: String?) {
         renderState.setSelectedVehicle(tripId)
@@ -438,10 +438,10 @@ class MapViewModel @Inject constructor(
      * Whether tapping the vehicle on [tripId] is a *second* tap on the one already selected — the host
      * opens its trip details on that tap (#2194).
      *
-     * Asked here because this holds the selection whichever route it arrived by: over a stop's focused
-     * route Home drives it as a focus level (#2205), elsewhere [selectVehicleTrip] sets it directly, and
-     * both land in the same render state. An adapter answering it for itself would be reading state it
-     * doesn't own, a poll behind.
+     * Asked here because this holds the selection whichever route it arrived by: every route-bearing
+     * focus drives it through the same [selectVehicleTrip] directive, and all of them land in this one
+     * render state. An adapter answering it for itself would be reading state it doesn't own, a poll
+     * behind.
      */
     fun isVehicleReTap(tripId: String?): Boolean = isVehicleReTap(renderState.selectedVehicleTripId.value, tripId)
 

@@ -76,6 +76,7 @@ import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.components.etaPillFocus
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
@@ -966,6 +967,12 @@ fun HomeScreen(
                                             // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
                                             // ruled at the moment the plan has the rider reach the stop (#2125).
                                             stopEtaStrip = { ride, stop ->
+                                                // The focused leg's boarding stop: the one strip that reads the
+                                                // hoisted session rather than opening a second one on the stop the
+                                                // map is already polling — and so the one strip whose pills can be
+                                                // the map's drilled-into vehicle (#2224).
+                                                val isRideBoardStop =
+                                                    stop.stopId != null && stop.stopId == rideBoardStop?.id
                                                 DirectionStopEtaStrip(
                                                     routeLeg = ride.routeLeg,
                                                     stop = stop,
@@ -976,11 +983,14 @@ fun HomeScreen(
                                                     onFocusVehicle = { request ->
                                                         homeViewModel.focusDirectionsRouteVehicle(request, ride.routeLeg, ride.legPoints)
                                                     },
-                                                    // The focused leg's Board row reads the hoisted session rather than
-                                                    // opening a second one on the stop the map is already polling.
-                                                    hoistedSession = rideArrivalsSession?.takeIf {
-                                                        stop.stopId != null && stop.stopId == rideBoardStop?.id
-                                                    }
+                                                    hoistedSession = rideArrivalsSession?.takeIf { isRideBoardStop },
+                                                    // Same rung and same rim colour the arrivals drawer outlines its
+                                                    // focused pill with, so a pill tapped here and one tapped there
+                                                    // look alike as well as behaving alike.
+                                                    pillFocus = etaPillFocus(
+                                                        rideRouteFocus?.selectedTripId?.takeIf { isRideBoardStop },
+                                                        selectedTripBandColor
+                                                    )
                                                 )
                                             },
                                             // Its own settled height (peek vs expanded), not a measured

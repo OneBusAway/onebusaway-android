@@ -91,6 +91,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.arrivals.components.EtaPillFocus
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
@@ -419,7 +420,14 @@ internal fun DirectionStopEtaStrip(
     onEditReminder: (ReminderEditorArgs) -> Unit,
     onFocusVehicle: (ShowRouteRequest) -> Unit,
     modifier: Modifier = Modifier,
-    hoistedSession: ArrivalsSession? = null
+    hoistedSession: ArrivalsSession? = null,
+    /**
+     * The trip this strip's stop is drilled into on the map, if any (#2224) — the directions half of the
+     * treatment a stop's arrivals row gives its focused pill. Only ever non-null on the focused leg's
+     * boarding-stop strip, which is the one the map's vehicle was tapped from; every other strip on the
+     * itinerary is showing some other stop's departures and has no drilled-into vehicle to mark.
+     */
+    pillFocus: EtaPillFocus? = null
 ) {
     val stopId = stop.stopId
     val point = stop.point
@@ -458,6 +466,7 @@ internal fun DirectionStopEtaStrip(
         reachStopTime = reachStopTime,
         session = session,
         rowPadding = rowPadding,
+        pillFocus = pillFocus,
         modifier = modifier
     )
 }
@@ -469,6 +478,7 @@ private fun DirectionStopEtaStripContent(
     reachStopTime: ServerTime?,
     session: ArrivalsSession,
     rowPadding: Modifier,
+    pillFocus: EtaPillFocus?,
     modifier: Modifier
 ) {
     val state by session.viewModel.state.collectAsStateWithLifecycle()
@@ -498,7 +508,8 @@ private fun DirectionStopEtaStripContent(
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
         routeBadgeFor = { badgesByTrip[it] },
-        marker = reachStopTime?.let { rememberReachStopMarker(it) }
+        marker = reachStopTime?.let { rememberReachStopMarker(it) },
+        focus = pillFocus
     )
 }
 

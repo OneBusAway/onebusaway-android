@@ -296,11 +296,14 @@ internal fun EtaStrip(
 }
 
 /**
- * The trip a row is drilled into (the stop→route→trip focus, #2205) and the stroke to outline its pill
- * with. One value rather than two loose parameters, so a pill can never be told which trip is focused
- * without also being told what to draw for it. [outline] is literally the row card's own selection
- * border — the same object, built once by [RouteArrivalRow] — so the pill reads as belonging to the
- * outlined row and the two can't drift in width or colour.
+ * The trip this strip is drilled into (the trip rung of the current focus, #2205/#2224) and the stroke
+ * to outline its pill with. One value rather than two loose parameters, so a pill can never be told
+ * which trip is focused without also being told what to draw for it.
+ *
+ * Built in exactly one place — `etaPillFocus` — for both surfaces that show a focused pill: a stop's
+ * arrivals row, where [outline] is the row card's own selection stroke so the pill reads as belonging to
+ * the outlined row, and a directions leg's inline strip, which has no row card and wears the band tint
+ * alone. Sharing the builder is what keeps the two from drifting in width or colour.
  *
  * [tripId] is a vehicle, not one arrival instance — see the match site in [EtaStrip] for why that is
  * narrower than the strip's own item key, and why it has to be.

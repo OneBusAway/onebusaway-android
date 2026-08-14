@@ -296,6 +296,23 @@ internal fun focusedPillRimColor(
     cardSelectionColor: Int?
 ): Int? = if (selected) bandColor ?: cardSelectionColor else null
 
+/** The focused pill's rim width, shared by both producers of an [EtaPillFocus] so they can't drift. */
+private val FOCUSED_PILL_RIM = 2.dp
+
+/**
+ * The focused-pill treatment for [tripId] drawn in [rimColor], or null when nothing is drilled into or
+ * there is no colour to draw it in.
+ *
+ * The one place an [EtaPillFocus] is built, for both surfaces that show a focused pill: a stop's arrivals
+ * row (above) and a directions leg's inline ETA strip (#2224). The rung the two read is the same one —
+ * `CurrentFocus.selectedTripId` — so what they draw for it should be the same too.
+ */
+internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
+    val trip = tripId ?: return null
+    val color = rimColor ?: return null
+    return EtaPillFocus(trip, BorderStroke(FOCUSED_PILL_RIM, Color(color)))
+}
+
 /**
  * One arrivals row for a single (route, direction): the route badge on the left, and on the right
  * the direction name over a horizontally-scrollable strip of per-trip ETA pills (soonest first).
@@ -360,9 +377,10 @@ fun RouteArrivalRow(
     val selectionBorder = selectionColor
         ?.takeIf { selected }
         ?.let { BorderStroke(2.dp, Color(it)) }
-    val pillBorder = focusedPillRimColor(selected, selectedTripBandColor, selectionColor)
-        ?.let { BorderStroke(2.dp, Color(it)) }
-    val pillFocus = pillBorder?.let { border -> selectedTripId?.let { EtaPillFocus(it, border) } }
+    val pillFocus = etaPillFocus(
+        selectedTripId,
+        focusedPillRimColor(selected, selectedTripBandColor, selectionColor)
+    )
     ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(

@@ -26,11 +26,17 @@ package org.onebusaway.android.map
  * @property directionStopId when non-null (the arrivals "show vehicles on map" launch), the stop whose
  *   direction the map narrows to; null shows the whole route. It's also the *originating stop* framed
  *   alongside the vehicle by [focusTripId].
- * @property focusTripId when non-null (the arrivals **ETA-pill** tap), the trip whose live vehicle the
- *   map fits into view together with the originating stop ([directionStopId]) — a one-shot framing of the
- *   vehicle↔stop relationship. When no live vehicle is running that trip, the map shows the route and
- *   raises the "vehicle isn't on the map" toast. A plain arrival-row tap leaves this null (frame the whole
- *   route); only the ETA pill sets it.
+ * @property focusTripId when non-null (the arrivals **ETA-pill** tap, or a coach-number search hit), the
+ *   trip whose live vehicle the map fits into view together with the originating stop
+ *   ([directionStopId]) — a one-shot framing of the vehicle↔stop relationship. When no live vehicle is
+ *   running that trip, the map shows the route and raises the "vehicle isn't on the map" toast. A plain
+ *   arrival-row tap leaves this null (frame the whole route); only the ETA pill sets it.
+ *
+ *   **A camera instruction, never retained state.** Which trip the rider is drilled into is a rung of the
+ *   focus itself (`CurrentFocus.selectedTripId`, #2224), minted from this field by the gesture that
+ *   carries it and kept there afterwards. Every replay path — an arrivals poll, a back-restore — sends a
+ *   request with this null, so returning to a focus redraws its route without re-flying the camera to the
+ *   vehicle and re-pinging it.
  * @property initialDirectionId when non-null (a route-continuation or adjacency-badge tap), the GTFS
  *   direction to show instead of the route's default — validated against the loaded route's directions
  *   by [RouteMapController], falling back to the default when it doesn't match.

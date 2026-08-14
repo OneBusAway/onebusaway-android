@@ -51,11 +51,14 @@ internal object CurrentFocusPersistence {
         return when (state.get<String>(KEY_FOCUS_KIND)) {
             FOCUS_STOP -> stop?.let { CurrentFocus.Stop(it, readStopRoute(state)) }
                 ?: CurrentFocus.None
-            FOCUS_ROUTE -> readRouteTarget(state)?.let { CurrentFocus.Route(it) } ?: CurrentFocus.None
+            FOCUS_ROUTE -> readRouteTarget(state)
+                ?.let { CurrentFocus.Route(it, state[KEY_ROUTE_SELECTED_TRIP]) }
+                ?: CurrentFocus.None
             FOCUS_BIKE -> state.get<String>(KEY_BIKE_STATION)?.let { CurrentFocus.BikeStation(it) }
                 ?: CurrentFocus.None
             // A restored directions focus returns to the itinerary overview; the transient leg
-            // sub-focus isn't persisted.
+            // sub-focus isn't persisted — and with it goes the trip rung it would have carried, since
+            // there is no leg left to have drilled into.
             FOCUS_DIRECTIONS -> CurrentFocus.Directions()
             FOCUS_NONE -> CurrentFocus.None
             else -> readLegacyFocus(state, stop)
@@ -91,7 +94,9 @@ internal object CurrentFocusPersistence {
         state[KEY_ROUTE_LEG_DIRECTIONS] = selected?.legs
             ?.map { it.directionId ?: NO_DIRECTION }
             ?.toIntArray()
-        state[KEY_ROUTE_SELECTED_TRIP] = selected?.selectedTripId
+        // The drilled-into trip off whichever focus holds it (#2224) — one key, because the focus kinds
+        // that can carry the rung are mutually exclusive and only the current one is ever written.
+        state[KEY_ROUTE_SELECTED_TRIP] = focus.selectedTripId
     }
 
     private fun readLegacyFocus(state: SavedStateHandle, stop: FocusedStop?): CurrentFocus {

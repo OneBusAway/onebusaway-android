@@ -22,9 +22,10 @@ import org.junit.Test
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * Unit tests for [CorrectionSmoother]: the decaying-correction marker glide. Coordinates are kept
- * tiny so 1° ≈ 111 km dwarfs the 2 km snap gate only where a test wants it to; otherwise jumps stay
- * well under the gate so they smooth rather than snap.
+ * Unit tests for [CorrectionSmoother] — the decaying-correction marker glide — and for
+ * [SingleSubjectSmoother], the one-marker-at-a-time wrapper the fast-estimate marker uses.
+ * Coordinates are kept tiny so 1° ≈ 111 km dwarfs the 2 km snap gate only where a test wants it to;
+ * otherwise jumps stay well under the gate so they smooth rather than snap.
  */
 class CorrectionSmootherTest {
 
@@ -171,30 +172,48 @@ class CorrectionSmootherTest {
         assertFalse(s.isSettling("gone"))
     }
 
+    private fun singleSubject() = SingleSubjectSmoother(smoother())
+
     /**
-     * The fast-estimate marker's contract (#2222): its state is keyed by the selected trip, so switching
-     * vehicles jumps the marker to the new one while a fresh fix on the *same* vehicle still smooths.
-     * A shared key would instead correct the whole inter-vehicle displacement — the marker sweeping
-     * across the map on a tap.
+     * The fast-estimate marker's contract (#2222): a change of subject is not a fresh fix on the old
+     * one, so the marker jumps to the newly tapped vehicle instead of correcting the whole displacement
+     * between the two — which looked like the band being re-drawn, sweeping across the map.
      */
     @Test
-    fun switchingKeys_jumpsInsteadOfSweepingAcrossTheGap() {
-        val s = smoother()
-        // Vehicle A is being tracked and has just absorbed a fix.
+    fun changingSubject_showsTheNewSubjectExactly() {
+        val s = singleSubject()
+        // Vehicle A is drawn and has just absorbed a fix, so a correction is in flight.
         s.prime("tripA", p(0.0, 0.0), fixTimeMs = 1L)
-        s.displayPosition("tripA", p(0.001, 0.0), fixTimeMs = 2L, nowMs = 100L)
-        assertTrue(s.isSettling("tripA"))
+        val settling = s.displayPosition("tripA", p(0.001, 0.0), fixTimeMs = 2L, nowMs = 100L)
+        assertEquals(0.0, settling.latitude, 1e-9) // still showing where A was
 
-        // Selecting vehicle B: retain only its key, then draw it. Its (nearby, so otherwise smoothable)
-        // position is shown exactly — no correction carried over from where A's marker was.
-        s.retainOnly(setOf("tripB"))
+        // Tap vehicle B: its (nearby, so otherwise smoothable) position is shown exactly.
         val onTap = s.displayPosition("tripB", p(0.005, 0.0), fixTimeMs = 7L, nowMs = 200L)
         assertEquals(0.005, onTap.latitude, 1e-12)
-        assertFalse(s.isSettling("tripB"))
+    }
 
-        // B's own next fix still smooths: it corrects from where B was shown, not from the new target.
-        val bFresh = s.displayPosition("tripB", p(0.006, 0.0), fixTimeMs = 8L, nowMs = 300L)
-        assertEquals(0.005, bFresh.latitude, 1e-9)
-        assertTrue(s.isSettling("tripB"))
+    /** Between fixes on one subject nothing is dropped, so a fresh fix still smooths as before. */
+    @Test
+    fun sameSubject_stillSmoothsAcrossAFreshFix() {
+        val s = singleSubject()
+        s.prime("tripB", p(0.005, 0.0), fixTimeMs = 7L)
+
+        // The fresh fix corrects from where the marker was shown, not from the new target.
+        val fresh = s.displayPosition("tripB", p(0.006, 0.0), fixTimeMs = 8L, nowMs = 300L)
+        assertEquals(0.005, fresh.latitude, 1e-9)
+        // ...and converges onto it by the end of the correction.
+        val settled = s.displayPosition("tripB", p(0.006, 0.0), fixTimeMs = 8L, nowMs = 300L + duration)
+        assertEquals(0.006, settled.latitude, 1e-12)
+    }
+
+    /** Deselecting forgets the subject, so re-selecting the same vehicle later starts fresh too. */
+    @Test
+    fun clear_forgetsTheSubject() {
+        val s = singleSubject()
+        s.prime("tripA", p(0.0, 0.0), fixTimeMs = 1L)
+        s.clear()
+
+        val reselected = s.displayPosition("tripA", p(0.001, 0.0), fixTimeMs = 2L, nowMs = 100L)
+        assertEquals(0.001, reselected.latitude, 1e-12)
     }
 }

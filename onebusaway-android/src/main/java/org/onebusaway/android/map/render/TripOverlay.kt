@@ -43,12 +43,9 @@ data class DataAgeMarker(val point: GeoPoint, val ageMillis: Long)
  * renderers draw the same overlay. On a frame with no usable estimate [fastEstimatePoint] is null and
  * [band] is empty.
  *
- * @property tripId the trip this frame's overlay describes, or null when nothing is selected. The
- *   renderer keys the fast marker's fix-correction state on it, so the smoothing is scoped to one
- *   vehicle: tapping a different one is a change of subject, not a fresh fix on the same subject, and
- *   the marker jumps to the new selection instead of sweeping across the map to it (#2222). Carried on
- *   the overlay rather than read from the selection separately, so the identity can't skew from the
- *   point it belongs to on the frame a tap lands.
+ * @property tripId the trip this frame's overlay describes — the fast marker's smoothing subject
+ *   ([SingleSubjectSmoother], #2222). Carried on the overlay rather than read from the selection
+ *   separately, so the identity can't skew from the point it belongs to on the frame a tap lands
  * @property fastEstimatePoint the optimistic (high-quantile) "best case" position, or null
  * @property band the graded uncertainty band over the route shape (empty when no estimate)
  * @property fixTimeMs the latest AVL fix's timestamp — constant between fixes, so a change signals
@@ -59,7 +56,7 @@ data class DataAgeMarker(val point: GeoPoint, val ageMillis: Long)
  *   no estimate at all, because the data dot is drawn from the selection, not from the band
  */
 data class TripOverlay(
-    val tripId: String? = null,
+    val tripId: String,
     val fastEstimatePoint: GeoPoint? = null,
     val band: List<BandSegment> = emptyList(),
     val fixTimeMs: Long = 0L,

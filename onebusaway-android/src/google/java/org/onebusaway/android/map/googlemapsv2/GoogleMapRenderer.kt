@@ -65,6 +65,7 @@ import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.STOP_ROUTE_LABEL_Z_INDEX
+import org.onebusaway.android.map.render.SingleSubjectSmoother
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
@@ -795,25 +796,20 @@ class GoogleMapRenderer(
         while (bandPolylines.size > band.size) {
             bandPolylines.removeAt(bandPolylines.size - 1).remove()
         }
-        // The fast-estimate marker owns its smoothing + fixed title; hand it the trip it belongs to (which
-        // scopes that smoothing to one vehicle), the fresh fix + tick clock, and the band's colour to fill
-        // its disc with. A frame with no overlay leaves the marker gone.
-        fastEstimate.update(
-            overlay?.tripId,
-            overlay?.fastEstimatePoint,
-            overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR,
-            overlay?.fixTimeMs ?: 0L,
-            nowMs
-        )
+        // The fast-estimate marker owns its smoothing + fixed title; hand it the overlay it draws (the
+        // trip it belongs to, its point, its fix, and the band's colour to fill its disc with) and the
+        // tick clock. A frame with no overlay leaves the marker gone.
+        fastEstimate.update(overlay, nowMs)
     }
 
     /**
      * The selected vehicle's fast-estimate marker: owns its native [Marker] and its own
-     * [CorrectionSmoother], with a fixed info-window [title] set at creation. [update] creates it on the
-     * first non-null point, removes it on null, and smooths it across a fresh fix *on the same trip*. The
-     * icon resolves lazily on first show via [iconProvider] (so it isn't built until a vehicle is
-     * selected), filled with the band's colour and re-stamped when that colour changes (#1990). Driven
-     * every tick (the overlay sampler runs each frame), so the decay just progresses.
+     * [SingleSubjectSmoother] — so it smooths across a fresh fix on the trip it is drawn for, and jumps
+     * when a tap makes that a different trip (#2222) — with a fixed info-window [title] set at creation.
+     * [update] creates it on the first overlay with a point and removes it when there is none. The icon
+     * resolves lazily on first show via [iconProvider] (so it isn't built until a vehicle is selected),
+     * filled with the band's colour and re-stamped when that colour changes (#1990). Driven every tick
+     * (the overlay sampler runs each frame), so the decay just progresses.
      */
     private inner class TripEstimateMarker(
         private val iconProvider: (Int) -> BitmapDescriptor,
@@ -821,28 +817,19 @@ class GoogleMapRenderer(
         private val zIndex: Float
     ) {
         private var marker: Marker? = null
-        private val smoother = CorrectionSmoother()
+        private val smoother = SingleSubjectSmoother()
 
         // The fill the current icon was stamped with; 0 whenever there is no marker.
         private var iconFillColor: Int = 0
 
-        fun update(tripId: String?, point: GeoPoint?, fillColor: Int, fixTimeMs: Long, nowMs: Long) {
-            val existing = marker
-            if (point == null) {
-                existing?.remove()
-                marker = null
-                iconFillColor = 0
-                smoother.retainOnly(emptySet()) // drop any in-flight correction + forget
+        fun update(overlay: TripOverlay?, nowMs: Long) {
+            val point = overlay?.fastEstimatePoint
+            if (overlay == null || point == null) {
+                dispose()
                 return
             }
-            // Correction state belongs to one vehicle, so keep only the trip this frame draws. Tapping a
-            // different vehicle is a change of subject, not a fresh fix on this one: with the previous
-            // trip's state dropped the smoother has nothing to correct from, and the marker jumps to the
-            // new selection rather than sweeping across the map to it — which read as the band being
-            // re-drawn (#2222). The most-recent-data dot already behaves this way. Between fixes on one
-            // trip the key is stable, so a fresh fix still smooths.
-            val easeKey = tripId.orEmpty()
-            smoother.retainOnly(setOf(easeKey))
+            val fillColor = overlay.markerColorArgb
+            val existing = marker
             if (existing == null) {
                 marker = map.addMarkerOrFail(
                     MarkerOptions()
@@ -853,24 +840,24 @@ class GoogleMapRenderer(
                         .zIndex(zIndex)
                 )
                 iconFillColor = fillColor
-                smoother.prime(easeKey, point, fixTimeMs)
+                smoother.prime(overlay.tripId, point, overlay.fixTimeMs)
                 return
             }
             if (fillColor != iconFillColor) {
                 existing.setIcon(iconProvider(fillColor))
                 iconFillColor = fillColor
             }
-            existing.position = smoother.displayPosition(easeKey, point, fixTimeMs, nowMs).toLatLng()
+            existing.position =
+                smoother.displayPosition(overlay.tripId, point, overlay.fixTimeMs, nowMs).toLatLng()
         }
 
-        /** Remove the marker and drop any in-flight correction — the null-point branch of [update]. */
-        fun dispose() = update(
-            tripId = null,
-            point = null,
-            fillColor = TripMarkerBitmaps.DEFAULT_FILL_COLOR,
-            fixTimeMs = 0L,
-            nowMs = 0L
-        )
+        /** Remove the marker and drop any in-flight correction. */
+        fun dispose() {
+            marker?.remove()
+            marker = null
+            iconFillColor = 0
+            smoother.clear()
+        }
     }
 
     // The overlay/dot icons, cached through [descriptorCache] by a stable per-icon key so each resolves

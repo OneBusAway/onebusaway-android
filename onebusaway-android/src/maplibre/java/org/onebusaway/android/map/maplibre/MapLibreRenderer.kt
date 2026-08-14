@@ -56,6 +56,7 @@ import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
+import org.onebusaway.android.map.render.SingleSubjectSmoother
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
@@ -186,23 +187,23 @@ class MapLibreRenderer(
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
-    // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
-    // (interaction-free) polylines re-added each frame.
+    // vehicles keyed by active trip id, the selected vehicle's single fast-estimate marker, and the
+    // band's (interaction-free) polylines re-added each frame.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
-    private val tripMarkersByRole = HashMap<String, Marker>()
+    private var fastEstimateMarker: Marker? = null
 
-    // The fill each trip marker's icon is currently stamped with, so a role is re-stamped only when its
-    // band colour changes (#1990); dropped with the marker.
-    private val tripMarkerFills = HashMap<String, Int>()
+    // The fill the fast-estimate marker's icon is currently stamped with, so it's re-stamped only when
+    // its band colour changes (#1990). 0 whenever there is no marker.
+    private var fastEstimateFill: Int = 0
     private val bandPolylines = mutableListOf<Polyline>()
 
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
-    // doesn't pop. Both are keyed by trip id: the correction belongs to the vehicle, so selecting another
-    // one starts fresh instead of easing the estimate marker across to it (#2222).
+    // doesn't pop. Route vehicles are keyed by trip id; the fast-estimate marker shows one vehicle at a
+    // time, so it takes the smoother that scopes the correction to that vehicle (#2222).
     private val vehicleSmoother = CorrectionSmoother()
-    private val tripSmoother = CorrectionSmoother()
+    private val fastEstimateSmoother = SingleSubjectSmoother()
 
     // The selected vehicle's most-recent-data dot: a marker at its last actual AVL fix (where the live
     // estimate was last corrected from), shown while a vehicle is selected, with a "Most recent data"
@@ -430,7 +431,7 @@ class MapLibreRenderer(
     /** Releases renderer-owned annotations and extracted style layers before MapView destruction. */
     fun dispose() {
         vehicleSmoother.retainOnly(emptySet())
-        tripSmoother.retainOnly(emptySet())
+        fastEstimateSmoother.clear()
         dotSmoother.retainOnly(emptySet())
         clearPing()
         stopMarkerLayer.dispose()
@@ -443,8 +444,8 @@ class MapLibreRenderer(
 
         staticAnnotations.clear()
         vehicleMarkersByTripId.clear()
-        tripMarkersByRole.clear()
-        tripMarkerFills.clear()
+        fastEstimateMarker = null
+        fastEstimateFill = 0
         tripCircleIcons.evictAll()
         bandPolylines.clear()
         vehicleByMarker.clear()
@@ -693,67 +694,44 @@ class MapLibreRenderer(
         while (bandPolylines.size > band.size) {
             map.removeAnnotation(bandPolylines.removeAt(bandPolylines.size - 1))
         }
-        // Correction state belongs to one vehicle, so keep only the trip this frame draws — and nothing at
-        // all once the overlay is gone (a deselect). Tapping a different vehicle is a change of subject,
-        // not a fresh fix on this one: with the previous trip's state dropped the smoother has nothing to
-        // correct from, and the marker jumps to the new selection rather than sweeping across the map to
-        // it — which read as the band being re-drawn (#2222). The most-recent-data dot already behaves
-        // this way. Between fixes on one trip the key is stable, so a fresh fix still smooths. Dropped
-        // *before* the marker moves, so the very first frame after a tap already jumps.
-        tripSmoother.retainOnly(setOfNotNull(overlay?.tripId))
-        // The fast-estimate marker moves in place (keeping any open info window); the fix instant drives
-        // the smoother's correction. Its disc is filled with the band's own colour (#1990).
-        updateTripMarker(
-            "fast",
-            overlay?.tripId,
-            overlay?.fastEstimatePoint,
-            ::fastEstimateIcon,
-            overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR,
-            "Fast estimate",
-            overlay?.fixTimeMs ?: 0L,
-            nowMs
-        )
+        updateFastEstimateMarker(overlay, nowMs)
     }
 
     /**
-     * [icon] resolves lazily from [fillColor] so no icon is built for a role with nothing to draw, and
-     * the marker is re-stamped only when its fill actually changes (#1990) — never per frame.
-     *
-     * The native marker is tracked by [role] (its job on the map), but its fix correction is keyed by
-     * [tripId] (whose position it is showing), so the smoothing is scoped to one vehicle (#2222).
+     * The selected vehicle's fast-estimate marker: created on the first overlay with a point, removed
+     * when there is none, and moved in place otherwise (keeping any open info window). Its correction is
+     * smoothed per vehicle by [fastEstimateSmoother], so a fresh fix on the trip it draws glides while a
+     * tap onto another trip jumps (#2222). The icon resolves lazily from the band's colour and is
+     * re-stamped only when that colour changes (#1990) — never per frame.
      */
-    private fun updateTripMarker(
-        role: String,
-        tripId: String?,
-        point: GeoPoint?,
-        icon: (Int) -> Icon,
-        fillColor: Int,
-        title: String,
-        fixTimeMs: Long,
-        nowMs: Long
-    ) {
-        val existing = tripMarkersByRole[role]
-        if (point == null) {
-            existing?.let {
-                map.removeAnnotation(it)
-                tripMarkersByRole.remove(role)
-                tripMarkerFills.remove(role)
-            }
+    private fun updateFastEstimateMarker(overlay: TripOverlay?, nowMs: Long) {
+        val point = overlay?.fastEstimatePoint
+        val existing = fastEstimateMarker
+        if (overlay == null || point == null) {
+            existing?.let { map.removeAnnotation(it) }
+            fastEstimateMarker = null
+            fastEstimateFill = 0
+            fastEstimateSmoother.clear()
             return
         }
-        val easeKey = tripId.orEmpty()
+        val fillColor = overlay.markerColorArgb
         if (existing == null) {
-            tripMarkersByRole[role] =
-                map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon(fillColor)).title(title))
-            tripMarkerFills[role] = fillColor
-            tripSmoother.prime(easeKey, point, fixTimeMs)
+            fastEstimateMarker = map.addMarker(
+                MarkerOptions()
+                    .position(point.toLatLng())
+                    .icon(fastEstimateIcon(fillColor))
+                    .title(FAST_ESTIMATE_TITLE)
+            )
+            fastEstimateFill = fillColor
+            fastEstimateSmoother.prime(overlay.tripId, point, overlay.fixTimeMs)
         } else {
-            if (tripMarkerFills[role] != fillColor) {
-                existing.icon = icon(fillColor)
-                tripMarkerFills[role] = fillColor
+            if (fastEstimateFill != fillColor) {
+                existing.icon = fastEstimateIcon(fillColor)
+                fastEstimateFill = fillColor
             }
-            existing.moveTo(tripSmoother.displayPosition(easeKey, point, fixTimeMs, nowMs).toLatLng())
-            if (existing.title != title) existing.title = title
+            existing.moveTo(
+                fastEstimateSmoother.displayPosition(overlay.tripId, point, overlay.fixTimeMs, nowMs).toLatLng()
+            )
         }
     }
 
@@ -822,6 +800,10 @@ class MapLibreRenderer(
     companion object {
         private const val ROUTE_WIDTH_DP = 3f
         private const val TRIP_BAND_WIDTH_DP = 6f
+
+        // The fast-estimate marker's info-window title, fixed at creation (the marker's subject changes,
+        // its job on the map doesn't). Mirrors the Google flavor's TripEstimateMarker title.
+        private const val FAST_ESTIMATE_TITLE = "Fast estimate"
 
         // Sized to hold a whole zoom session's worth of the labels currently on the map, so panning the
         // ramp end to end never evicts a label that is still drawn: a directions itinerary, or a focused

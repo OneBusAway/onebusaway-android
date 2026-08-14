@@ -795,9 +795,11 @@ class GoogleMapRenderer(
         while (bandPolylines.size > band.size) {
             bandPolylines.removeAt(bandPolylines.size - 1).remove()
         }
-        // The fast-estimate marker owns its smoothing + fixed title; hand it the fresh fix + tick clock,
-        // and the band's colour to fill its disc with. A frame with no overlay leaves the marker gone.
+        // The fast-estimate marker owns its smoothing + fixed title; hand it the trip it belongs to (which
+        // scopes that smoothing to one vehicle), the fresh fix + tick clock, and the band's colour to fill
+        // its disc with. A frame with no overlay leaves the marker gone.
         fastEstimate.update(
+            overlay?.tripId,
             overlay?.fastEstimatePoint,
             overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR,
             overlay?.fixTimeMs ?: 0L,
@@ -808,10 +810,10 @@ class GoogleMapRenderer(
     /**
      * The selected vehicle's fast-estimate marker: owns its native [Marker] and its own
      * [CorrectionSmoother], with a fixed info-window [title] set at creation. [update] creates it on the
-     * first non-null point, removes it on null, and smooths it across a fresh fix. The icon resolves lazily
-     * on first show via [iconProvider] (so it isn't built until a vehicle is selected), filled with the
-     * band's colour and re-stamped when that colour changes (#1990). Driven every tick (the overlay
-     * sampler runs each frame), so the decay just progresses.
+     * first non-null point, removes it on null, and smooths it across a fresh fix *on the same trip*. The
+     * icon resolves lazily on first show via [iconProvider] (so it isn't built until a vehicle is
+     * selected), filled with the band's colour and re-stamped when that colour changes (#1990). Driven
+     * every tick (the overlay sampler runs each frame), so the decay just progresses.
      */
     private inner class TripEstimateMarker(
         private val iconProvider: (Int) -> BitmapDescriptor,
@@ -824,7 +826,7 @@ class GoogleMapRenderer(
         // The fill the current icon was stamped with; 0 whenever there is no marker.
         private var iconFillColor: Int = 0
 
-        fun update(point: GeoPoint?, fillColor: Int, fixTimeMs: Long, nowMs: Long) {
+        fun update(tripId: String?, point: GeoPoint?, fillColor: Int, fixTimeMs: Long, nowMs: Long) {
             val existing = marker
             if (point == null) {
                 existing?.remove()
@@ -833,6 +835,14 @@ class GoogleMapRenderer(
                 smoother.retainOnly(emptySet()) // drop any in-flight correction + forget
                 return
             }
+            // Correction state belongs to one vehicle, so keep only the trip this frame draws. Tapping a
+            // different vehicle is a change of subject, not a fresh fix on this one: with the previous
+            // trip's state dropped the smoother has nothing to correct from, and the marker jumps to the
+            // new selection rather than sweeping across the map to it — which read as the band being
+            // re-drawn (#2222). The most-recent-data dot already behaves this way. Between fixes on one
+            // trip the key is stable, so a fresh fix still smooths.
+            val easeKey = tripId.orEmpty()
+            smoother.retainOnly(setOf(easeKey))
             if (existing == null) {
                 marker = map.addMarkerOrFail(
                     MarkerOptions()
@@ -843,19 +853,24 @@ class GoogleMapRenderer(
                         .zIndex(zIndex)
                 )
                 iconFillColor = fillColor
-                smoother.prime(ESTIMATE_EASE_KEY, point, fixTimeMs)
+                smoother.prime(easeKey, point, fixTimeMs)
                 return
             }
             if (fillColor != iconFillColor) {
                 existing.setIcon(iconProvider(fillColor))
                 iconFillColor = fillColor
             }
-            existing.position =
-                smoother.displayPosition(ESTIMATE_EASE_KEY, point, fixTimeMs, nowMs).toLatLng()
+            existing.position = smoother.displayPosition(easeKey, point, fixTimeMs, nowMs).toLatLng()
         }
 
         /** Remove the marker and drop any in-flight correction — the null-point branch of [update]. */
-        fun dispose() = update(null, TripMarkerBitmaps.DEFAULT_FILL_COLOR, 0L, 0L)
+        fun dispose() = update(
+            tripId = null,
+            point = null,
+            fillColor = TripMarkerBitmaps.DEFAULT_FILL_COLOR,
+            fixTimeMs = 0L,
+            nowMs = 0L
+        )
     }
 
     // The overlay/dot icons, cached through [descriptorCache] by a stable per-icon key so each resolves
@@ -971,9 +986,6 @@ class GoogleMapRenderer(
         private const val HINT_DASH_LENGTH_PX = 24f
         private const val TRAIL_DASH_LENGTH_PX = HINT_DASH_LENGTH_PX * 2f
         private const val DASH_GAP_LENGTH_PX = 16f
-
-        // The (arbitrary, constant) ease key for a TripEstimateMarker's single-marker easer.
-        private const val ESTIMATE_EASE_KEY = "estimate"
 
         private const val MOST_RECENT_DATA_TITLE = "Most recent data"
 

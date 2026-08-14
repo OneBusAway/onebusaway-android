@@ -199,7 +199,8 @@ class MapLibreRenderer(
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
-    // doesn't pop. Route vehicles keyed by trip id; the trip-focus estimate markers keyed by role.
+    // doesn't pop. Both are keyed by trip id: the correction belongs to the vehicle, so selecting another
+    // one starts fresh instead of easing the estimate marker across to it (#2222).
     private val vehicleSmoother = CorrectionSmoother()
     private val tripSmoother = CorrectionSmoother()
 
@@ -692,10 +693,19 @@ class MapLibreRenderer(
         while (bandPolylines.size > band.size) {
             map.removeAnnotation(bandPolylines.removeAt(bandPolylines.size - 1))
         }
+        // Correction state belongs to one vehicle, so keep only the trip this frame draws — and nothing at
+        // all once the overlay is gone (a deselect). Tapping a different vehicle is a change of subject,
+        // not a fresh fix on this one: with the previous trip's state dropped the smoother has nothing to
+        // correct from, and the marker jumps to the new selection rather than sweeping across the map to
+        // it — which read as the band being re-drawn (#2222). The most-recent-data dot already behaves
+        // this way. Between fixes on one trip the key is stable, so a fresh fix still smooths. Dropped
+        // *before* the marker moves, so the very first frame after a tap already jumps.
+        tripSmoother.retainOnly(setOfNotNull(overlay?.tripId))
         // The fast-estimate marker moves in place (keeping any open info window); the fix instant drives
         // the smoother's correction. Its disc is filled with the band's own colour (#1990).
         updateTripMarker(
             "fast",
+            overlay?.tripId,
             overlay?.fastEstimatePoint,
             ::fastEstimateIcon,
             overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR,
@@ -703,16 +713,18 @@ class MapLibreRenderer(
             overlay?.fixTimeMs ?: 0L,
             nowMs
         )
-        // Drop smoother state for the marker's role once it's gone (overlay went null on deselect).
-        tripSmoother.retainOnly(tripMarkersByRole.keys)
     }
 
     /**
      * [icon] resolves lazily from [fillColor] so no icon is built for a role with nothing to draw, and
      * the marker is re-stamped only when its fill actually changes (#1990) — never per frame.
+     *
+     * The native marker is tracked by [role] (its job on the map), but its fix correction is keyed by
+     * [tripId] (whose position it is showing), so the smoothing is scoped to one vehicle (#2222).
      */
     private fun updateTripMarker(
         role: String,
+        tripId: String?,
         point: GeoPoint?,
         icon: (Int) -> Icon,
         fillColor: Int,
@@ -729,17 +741,18 @@ class MapLibreRenderer(
             }
             return
         }
+        val easeKey = tripId.orEmpty()
         if (existing == null) {
             tripMarkersByRole[role] =
                 map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon(fillColor)).title(title))
             tripMarkerFills[role] = fillColor
-            tripSmoother.prime(role, point, fixTimeMs)
+            tripSmoother.prime(easeKey, point, fixTimeMs)
         } else {
             if (tripMarkerFills[role] != fillColor) {
                 existing.icon = icon(fillColor)
                 tripMarkerFills[role] = fillColor
             }
-            existing.moveTo(tripSmoother.displayPosition(role, point, fixTimeMs, nowMs).toLatLng())
+            existing.moveTo(tripSmoother.displayPosition(easeKey, point, fixTimeMs, nowMs).toLatLng())
             if (existing.title != title) existing.title = title
         }
     }

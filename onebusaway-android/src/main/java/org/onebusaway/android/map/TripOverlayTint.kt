@@ -53,10 +53,14 @@ internal fun contrastingColor(color: Int): Int {
  *
  * The undimmed color rides along as [TripOverlay.markerColorArgb], because the markers that bound the
  * band are filled with it (#1990) and a marker takes the band's *color*, not one slice's weight.
+ *
+ * [tripId] names whose extrapolation this is — the producer models one trip at a time and so carries no
+ * id, but the renderer needs one to scope the fast marker's fix smoothing to a single vehicle (#2222).
  */
-internal fun TripExtrapolation.toTripOverlay(bandColorArgb: Int): TripOverlay {
+internal fun TripExtrapolation.toTripOverlay(tripId: String, bandColorArgb: Int): TripOverlay {
     val baseRgb = bandColorArgb and 0x00FFFFFF
     return TripOverlay(
+        tripId = tripId,
         fastEstimatePoint = fastEstimatePoint,
         band = band.map { slice ->
             val alpha = (slice.weight.coerceIn(0f, 1f) * 255f).roundToInt()

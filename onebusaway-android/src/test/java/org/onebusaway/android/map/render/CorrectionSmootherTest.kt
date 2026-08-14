@@ -170,4 +170,31 @@ class CorrectionSmootherTest {
         assertEquals(5.0, out.latitude, 1e-12)
         assertFalse(s.isSettling("gone"))
     }
+
+    /**
+     * The fast-estimate marker's contract (#2222): its state is keyed by the selected trip, so switching
+     * vehicles jumps the marker to the new one while a fresh fix on the *same* vehicle still smooths.
+     * A shared key would instead correct the whole inter-vehicle displacement — the marker sweeping
+     * across the map on a tap.
+     */
+    @Test
+    fun switchingKeys_jumpsInsteadOfSweepingAcrossTheGap() {
+        val s = smoother()
+        // Vehicle A is being tracked and has just absorbed a fix.
+        s.prime("tripA", p(0.0, 0.0), fixTimeMs = 1L)
+        s.displayPosition("tripA", p(0.001, 0.0), fixTimeMs = 2L, nowMs = 100L)
+        assertTrue(s.isSettling("tripA"))
+
+        // Selecting vehicle B: retain only its key, then draw it. Its (nearby, so otherwise smoothable)
+        // position is shown exactly — no correction carried over from where A's marker was.
+        s.retainOnly(setOf("tripB"))
+        val onTap = s.displayPosition("tripB", p(0.005, 0.0), fixTimeMs = 7L, nowMs = 200L)
+        assertEquals(0.005, onTap.latitude, 1e-12)
+        assertFalse(s.isSettling("tripB"))
+
+        // B's own next fix still smooths: it corrects from where B was shown, not from the new target.
+        val bFresh = s.displayPosition("tripB", p(0.006, 0.0), fixTimeMs = 8L, nowMs = 300L)
+        assertEquals(0.005, bFresh.latitude, 1e-9)
+        assertTrue(s.isSettling("tripB"))
+    }
 }

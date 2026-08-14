@@ -699,7 +699,8 @@ class RouteMapController(
             // A frame with no extrapolation at all (no shape, or no fix yet) still publishes the colour:
             // the most-recent-data dot is drawn from the selection rather than from the band, and takes
             // the band's colour whether or not there is a band to draw beside it.
-            extrapolation?.toTripOverlay(bandColor) ?: TripOverlay(markerColorArgb = bandColor)
+            extrapolation?.toTripOverlay(tripId, bandColor)
+                ?: TripOverlay(tripId = tripId, markerColorArgb = bandColor)
         }
     }
 

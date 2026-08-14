@@ -552,11 +552,15 @@ class HomeViewModelTest {
      */
     private fun HomeViewModel.tapLegVehicle(tripId: String = "tapped") {
         val leg = rideLeg()
+        // Bound once each: [rideLeg] always supplies them, and asserting that twice for the same stop
+        // is the redundant `!!` the compiler rejects under -PwarningsAsErrors.
+        val board = leg.board!!
+        val alight = leg.alight!!
         enterDirectionsShowing()
         focusDirectionsRouteVehicle(
-            request = ShowRouteRequest(leg.routeId!!, leg.board!!.stopId, focusTripId = tripId),
+            request = ShowRouteRequest(leg.routeId!!, board.stopId, focusTripId = tripId),
             routeLeg = leg,
-            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
+            fallbackPoints = listOf(board.point!!, alight.point!!)
         )
     }
 

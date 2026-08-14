@@ -350,13 +350,18 @@ fun MapFeature(
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
                     mapViewModel.recenterOnFocusedStop(directive.point)
-                is MapDirective.ShowRoute ->
+                is MapDirective.ShowRoute -> {
                     mapViewModel.toRoute(
                         directive.request,
                         directive.stopScoped,
                         directive.frameRoute,
                         directive.withinDirections
                     )
+                    // After the route, always, and null included: entering a route tears the previous
+                    // session's selection down, so this is what restores the focus's own — and what
+                    // stops a route change from leaving a previous trip selected (#2224).
+                    mapViewModel.selectVehicleTrip(directive.selectedTripId)
+                }
                 is MapDirective.RestoreViewport ->
                     mapViewModel.restoreViewport(directive.viewport)
                 MapDirective.FrameRoute -> mapViewModel.frameRoute()

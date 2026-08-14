@@ -77,7 +77,17 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val clearFocusCount get() = sent.count { it is MapDirective.ClearFocus }
     val focusStops get() = sent.filterIsInstance<MapDirective.FocusStop>()
     val viewportRestores get() = sent.filterIsInstance<MapDirective.RestoreViewport>()
-    val vehicleSelections get() = sent.filterIsInstance<MapDirective.SelectVehicle>().map { it.tripId }
+
+    // Every vehicle selection the map is told to make, in order, whichever directive carried it: showing
+    // a route always names one (#2224), and SelectVehicle moves it over a route already drawn. Nulls are
+    // meaningful (a cleared selection), so the per-directive lists are flattened rather than mapNotNull'd.
+    val vehicleSelections: List<String?> get() = sent.mapNotNull { directive ->
+        when (directive) {
+            is MapDirective.ShowRoute -> listOf(directive.selectedTripId)
+            is MapDirective.SelectVehicle -> listOf(directive.tripId)
+            else -> null
+        }
+    }.flatten()
     val lastBottomPadding get() = vm.mapBottomPadding.value
 
     suspend fun collect() {
@@ -445,15 +455,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        val leg = rideLeg()
-        vm.enterDirectionsShowing()
-        map.sent.clear()
-
-        vm.focusDirectionsRouteVehicle(
-            request = ShowRouteRequest("40_2LINE", "40_board", focusTripId = "tapped"),
-            routeLeg = leg,
-            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
-        )
+        vm.tapLegVehicle()
         advanceUntilIdle()
 
         assertEquals("tapped", vm.directionsRouteFocus()?.selectedTripId)
@@ -475,13 +477,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        val leg = rideLeg()
-        vm.enterDirectionsShowing()
-        vm.focusDirectionsRouteVehicle(
-            request = ShowRouteRequest("40_2LINE", "40_board", focusTripId = "tapped"),
-            routeLeg = leg,
-            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
-        )
+        vm.tapLegVehicle()
         advanceUntilIdle()
         map.sent.clear()
 
@@ -509,13 +505,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        val leg = rideLeg()
-        vm.enterDirectionsShowing()
-        vm.focusDirectionsRouteVehicle(
-            request = ShowRouteRequest("40_2LINE", "40_board", focusTripId = "tapped"),
-            routeLeg = leg,
-            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
-        )
+        vm.tapLegVehicle()
         advanceUntilIdle()
 
         // Away to a stop, then back — the branch that has to redraw the route rather than just reselect.
@@ -538,13 +528,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        val leg = rideLeg()
-        vm.enterDirectionsShowing()
-        vm.focusDirectionsRouteVehicle(
-            request = ShowRouteRequest("40_2LINE", "40_board", focusTripId = "tapped"),
-            routeLeg = leg,
-            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
-        )
+        vm.tapLegVehicle()
         vm.unfocusMapOneLevel()
         advanceUntilIdle()
         map.sent.clear()
@@ -560,6 +544,21 @@ class HomeViewModelTest {
     // A tapped on-street leg. Only [legIndices] distinguishes one from another to the focus model, so the
     // geometry is shared; [walkLeg] gives each test the leg it needs without restating the coordinates.
     private fun walkLeg(vararg legIndices: Int) = FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), legIndices.toSet())
+
+    /**
+     * Enter directions and tap the pill for [tripId] in [rideLeg]'s inline ETA strip — the drill-in
+     * gesture every trip-rung test below starts from (#2224). Emits no route directive of its own before
+     * the tap, so a test can read the tap's own request straight off the recorder.
+     */
+    private fun HomeViewModel.tapLegVehicle(tripId: String = "tapped") {
+        val leg = rideLeg()
+        enterDirectionsShowing()
+        focusDirectionsRouteVehicle(
+            request = ShowRouteRequest(leg.routeId!!, leg.board!!.stopId, focusTripId = tripId),
+            routeLeg = leg,
+            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
+        )
+    }
 
     /** Directions focus with [itinerary] drawn — the state every leg-focus test starts from. */
     private fun HomeViewModel.enterDirectionsShowing(itinerary: TripItinerary = TripItinerary()) = itinerary.also {

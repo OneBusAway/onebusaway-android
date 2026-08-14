@@ -421,19 +421,13 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * **The one place a [MapDirective.ShowRoute] is emitted** (#2205, #2224). It always travels with the
-     * [MapDirective.SelectVehicle] that projects [selectedTripId] — the drilled-into trip rung of the
-     * focus being shown — onto the map, so the map's vehicle selection (what draws the extrapolation
-     * band, the exact shape/stops, the fast-estimate marker and the block continuation) can never become
-     * a second, independently-mutated truth. That is what had drifted: the stop path paired the two and
-     * the standalone-route and directions-leg paths did not, so the same gesture drew three different
-     * things depending on how the rider reached the route.
+     * Show [request]'s route with [selectedTripId] drilled into over it — the drilled-into trip rung of
+     * the focus being shown (#2205, #2224), which the map projects as its vehicle selection (what draws
+     * the extrapolation band, the exact shape/stops, the fast-estimate marker and the block
+     * continuation).
      *
-     * The selection is emitted *after* the route directive so it survives the teardown a route change
-     * performs, and unconditionally (null included) so no path can leave a previous trip selected.
-     *
-     * Keep this the only construction site of [MapDirective.ShowRoute]: a new surface that builds one
-     * for itself is exactly how the pairing was lost the first time.
+     * The two travel as one directive rather than a pair the caller has to remember to send, so the
+     * selection cannot become a second, independently-mutated truth — see [MapDirective.ShowRoute].
      */
     private fun showRoute(
         request: ShowRouteRequest,
@@ -441,17 +435,15 @@ class HomeViewModel @Inject constructor(
         stopScoped: Boolean = false,
         frameRoute: Boolean = true,
         withinDirections: Boolean = false
-    ) {
-        emitMapDirective(
-            MapDirective.ShowRoute(
-                request,
-                stopScoped = stopScoped,
-                frameRoute = frameRoute,
-                withinDirections = withinDirections
-            )
+    ) = emitMapDirective(
+        MapDirective.ShowRoute(
+            request,
+            selectedTripId = selectedTripId,
+            stopScoped = stopScoped,
+            frameRoute = frameRoute,
+            withinDirections = withinDirections
         )
-        emitMapDirective(MapDirective.SelectVehicle(selectedTripId))
-    }
+    )
 
     /**
      * Show a stop-scoped route on the map together with its trip level — the stop-shaped entry into
@@ -1381,9 +1373,17 @@ sealed interface MapDirective {
      * Enter route mode for [request]'s route (the "show vehicles on map" action). [withinDirections]
      * marks a drill-in from a trip plan's leg, which keeps the rest of the trip drawn beneath the route
      * as de-emphasized context (#2048).
+     *
+     * [selectedTripId] is which of that route's vehicles the focus is drilled into (#2205, #2224), null
+     * for none. **It carries no default on purpose.** The route and the vehicle drilled into over it are
+     * one map state, and sending them apart is how they drifted: the stop path paired them and the
+     * standalone-route and directions-leg paths did not, leaving the map's selection an unowned second
+     * truth on those two. Making it a required field means a surface added later cannot show a route
+     * without answering the question — the compiler asks, so no comment has to.
      */
     data class ShowRoute(
         val request: ShowRouteRequest,
+        val selectedTripId: String?,
         val stopScoped: Boolean,
         val frameRoute: Boolean = true,
         val withinDirections: Boolean = false
@@ -1423,9 +1423,10 @@ sealed interface MapDirective {
     data object ClearSelectedRoute : MapDirective
 
     /**
-     * Select the vehicle running [tripId] — what draws its extrapolation confidence band — or clear the
-     * selection with null. The stop→route→trip focus level (#2205) is the authority here, so this rides
-     * alongside every stop-scoped [ShowRoute] rather than the map setting it alone from a vehicle tap.
+     * Move the vehicle selection — what draws the extrapolation confidence band — to [tripId], or clear
+     * it with null, over a route the map is *already* showing. The trip rung of the focus (#2205, #2224)
+     * is the authority here; entering or replaying a route carries its own selection on [ShowRoute], so
+     * this is only for the transitions that move the rung without redrawing the route beneath it.
      */
     data class SelectVehicle(val tripId: String?) : MapDirective
 

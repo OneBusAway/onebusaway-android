@@ -20,10 +20,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -121,7 +124,9 @@ fun PinnedTripFab(
                     // route badges a screen reader has to walk separately.
                     .clickable(onClickLabel = resumeLabel, onClick = onResume)
                     .semantics(mergeDescendants = true) {}
-                    .padding(vertical = CONTENT_GAP),
+                    // Held off the pill's leading edge, which is a 16dp corner the glyph would otherwise
+                    // sit inside the curve of.
+                    .padding(start = PIN_START_PADDING, top = CONTENT_GAP, bottom = CONTENT_GAP),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(CONTENT_GAP)
             ) {
@@ -130,13 +135,32 @@ fun PinnedTripFab(
                     // Where the trip goes, which the button no longer draws. It rides the glyph so a
                     // screen reader announces the parked trip by name and not merely as a string of
                     // routes.
-                    contentDescription = name
+                    contentDescription = name,
+                    modifier = Modifier.size(PIN_GLYPH)
                 )
-                // Wrapped against this button rather than against the option card the summary was drawn
-                // for: that card's line is 176dp, so on a button the width of most of the screen the
-                // symbols packed themselves into a card's worth of it and left the rest empty. Null puts
-                // the break wherever this button actually runs out.
-                ModeSymbolSummary(state.symbols, wrapAt = null)
+                // The summary sits on its own ground rather than beside the glyph and the ✕ as a third
+                // thing of the same kind: those two are controls, and this is what they are about. The
+                // colour is the option card's own background — the surface these badges are drawn
+                // against everywhere else — so the picker's summary and this one read as one thing
+                // rather than as the same symbols on two different grounds.
+                Surface(
+                    shape = RoundedCornerShape(SUMMARY_CORNER),
+                    color = colorResource(R.color.trip_plan_card_background),
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ) {
+                    // Wrapped against this button rather than against the option card the summary was
+                    // drawn for: that card's line is 176dp, so on a button the width of most of the
+                    // screen the symbols packed themselves into a card's worth of it and left the rest
+                    // empty. Null puts the break wherever this button actually runs out.
+                    ModeSymbolSummary(
+                        state.symbols,
+                        modifier = Modifier.padding(
+                            horizontal = SUMMARY_PADDING_HORIZONTAL,
+                            vertical = SUMMARY_PADDING_VERTICAL
+                        ),
+                        wrapAt = null
+                    )
+                }
             }
             IconButton(onClick = { confirmingUnpin = true }) {
                 Icon(
@@ -174,6 +198,20 @@ fun PinnedTripFab(
 
 /** Air between the glyph and the route summary it labels, so the two read as one thing. */
 private val CONTENT_GAP = 8.dp
+
+/**
+ * The pin glyph, a tenth under the 24dp an icon button's usually is. It is a mark saying which button
+ * this is, not a control in its own right, so it gives a little ground to the summary beside it.
+ */
+private val PIN_GLYPH = 22.dp
+
+/** Holds the glyph clear of the pill's leading corner, whose radius it would otherwise sit inside. */
+private val PIN_START_PADDING = 12.dp
+
+/** The summary panel: its corner, and the inset holding the symbols off its edges. */
+private val SUMMARY_CORNER = 8.dp
+private val SUMMARY_PADDING_HORIZONTAL = 8.dp
+private val SUMMARY_PADDING_VERTICAL = 4.dp
 
 /** The ✕, a touch smaller than a FAB glyph: it is the secondary of the two actions on this pill. */
 private val UNPIN_GLYPH = 20.dp

@@ -113,7 +113,6 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
-import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.ObaRequestErrors
@@ -148,12 +147,7 @@ fun MapFeature(
     fabBottomInset: Dp,
     modifier: Modifier = Modifier,
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
-    onMapLongPress: (GeoPoint) -> Unit = {},
-    // The rider's parked trip plan and the way back into it (#2053), drawn as a FAB in the map chrome
-    // (#2229), or null with nothing to offer. HomeScreen owns the pin *and* decides when it is worth
-    // showing; this module only places the button and reports its tap.
-    pinnedTrip: PinnedTripCardState? = null,
-    onResumePinnedTrip: () -> Unit = {}
+    onMapLongPress: (GeoPoint) -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -555,7 +549,6 @@ fun MapFeature(
         rentalsLoading = rentalsLoading,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
-        pinnedTrip = pinnedTrip,
         onMyLocation = {
             // Reset the prefs that suppress the enable-location / permission prompts, then recenter.
             PreferenceUtils.saveBoolean(
@@ -575,7 +568,6 @@ fun MapFeature(
         onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) },
         onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
         onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) },
-        onResumePinnedTrip = onResumePinnedTrip,
         onHideRentalButton = {
             PreferenceUtils.saveBoolean(resources.getString(R.string.preference_key_show_rental_button), false)
             // The button is the only signpost to itself, so hiding it without saying where it went

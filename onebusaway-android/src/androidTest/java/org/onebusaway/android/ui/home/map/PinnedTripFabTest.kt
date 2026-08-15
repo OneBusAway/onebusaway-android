@@ -20,7 +20,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -41,6 +41,10 @@ import org.onebusaway.android.ui.tripresults.TransitMode
  * The parked trip's button (#2229). The pin it replaced could be off screen, so what matters here is
  * that the trip says where it goes and that one tap on it means "take me back" — the two things the
  * marker's info window was the only place to say.
+ *
+ * Both are now carried by semantics rather than by drawn text: the button states the destination as its
+ * content description and "resume" as its click label, so a rider using a screen reader gets what the
+ * dropped "Pinned trip to X" heading used to spell out. That makes these the only check on either.
  */
 class PinnedTripFabTest {
 
@@ -49,7 +53,7 @@ class PinnedTripFabTest {
     val composeRule = createUnconfinedComposeRule()
 
     private val resources = InstrumentationRegistry.getInstrumentation().targetContext.resources
-    private val title = resources.getString(R.string.trip_plan_pinned_trip_title, "Ballard")
+    private val name = resources.getString(R.string.trip_plan_pinned_trip_title, "Ballard")
     private val resumeLabel = resources.getString(R.string.trip_plan_pinned_resume)
 
     @Test
@@ -57,7 +61,7 @@ class PinnedTripFabTest {
         var resumed = 0
         show(onResume = { resumed++ })
 
-        composeRule.onNodeWithText(title).assertIsDisplayed().performClick()
+        composeRule.onNodeWithContentDescription(name).assertIsDisplayed().performClick()
 
         assertEquals(1, resumed)
     }
@@ -72,7 +76,7 @@ class PinnedTripFabTest {
         show()
 
         composeRule
-            .onNodeWithText(title)
+            .onNodeWithContentDescription(name)
             .assert(
                 SemanticsMatcher("click action is labelled \"$resumeLabel\"") { node ->
                     node.config.getOrNull(SemanticsActions.OnClick)?.label == resumeLabel

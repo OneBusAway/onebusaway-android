@@ -111,6 +111,7 @@ import org.onebusaway.android.ui.home.map.FocusBannerState
 import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.home.map.MapChrome
 import org.onebusaway.android.ui.home.map.MapFeature
+import org.onebusaway.android.ui.home.map.PinnedTripFab
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsSheetHost
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
 import org.onebusaway.android.ui.home.nearby.limitExceeded
@@ -854,8 +855,6 @@ fun HomeScreen(
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onMapLongPress = { longPressPoint = it },
-                                    pinnedTrip = pinnedCard?.takeIf { showPinnedTrip },
-                                    onResumePinnedTrip = onResumePinnedTrip,
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -907,6 +906,31 @@ fun HomeScreen(
                                             // the map VM adds marker clearance and owns the resulting content padding.
                                             onFocusBannerBottom = { focusBannerBottomPx = it }
                                         )
+                                        // The parked trip (#2229). Top-of-map rather than down in the
+                                        // FAB column, where it rode the arrivals sheet's lift and so
+                                        // moved every time a drawer did — a standing reminder shouldn't
+                                        // be animating.
+                                        //
+                                        // Stacked under the focus banner by that banner's own *measured*
+                                        // height (the same report the map's top padding is derived from),
+                                        // so it clears whatever the banner currently is instead of
+                                        // guessing at it, and sits directly under the chrome row when
+                                        // there is no banner at all. Drawn after the overlays so it stays
+                                        // tappable if the two ever meet.
+                                        pinnedCard?.takeIf { showPinnedTrip }?.let { card ->
+                                            val bannerHeightPx =
+                                                (focusBannerBottomPx - focusBannerTopPx).coerceAtLeast(0)
+                                            PinnedTripFab(
+                                                state = card,
+                                                onResume = onResumePinnedTrip,
+                                                modifier = Modifier
+                                                    .align(Alignment.TopStart)
+                                                    .padding(
+                                                        start = 16.dp,
+                                                        top = with(density) { bannerHeightPx.toDp() }
+                                                    )
+                                            )
+                                        }
                                     }
                                     // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
                                     // the very top; the overlay layer above adds the clearance below it.

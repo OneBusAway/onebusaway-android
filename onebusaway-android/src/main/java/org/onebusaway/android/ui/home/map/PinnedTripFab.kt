@@ -107,7 +107,11 @@ fun PinnedTripFab(
                 // reader announces the parked trip by name and not merely as a string of routes.
                 contentDescription = name
             )
-            ModeSymbolSummary(state.symbols)
+            // Wrapped against this button rather than against the option card the summary was drawn
+            // for: that card's line is 176dp, so on a button the width of most of the screen the
+            // symbols packed themselves into a card's worth of it and left the rest empty. Null puts
+            // the break wherever this button actually runs out.
+            ModeSymbolSummary(state.symbols, wrapAt = null)
         }
     }
 }

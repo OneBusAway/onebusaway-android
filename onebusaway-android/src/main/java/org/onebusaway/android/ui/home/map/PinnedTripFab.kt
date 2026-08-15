@@ -224,7 +224,7 @@ private val ROW_VERTICAL_PADDING = 5.dp
  * as a different material. Applied to the pill's own content colour, so it darkens in light mode and
  * lightens in dark by construction.
  */
-private const val SUMMARY_TINT_ALPHA = 0.10f
+private const val SUMMARY_TINT_ALPHA = 0.16f
 
 /** The summary panel: its corner, and the inset holding the symbols off its edges. */
 private val SUMMARY_CORNER = 8.dp

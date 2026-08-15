@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
@@ -270,6 +271,11 @@ fun HomeScreen(
                 // on currentFocus would reset this to 0 when switching between two equal-height banners, framing
                 // the map as if no banner showed. The disappearance case resets it via the banner's else branch.
                 var focusBannerBottomPx by remember { mutableIntStateOf(0) }
+                // The other two things sharing the top-of-map band, each reported by an always-present
+                // wrapper so a hidden one reads as 0 rather than leaving its last height behind. The
+                // parked-trip button (#2229) stacks below whichever of the three is currently tallest.
+                var stopsBannerHeightPx by remember { mutableIntStateOf(0) }
+                var weatherHeightPx by remember { mutableIntStateOf(0) }
                 // The directions trip-plan form card's absolute bottom edge (window px), so the map's top inset
                 // covers the form/FAB during directions (the itinerary-step focus centers in the band below it).
                 var directionsFormBottomPx by remember { mutableIntStateOf(0) }
@@ -855,6 +861,7 @@ fun HomeScreen(
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onMapLongPress = { longPressPoint = it },
+                                    onStopsBannerHeight = { stopsBannerHeightPx = it },
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -904,22 +911,28 @@ fun HomeScreen(
                                             focusBannerTopPx = focusBannerTopPx,
                                             // This layer converts measured card height to its map-space bottom edge;
                                             // the map VM adds marker clearance and owns the resulting content padding.
-                                            onFocusBannerBottom = { focusBannerBottomPx = it }
+                                            onFocusBannerBottom = { focusBannerBottomPx = it },
+                                            onWeatherHeight = { weatherHeightPx = it }
                                         )
                                         // The parked trip (#2229). Top-of-map rather than down in the
                                         // FAB column, where it rode the arrivals sheet's lift and so
                                         // moved every time a drawer did — a standing reminder shouldn't
                                         // be animating.
                                         //
-                                        // Stacked under the focus banner by that banner's own *measured*
-                                        // height (the same report the map's top padding is derived from),
-                                        // so it clears whatever the banner currently is instead of
-                                        // guessing at it, and sits directly under the chrome row when
-                                        // there is no banner at all. Drawn after the overlays so it stays
-                                        // tappable if the two ever meet.
+                                        // It clears everything else in this band — the focus banner, the
+                                        // "zoom in to see more stops" notice, and the weather chip — by
+                                        // their *measured* heights rather than by any assumption about
+                                        // what they are. They all hang from the top of the band and
+                                        // overlap each other, so the tallest is the whole stack; with all
+                                        // three away the button sits directly under the chrome row.
+                                        // Drawn after the overlays, so it stays tappable if one ever
+                                        // grows into it.
                                         pinnedCard?.takeIf { showPinnedTrip }?.let { card ->
-                                            val bannerHeightPx =
-                                                (focusBannerBottomPx - focusBannerTopPx).coerceAtLeast(0)
+                                            val clearPx = maxOf(
+                                                (focusBannerBottomPx - focusBannerTopPx).coerceAtLeast(0),
+                                                stopsBannerHeightPx,
+                                                weatherHeightPx
+                                            )
                                             PinnedTripFab(
                                                 state = card,
                                                 onResume = onResumePinnedTrip,
@@ -927,7 +940,11 @@ fun HomeScreen(
                                                     .align(Alignment.TopStart)
                                                     .padding(
                                                         start = 16.dp,
-                                                        top = with(density) { bannerHeightPx.toDp() }
+                                                        // The gap belongs to the stacking, not to the
+                                                        // button: with nothing above, the band's own
+                                                        // clearance is already the gap.
+                                                        top = with(density) { clearPx.toDp() } +
+                                                            if (clearPx > 0) TOP_OVERLAY_STACK_GAP else 0.dp
                                                     )
                                             )
                                         }
@@ -1254,17 +1271,25 @@ private fun BoxScope.HomeMapOverlays(
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
     focusBannerTopPx: Int,
-    onFocusBannerBottom: (Int) -> Unit
+    onFocusBannerBottom: (Int) -> Unit,
+    // How tall the weather chip currently is, or 0 with none showing — the parked-trip button clears it.
+    onWeatherHeight: (Int) -> Unit
 ) {
     // The caller offsets this whole overlay layer below the top chrome (one shared inset), so the
     // overlays only carry their own side margins here.
     // The weather chip feature module: self-wiring from its ViewModel. Sits below the floating search
     // field (which now occupies the top-end corner), not beside it.
-    WeatherFeature(
-        viewModel = weatherViewModel,
-        onNearby = true,
-        modifier = Modifier.align(Alignment.TopEnd).padding(end = 16.dp)
-    )
+    // Measured through a wrapper that is always here rather than on the chip itself: the chip emits
+    // *nothing* while it is hidden or has no reading, and a modifier on something that isn't composed
+    // never reports the shrink — it would just leave its last height standing.
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(end = 16.dp)
+            .onSizeChanged { onWeatherHeight(it.height) }
+    ) {
+        WeatherFeature(viewModel = weatherViewModel, onNearby = true)
+    }
     // The donation feature module: the card (DonationsManager-gated) plus its dismiss dialog.
     DonationFeature(
         viewModel = donationViewModel,
@@ -1310,6 +1335,9 @@ private fun BoxScope.HomeMapOverlays(
         LaunchedEffect(Unit) { onFocusBannerBottom(0) }
     }
 }
+
+/** Air between the parked-trip button and whatever top-of-map overlay it is stacking below (#2229). */
+private val TOP_OVERLAY_STACK_GAP = 8.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 private fun SheetValue.toArrivalsSheetState() = when (this) {

@@ -937,15 +937,15 @@ fun HomeScreen(
                                                 state = card,
                                                 onResume = onResumePinnedTrip,
                                                 modifier = Modifier
-                                                    .align(Alignment.TopStart)
+                                                    .align(Alignment.TopCenter)
                                                     .padding(
-                                                        start = 16.dp,
                                                         // The gap belongs to the stacking, not to the
                                                         // button: with nothing above, the band's own
                                                         // clearance is already the gap.
                                                         top = with(density) { clearPx.toDp() } +
                                                             if (clearPx > 0) TOP_OVERLAY_STACK_GAP else 0.dp
                                                     )
+                                                    .fillMaxWidth(PINNED_TRIP_FAB_WIDTH_FRACTION)
                                             )
                                         }
                                     }
@@ -1338,6 +1338,16 @@ private fun BoxScope.HomeMapOverlays(
 
 /** Air between the parked-trip button and whatever top-of-map overlay it is stacking below (#2229). */
 private val TOP_OVERLAY_STACK_GAP = 8.dp
+
+/**
+ * How much of the screen's width the parked-trip button spans (#2229).
+ *
+ * A fraction rather than a fixed width so it reads the same on every display, and wide enough that it is
+ * unmistakably the parked trip rather than one more round button in a corner — it is the only chrome here
+ * that stands for something the rider put there themselves. The remaining fifth keeps it clear of both
+ * edges, so it still reads as a button floating over the map rather than a bar across it.
+ */
+private const val PINNED_TRIP_FAB_WIDTH_FRACTION = 0.8f
 
 @OptIn(ExperimentalMaterial3Api::class)
 private fun SheetValue.toArrivalsSheetState() = when (this) {

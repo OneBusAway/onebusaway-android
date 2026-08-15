@@ -17,7 +17,7 @@ package org.onebusaway.android.ui.home.map
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -80,33 +80,37 @@ fun PinnedTripFab(
     val resumeLabel = stringResource(R.string.trip_plan_pinned_resume)
     ExtendedFloatingActionButton(
         onClick = onResume,
-        // A guard rather than a working limit: the line is short now, but a badge joining several
-        // interchangeable routes is deliberately uncapped (see RouteBadgeChip), and one of those must not
-        // stretch this button across the map.
-        modifier = modifier.widthIn(max = PINNED_TRIP_FAB_MAX_WIDTH),
-        icon = {
-            Icon(
-                painterResource(R.drawable.ic_pin_filled),
-                // Where the trip goes, which the button no longer draws. It rides the glyph so a screen
-                // reader announces the parked trip by name and not merely as a route and a duration.
-                contentDescription = name
-            )
-        },
-        text = {
+        // No width of its own: the host sizes this button against the screen, and a cap here would
+        // quietly win on any display wide enough to reach it.
+        modifier = modifier,
+        // The whole row rather than M3's icon + text slots: those lead with the icon and leave the label
+        // where it falls, which reads as a half-empty button once the host makes it wider than its
+        // contents. Here the glyph travels with what it labels and the group sits in the middle.
+        content = {
             Row(
                 // "Resume this trip" is what the tap does, not what the button is, so it is announced as
                 // the click's label rather than drawn as a line of its own. Set on a descendant of the
                 // FAB, because that is the direction the merge runs: the button contributes the action,
                 // the child the label (an action property merges as parent-label-or-child's,
                 // parent-action-or-child's).
-                modifier = Modifier.semantics { onClick(label = resumeLabel, action = null) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { onClick(label = resumeLabel, action = null) },
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(CONTENT_GAP, Alignment.CenterHorizontally)
             ) {
-                // The elastic half of the line, so the duration — short, fixed, and the one number the
-                // rider is checking — is measured first and always gets its natural width. The summary
-                // packs its symbols unbounded by design (see SymbolFlow), so without this a trip with a
-                // wide multi-route badge would take the whole line and leave "32 min" nothing.
+                Icon(
+                    painterResource(R.drawable.ic_pin_filled),
+                    // Where the trip goes, which the button no longer draws. It rides the glyph so a
+                    // screen reader announces the parked trip by name and not merely as a route and a
+                    // duration.
+                    contentDescription = name
+                )
+                // Elastic, so the duration — short, fixed, and the one number the rider is checking — is
+                // measured first and always gets its natural width. The summary packs its symbols
+                // unbounded by design (see SymbolFlow), so without this a trip with a wide multi-route
+                // badge would take the whole line and leave "32 min" nothing. `fill = false` so it still
+                // gives its slack back to the arrangement, which is what keeps the group centred.
                 ModeSymbolSummary(state.symbols, modifier = Modifier.weight(1f, fill = false))
                 EtaDurationText(minutes = state.durationMinutes)
             }
@@ -114,5 +118,5 @@ fun PinnedTripFab(
     )
 }
 
-/** How wide the button may grow before its route summary is left to ellipsize inside it. */
-private val PINNED_TRIP_FAB_MAX_WIDTH = 260.dp
+/** Air between the glyph, the route summary and the duration — one gap, so the group reads as one thing. */
+private val CONTENT_GAP = 8.dp

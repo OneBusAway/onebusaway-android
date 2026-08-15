@@ -211,7 +211,7 @@ private val PIN_START_PADDING = 12.dp
 /** The summary panel: its corner, and the inset holding the symbols off its edges. */
 private val SUMMARY_CORNER = 8.dp
 private val SUMMARY_PADDING_HORIZONTAL = 8.dp
-private val SUMMARY_PADDING_VERTICAL = 4.dp
+private val SUMMARY_PADDING_VERTICAL = 7.dp
 
 /** The ✕, a touch smaller than a FAB glyph: it is the secondary of the two actions on this pill. */
 private val UNPIN_GLYPH = 20.dp

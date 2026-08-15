@@ -150,7 +150,8 @@ fun MapFeature(
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
     onMapLongPress: (GeoPoint) -> Unit = {},
     // The rider's parked trip plan and the way back into it (#2053), drawn as a FAB in the map chrome
-    // (#2229). HomeScreen owns the pin; this module only places the button and reports its tap.
+    // (#2229), or null with nothing to offer. HomeScreen owns the pin *and* decides when it is worth
+    // showing; this module only places the button and reports its tap.
     pinnedTrip: PinnedTripCardState? = null,
     onResumePinnedTrip: () -> Unit = {}
 ) {
@@ -554,10 +555,7 @@ fun MapFeature(
         rentalsLoading = rentalsLoading,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
-        // Withheld inside directions, where a trip is already on the map: the same reason the ghost
-        // trace is (#2053), and the same reason the layers button is — this corner is crowded there,
-        // and the pin's own controls live in the results sheet the rider is looking at.
-        pinnedTrip = pinnedTrip?.takeIf { currentFocus !is CurrentFocus.Directions },
+        pinnedTrip = pinnedTrip,
         onMyLocation = {
             // Reset the prefs that suppress the enable-location / permission prompts, then recenter.
             PreferenceUtils.saveBoolean(

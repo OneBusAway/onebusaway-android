@@ -752,15 +752,15 @@ fun HomeScreen(
                                     pinTripOption(index)
                                 }
                             }
-                            // The parked trip, traced thin under the map the rider is exploring (#2053) —
-                            // withdrawn inside directions, where the real trip is already drawn and a
-                            // ghost of it would only double every line. What is parked, and the way back
-                            // into it, is said by the map chrome's pinned-trip FAB (#2229) rather than by
-                            // anything on the map.
-                            LaunchedEffect(pinnedTrip, directionsActive) {
-                                mapViewModel.setPinnedTripOverlay(
-                                    pinnedTrip?.selectedItinerary,
-                                    traceRoute = !directionsActive
+                            // Both halves of the parked trip — the thin ghost traced under the map and the
+                            // FAB that offers the way back into it (#2229) — are withdrawn inside
+                            // directions, where the real trip is already drawn: a ghost would double every
+                            // line, and the pin's own controls are in the results sheet the rider is
+                            // looking at. One boolean, so the two can't come to answer it differently.
+                            val showPinnedTrip = !directionsActive
+                            LaunchedEffect(pinnedTrip, showPinnedTrip) {
+                                mapViewModel.setPinnedTripTrace(
+                                    pinnedTrip?.selectedItinerary?.takeIf { showPinnedTrip }
                                 )
                             }
                             // A pinned trip is one the rider can walk back to, so leaving it costs nothing
@@ -854,7 +854,7 @@ fun HomeScreen(
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onMapLongPress = { longPressPoint = it },
-                                    pinnedTrip = pinnedCard,
+                                    pinnedTrip = pinnedCard?.takeIf { showPinnedTrip },
                                     onResumePinnedTrip = onResumePinnedTrip,
                                     modifier = Modifier.fillMaxSize()
                                 )

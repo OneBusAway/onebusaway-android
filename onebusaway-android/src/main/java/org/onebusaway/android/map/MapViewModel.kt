@@ -561,25 +561,23 @@ class MapViewModel @Inject constructor(
      */
 
     /**
-     * Trace the rider's parked trip under the map, or take it off with a null [itinerary] (#2053).
+     * Trace the rider's parked trip thin under the map, or take it off with a null [itinerary] (#2053).
      *
      * Independent of every mode this map has, and that is the point: the pinned trip is what the rider
      * is exploring *around*, so it survives focusing a stop, opening a route, and returning to nearby
      * stops — none of which [leaveCurrentView] can tear down, because it lives in its own slice of the
      * render state rather than in the route list every transition clears.
      *
-     * The trace says *the parked trip goes this way*, which is only worth drawing when nothing else is:
-     * over a drawn itinerary it would double every line, so [traceRoute] withholds it there. What is
-     * parked, and the way back into it, is said off the map by the pinned-trip FAB (#2229) — the marker
-     * that used to say it stood at the trip's head, which is wherever the plan happens to start rather
-     * than anywhere the rider is looking.
+     * The trace only says *the parked trip goes this way*; what is parked, and the way back into it, is
+     * said off the map by `PinnedTripFab` (#2229). When to show either is the host's call, and it is one
+     * call for both — hence a plain nullable here rather than a second gating flag.
      *
      * Drawn in the directions palette, the same deliberately-faded colours the trip wore while it was
      * being read, so the parked trip is recognisably the one the rider left.
      */
-    fun setPinnedTripOverlay(itinerary: TripItinerary?, traceRoute: Boolean) {
+    fun setPinnedTripTrace(itinerary: TripItinerary?) {
         renderState.setPinnedTripPolylines(
-            itinerary?.takeIf { traceRoute }?.let {
+            itinerary?.let {
                 itineraryLegLines(it, directionsPalette()) { leg -> parseObaHexColor(leg.routeColor) }
                     .asPinnedTripGhost()
             }.orEmpty()

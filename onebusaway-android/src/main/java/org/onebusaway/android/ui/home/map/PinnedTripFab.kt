@@ -18,17 +18,16 @@ package org.onebusaway.android.ui.home.map
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
@@ -66,9 +65,16 @@ fun PinnedTripFab(
     onResume: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val destination = when (val label = state.destination) {
-        is PinnedLabel.Text -> label.value
-        is PinnedLabel.Resource -> stringResource(label.id)
+    // Formatting the title is a getString + String.format, and the pin behind it changes only when the
+    // rider pins something; the button itself recomposes with the rest of the map chrome (the sheet-lift
+    // animation runs through it frame by frame), so the work is held rather than repeated.
+    val resources = LocalResources.current
+    val title = remember(resources, state.destination) {
+        val destination = when (val label = state.destination) {
+            is PinnedLabel.Text -> label.value
+            is PinnedLabel.Resource -> resources.getString(label.id)
+        }
+        resources.getString(R.string.trip_plan_pinned_trip_title, destination)
     }
     val resumeLabel = stringResource(R.string.trip_plan_pinned_resume)
     ExtendedFloatingActionButton(
@@ -76,44 +82,45 @@ fun PinnedTripFab(
         // Capped so a long destination name ellipsizes instead of growing the button across the map —
         // the summary beside it already wraps at its own width, and this keeps the two in the same
         // column rather than letting the title alone decide how wide the button is.
-        modifier = modifier.widthIn(max = PINNED_TRIP_FAB_MAX_WIDTH)
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_pin_filled),
-            // The button's own text says what it is; a description here would only repeat it.
-            contentDescription = null,
-            modifier = Modifier.size(PINNED_TRIP_FAB_GLYPH)
-        )
-        // The gap M3's own icon+text extended FAB puts between the two; this overload takes the whole
-        // row, so it has to be stated.
-        Spacer(Modifier.width(12.dp))
-        Column(
-            // "Resume this trip" is what the tap does, not what the button is, so it is announced as the
-            // click's label rather than drawn as a third line. Set on a descendant of the FAB, because
-            // that is the direction the merge runs: the button contributes the action, the child the
-            // label (an action property merges as parent-label-or-child's, parent-action-or-child's).
-            modifier = Modifier.semantics { onClick(label = resumeLabel, action = null) },
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.trip_plan_pinned_trip_title, destination),
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+        modifier = modifier.widthIn(max = PINNED_TRIP_FAB_MAX_WIDTH),
+        icon = {
+            Icon(
+                painterResource(R.drawable.ic_pin_filled),
+                // The button's own text says what it is; a description here would only repeat it.
+                contentDescription = null
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        },
+        text = {
+            Column(
+                // "Resume this trip" is what the tap does, not what the button is, so it is announced as
+                // the click's label rather than drawn as a third line. Set on a descendant of the FAB,
+                // because that is the direction the merge runs: the button contributes the action, the
+                // child the label (an action property merges as parent-label-or-child's,
+                // parent-action-or-child's).
+                modifier = Modifier.semantics { onClick(label = resumeLabel, action = null) },
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                // The elastic half of the line, so the duration — short, fixed, and the one number the
-                // rider is checking — is measured first and always gets its natural width. The summary
-                // packs its symbols unbounded by design (see SymbolFlow), so without this a trip with a
-                // wide multi-route badge would take the whole line and leave "32 min" nothing.
-                ModeSymbolSummary(state.symbols, modifier = Modifier.weight(1f, fill = false))
-                EtaDurationText(minutes = state.durationMinutes)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // The elastic half of the line, so the duration — short, fixed, and the one number
+                    // the rider is checking — is measured first and always gets its natural width. The
+                    // summary packs its symbols unbounded by design (see SymbolFlow), so without this a
+                    // trip with a wide multi-route badge would take the whole line and leave "32 min"
+                    // nothing.
+                    ModeSymbolSummary(state.symbols, modifier = Modifier.weight(1f, fill = false))
+                    EtaDurationText(minutes = state.durationMinutes)
+                }
             }
         }
-    }
+    )
 }
 
 /**
@@ -122,6 +129,3 @@ fun PinnedTripFab(
  * [MapChrome] reserves that column, so this is about the button looking like a button rather than a bar.
  */
 private val PINNED_TRIP_FAB_MAX_WIDTH = 260.dp
-
-/** The pin glyph, at the size a FAB icon takes. */
-private val PINNED_TRIP_FAB_GLYPH = 24.dp

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home.map
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
@@ -48,16 +49,15 @@ class PinnedTripFabTest {
     val composeRule = createUnconfinedComposeRule()
 
     private val resources = InstrumentationRegistry.getInstrumentation().targetContext.resources
+    private val title = resources.getString(R.string.trip_plan_pinned_trip_title, "Ballard")
+    private val resumeLabel = resources.getString(R.string.trip_plan_pinned_resume)
 
     @Test
     fun theButtonNamesTheParkedTripAndResumesItOnTap() {
         var resumed = 0
         show(onResume = { resumed++ })
 
-        composeRule
-            .onNodeWithText(resources.getString(R.string.trip_plan_pinned_trip_title, "Ballard"))
-            .assertIsDisplayed()
-            .performClick()
+        composeRule.onNodeWithText(title).assertIsDisplayed().performClick()
 
         assertEquals(1, resumed)
     }
@@ -69,19 +69,18 @@ class PinnedTripFabTest {
      */
     @Test
     fun theTapAnnouncesWhatItDoes() {
-        show(onResume = {})
+        show()
 
         composeRule
-            .onNodeWithText(resources.getString(R.string.trip_plan_pinned_trip_title, "Ballard"))
+            .onNodeWithText(title)
             .assert(
-                SemanticsMatcher("click action is labelled \"Resume this trip\"") { node ->
-                    node.config.getOrElseNullable(SemanticsActions.OnClick) { null }?.label ==
-                        resources.getString(R.string.trip_plan_pinned_resume)
+                SemanticsMatcher("click action is labelled \"$resumeLabel\"") { node ->
+                    node.config.getOrNull(SemanticsActions.OnClick)?.label == resumeLabel
                 }
             )
     }
 
-    private fun show(onResume: () -> Unit) {
+    private fun show(onResume: () -> Unit = {}) {
         composeRule.setContent {
             ObaTheme {
                 PinnedTripFab(

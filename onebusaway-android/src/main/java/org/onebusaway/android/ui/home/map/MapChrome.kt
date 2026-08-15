@@ -103,6 +103,9 @@ fun MapChrome(
     // AndroidView / overlay cards (which are siblings in HomeScreen's Box).
     val fabBottomInset by animateDpAsState(fabBottomInsetTarget, label = "fabInset")
     val sideAlign = if (leftHandMode) Alignment.BottomStart else Alignment.BottomEnd
+    // The parked trip hugs the far edge from the column, so both edge decisions read off one flag here
+    // rather than being kept opposite by hand in two places.
+    val pinnedAlign = if (leftHandMode) Alignment.BottomEnd else Alignment.BottomStart
     val marginHorizontal = dimensionResource(R.dimen.fab_margin_horizontal)
     val marginBottom = dimensionResource(R.dimen.fab_margin_vertical)
     val accent = colorResource(R.color.theme_accent)
@@ -147,11 +150,11 @@ fun MapChrome(
                     // Clear the my-location FAB below rather than guess a margin: it occupies
                     // marginBottom..marginBottom+FAB_SIZE, and the panel's own padding drops its button
                     // that much lower again, so both are subtracted back out to leave exactly
-                    // RENTAL_FAB_GAP of air between the two buttons.
+                    // CHROME_STACK_GAP of air between the two buttons.
                     .padding(
                         bottom = marginBottom +
                             FAB_SIZE +
-                            RENTAL_FAB_GAP -
+                            CHROME_STACK_GAP -
                             RENTAL_SURFACE_PADDING +
                             fabBottomInset
                     )
@@ -159,27 +162,27 @@ fun MapChrome(
         }
         // The parked trip (#2229), on the opposite bottom corner from the chrome column — the one place
         // on this map that is always free, and where a button carrying a destination name has room to be
-        // read. Its horizontal padding reserves the column's whole width so a wide label can never run
-        // under the my-location FAB or the rental control stacked above it, at any screen width.
+        // read.
+        //
+        // It sits on the my-location FAB's own baseline, except when the zoom pill is showing: that is
+        // centred on the same line, and is the one neighbour the reserved column doesn't already clear.
+        // Lifted over it rather than narrowed around it, since whether the pill is there at all is the
+        // rider's zoom preference.
         if (pinnedTrip != null) {
+            // Clear of the widest thing in the chrome column, whatever that is, plus a gap — so a long
+            // destination name can never run under it at any screen width.
+            val reserved = marginHorizontal + CHROME_COLUMN_WIDTH + CHROME_STACK_GAP
             PinnedTripFab(
                 state = pinnedTrip,
                 onResume = onResumePinnedTrip,
                 modifier = Modifier
-                    .align(if (leftHandMode) Alignment.BottomEnd else Alignment.BottomStart)
-                    .padding(horizontal = marginHorizontal)
+                    .align(pinnedAlign)
                     .padding(
-                        start = if (leftHandMode) marginHorizontal + FAB_SIZE else 0.dp,
-                        end = if (leftHandMode) 0.dp else marginHorizontal + FAB_SIZE
-                    )
-                    // On the my-location FAB's own baseline, except when the zoom pill is showing: that
-                    // sits centred on the same line, and is the one thing this button's reserved column
-                    // doesn't already clear. Lifted over it rather than narrowed around it, since the
-                    // pill's width is the rider's zoom preference, not a layout constant.
-                    .padding(
+                        start = if (leftHandMode) reserved else marginHorizontal,
+                        end = if (leftHandMode) marginHorizontal else reserved,
                         bottom = marginBottom +
                             fabBottomInset +
-                            if (zoomVisible) ZOOM_CONTROLS_HEIGHT + RENTAL_FAB_GAP else 0.dp
+                            if (zoomVisible) ZOOM_CONTROLS_HEIGHT + CHROME_STACK_GAP else 0.dp
                     )
             )
         }
@@ -210,7 +213,7 @@ private fun ZoomControls(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.height(ZOOM_CONTROLS_HEIGHT),
         shape = RoundedCornerShape(4.dp),
         color = Color.White.copy(alpha = 0.85f),
         shadowElevation = 4.dp
@@ -504,18 +507,30 @@ private val RENTAL_SURFACE_CORNER = RENTAL_FAB_CORNER + RENTAL_SURFACE_PADDING_H
 private val RENTAL_SURFACE_ELEVATION = 6.dp
 
 // The my-location FAB uses @dimen/fab_margin_*; the rental control stacks above it, clearing it by
-// RENTAL_FAB_GAP. The legacy layout hardcoded the whole distance as 80dp with no dimen, which left the
+// CHROME_STACK_GAP. The legacy layout hardcoded the whole distance as 80dp with no dimen, which left the
 // two buttons flush once the rental panel gained its own padding — hence deriving it instead.
 
 /** M3's standard FAB diameter, which the my-location button is. Not exposed as a token by Material 3. */
 private val FAB_SIZE = 56.dp
 
-/** Clear air between the rental control and the my-location FAB beneath it. */
-private val RENTAL_FAB_GAP = 16.dp
+/** Clear air between two chrome items that stack: the rental control over the my-location FAB, and the
+ *  parked-trip button over the zoom pill. */
+private val CHROME_STACK_GAP = 16.dp
 
 /**
- * The zoom pill's height, which the pinned-trip button is lifted over when the pill is showing. It is
- * two [IconButton]s side by side in a [Surface] that adds no padding of its own, so the pill measures
- * exactly the icon button's own 48dp — restated here because Material exposes it as an internal default.
+ * How far the chrome column reaches in from its screen margin — the widest thing in it, which is the
+ * rental panel rather than the FABs it wraps ([RENTAL_SURFACE_PADDING_HORIZONTAL] on each side of a
+ * [FAB_SIZE] button, hung half a padding outside the margin, so it overhangs by one).
+ *
+ * Derived rather than eyeballed at `FAB_SIZE` because the parked-trip button on the far edge reserves it:
+ * widen the rental panel's inset and the reservation has to follow, or that button slides under it and
+ * — being composed first — draws below it and stops taking taps along its edge.
+ */
+private val CHROME_COLUMN_WIDTH = FAB_SIZE + RENTAL_SURFACE_PADDING_HORIZONTAL
+
+/**
+ * The zoom pill's height, which the parked-trip button is lifted over when the pill is showing. Material
+ * exposes [IconButton]'s size only as an internal default, so it is restated here — and [ZoomControls]
+ * is held to it, so the pill can't quietly grow past what its neighbour is dodging.
  */
 private val ZOOM_CONTROLS_HEIGHT = 48.dp

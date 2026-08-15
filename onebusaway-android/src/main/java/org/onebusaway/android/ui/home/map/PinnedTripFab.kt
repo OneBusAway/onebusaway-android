@@ -126,7 +126,11 @@ fun PinnedTripFab(
                     .semantics(mergeDescendants = true) {}
                     // Held off the pill's leading edge, which is a 16dp corner the glyph would otherwise
                     // sit inside the curve of.
-                    .padding(start = PIN_START_PADDING, top = CONTENT_GAP, bottom = CONTENT_GAP),
+                    .padding(
+                        start = PIN_START_PADDING,
+                        top = ROW_VERTICAL_PADDING,
+                        bottom = ROW_VERTICAL_PADDING
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(CONTENT_GAP)
             ) {
@@ -207,6 +211,12 @@ private val PIN_GLYPH = 22.dp
 
 /** Holds the glyph clear of the pill's leading corner, whose radius it would otherwise sit inside. */
 private val PIN_START_PADDING = 12.dp
+
+/**
+ * The margin above and below the row inside the pill — kept tighter than [CONTENT_GAP] because the
+ * summary panel carries its own inset now, and stacking the two read as a panel adrift in the button.
+ */
+private val ROW_VERTICAL_PADDING = 5.dp
 
 /** The summary panel: its corner, and the inset holding the symbols off its edges. */
 private val SUMMARY_CORNER = 8.dp

@@ -25,7 +25,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -143,14 +142,16 @@ fun PinnedTripFab(
                     modifier = Modifier.size(PIN_GLYPH)
                 )
                 // The summary sits on its own ground rather than beside the glyph and the ✕ as a third
-                // thing of the same kind: those two are controls, and this is what they are about. The
-                // colour is the option card's own background — the surface these badges are drawn
-                // against everywhere else — so the picker's summary and this one read as one thing
-                // rather than as the same symbols on two different grounds.
+                // thing of the same kind: those two are controls, and this is what they are about.
+                //
+                // That ground is the pill's own colour shaded by its own content colour, not a surface
+                // borrowed from elsewhere: a card background here was a second material sitting on the
+                // button, which separated the summary far harder than it needed to. A wash of the
+                // content colour reads as the same surface, slightly recessed — and it follows the pill
+                // into dark mode without a second colour having to be kept in step with it.
                 Surface(
                     shape = RoundedCornerShape(SUMMARY_CORNER),
-                    color = colorResource(R.color.trip_plan_card_background),
-                    contentColor = MaterialTheme.colorScheme.onSurface
+                    color = LocalContentColor.current.copy(alpha = SUMMARY_TINT_ALPHA)
                 ) {
                     // Wrapped against this button rather than against the option card the summary was
                     // drawn for: that card's line is 176dp, so on a button the width of most of the
@@ -217,6 +218,13 @@ private val PIN_START_PADDING = 12.dp
  * summary panel carries its own inset now, and stacking the two read as a panel adrift in the button.
  */
 private val ROW_VERTICAL_PADDING = 5.dp
+
+/**
+ * How far the summary panel is shaded off the pill it sits on — enough to separate, not enough to read
+ * as a different material. Applied to the pill's own content colour, so it darkens in light mode and
+ * lightens in dark by construction.
+ */
+private const val SUMMARY_TINT_ALPHA = 0.10f
 
 /** The summary panel: its corner, and the inset holding the symbols off its edges. */
 private val SUMMARY_CORNER = 8.dp

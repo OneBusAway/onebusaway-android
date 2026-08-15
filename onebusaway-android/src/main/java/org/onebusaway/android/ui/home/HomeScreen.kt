@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -946,7 +947,13 @@ fun HomeScreen(
                                                         top = with(density) { clearPx.toDp() } +
                                                             if (clearPx > 0) TOP_OVERLAY_STACK_GAP else 0.dp
                                                     )
+                                                    // A ceiling, not a width: the fraction sets how far
+                                                    // the button may grow before its route summary
+                                                    // starts wrapping, and wrapContentWidth then lets it
+                                                    // shrink back to whatever it actually needs, centred
+                                                    // in that allowance.
                                                     .fillMaxWidth(PINNED_TRIP_FAB_WIDTH_FRACTION)
+                                                    .wrapContentWidth()
                                             )
                                         }
                                     }
@@ -1341,12 +1348,13 @@ private fun BoxScope.HomeMapOverlays(
 private val TOP_OVERLAY_STACK_GAP = 8.dp
 
 /**
- * How much of the screen's width the parked-trip button spans (#2229).
+ * How much of the screen's width the parked-trip button may take before its route summary wraps (#2229).
  *
- * A fraction rather than a fixed width so it reads the same on every display, and wide enough that it is
- * unmistakably the parked trip rather than one more round button in a corner — it is the only chrome here
- * that stands for something the rider put there themselves. The remaining fifth keeps it clear of both
- * edges, so it still reads as a button floating over the map rather than a bar across it.
+ * A ceiling rather than a width: a short trip's button is only as wide as the trip, and a long one grows
+ * to here and then wraps. A fraction rather than a fixed dp so it reads the same on every display, and
+ * generous because this is the only chrome on the map standing for something the rider put there
+ * themselves. The remaining fifth keeps even the widest one clear of both edges, so it still reads as a
+ * button floating over the map rather than a bar across it.
  */
 private const val PINNED_TRIP_FAB_WIDTH_FRACTION = 0.8f
 

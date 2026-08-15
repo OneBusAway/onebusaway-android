@@ -109,7 +109,12 @@ fun PinnedTripFab(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Row(
                 modifier = Modifier
-                    .weight(1f)
+                    // Weighted so the ✕ — measured first, as the unweighted child — always gets its
+                    // full target, and this half takes what is left rather than starving it on a trip
+                    // with a long summary. `fill = false` so it still only takes what it *needs*: that
+                    // is what lets the pill shrink to its contents instead of always standing at the
+                    // width the host offers.
+                    .weight(1f, fill = false)
                     // "Resume this trip" is what the tap does, not what the button is, so it is the
                     // click's own label rather than a line drawn inside it. Merged so the region
                     // announces as one button carrying the trip's name, not as a glyph and a row of
@@ -118,7 +123,7 @@ fun PinnedTripFab(
                     .semantics(mergeDescendants = true) {}
                     .padding(vertical = CONTENT_GAP),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(CONTENT_GAP, Alignment.CenterHorizontally)
+                horizontalArrangement = Arrangement.spacedBy(CONTENT_GAP)
             ) {
                 Icon(
                     painterResource(R.drawable.ic_pin_filled),

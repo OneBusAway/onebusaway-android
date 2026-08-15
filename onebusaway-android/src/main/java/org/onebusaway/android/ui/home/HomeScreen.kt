@@ -936,6 +936,7 @@ fun HomeScreen(
                                             PinnedTripFab(
                                                 state = card,
                                                 onResume = onResumePinnedTrip,
+                                                onUnpin = pinnedTripViewModel::unpin,
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
                                                     .padding(

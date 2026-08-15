@@ -21,6 +21,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -55,6 +56,9 @@ class PinnedTripFabTest {
     private val resources = InstrumentationRegistry.getInstrumentation().targetContext.resources
     private val name = resources.getString(R.string.trip_plan_pinned_trip_title, "Ballard")
     private val resumeLabel = resources.getString(R.string.trip_plan_pinned_resume)
+    private val unpinLabel = resources.getString(R.string.trip_plan_unpin)
+    private val unpinConfirm = resources.getString(R.string.trip_plan_pinned_unpin_confirm)
+    private val cancel = resources.getString(R.string.cancel)
 
     @Test
     fun theButtonNamesTheParkedTripAndResumesItOnTap() {
@@ -84,7 +88,38 @@ class PinnedTripFabTest {
             )
     }
 
-    private fun show(onResume: () -> Unit = {}) {
+    /**
+     * The ✕ is a small glyph beside a large button, and the pin is the only thing holding that plan —
+     * nothing else remembers it. So it asks first, and a rider who says no keeps the trip.
+     */
+    @Test
+    fun theUnpinButtonAsksBeforeItLetsTheTripGo() {
+        var unpinned = 0
+        show(onUnpin = { unpinned++ })
+
+        composeRule.onNodeWithContentDescription(unpinLabel).performClick()
+        composeRule.onNodeWithText(cancel).performClick()
+
+        assertEquals("cancelling the confirmation must keep the trip", 0, unpinned)
+
+        composeRule.onNodeWithContentDescription(unpinLabel).performClick()
+        composeRule.onNodeWithText(unpinConfirm).performClick()
+
+        assertEquals(1, unpinned)
+    }
+
+    /** The ✕ is its own target: a tap on it must not read as a tap on the button it sits in. */
+    @Test
+    fun theUnpinButtonDoesNotResumeTheTrip() {
+        var resumed = 0
+        show(onResume = { resumed++ })
+
+        composeRule.onNodeWithContentDescription(unpinLabel).performClick()
+
+        assertEquals(0, resumed)
+    }
+
+    private fun show(onResume: () -> Unit = {}, onUnpin: () -> Unit = {}) {
         composeRule.setContent {
             ObaTheme {
                 PinnedTripFab(
@@ -100,7 +135,8 @@ class PinnedTripFabTest {
                             )
                         )
                     ),
-                    onResume = onResume
+                    onResume = onResume,
+                    onUnpin = onUnpin
                 )
             }
         }

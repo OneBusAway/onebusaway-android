@@ -1040,6 +1040,12 @@
          the trip on the button; the second is announced as what tapping it does. -->
     <string name="trip_plan_pinned_trip_title">Pinned trip to %1$s</string>
     <string name="trip_plan_pinned_resume">Resume this trip</string>
+    <!-- The confirmation the FAB's ✕ raises (its own label is trip_plan_unpin, shared with the results
+         sheet's control). Confirmed because the trip is gone for good: the plan is stored whole and
+         nothing else remembers it, so a mis-tap costs the whole journey. -->
+    <string name="trip_plan_pinned_unpin_title">Unpin this trip?</string>
+    <string name="trip_plan_pinned_unpin_message">You&#8217;ll need to plan it again to get it back.</string>
+    <string name="trip_plan_pinned_unpin_confirm">Unpin</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>

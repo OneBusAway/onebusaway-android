@@ -478,7 +478,7 @@ private val PINNED_CARD_BORDER = 2.dp
  * nothing drawable to say gets no summary at all — an empty tinted strip would be worse than the card
  * simply starting at its stats.
  *
- * Shared by the option card and the pinned-trip resume card (#2053), which describes the parked trip in
+ * Shared by the option card and the pinned-trip resume FAB (#2053), which describes the parked trip in
  * the same language the picker used to choose it.
  */
 @Composable

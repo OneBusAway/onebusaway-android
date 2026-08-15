@@ -45,7 +45,7 @@ sealed interface PinnedLabel {
     data class Resource(@StringRes val id: Int) : PinnedLabel
 }
 
-/** Everything the resume card draws: where the trip goes, what it looks like, and how long it takes. */
+/** Everything the resume FAB draws: where the trip goes, what it looks like, and how long it takes. */
 data class PinnedTripCardState(
     val destination: PinnedLabel,
     val symbols: List<ModeSymbol>,
@@ -71,11 +71,11 @@ internal fun pinnedDestinationLabel(
 
 /**
  * Owns the one parked trip plan (#2053): the pin/unpin actions, the state every pin control reads, and
- * the summary the resume card draws.
+ * the summary the resume FAB draws.
  *
  * Activity-scoped (constructed in `HomeActivity` via `by viewModels()`, not `hiltViewModel()` inside a
  * composable) because two very different places read it — the pin control inside the results sheet and
- * the resume card floating over the map. A NavBackStackEntry-scoped instance would make those two
+ * the resume FAB floating over the map. A NavBackStackEntry-scoped instance would make those two
  * separate objects with two collectors over the same row, disagreeing for a frame at a time.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -169,7 +169,7 @@ class PinnedTripViewModel @Inject constructor(
         }
     }
 
-    /** The rider tapped the resume card: replay [pin], landing on the option they chose. */
+    /** The rider tapped the resume FAB: replay [pin], landing on the option they chose. */
     fun beginResume(pin: PinnedTrip) {
         _pendingResumeIndex.value = pin.selectedIndex
     }

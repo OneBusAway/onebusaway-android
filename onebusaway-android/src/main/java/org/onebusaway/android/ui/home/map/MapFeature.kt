@@ -113,6 +113,7 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.ObaRequestErrors
@@ -148,15 +149,15 @@ fun MapFeature(
     modifier: Modifier = Modifier,
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
     onMapLongPress: (GeoPoint) -> Unit = {},
-    // Tapping the parked trip's info window takes the rider back into it (#2053). HomeScreen owns the
-    // pin, so the map only reports the tap.
+    // The rider's parked trip plan and the way back into it (#2053), drawn as a FAB in the map chrome
+    // (#2229). HomeScreen owns the pin; this module only places the button and reports its tap.
+    pinnedTrip: PinnedTripCardState? = null,
     onResumePinnedTrip: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
     // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
     val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
-    val currentOnResumePinnedTrip by rememberUpdatedState(onResumePinnedTrip)
     // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
     // inset updates on every frame of the keyboard animation, and reading it here directly would
     // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
@@ -302,10 +303,6 @@ fun MapFeature(
 
             override fun onRentalInfoWindowClick(place: RentalPlace) {
                 MapNavigation.openRentalLink(context, place)
-            }
-
-            override fun onPinnedTripInfoWindowClick() {
-                currentOnResumePinnedTrip()
             }
         }
     }
@@ -557,6 +554,10 @@ fun MapFeature(
         rentalsLoading = rentalsLoading,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
+        // Withheld inside directions, where a trip is already on the map: the same reason the ghost
+        // trace is (#2053), and the same reason the layers button is — this corner is crowded there,
+        // and the pin's own controls live in the results sheet the rider is looking at.
+        pinnedTrip = pinnedTrip?.takeIf { currentFocus !is CurrentFocus.Directions },
         onMyLocation = {
             // Reset the prefs that suppress the enable-location / permission prompts, then recenter.
             PreferenceUtils.saveBoolean(
@@ -576,6 +577,7 @@ fun MapFeature(
         onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) },
         onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
         onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) },
+        onResumePinnedTrip = onResumePinnedTrip,
         onHideRentalButton = {
             PreferenceUtils.saveBoolean(resources.getString(R.string.preference_key_show_rental_button), false)
             // The button is the only signpost to itself, so hiding it without saying where it went

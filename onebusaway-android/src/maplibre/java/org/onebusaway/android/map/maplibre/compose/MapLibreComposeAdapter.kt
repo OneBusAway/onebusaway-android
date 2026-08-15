@@ -57,7 +57,6 @@ import org.maplibre.android.maps.Style
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
-import org.onebusaway.android.map.compose.PinnedTripInfoWindow
 import org.onebusaway.android.map.compose.RentalInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
@@ -330,15 +329,6 @@ private fun wireClicks(
             }
             return@setOnMarkerClickListener true
         }
-        val pinnedTrip = renderer.pinnedTripForMarker(marker)
-        if (pinnedTrip != null) {
-            infoWindows.open(marker) {
-                Surface(color = Color.White, shape = RoundedCornerShape(8.dp), shadowElevation = 2.dp) {
-                    PinnedTripInfoWindow(pinnedTrip.summary)
-                }
-            }
-            return@setOnMarkerClickListener true
-        }
         // Only a label that leads somewhere is registered as a tap target, so this hands the badge over
         // whole and lets the host read where it leads — see [ObaMapCallbacks.onRouteBadgeClick].
         val routeBadge = renderer.routeBadgeForMarker(marker)
@@ -355,11 +345,6 @@ private fun wireClicks(
         val rental = renderer.rentalForMarker(marker)
         if (rental != null) {
             callbacks.onRentalInfoWindowClick(rental.place)
-            return@setOnInfoWindowClickListener true
-        }
-        // The parked trip's window is one tap target and its tap means one thing: take me back (#2053).
-        if (renderer.pinnedTripForMarker(marker) != null) {
-            callbacks.onPinnedTripInfoWindowClick()
             return@setOnInfoWindowClickListener true
         }
         false

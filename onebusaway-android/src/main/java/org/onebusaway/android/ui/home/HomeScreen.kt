@@ -228,7 +228,7 @@ fun HomeScreen(
     // the top chrome and the results sheet + itinerary render over the map.
     tripPlanViewModel: TripPlanViewModel,
     tripResultsViewModel: TripResultsViewModel,
-    // The parked trip plan (#2053): read from the results sheet's pin controls and from the resume card
+    // The parked trip plan (#2053): read from the results sheet's pin controls and from the resume FAB
     // over the map, so it is one activity-scoped instance rather than a per-destination one.
     pinnedTripViewModel: PinnedTripViewModel,
     // Builds the per-focused-stop ArrivalsViewModel for the bottom-sheet host (assisted-injected;
@@ -754,13 +754,12 @@ fun HomeScreen(
                             }
                             // The parked trip, traced thin under the map the rider is exploring (#2053) —
                             // withdrawn inside directions, where the real trip is already drawn and a
-                            // ghost of it would only double every line.
-                            LaunchedEffect(pinnedTrip, pinnedCard, directionsActive) {
+                            // ghost of it would only double every line. What is parked, and the way back
+                            // into it, is said by the map chrome's pinned-trip FAB (#2229) rather than by
+                            // anything on the map.
+                            LaunchedEffect(pinnedTrip, directionsActive) {
                                 mapViewModel.setPinnedTripOverlay(
                                     pinnedTrip?.selectedItinerary,
-                                    pinnedCard,
-                                    // The trace is withheld over a drawn itinerary, where it would only
-                                    // double every line; the marker stands wherever the rider is.
                                     traceRoute = !directionsActive
                                 )
                             }
@@ -855,6 +854,7 @@ fun HomeScreen(
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onMapLongPress = { longPressPoint = it },
+                                    pinnedTrip = pinnedCard,
                                     onResumePinnedTrip = onResumePinnedTrip,
                                     modifier = Modifier.fillMaxSize()
                                 )

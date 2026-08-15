@@ -48,8 +48,6 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
-import org.onebusaway.android.map.render.PinnedTripBitmaps
-import org.onebusaway.android.map.render.PinnedTripMarker
 import org.onebusaway.android.map.render.RentalBand
 import org.onebusaway.android.map.render.RentalBitmaps
 import org.onebusaway.android.map.render.RentalMarker
@@ -128,7 +126,6 @@ class MapLibreRenderer(
     // Native sprites for the rental markers, keyed by everything that varies the artwork. Bounded by
     // (layers x kinds x charge buckets) + 1, so a plain map rather than an LruCache.
     private val rentalIcons = HashMap<String, Icon>()
-    private var pinnedTripByMarker: Pair<Marker, PinnedTripMarker>? = null
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -282,7 +279,6 @@ class MapLibreRenderer(
         // the bike / route-badge tap maps are cleared here.
         rentalByMarker.clear()
         rentalIcons.clear()
-        pinnedTripByMarker = null
         routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
@@ -327,22 +323,6 @@ class MapLibreRenderer(
         }
 
         renderRouteBadges(snapshot.routeBadges)
-
-        // The parked trip's head (#2053), added dead last — which on this flavor is the *only* way to
-        // say "on top". The classic annotation API carries no z-index (contrast the Google renderer,
-        // which asks for one explicitly), so draw and hit order are add order, and a stop under the pin
-        // would otherwise take every tap meant for it. Trips start at stops, so that is the ordinary
-        // case rather than a corner one.
-        snapshot.pinnedTripMarker?.let { pinned ->
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(pinned.point.toLatLng())
-                    .icon(iconFactory.fromBitmap(PinnedTripBitmaps.pin(context)))
-                    .title(context.getString(R.string.trip_plan_pinned_resume))
-            )
-            staticAnnotations.add(marker)
-            pinnedTripByMarker = marker to pinned
-        }
     }
 
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
@@ -452,7 +432,6 @@ class MapLibreRenderer(
         vehicleIcons.evictAll()
         rentalByMarker.clear()
         rentalIcons.clear()
-        pinnedTripByMarker = null
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
         mostRecentDataMarker = null
@@ -778,8 +757,6 @@ class MapLibreRenderer(
     }
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
-
-    fun pinnedTripForMarker(marker: Marker): PinnedTripMarker? = pinnedTripByMarker?.takeIf { it.first == marker }?.second
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

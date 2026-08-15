@@ -17,7 +17,7 @@ import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 
-/** What the resume card calls the trip it offers to bring back. */
+/** What the resume FAB calls the trip it offers to bring back. */
 class PinnedDestinationLabelTest {
 
     @Test

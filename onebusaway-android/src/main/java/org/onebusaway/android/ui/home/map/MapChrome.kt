@@ -67,13 +67,15 @@ import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.ui.compose.unitsAreMetric
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 
 /**
  * The map's Compose overlay chrome, replacing the XML my-location FAB, zoom buttons, and the
- * third-party android-fab layers speed-dial. Hosted over the map inside HomeScreen's
- * BottomSheetScaffold content; [fabBottomInsetTarget] is the sheet-driven lift target (the peek
- * height when collapsed, else 0) that the FABs animate to — replacing the legacy
- * `moveFabsLocation()` margin animation. All state + actions are supplied by [MapFeature].
+ * third-party android-fab layers speed-dial — plus the rental control (#2168) and the parked trip's
+ * resume button (#2229). Hosted over the map inside HomeScreen's BottomSheetScaffold content;
+ * [fabBottomInsetTarget] is the sheet-driven lift target (the peek height when collapsed, else 0) that
+ * the FABs animate to — replacing the legacy `moveFabsLocation()` margin animation. All state + actions
+ * are supplied by [MapFeature].
  */
 @Composable
 fun MapChrome(
@@ -86,13 +88,16 @@ fun MapChrome(
     rentalsLoading: Boolean,
     mapLoading: Boolean,
     fabBottomInsetTarget: Dp,
+    // The rider's parked trip plan, or null with nothing pinned (#2229).
+    pinnedTrip: PinnedTripCardState?,
     onMyLocation: () -> Unit,
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
     onToggleRentals: () -> Unit,
     onToggleBikes: () -> Unit,
     onToggleScooters: () -> Unit,
-    onHideRentalButton: () -> Unit
+    onHideRentalButton: () -> Unit,
+    onResumePinnedTrip: () -> Unit
 ) {
     // Animate the lift here so the per-frame value only recomposes the FABs, not the hosting map
     // AndroidView / overlay cards (which are siblings in HomeScreen's Box).
@@ -149,6 +154,32 @@ fun MapChrome(
                             RENTAL_FAB_GAP -
                             RENTAL_SURFACE_PADDING +
                             fabBottomInset
+                    )
+            )
+        }
+        // The parked trip (#2229), on the opposite bottom corner from the chrome column — the one place
+        // on this map that is always free, and where a button carrying a destination name has room to be
+        // read. Its horizontal padding reserves the column's whole width so a wide label can never run
+        // under the my-location FAB or the rental control stacked above it, at any screen width.
+        if (pinnedTrip != null) {
+            PinnedTripFab(
+                state = pinnedTrip,
+                onResume = onResumePinnedTrip,
+                modifier = Modifier
+                    .align(if (leftHandMode) Alignment.BottomEnd else Alignment.BottomStart)
+                    .padding(horizontal = marginHorizontal)
+                    .padding(
+                        start = if (leftHandMode) marginHorizontal + FAB_SIZE else 0.dp,
+                        end = if (leftHandMode) 0.dp else marginHorizontal + FAB_SIZE
+                    )
+                    // On the my-location FAB's own baseline, except when the zoom pill is showing: that
+                    // sits centred on the same line, and is the one thing this button's reserved column
+                    // doesn't already clear. Lifted over it rather than narrowed around it, since the
+                    // pill's width is the rider's zoom preference, not a layout constant.
+                    .padding(
+                        bottom = marginBottom +
+                            fabBottomInset +
+                            if (zoomVisible) ZOOM_CONTROLS_HEIGHT + RENTAL_FAB_GAP else 0.dp
                     )
             )
         }
@@ -481,3 +512,10 @@ private val FAB_SIZE = 56.dp
 
 /** Clear air between the rental control and the my-location FAB beneath it. */
 private val RENTAL_FAB_GAP = 16.dp
+
+/**
+ * The zoom pill's height, which the pinned-trip button is lifted over when the pill is showing. It is
+ * two [IconButton]s side by side in a [Surface] that adds no padding of its own, so the pill measures
+ * exactly the icon button's own 48dp — restated here because Material exposes it as an internal default.
+ */
+private val ZOOM_CONTROLS_HEIGHT = 48.dp

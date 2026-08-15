@@ -128,7 +128,7 @@ class HomeActivity : AppCompatActivity() {
     private val tripResultsViewModel: TripResultsViewModel by viewModels()
 
     // The parked trip plan (#2053). Activity-scoped for the same reason as the two above, and for one
-    // more: the pin is read from inside the results sheet *and* from the resume card over the map, and
+    // more: the pin is read from inside the results sheet *and* from the resume FAB over the map, and
     // those two must never be looking at separate copies of it.
     private val pinnedTripViewModel: PinnedTripViewModel by viewModels()
 

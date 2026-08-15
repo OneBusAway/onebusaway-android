@@ -70,7 +70,7 @@ interface PinnedTripDao {
      * The pinned trip as it changes, or null when nothing is pinned.
      *
      * Emits the whole row rather than a "is something pinned" boolean (the shape
-     * [NavigationSessionDao.observeHasActiveSession] takes) because the resume card draws the trip's
+     * [NavigationSessionDao.observeHasActiveSession] takes) because the resume FAB draws the trip's
      * destination and summary from the payload — presence alone would only mean a second read.
      */
     @Query("SELECT * FROM pinned_trips LIMIT 1")

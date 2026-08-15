@@ -98,8 +98,7 @@ class PinnedTripFabTest {
                                     join = RouteBadgeJoin.ANY_OF
                                 )
                             )
-                        ),
-                        durationMinutes = 32
+                        )
                     ),
                     onResume = onResume
                 )

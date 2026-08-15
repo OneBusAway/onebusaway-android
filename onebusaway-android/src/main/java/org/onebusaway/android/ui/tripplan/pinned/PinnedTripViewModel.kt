@@ -45,11 +45,13 @@ sealed interface PinnedLabel {
     data class Resource(@StringRes val id: Int) : PinnedLabel
 }
 
-/** Everything the resume FAB draws: where the trip goes, what it looks like, and how long it takes. */
+/**
+ * Everything the resume FAB draws — the legs the parked trip rides — plus where it goes, which the button
+ * announces rather than draws.
+ */
 data class PinnedTripCardState(
     val destination: PinnedLabel,
-    val symbols: List<ModeSymbol>,
-    val durationMinutes: Long
+    val symbols: List<ModeSymbol>
 )
 
 /**
@@ -183,8 +185,7 @@ class PinnedTripViewModel @Inject constructor(
         val option = results.summarize(pin.itineraries).getOrNull()?.getOrNull(pin.selectedIndex) ?: return null
         return PinnedTripCardState(
             destination = pinnedDestinationLabel(pin.params, pin.selectedItinerary),
-            symbols = option.symbols,
-            durationMinutes = option.durationMinutes
+            symbols = option.symbols
         )
     }
 

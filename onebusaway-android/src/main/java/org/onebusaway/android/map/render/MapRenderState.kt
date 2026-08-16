@@ -112,7 +112,7 @@ enum class RouteLineDash {
 enum class RouteLineCase(val widthDp: Float) {
     NONE(0f),
     OUTLINE(0.75f),
-    APPROACH(1.5f),
+    APPROACH(1f),
     SELECTION(2.25f);
 
     /** What this case adds to its line's *total* width — both sides. Derived here so no caller has to

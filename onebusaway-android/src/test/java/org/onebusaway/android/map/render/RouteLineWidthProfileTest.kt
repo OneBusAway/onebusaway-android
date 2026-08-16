@@ -77,7 +77,7 @@ class RouteLineWidthProfileTest {
         // halo that thinned with its line would stop separating it from the basemap exactly when zoomed out.
         assertEquals(2.25f, RouteLineCase.SELECTION.widthDp, 0f)
         // The approach's own weight: the selection colour on a line too thin to carry the selection width.
-        assertEquals(1.5f, RouteLineCase.APPROACH.widthDp, 0f)
+        assertEquals(1f, RouteLineCase.APPROACH.widthDp, 0f)
         // The lighter edge every directions ride wears; selection stays legible against it by being three
         // times the weight, which is what lets it still mean "selected".
         assertEquals(0.75f, RouteLineCase.OUTLINE.widthDp, 0f)

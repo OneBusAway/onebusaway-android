@@ -50,9 +50,8 @@ object TripLogBuilder {
 
     /**
      * [routeLegRefs] is aligned to [legs]: the resolved route/stop identity per transit leg, else null.
-     * [plannedStart] is when the plan puts the rider at its starting point ([TripPlanParams.plannedStart]
-     * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart]) — what stands in for "the end of
-     * the leg before" when the itinerary opens on transit; null when the plan doesn't say (arrive-by).
+     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart] — what stands in
+     * for "the end of the leg before" when the itinerary opens on transit; null when the plan doesn't say.
      */
     fun build(
         legs: List<TripLeg>,
@@ -113,7 +112,7 @@ object TripLogBuilder {
                         // an arrive-by plan says nothing about when they set out, and that absence is
                         // carried as null rather than substituted for with the ride's own departure: see
                         // TripLogEntry.Transit.reachStopTime for what that would tell the rider.
-                        reachStopTime = legs.getOrNull(legIndex - 1)?.endTime ?: plannedStart.takeIf { legIndex == 0 },
+                        reachStopTime = if (legIndex == 0) plannedStart else legs[legIndex - 1].endTime,
                         ref = routeLegRefs.getOrNull(legIndex)
                     )
                 }

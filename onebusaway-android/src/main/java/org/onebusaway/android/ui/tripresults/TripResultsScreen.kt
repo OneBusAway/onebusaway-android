@@ -1985,10 +1985,9 @@ private fun ColumnScope.BoardContent(
 ) {
     // The route/headsign block highlights the leg on the map; expanding its steps is the scaffold's
     // own chevron segment (#2040), not a side effect of this tap. The board stop below is a third,
-    // separate tap target that zooms to the stop (its live ETA strip is the row's footer). Because this
-    // control is this inner block rather than the whole row, the scaffold's touch-target floor doesn't
-    // reach it — so it carries its own. (Its content clears 48dp on its own in practice; this is the
-    // guarantee, not the usual case.)
+    // separate tap target that zooms to the stop. Because this control is this inner block rather than
+    // the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
+    // content clears 48dp on its own in practice; this is the guarantee, not the usual case.)
     Column(
         Modifier
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)

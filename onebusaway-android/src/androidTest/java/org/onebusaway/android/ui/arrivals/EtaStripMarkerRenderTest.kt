@@ -61,7 +61,7 @@ class EtaStripMarkerRenderTest {
      * or clock-time match would risk colliding with a neighbour's subline.
      */
     private fun setContent(vararg names: String, reachStopMinutes: Long, width: Dp? = null) = composeRule.setContent {
-        Box(if (width == null) Modifier.fillMaxWidth() else Modifier.width(width)) {
+        Box(width?.let { Modifier.width(it) } ?: Modifier.fillMaxWidth()) {
             EtaStrip(
                 trips = names.mapIndexed { i, name ->
                     previewArrival(name, "Rainier Beach", etaMinutes = 3L + i * 8, tripId = "trip_$i")

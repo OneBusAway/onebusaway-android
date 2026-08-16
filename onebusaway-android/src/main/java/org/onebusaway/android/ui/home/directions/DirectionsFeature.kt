@@ -94,7 +94,7 @@ import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaPillFocus
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
-import org.onebusaway.android.ui.arrivals.components.anyAtOrAfter
+import org.onebusaway.android.ui.arrivals.components.countBefore
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
@@ -438,9 +438,7 @@ internal fun DirectionStopEtaStrip(
 ) {
     val stopId = stop.stopId
     val point = stop.point
-    // Spans the content column edge to edge: the log row already insets its content from the sheet's
-    // edges, so no inset of its own on either side (an extra end inset used to stop the strip well
-    // short of the column, #2228; the old start indent was a holdover from the indented-sub-row design).
+    // Edge to edge: the log row already insets its content from the sheet's edges (#2228).
     val rowPadding = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp)
     // Without an OBA id + location there is no stop to query, so draw nothing at all. "No upcoming
     // arrivals" is reserved for a stop we *did* look up (below) — saying it here would report an
@@ -506,11 +504,13 @@ private fun DirectionStopEtaStripContent(
         }
     }
     val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
-    // Whether the rider can board anything the feed knows about; always, without a reach time. Once
-    // shown anyway the strip stays up for this stop, though a strip that has come to hold a boardable
-    // pill needs no reveal.
+    // Collapsed when the rule would land past the last pill — the very count the strip places its rule
+    // by, so the line and the rule can't disagree about what is boardable (nothing at all counts:
+    // an empty feed has nothing boardable either). Never without a reach time. Once shown anyway the
+    // strip stays up for this stop, though a strip that has come to hold a boardable pill needs no reveal.
     var revealed by rememberSaveable { mutableStateOf(false) }
-    if (reachStopTime != null && !revealed && !anyAtOrAfter(interleaved, reachStopTime) { it.first.displayTime }) {
+    val nothingBoardable = reachStopTime != null && countBefore(interleaved, reachStopTime) { it.first.displayTime } == interleaved.size
+    if (nothingBoardable && !revealed) {
         NoBoardableDeparturesLine(modifier = rowPadding, onReveal = { revealed = true })
         return
     }

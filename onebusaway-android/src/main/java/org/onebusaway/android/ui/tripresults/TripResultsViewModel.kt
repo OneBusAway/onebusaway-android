@@ -53,7 +53,7 @@ class TripResultsViewModel @Inject constructor(
 
     /**
      * Seeds the results from a completed plan. [initialIndex] restores the prior option selection;
-     * [plannedStart] is the plan's own starting moment, if it names one (see [TripResultsRepository.directionsFor]).
+     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
      */
     fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int, plannedStart: ServerTime? = null) {
         this.itineraries = itineraries

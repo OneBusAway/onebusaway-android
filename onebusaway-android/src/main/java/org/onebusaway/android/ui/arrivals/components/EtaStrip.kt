@@ -133,14 +133,6 @@ internal data class EtaStripMarker(
 internal fun <T> countBefore(items: List<T>, moment: ServerTime, timeOf: (T) -> ServerTime): Int = items.count { timeOf(it) < moment }
 
 /**
- * Whether any of [items] falls at or after [moment] — i.e. whether a strip ruled at [moment] would have
- * at least one pill the rule has not passed. The complement of [countBefore]'s boundary (an item exactly
- * at the moment counts, for the same reason), so the two can never disagree about which side a pill is
- * on. Vacuously false for no items: a feed with nothing in it has nothing boardable either.
- */
-internal fun <T> anyAtOrAfter(items: List<T>, moment: ServerTime, timeOf: (T) -> ServerTime): Boolean = items.any { timeOf(it) >= moment }
-
-/**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
  * in feed order; the strip never auto-scrolls, so a trip whose ETA has gone negative just keeps
  * counting down in place. When the pills overflow the row, a chevron appears at that edge to signal
@@ -165,9 +157,15 @@ internal fun EtaStrip(
     marker: EtaStripMarker? = null,
     /** The trip this strip's row is drilled into, if any — see [EtaPillFocus]. */
     focus: EtaPillFocus? = null,
-    // Hoisted for previews/tests ONLY (both real call sites leave it null) so a caller can start the
-    // strip mid-scroll. Null means the strip's own state, which starts at the marker (see below).
-    state: LazyListState? = null
+    // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
+    // the strip mid-scroll. The default opens on the marker's item — the rule rides at the front of the
+    // first pill it precedes (see MarkedItem), so that pill's index is the rule's. Only the initial
+    // position: rememberLazyListState reads it once, and a later poll leaves the viewport where the
+    // user has it (the LazyRow's keys keep it on the same pills). Unmarked, the strip starts at its
+    // first pill.
+    state: LazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } ?: 0
+    )
 ) {
     // All of this strip's trips share one poll (one route/direction group from a single
     // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
@@ -196,34 +194,27 @@ internal fun EtaStrip(
     // Where the marker's moment falls among these departures. Remembered for the same reason: the live
     // clock recomposes this body every second, but the answer only moves when a poll brings new trips.
     val markerIndex = remember(trips, marker) { marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } }
-    // Opens on the marker's item — the rule rides at the front of the first pill it precedes (see
-    // MarkedItem), so that pill's index is the rule's. Only the initial position: rememberLazyListState
-    // reads it once, and a later poll leaves the viewport where the user has it (the LazyRow's keys keep
-    // it on the same pills). Unmarked, the strip starts at its first pill.
-    val listState = state ?: rememberLazyListState(initialFirstVisibleItemIndex = markerIndex ?: 0)
 
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
 
     // Read directly — LazyListState.canScroll* are already snapshot-backed and only flip at the
     // scrollable/not boundary.
-    val canScrollForward = listState.canScrollForward
-    val canScrollBackward = listState.canScrollBackward
+    val canScrollForward = state.canScrollForward
+    val canScrollBackward = state.canScrollBackward
 
     // Jumps the strip one viewport toward the given direction; animateScrollBy clamps at the content
     // ends, giving "or to the end, whichever is closer" for free.
     val scope = rememberCoroutineScope()
     fun jumpArrow(forward: Boolean) {
         val delta = if (forward) viewportPx.toFloat() else -viewportPx.toFloat()
-        scope.launch { listState.animateScrollBy(delta) }
+        scope.launch { state.animateScrollBy(delta) }
     }
 
-    // Sized to its own tallest child (the reference pill frame) so the gutters' fillMaxHeight has a
-    // bound to fill and their chevrons centre on the pills. Without it a host that hands the strip no
-    // height bound (the directions drawer's log row) leaves each gutter at its icon's height, and the
-    // bottom alignment below drops the chevrons to the strip's foot (#2228). The frame answers the
-    // intrinsic query this asks (see ReferencePillHeightFrame), and the arrivals row's own
-    // IntrinsicSize.Min host nests over it fine.
+    // Bound to the tallest child so the gutters' fillMaxHeight has something to fill (and their
+    // chevrons centre on the pills) even when the host gives no height bound — the directions drawer's
+    // log row, where the bottom alignment otherwise dropped them to the foot (#2228).
+    // ReferencePillHeightFrame answers the intrinsic query.
     Row(modifier.height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom) {
         // Left gutter: a chevron back toward earlier arrivals, shown once the strip is scrolled off its
         // start. Reserved (like the right gutter) so toggling it never reflows the pills.
@@ -255,7 +246,7 @@ internal fun EtaStrip(
             }
         ) {
             LazyRow(
-                state = listState,
+                state = state,
                 modifier = Modifier.onSizeChanged { viewportPx = it.width },
                 horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
                 // Bottom-align so a smaller pill sits on the same baseline as the full-size ones.
@@ -725,7 +716,7 @@ private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Nor
 private fun EtaStripPreviewFrame(
     trips: List<ArrivalInfo>,
     marker: EtaStripMarker? = null,
-    state: LazyListState? = null
+    state: LazyListState = rememberLazyListState()
 ) {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {

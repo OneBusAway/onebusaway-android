@@ -1025,6 +1025,22 @@
          %1$s is the localized severity label, announced in place so it reads e.g.
          "1 Line, Severe service alert". -->
     <string name="directions_leg_service_alert">%1$s service alert</string>
+    <!-- The one-time full-screen safety notice, shown the first time a rider opens directions (#2218).
+         OTP plans walking legs from open map data whose crosswalk / signal / sidewalk coverage is
+         patchy, and riders arrive expecting parity with commercial map apps.
+         Note: %1$s is replaced with app_name for white-label support. -->
+    <string name="directions_safety_title">Directions may be wrong</string>
+    <string name="directions_safety_body">%1$s builds walking directions from open map data that is often missing crosswalks, traffic signals and sidewalks. A route may send you across a busy street where there is no safe place to cross.</string>
+    <string name="directions_safety_body_secondary">Always look for a marked crossing and use your own judgment. Do not rely on these directions to keep you safe.</string>
+    <!-- The button that acknowledges the notice; nothing else dismisses it into the planner. -->
+    <string name="directions_safety_acknowledge">I understand</string>
+    <!-- The standing caution at the head of every itinerary detail. Tapping it expands the same
+         explanation the one-time notice gave, which is the only way back to that text once
+         acknowledged. -->
+    <string name="directions_caution_banner">Directions can be wrong. Always use caution.</string>
+    <!-- Content descriptions for that caution banner&#8217;s chevron. -->
+    <string name="directions_caution_show_details">Show safety details</string>
+    <string name="directions_caution_hide_details">Hide safety details</string>
     <!-- Confirmation shown when a gesture (Back, or a tap on the map background) would close directions
          while a planned trip is drawn on the map, since that discards the whole plan. -->
     <string name="directions_exit_confirm_title">Leave these directions?</string>

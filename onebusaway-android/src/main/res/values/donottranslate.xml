@@ -66,6 +66,11 @@
     <string name="preference_key_never_show_change_location_mode_dialog">preference_never_show_change_location_mode_dialog</string>
     <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
     <string name="preference_key_never_show_destination_reminder_beta_dialog">preference_never_show_destination_reminder_beta_dialog</string>
+    <!-- Set once the rider acknowledges the directions safety notice (#2218). Deliberately NOT cleared
+         by "show tutorials again" (TutorialPrefs.resetAllTutorials): this is a safety acknowledgement,
+         not onboarding, and re-running the tutorials does not un-acknowledge it. The caution banner at
+         the head of every itinerary is the standing reminder. -->
+    <string name="preference_key_directions_safety_acknowledged">directions_safety_acknowledged</string>
     <string name="preferences_key_user_denied_location_permissions">preferences_key_user_denied_location_permissions</string>
     <string name="preferences_display_test_alerts">preferences_display_test_alerts</string>
     <string name="preference_key_push_test_device">preference_push_test_device</string>

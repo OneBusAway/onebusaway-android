@@ -71,6 +71,10 @@ fun alertAccentColor(severity: AlertSeverity): Color = when (severity) {
  * to the full description), and what they must agree on is the *colour* — which is exactly the part a
  * second copy of the table below would eventually get wrong.
  *
+ * For the same reason it also carries the one caution that isn't a feed alert: the directions safety
+ * banner (`DirectionsCautionBanner`, #2218), which warns that the walking data may be wrong. It is a
+ * genuine [AlertSeverity.WARNING] and the alternative was a duplicate palette.
+ *
  * [onClick] makes the whole card the tap target; a card with nothing to open passes null and takes no
  * clickable at all rather than an empty one. The card also exposes [severity] as a localized state
  * description, because its container colour is otherwise invisible to a screen reader.

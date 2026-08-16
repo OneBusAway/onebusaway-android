@@ -142,13 +142,17 @@ internal fun <T> anyAtOrAfter(items: List<T>, moment: ServerTime, timeOf: (T) ->
 
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
- * in feed order from the first one; the strip never auto-scrolls, so a trip whose ETA has gone
- * negative just keeps counting down in place. When the pills overflow the row, a chevron appears at
- * that edge to signal there's more to scroll to; tapping it moves the strip one viewport that
- * direction (or to the end, whichever is closer). The chevron's own tap target is a narrow side
- * gutter separate from the pills, so it never blocks the strip's own drag-to-scroll.
+ * in feed order; the strip never auto-scrolls, so a trip whose ETA has gone negative just keeps
+ * counting down in place. When the pills overflow the row, a chevron appears at that edge to signal
+ * there's more to scroll to; tapping it moves the strip one viewport that direction (or to the end,
+ * whichever is closer). The chevron's own tap target is a narrow side gutter separate from the pills,
+ * so it never blocks the strip's own drag-to-scroll.
  *
- * [marker] optionally rules one moment across the strip — see [EtaStripMarker].
+ * [marker] optionally rules one moment across the strip — see [EtaStripMarker]. A marked strip *opens*
+ * with the rule at its left edge (#2228): the departures the rider can catch are what the row is for,
+ * so they lead, and the ones already ruled out sit behind the "earlier" chevron. This is only where the
+ * strip starts — a fixed initial position, not a glide, so it can't contend with the user's own scroll
+ * (the #1801/#1974 class) — and it holds where the user leaves it thereafter.
  */
 @Composable
 internal fun EtaStrip(
@@ -161,9 +165,9 @@ internal fun EtaStrip(
     marker: EtaStripMarker? = null,
     /** The trip this strip's row is drilled into, if any — see [EtaPillFocus]. */
     focus: EtaPillFocus? = null,
-    // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
-    // the strip mid-scroll.
-    state: LazyListState = rememberLazyListState()
+    // Hoisted for previews/tests ONLY (both real call sites leave it null) so a caller can start the
+    // strip mid-scroll. Null means the strip's own state, which starts at the marker (see below).
+    state: LazyListState? = null
 ) {
     // All of this strip's trips share one poll (one route/direction group from a single
     // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
@@ -192,21 +196,26 @@ internal fun EtaStrip(
     // Where the marker's moment falls among these departures. Remembered for the same reason: the live
     // clock recomposes this body every second, but the answer only moves when a poll brings new trips.
     val markerIndex = remember(trips, marker) { marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } }
+    // Opens on the marker's item — the rule rides at the front of the first pill it precedes (see
+    // MarkedItem), so that pill's index is the rule's. Only the initial position: rememberLazyListState
+    // reads it once, and a later poll leaves the viewport where the user has it (the LazyRow's keys keep
+    // it on the same pills). Unmarked, the strip starts at its first pill.
+    val listState = state ?: rememberLazyListState(initialFirstVisibleItemIndex = markerIndex ?: 0)
 
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
 
     // Read directly — LazyListState.canScroll* are already snapshot-backed and only flip at the
     // scrollable/not boundary.
-    val canScrollForward = state.canScrollForward
-    val canScrollBackward = state.canScrollBackward
+    val canScrollForward = listState.canScrollForward
+    val canScrollBackward = listState.canScrollBackward
 
     // Jumps the strip one viewport toward the given direction; animateScrollBy clamps at the content
     // ends, giving "or to the end, whichever is closer" for free.
     val scope = rememberCoroutineScope()
     fun jumpArrow(forward: Boolean) {
         val delta = if (forward) viewportPx.toFloat() else -viewportPx.toFloat()
-        scope.launch { state.animateScrollBy(delta) }
+        scope.launch { listState.animateScrollBy(delta) }
     }
 
     // Sized to its own tallest child (the reference pill frame) so the gutters' fillMaxHeight has a
@@ -246,7 +255,7 @@ internal fun EtaStrip(
             }
         ) {
             LazyRow(
-                state = state,
+                state = listState,
                 modifier = Modifier.onSizeChanged { viewportPx = it.width },
                 horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
                 // Bottom-align so a smaller pill sits on the same baseline as the full-size ones.
@@ -716,7 +725,7 @@ private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Nor
 private fun EtaStripPreviewFrame(
     trips: List<ArrivalInfo>,
     marker: EtaStripMarker? = null,
-    state: LazyListState = rememberLazyListState()
+    state: LazyListState? = null
 ) {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {

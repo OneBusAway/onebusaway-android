@@ -272,8 +272,8 @@ fun HomeScreen(
                 // on currentFocus would reset this to 0 when switching between two equal-height banners, framing
                 // the map as if no banner showed. The disappearance case resets it via the banner's else branch.
                 var focusBannerBottomPx by remember { mutableIntStateOf(0) }
-// How tall the top-of-map overlay layer currently is, and the stops notice beside it — the two
-                // things the parked-trip button (#2229) stacks below. The layer is measured whole rather
+                // How tall the top-of-map overlay layer currently is, and the stops notice beside it — the
+                // two things the parked-trip button (#2229) stacks below. The layer is measured whole rather
                 // than overlay by overlay: its occupants all hang from the top of the band and overlap
                 // each other, so its own height *is* the tallest of them, and an overlay added there
                 // later is cleared without anyone having to remember this. The stops notice is measured

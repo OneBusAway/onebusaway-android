@@ -15,16 +15,25 @@
  */
 package org.onebusaway.android.ui.home.map
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
@@ -119,27 +128,68 @@ class PinnedTripFabTest {
         assertEquals(0, resumed)
     }
 
-    private fun show(onResume: () -> Unit = {}, onUnpin: () -> Unit = {}) {
+    /**
+     * The host offers the button a fraction of the screen and expects it to take only what it needs
+     * ([HomeScreen]'s `fillMaxWidth(fraction).wrapContentWidth()`). `fillMaxWidth` hands down a *fixed*
+     * width, so it is `wrapContentWidth` that has to give it back — a claim about two layout modifiers
+     * interacting, which is worth pinning to a measurement rather than to reading.
+     */
+    @Test
+    fun theButtonTakesOnlyTheWidthItNeedsOfWhatItIsOffered() {
         composeRule.setContent {
             ObaTheme {
-                PinnedTripFab(
-                    state = PinnedTripSummary(
-                        destination = PinnedLabel.Text("Ballard"),
-                        symbols = listOf(
-                            ModeSymbol.Transit(
-                                LegBadge(
-                                    routes = listOf(RouteBadge("44", routeColor = null)),
-                                    mode = TransitMode.BUS,
-                                    join = RouteBadgeJoin.ANY_OF
-                                )
-                            )
-                        )
-                    ),
-                    onResume = onResume,
-                    onUnpin = onUnpin
-                )
+                Box(Modifier.fillMaxSize()) {
+                    PinnedTripFab(
+                        state = state,
+                        onResume = {},
+                        onUnpin = {},
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth(WIDTH_FRACTION)
+                            .wrapContentWidth()
+                    )
+                }
             }
         }
         composeRule.waitForIdle()
+
+        // The pill spans from the resume half's leading edge to the ✕'s trailing one.
+        val left = composeRule.onNodeWithContentDescription(name).getUnclippedBoundsInRoot().left
+        val right = composeRule.onNodeWithContentDescription(unpinLabel).getUnclippedBoundsInRoot().right
+        val root = composeRule.onRoot().getUnclippedBoundsInRoot()
+        val allowance = (root.right - root.left) * WIDTH_FRACTION
+
+        assertTrue(
+            "a one-leg trip should not fill its whole allowance: ${right - left} of $allowance",
+            right - left < allowance
+        )
+    }
+
+    private fun show(onResume: () -> Unit = {}, onUnpin: () -> Unit = {}) {
+        composeRule.setContent {
+            ObaTheme {
+                PinnedTripFab(state = state, onResume = onResume, onUnpin = onUnpin)
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    /** One bus, so the button's contents are comfortably narrower than the width a host offers it. */
+    private val state = PinnedTripSummary(
+        destination = PinnedLabel.Text("Ballard"),
+        symbols = listOf(
+            ModeSymbol.Transit(
+                LegBadge(
+                    routes = listOf(RouteBadge("44", routeColor = null)),
+                    mode = TransitMode.BUS,
+                    join = RouteBadgeJoin.ANY_OF
+                )
+            )
+        )
+    )
+
+    private companion object {
+        /** The share of the screen [org.onebusaway.android.ui.home.HomeScreen] offers the button. */
+        const val WIDTH_FRACTION = 0.8f
     }
 }

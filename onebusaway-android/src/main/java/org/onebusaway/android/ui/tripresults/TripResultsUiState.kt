@@ -199,11 +199,13 @@ sealed interface TripLogEntry {
      * [reachStopTime] and [boardTime] are different moments and both matter: the rider gets to the stop
      * at the first (the end of whatever leg precedes this one) and the vehicle leaves at the second. The
      * gap between them is the planned wait, and it's what the Board node's live ETA strip marks (#2125) —
-     * without it the strip reads as if the rider were standing at the stop already. It is **null** when
-     * nothing precedes the ride: the plan then puts the rider at the stop from the start, so there is no
-     * wait, and — crucially — no departure is out of their reach. Substituting [boardTime] there would
-     * dim every departure earlier than the one the plan happened to pick, which for a "leave at 5pm" plan
-     * read at 3pm is the whole strip, and is the opposite of the truth.
+     * without it the strip reads as if the rider were standing at the stop already. When nothing
+     * precedes the ride, the plan's own start stands in (#2228): a "leave at 5pm" plan puts the rider at
+     * the stop at 5pm, so read at 3pm every departure before then is genuinely out of reach — the strip
+     * says so instead of offering them. It is **null** only when the plan doesn't say when the rider sets
+     * out (an arrive-by plan that opens on transit). Substituting [boardTime] there would dim every
+     * departure earlier than the one the plan happened to pick — including the ones a rider already at
+     * the stop could catch — which is the opposite of the truth.
      */
     data class Transit(
         val routeShortName: String?,

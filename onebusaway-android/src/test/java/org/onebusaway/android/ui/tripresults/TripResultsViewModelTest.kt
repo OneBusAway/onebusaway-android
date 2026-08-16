@@ -56,13 +56,29 @@ class TripResultsViewModelTest {
     ) : TripResultsRepository {
         val directionsForCalls = mutableListOf<TripItinerary>()
         override suspend fun summarize(itineraries: List<TripItinerary>) = summary
-        override suspend fun directionsFor(itinerary: TripItinerary): Result<List<TripLogEntry>> {
+        val plannedStarts = mutableListOf<ServerTime?>()
+        override suspend fun directionsFor(itinerary: TripItinerary, plannedStart: ServerTime?): Result<List<TripLogEntry>> {
             directionsForCalls.add(itinerary)
+            plannedStarts.add(plannedStart)
             return directions
         }
     }
 
     private fun itineraries(count: Int): List<TripItinerary> = List(count) { TripItinerary() }
+
+    @Test
+    fun `the plan's start rides along to every directions build`() = runTest {
+        val repository = FakeTripResultsRepository(Result.success(options))
+        val viewModel = TripResultsViewModel(repository)
+        val start = ServerTime(1_700_000_000_000L)
+
+        viewModel.setItineraries(itineraries(2), initialIndex = 0, plannedStart = start)
+        advanceUntilIdle()
+        viewModel.selectOption(1)
+        advanceUntilIdle()
+
+        assertEquals(listOf(start, start), repository.plannedStarts)
+    }
 
     @Test
     fun `initial state is Loading before itineraries are set`() = runTest {

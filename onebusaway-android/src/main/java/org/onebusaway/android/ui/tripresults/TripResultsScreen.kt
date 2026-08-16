@@ -1028,7 +1028,7 @@ fun TripResultsSheet(
     // highlighting a trip the map isn't showing.
     LaunchedEffect(itineraries) {
         val index = initialOptionIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        resultsViewModel.setItineraries(itineraries, initialIndex = index)
+        resultsViewModel.setItineraries(itineraries, initialIndex = index, plannedStart = params?.plannedStart)
         itineraries.getOrNull(index)?.let { showItinerary(it) }
         if (!fromSnapshot) maybeStartTripUpdates(activity, params, itineraries, index)
         onOptionsSeeded()

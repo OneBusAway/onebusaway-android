@@ -289,17 +289,46 @@ class TripLogBuilderTest {
     }
 
     @Test
-    fun anItineraryOpeningOnTransit_hasNoArrivalAtTheStopToMark() {
-        // Nothing precedes the ride, so the rider is at the stop from the start: there is no wait, and
-        // no departure is out of their reach. Standing the ride's own departure in would dim every
-        // earlier one — for a "leave at 5pm" plan read at 3pm, the whole strip — so the absence is
-        // carried as null rather than substituted for.
+    fun anItineraryOpeningOnTransit_reachesItsFirstStopAtThePlansStart() {
+        // Nothing precedes the ride, so the rider is at the stop from the plan's start — for a "leave at
+        // 5pm" plan, 5pm — which is what a depart-at plan names (#2228). Not the ride's own departure:
+        // that would dim every earlier one, including the ones a rider already there could catch.
+        val start = ServerTime(4 * 60_000L)
+        val transit = TripLogBuilder
+            .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef), plannedStart = start)
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(start, transit.reachStopTime)
+    }
+
+    @Test
+    fun anItineraryOpeningOnTransit_withNoPlannedStart_hasNoArrivalAtTheStopToMark() {
+        // An arrive-by plan fixes when the trip ends and says nothing about when the rider sets out, so
+        // there is no moment to mark: the absence is carried as null rather than substituted for.
         val transit = TripLogBuilder
             .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef))
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
         assertNull(transit.reachStopTime)
+    }
+
+    @Test
+    fun thePlansStart_standsInOnlyForARideNothingPrecedes() {
+        // With a walk ahead of the ride, the walk's end is when the rider gets to the stop; the plan's
+        // start is when they left home, and must not displace it.
+        val transit = TripLogBuilder
+            .build(
+                legs = listOf(walkLeg, transitLeg),
+                flatDirections = listOf(walkDir, boardDir, alightDir),
+                routeLegRefs = listOf(null, transitRef),
+                plannedStart = ServerTime(0L)
+            )
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(walkLeg.endTime, transit.reachStopTime)
     }
 
     @Test

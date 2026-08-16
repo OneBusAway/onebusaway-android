@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripplan
 
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.time.ServerTime
 
 /**
  * A JVM-pure projection of a trip-plan endpoint (a [org.onebusaway.android.directions.util.CustomAddress]),
@@ -144,7 +145,20 @@ data class TripPlanParams(
     val walkPreference: WalkPreference = WalkPreference.MEDIUM,
     val cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
     val bikePreference: BikePreference = BikePreference.MEDIUM
-)
+) {
+    /**
+     * When the plan puts the rider at its starting point: the requested departure of a depart-at plan,
+     * and null for an arrive-by one, which fixes when the trip *ends* and says nothing about when the
+     * rider sets out. The trip log uses it as when the rider is at the first stop of an itinerary that
+     * opens on transit (#2228) — the plan's own "you get here" for a ride nothing precedes.
+     *
+     * Minted as [ServerTime] because it is the instant the plan was made against ([dateTimeMillis] is
+     * what the planner is asked to depart at), and the plan's leg times come back on that same timeline
+     * as server-domain instants; it is compared only with those and with the stop's arrival predictions.
+     */
+    val plannedStart: ServerTime?
+        get() = if (arriving) null else ServerTime(dateTimeMillis)
+}
 
 /** The trip-plan form (origin/destination, when, and the advanced options). */
 data class TripPlanFormState(

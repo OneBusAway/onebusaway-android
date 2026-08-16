@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.time.ServerTime
 
 /**
  * Holds the trip-planning results: the option cards, which one is selected, and the selected
@@ -48,11 +49,16 @@ class TripResultsViewModel @Inject constructor(
 
     private var itineraries: List<TripItinerary> = emptyList()
     private var selectedIndex: Int = 0
+    private var plannedStart: ServerTime? = null
 
-    /** Seeds the results from a completed plan. [initialIndex] restores the prior option selection. */
-    fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int) {
+    /**
+     * Seeds the results from a completed plan. [initialIndex] restores the prior option selection;
+     * [plannedStart] is the plan's own starting moment, if it names one (see [TripResultsRepository.directionsFor]).
+     */
+    fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int, plannedStart: ServerTime? = null) {
         this.itineraries = itineraries
         this.selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
+        this.plannedStart = plannedStart
         load()
     }
 
@@ -75,7 +81,7 @@ class TripResultsViewModel @Inject constructor(
                 onSuccess = { options ->
                     val selected = itineraries.getOrNull(selectedIndex)
                     val directions = selected
-                        ?.let { repository.directionsFor(it).getOrDefault(emptyList()) }
+                        ?.let { repository.directionsFor(it, plannedStart).getOrDefault(emptyList()) }
                         .orEmpty()
                     _state.value = TripResultsUiState.Success(
                         options = options,

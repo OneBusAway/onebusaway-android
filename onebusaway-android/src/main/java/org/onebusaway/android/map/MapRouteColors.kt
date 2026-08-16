@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.util.routeBadgeChipColor
 import org.onebusaway.android.util.routeCasingColor
 import org.onebusaway.android.util.routeColorHctOrNull
@@ -64,9 +65,15 @@ internal fun mapRouteLineColor(hue: Double): Int = Hct.from(hue, MAP_ROUTE_CHROM
 internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(source)?.let { mapRouteLineColor(it.hue) }
 
 /**
- * The case (halo) drawn beneath a selected line of colour [lineColor] (#2082): that line's own hue and chroma
- * taken to the far end of the tone scale *away from the basemap* — [MAP_ROUTE_CASE_TONE_DARK] on the light
- * basemap, [MAP_ROUTE_CASE_TONE_LIGHT] when [darkMode].
+ * The case (halo) drawn beneath a line of colour [lineColor] wearing [case] (#2082): that line's own hue and
+ * chroma taken to the far end of the tone scale *away from the basemap* — the dark end on the light basemap,
+ * the light end when [darkMode].
+ *
+ * How far out along that scale is [case]'s to say. A [RouteLineCase.SELECTION] takes the very end of it and a
+ * [RouteLineCase.OUTLINE] stops just short, so the rider's selected leg is the *brightest* edge on the map as
+ * well as the heaviest — selection said on two channels rather than on thickness alone. The headroom left
+ * above the outline's own tone is small (see the constants), so this is a nudge on top of the weight step and
+ * not a second signal that could carry selection by itself.
  *
  * The direction is deliberately the opposite of the halo convention for map *labels*, which carry the
  * background's own value to punch glyphs out of busy detail. Tried that way first and the case vanished on
@@ -101,10 +108,20 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  * This is the one deliberate exception to this file's theme independence (see above) — precisely because its
  * whole job is to hold the line apart from a backdrop that itself flips.
  */
-internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean): Int = routeCasingColor(
-    lineColor,
-    if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK
-)
+internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean, case: RouteLineCase): Int = routeCasingColor(lineColor, caseTone(case, darkMode))
+
+/**
+ * How far out the tone scale [case] goes, for the theme it is drawn in.
+ *
+ * [RouteLineCase.NONE] answers alongside the outline rather than being rejected, because an uncased line can
+ * still need this colour: the interline cutover slash is drawn in its line's case colour whether or not that
+ * line asked for an edge of its own (see `InterlineSeamMark`), and a hairline joint's casing is what that
+ * mark is. Nothing reads a NONE line's case *as a case* — the renderers only pair one when [case] isn't NONE.
+ */
+private fun caseTone(case: RouteLineCase, darkMode: Boolean): Double = when (case) {
+    RouteLineCase.NONE, RouteLineCase.OUTLINE -> if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK
+    RouteLineCase.SELECTION -> if (darkMode) MAP_SELECTION_CASE_TONE_LIGHT else MAP_SELECTION_CASE_TONE_DARK
+}
 
 /**
  * Which policy renders a route line's colour, handed to whatever produces the lines rather than read from
@@ -153,9 +170,21 @@ fun directionsRouteLinePalette(dark: Boolean) = RouteLinePalette { routeBadgeChi
 private const val MAP_ROUTE_CHROMA = 75.0
 private const val MAP_ROUTE_TONE = 55.0
 
-// The two ends of the tone scale a case is pinned to, chosen for maximum contrast with the basemap it has to
-// separate its line from — and, since a case's thickness is what marks selection, with that line as well
-// (#2226). Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as it can usefully go
+// The two ends of the tone scale an ordinary case is pinned to, chosen for maximum contrast with the basemap
+// it has to separate its line from — and, since a case's thickness is what marks selection, with that line as
+// well (#2226). Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as it can usefully go
 // without becoming literal black or white, which the dark end reaches sooner than the light one.
 private const val MAP_ROUTE_CASE_TONE_DARK = 10.0
 private const val MAP_ROUTE_CASE_TONE_LIGHT = 98.0
+
+// ...and the ends themselves, which the rider's selected leg takes: literal black and white, since selection
+// is the one thing worth spending the last of the scale on.
+//
+// Note how little that last step is worth on its own. #2226 took the ordinary case out to where the gamut has
+// almost nothing left, so a selected case sits 1.05:1 from an outline in dark mode and 1.10:1 in light — a
+// difference a rider will not read as a difference. It is here because a selection may as well have the end
+// of the scale, not because brightness now carries the signal: the weight step (0.75dp → 1.5dp per side) is
+// still what says "this is the one you're looking at". Buying real brightness separation would mean pulling
+// MAP_ROUTE_CASE_TONE_LIGHT back down toward 90 to open the gap, which is exactly what #2226 closed.
+private const val MAP_SELECTION_CASE_TONE_DARK = 5.0
+private const val MAP_SELECTION_CASE_TONE_LIGHT = 100.0

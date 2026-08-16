@@ -155,7 +155,7 @@ class GoogleMapRenderer(
         setWidth = { line, width -> line.width = width },
         // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
         // theme, because the basemap it separates its line from does (see [mapRouteLineCaseColor]).
-        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
+        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context), it.case) },
         caseExtraWidth = { it.case.extraWidthDp * density }
     )
 
@@ -383,7 +383,7 @@ class GoogleMapRenderer(
     private fun endCapFor(polyline: RoutePolyline, mark: RouteLineMark): CustomCap? = when (mark) {
         RouteLineMark.NONE -> null
         RouteLineMark.BULB -> endpointBulbCap(polyline.resolvedColor)
-        RouteLineMark.INTERLINE_CUT -> interlineSeamCap(polyline.resolvedColor)
+        RouteLineMark.INTERLINE_CUT -> interlineSeamCap(polyline)
     }
 
     /** A circle 2x the stroke width, scaled by Maps together with the line at every zoom. */
@@ -404,10 +404,11 @@ class GoogleMapRenderer(
     /**
      * The interline cutover slash ([InterlineSeamMark]), drawn in the cut line's own case colour — resolved
      * here rather than by the producer because it follows the theme, exactly as a line's case does (see
-     * [mapRouteLineCaseColor]).
+     * [mapRouteLineCaseColor]). The whole line is passed, not just its colour, because that colour is the
+     * line's *case* colour and so depends on the weight of case it wears.
      */
-    private fun interlineSeamCap(lineColor: Int): CustomCap {
-        val color = mapRouteLineCaseColor(lineColor, ThemeUtils.isInDarkMode(context))
+    private fun interlineSeamCap(polyline: RoutePolyline): CustomCap {
+        val color = mapRouteLineCaseColor(polyline.resolvedColor, ThemeUtils.isInDarkMode(context), polyline.case)
         val descriptor = descriptorCache.get("interline-seam:$color") { InterlineSeamMark.bitmap(color) }
         return CustomCap(descriptor, InterlineSeamMark.REFERENCE_WIDTH_PX)
     }

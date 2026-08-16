@@ -333,13 +333,13 @@ class ItineraryLegStyleTest {
             val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).color)
 
             listOf(false to 10.0, true to 98.0).forEach { (darkMode, expectedTone) ->
-                val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
+                val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode, RouteLineCase.OUTLINE))
                 assertEquals("$kind case tone (darkMode=$darkMode)", expectedTone, case.tone, CHANNEL_TOLERANCE)
             }
             assertEquals(
                 "$kind case hue",
                 line.hue,
-                Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = false)).hue,
+                Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = false, case = RouteLineCase.OUTLINE)).hue,
                 HUE_TOLERANCE_DEGREES
             )
         }
@@ -357,7 +357,7 @@ class ItineraryLegStyleTest {
         // for the blues and wrong for the greens, which is exactly what this one was.
         (0 until 360 step 10).forEach { hue ->
             val line = Hct.fromInt(mapRouteLineColor(hue.toDouble()))
-            val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true))
+            val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true, case = RouteLineCase.OUTLINE))
 
             assertTrue(
                 "hue $hue: case tone ${case.tone} is only ${case.tone - line.tone} above its line's ${line.tone}",
@@ -366,6 +366,48 @@ class ItineraryLegStyleTest {
             assertTrue(
                 "hue $hue: case kept chroma ${case.chroma} of its line's ${line.chroma} — a colour, not an edge",
                 case.chroma <= MAX_LIGHT_CASE_CHROMA
+            )
+        }
+    }
+
+    @Test
+    fun `the selected leg's case takes the very end of the scale, an outline stops short of it`() {
+        // Selection is said with case weight (#2082); this adds the last of the tone scale to it, so the leg
+        // the rider is looking at wears the brightest edge on the map as well as the heaviest.
+        //
+        // The step is deliberately tiny and the test says so, because #2226 already spent nearly all of that
+        // scale on the ordinary case: what is left above it is 2 tones. Asserted as an *ordering* rather than
+        // a contrast bar for exactly that reason — there is no perceptual claim here to make, only the policy
+        // one that a selection is never cased less far out than an outline beside it.
+        val line = Hct.fromInt(mapRouteLineColor(hue = 250.0))
+
+        assertEquals(100.0, caseTone(line, darkMode = true, case = RouteLineCase.SELECTION), CHANNEL_TOLERANCE)
+        assertEquals(5.0, caseTone(line, darkMode = false, case = RouteLineCase.SELECTION), CHANNEL_TOLERANCE)
+
+        // Away from the basemap in both themes, which is the direction the whole policy is about: brighter
+        // than the outline on the dark map, deeper than it on the light one.
+        assertTrue(
+            caseTone(line, darkMode = true, case = RouteLineCase.SELECTION) >
+                caseTone(line, darkMode = true, case = RouteLineCase.OUTLINE)
+        )
+        assertTrue(
+            caseTone(line, darkMode = false, case = RouteLineCase.SELECTION) <
+                caseTone(line, darkMode = false, case = RouteLineCase.OUTLINE)
+        )
+    }
+
+    @Test
+    fun `an uncased line answers with the outline's tone, for the interline cut that reads it`() {
+        // The cutover slash takes its line's case colour whether or not that line wears a case (see
+        // `InterlineSeamMark`) — it *is* a hairline joint's casing. So NONE resolves rather than throwing or
+        // falling through to the selection tone, and it resolves to the hairline's own.
+        val line = Hct.fromInt(mapRouteLineColor(hue = 250.0))
+
+        listOf(false, true).forEach { darkMode ->
+            assertEquals(
+                caseTone(line, darkMode, case = RouteLineCase.OUTLINE),
+                caseTone(line, darkMode, case = RouteLineCase.NONE),
+                CHANNEL_TOLERANCE
             )
         }
     }
@@ -402,7 +444,7 @@ class ItineraryLegStyleTest {
         }
     }
 
-    private fun caseTone(line: Hct, darkMode: Boolean) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode)).tone
+    private fun caseTone(line: Hct, darkMode: Boolean, case: RouteLineCase = RouteLineCase.OUTLINE) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode, case)).tone
 
     /** A walk → ride → walk trip as drawn lines, at the given leg indices. */
     private fun tripOf(walk: Int, ride: Int, walk2: Int) = listOf(

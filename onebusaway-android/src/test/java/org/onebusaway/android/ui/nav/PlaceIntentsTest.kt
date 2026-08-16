@@ -156,6 +156,27 @@ class PlaceIntentsTest {
         )
     }
 
+    /**
+     * The URL Google Contacts builds for a postal address, captured off a Pixel 7 Pro. The `%0A` between
+     * street and city decodes to a real newline — which a single-line form field truncates at and a
+     * geocoder can do nothing with — so the whole address has to survive as one line.
+     */
+    @Test
+    fun `a contacts address URL keeps its whole address on one line`() {
+        assertEquals(
+            Place.Query("14420 75th Ave NE Bothell, WA 98011"),
+            viewed("https://www.google.com/maps?daddr=14420+75th+Ave+NE%0ABothell,+WA+98011&entry=ml&utm_campaign=ml-ardl-mgrc")
+        )
+    }
+
+    @Test
+    fun `a labelled coordinate keeps its label on one line`() {
+        assertEquals(
+            Place.Point(47.6097, -122.3422, "Pike Place Market"),
+            viewed("geo:0,0?q=47.6097,-122.3422(Pike%0APlace%0AMarket)")
+        )
+    }
+
     @Test
     fun `an unknown maps host is not read`() {
         assertNull(viewed("https://maps.example.com/?q=Pike+Place+Market"))

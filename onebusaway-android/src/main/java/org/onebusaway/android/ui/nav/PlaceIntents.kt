@@ -118,7 +118,7 @@ object PlaceIntents {
         // `q` may itself be a coordinate, optionally labelled.
         labelledCoordinates(query)?.let { return it }
         // Otherwise it is text, and it only *labels* the URI when the URI carries a real position.
-        return if (uriPoint == null || uriPoint == GEO_PLACEHOLDER) Place.Query(query) else uriPoint.copy(label = query)
+        return if (uriPoint == null || uriPoint == GEO_PLACEHOLDER) query(query) else uriPoint.copy(label = normalized(query))
     }
 
     // --- maps links ---------------------------------------------------------------------------------
@@ -141,8 +141,9 @@ object PlaceIntents {
         // resolve to the wrong place: `maps.apple.com/?q=Home&ll=47.6,-122.3` means that position, named
         // Home. Text is the answer only when no parameter carries a position.
         val text = values.firstOrNull { labelledCoordinates(it) == null }
-        values.firstNotNullOfOrNull { labelledCoordinates(it) }?.let { return it.copy(label = it.label ?: text) }
-        return text?.let { Place.Query(it) }
+        values.firstNotNullOfOrNull { labelledCoordinates(it) }
+            ?.let { return it.copy(label = it.label ?: text?.let(::normalized)) }
+        return text?.let { query(it) }
     }
 
     /** `…/maps/place/<Name>/@<lat>,<lng>,<zoom>z/…` — how a Google Maps place page is copied out. */
@@ -153,7 +154,7 @@ object PlaceIntents {
         val name = if (placeIndex < 0) {
             null
         } else {
-            pathSegments.getOrNull(placeIndex + 1)?.takeIf { it.isNotBlank() && !it.startsWith(GOOGLE_AT_PREFIX) }
+            pathSegments.getOrNull(placeIndex + 1)?.takeIf { !it.startsWith(GOOGLE_AT_PREFIX) }?.let(::normalized)
         }
         return point.copy(label = name)
     }
@@ -176,11 +177,27 @@ object PlaceIntents {
      */
     private fun parseSharedText(text: String): Place? {
         URI_TOKEN.findAll(text).firstNotNullOfOrNull { parseUriString(it.value) }?.let { return it }
-        val prose = URI_TOKEN.replace(text, " ").split(WHITESPACE).filter { it.isNotBlank() }
-        return prose.takeIf { it.isNotEmpty() }?.let { Place.Query(it.joinToString(" ")) }
+        return query(URI_TOKEN.replace(text, " "))
     }
 
     // --- shared parsing -----------------------------------------------------------------------------
+
+    /** A [Place.Query] over [text], or null when [normalized] leaves nothing of it. */
+    private fun query(text: String): Place.Query? = normalized(text)?.let { Place.Query(it) }
+
+    /**
+     * Collapses a value's whitespace to single spaces, or null if nothing is left of it.
+     *
+     * Every place name here is headed for a geocoder or a single-line form field, and senders put real
+     * line breaks in them: Google Contacts spells a street address `daddr=14420+75th+Ave+NE%0ABothell…`,
+     * whose `%0A` decodes to a newline that a text field truncates at and a geocoder does nothing useful
+     * with. So it is applied wherever a name is *produced*, not just on the shared-text path.
+     */
+    private fun normalized(text: String): String? = text
+        .split(WHITESPACE)
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+        .takeIf { it.isNotEmpty() }
 
     /**
      * `<lat>,<lng>` — the one coordinate spelling all of the above share. A trailing third component
@@ -200,8 +217,8 @@ object PlaceIntents {
     private fun labelledCoordinates(value: String): Place.Point? {
         val open = value.indexOf('(')
         if (open < 0) return parseCoordinates(value)
-        val label = value.substring(open + 1).substringBeforeLast(')').trim()
-        return parseCoordinates(value.substring(0, open))?.copy(label = label.takeIf { it.isNotBlank() })
+        val label = value.substring(open + 1).substringBeforeLast(')')
+        return parseCoordinates(value.substring(0, open))?.copy(label = normalized(label))
     }
 
     /** An `http`/`https` URL decomposed into the parts [parseMapsUrl] reads, or null if it isn't one. */

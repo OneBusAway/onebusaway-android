@@ -88,6 +88,7 @@ import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.pickRideDirection
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
@@ -125,6 +126,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
 import org.onebusaway.android.ui.tripresults.FocusedLeg
+import org.onebusaway.android.ui.tripresults.ReachStop
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripLogEntry
@@ -132,6 +134,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
+import org.onebusaway.android.ui.tripresults.resolvedAt
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.DisplayFormat
@@ -405,13 +408,13 @@ fun DirectionsResultsSheet(
  * An alternative with no OBA id, or with nothing upcoming at this stop, is simply left out — its name
  * still appears on the card's "or …" line.
  *
- * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStopTime] —
- * when the plan has them reach this stop — is ruled across it (#2125): departures before it are ones
- * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
+ * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStop] — how
+ * the plan gets them to this stop — is ruled across it (#2125): departures before it are ones they
+ * can't be here for, and the first pill after the rule is the soonest one they can actually board.
  * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
  * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
  *
- * When the feed holds no departure at or after [reachStopTime] — a plan that leaves later than the
+ * When the feed holds no departure at or after that rule — a plan that leaves later than the
  * arrivals window reaches, so every pill would be dimmed and the rule would close the strip — the strip
  * collapses to one line saying so, with a tap to show it anyway (#2228). The line is not a threshold
  * on how soon the trip must be: it is exactly the case where the feed has nothing boardable to show, and
@@ -421,7 +424,7 @@ fun DirectionsResultsSheet(
 internal fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
-    reachStopTime: ServerTime?,
+    reachStop: ReachStop?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
@@ -470,7 +473,7 @@ internal fun DirectionStopEtaStrip(
     val session = hoistedSession ?: ownSession ?: return
     DirectionStopEtaStripContent(
         routeLeg = routeLeg,
-        reachStopTime = reachStopTime,
+        reachStop = reachStop,
         session = session,
         rowPadding = rowPadding,
         pillFocus = pillFocus,
@@ -482,7 +485,7 @@ internal fun DirectionStopEtaStrip(
 @Composable
 private fun DirectionStopEtaStripContent(
     routeLeg: RouteLegRef,
-    reachStopTime: ServerTime?,
+    reachStop: ReachStop?,
     session: ArrivalsSession,
     rowPadding: Modifier,
     pillFocus: EtaPillFocus?,
@@ -509,7 +512,15 @@ private fun DirectionStopEtaStripContent(
     // an empty feed has nothing boardable either). Never without a reach time. Once shown anyway the
     // strip stays up for this stop, though a strip that has come to hold a boardable pill needs no reveal.
     var revealed by rememberSaveable { mutableStateOf(false) }
-    val nothingBoardable = reachStopTime != null && countBefore(interleaved, reachStopTime) { it.first.displayTime } == interleaved.size
+    // The rule itself, resolved once on the strip's own live clock (#2227), so the collapse decision and
+    // the mark drawn across the pills are the same instant to the second and cannot disagree. Null when
+    // the plan puts nothing before this ride, and when the feed holds no pill at all — there is then no
+    // poll to anchor the clock to, and nothing boardable to rule on either.
+    val marker = reachStop?.let { stop ->
+        interleaved.firstOrNull()?.let { (trip, _) -> rememberReachStopMarker(stop, trip.serverNow) }
+    }
+    val nothingBoardable = reachStop != null &&
+        (marker == null || countBefore(interleaved, marker.at) { it.first.displayTime } == interleaved.size)
     if (nothingBoardable && !revealed) {
         NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
         return
@@ -525,23 +536,37 @@ private fun DirectionStopEtaStripContent(
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
         routeBadgeFor = { badgesByTrip[it] },
-        marker = reachStopTime?.let { rememberReachStopMarker(it) },
+        marker = marker,
         focus = pillFocus
     )
 }
 
-/** The strip's "you get here at …" rule for [reachStopTime]. The clock string is memoized because the
- *  format call is locale work that only changes with the plan, not with each arrivals poll. */
+/**
+ * The strip's "you get here at …" rule for [reachStop], resolved against a clock anchored on
+ * [serverNow] (this poll's server time) and ticked forward from there.
+ *
+ * It has to tick, because a [ReachStop.OnFoot] rule is *now* plus the walk (#2227) — a moment that
+ * moves with the clock rather than one the plan fixed. That reads as the rule holding still at the
+ * rider's walking distance while the pills flow past it, which is exactly what it means: everything
+ * left of the rule is a departure they can no longer walk to in time. A [ReachStop.OnArrival] rule is
+ * an absolute moment and simply ignores the tick.
+ *
+ * The clock string is memoized on the whole minute it falls in, not on the ticking value: it is printed
+ * to the minute, and formatting it is locale work that has no business running every second.
+ */
 @Composable
-private fun rememberReachStopMarker(reachStopTime: ServerTime): EtaStripMarker {
+private fun rememberReachStopMarker(reachStop: ReachStop, serverNow: ServerTime): EtaStripMarker {
     val context = LocalContext.current
-    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
+    val at = reachStop.resolvedAt(rememberLiveServerTime(serverNow))
+    val clock = remember(at.epochMs / MILLIS_PER_MINUTE, context) { DisplayFormat.formatTime(context, at.epochMs) }
     return EtaStripMarker(
-        at = reachStopTime,
+        at = at,
         contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
         passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
     )
 }
+
+private const val MILLIS_PER_MINUTE = 60_000L
 
 /**
  * Flattens route-specific, already-ordered arrival lists into one chronological strip. Kotlin's sort

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import kotlin.time.Duration
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
@@ -105,14 +106,7 @@ object TripLogBuilder {
                         board = board,
                         legPoints = legPoints,
                         legIndex = legIndex,
-                        // When the rider gets to the board stop: the end of the leg that brought them
-                        // there (a walk, or the ride they transfer off). An itinerary that opens on a
-                        // transit leg has no such leg — the rider is at the stop from the plan's start —
-                        // so the plan's own start stands in there, when it has one (a depart-at plan);
-                        // an arrive-by plan says nothing about when they set out, and that absence is
-                        // carried as null rather than substituted for with the ride's own departure: see
-                        // TripLogEntry.Transit.reachStopTime for what that would tell the rider.
-                        reachStopTime = if (legIndex == 0) plannedStart else legs[legIndex - 1].endTime,
+                        reachStop = legs.reachStopFor(legIndex, plannedStart),
                         ref = routeLegRefs.getOrNull(legIndex)
                     )
                 }
@@ -127,6 +121,34 @@ object TripLogBuilder {
             point = geoPointOrNull(last.to.lat, last.to.lon)
         )
         return entries
+    }
+
+    /**
+     * How the plan gets the rider to the boarding stop of the transit leg at [legIndex] — see
+     * [ReachStop] for why the answer has two shapes and [ReachStop.OnFoot] for the OTP behaviour that
+     * forces the split.
+     *
+     * The rider reaches this stop *on foot* exactly when nothing before this leg is transit: the street
+     * legs from the itinerary's origin (usually one walk; a bikeshare access is a walk to the vehicle
+     * then a ride on it) are the whole of how they get here, and OTP has shifted them, so only their
+     * combined [TripLeg.duration] survives as a fact. Otherwise something *carries* them here and the
+     * plan commits to when it lands — the preceding leg's end, whether that's the inbound ride of a
+     * transfer or the transfer walk off it, neither of which OTP shifts.
+     *
+     * When this leg opens the itinerary nothing carries the rider and nothing is walked: they are at the
+     * stop from the plan's own start, which a depart-at plan names ([plannedStart], #2228) and stands
+     * there as the moment they reach it. An arrive-by plan says nothing about when they set out, and
+     * that absence is carried as null rather than substituted for with the ride's own departure — see
+     * [TripLogEntry.Transit.reachStop] for what that would tell the rider.
+     */
+    private fun List<TripLeg>.reachStopFor(legIndex: Int, plannedStart: ServerTime?): ReachStop? {
+        if (legIndex == 0) return plannedStart?.let(ReachStop::OnArrival)
+        val precedingLegs = subList(0, legIndex)
+        return if (precedingLegs.all { it.mode?.isOnStreetNonTransit == true }) {
+            ReachStop.OnFoot(precedingLegs.fold(Duration.ZERO) { total, leg -> total + leg.duration })
+        } else {
+            ReachStop.OnArrival(this[legIndex - 1].endTime)
+        }
     }
 
     private fun walkEntry(
@@ -197,7 +219,7 @@ object TripLogBuilder {
         board: Direction,
         legPoints: List<GeoPoint>,
         legIndex: Int,
-        reachStopTime: ServerTime?,
+        reachStop: ReachStop?,
         ref: RouteLegRef?
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)
@@ -207,7 +229,7 @@ object TripLogBuilder {
             mode = leg.mode.transitMode(),
             routeColorHex = leg.routeColor,
             headsign = leg.headsign ?: routeLeg.headsign,
-            reachStopTime = reachStopTime,
+            reachStop = reachStop,
             boardTime = leg.startTime,
             exitTime = leg.endTime,
             durationMinutes = leg.duration.inWholeMinutes,

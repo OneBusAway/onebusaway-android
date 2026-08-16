@@ -1030,7 +1030,7 @@ fun HomeScreen(
                                                 DirectionStopEtaStrip(
                                                     routeLeg = ride.routeLeg,
                                                     stop = stop,
-                                                    reachStopTime = ride.reachStopTime,
+                                                    reachStop = ride.reachStop,
                                                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                                                     onShowTrip = onShowTrip,
                                                     onEditReminder = onEditReminder,

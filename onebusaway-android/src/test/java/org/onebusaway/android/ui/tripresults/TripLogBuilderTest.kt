@@ -271,36 +271,79 @@ class TripLogBuilderTest {
     }
 
     @Test
-    fun transitEntry_reachesTheStopWhenTheLegBeforeItEnds() {
-        // The rider is at the board stop when the walk that got them there finishes — 4 minutes in —
-        // which is a different moment from the ride's own departure whenever the plan builds in a wait.
-        // The Board row's ETA strip rules the live departures at this instant (#2125).
+    fun theAccessWalk_reachesTheStopByItsDurationRatherThanItsPlannedEnd() {
+        // The rider walks to the first ride's stop, and it takes 4 minutes. That duration — NOT the
+        // walk's own end time — is what the strip's rule is built from (#2227): OTP shifts the leading
+        // street leg to end exactly at the departure it picked, so `walkLeg.endTime` here is just
+        // `boardTime` restated, and ruling there dims every earlier departure the rider could have
+        // walked to and caught.
         val transit = TripLogBuilder
             .build(
-                legs = listOf(walkLeg, transitLeg.copy(startTime = ServerTime(9 * 60_000L))),
+                legs = listOf(
+                    walkLeg.copy(startTime = ServerTime(5 * 60_000L), endTime = ServerTime(9 * 60_000L)),
+                    transitLeg.copy(startTime = ServerTime(9 * 60_000L))
+                ),
                 flatDirections = listOf(walkDir, boardDir, alightDir),
                 routeLegRefs = listOf(null, transitRef)
             )
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(walkLeg.endTime, transit.reachStopTime)
+        assertEquals(ReachStop.OnFoot(4.minutes), transit.reachStop)
         assertEquals(ServerTime(9 * 60_000L), transit.boardTime)
     }
 
     @Test
+    fun aMultiLegAccess_reachesTheStopByTheWholeWayThere() {
+        // A bikeshare access is two street legs — walk to the vehicle, then ride it to the stop — and
+        // the rider's way there is both of them, so the walk-time the rule uses is their sum.
+        val toTheBike = walkLeg.copy(duration = 3.minutes)
+        val onTheBike = walkLeg.copy(mode = TripMode.BICYCLE, duration = 7.minutes, rentedVehicle = true)
+        val transit = TripLogBuilder
+            .build(
+                legs = listOf(toTheBike, onTheBike, transitLeg),
+                flatDirections = listOf(walkDir, walkDir, boardDir, alightDir),
+                routeLegRefs = listOf(null, null, transitRef)
+            )
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(ReachStop.OnFoot(10.minutes), transit.reachStop)
+    }
+
+    @Test
+    fun aTransfer_reachesTheStopWhenTheLegBeforeItEnds() {
+        // Past the first ride the rider is *carried* to the stop, and OTP leaves those legs unshifted —
+        // a transfer walk starts exactly when the inbound ride lands — so the preceding leg's end is a
+        // real moment the plan commits to, and the rule stands there.
+        val transfer = walkLeg.copy(startTime = ServerTime(20 * 60_000L), endTime = ServerTime(24 * 60_000L))
+        val second = transitLeg.copy(startTime = ServerTime(30 * 60_000L), endTime = ServerTime(40 * 60_000L))
+        val transit = TripLogBuilder
+            .build(
+                legs = listOf(transitLeg, transfer, second),
+                flatDirections = listOf(boardDir, alightDir, walkDir, boardDir, alightDir),
+                routeLegRefs = listOf(transitRef, null, transitRef)
+            )
+            .filterIsInstance<TripLogEntry.Transit>()
+            .last()
+
+        assertEquals(ReachStop.OnArrival(ServerTime(24 * 60_000L)), transit.reachStop)
+    }
+
+    @Test
     fun anItineraryOpeningOnTransit_reachesItsFirstStopAtThePlansStart() {
-        // Nothing precedes the ride, so the rider is at the stop from the plan's start — for a "leave at
-        // 5pm" plan, 5pm — which is what a depart-at plan names (#2228). Not the ride's own departure:
-        // that would dim every earlier one, including the ones a rider already there could catch.
-        // Earlier than the leg's own departure (4 min), so a build that reached for that instead would fail.
+        // Nothing precedes the ride and nothing is walked, so the rider is at the stop from the plan's
+        // start — for a "leave at 5pm" plan, 5pm — which is what a depart-at plan names (#2228). Not the
+        // ride's own departure: that would dim every earlier one, including the ones a rider already
+        // there could catch. Earlier than the leg's own departure (4 min), so a build that reached for
+        // that instead would fail.
         val start = ServerTime(2 * 60_000L)
         val transit = TripLogBuilder
             .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef), plannedStart = start)
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(start, transit.reachStopTime)
+        assertEquals(ReachStop.OnArrival(start), transit.reachStop)
     }
 
     @Test
@@ -312,13 +355,27 @@ class TripLogBuilderTest {
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertNull(transit.reachStopTime)
+        assertNull(transit.reachStop)
+    }
+
+    @Test
+    fun aWalkRule_holdsAtTheRidersWalkingDistanceWhileAnArrivalRuleStandsStill() {
+        // What the two shapes mean once a clock is put to them: a walk is measured *from now*, so the
+        // rule keeps its distance as the clock runs and the pills flow past it; an arrival is an
+        // absolute moment and ignores the clock entirely.
+        val onFoot = ReachStop.OnFoot(4.minutes)
+        assertEquals(ServerTime(14 * 60_000L), onFoot.resolvedAt(ServerTime(10 * 60_000L)))
+        assertEquals(ServerTime(24 * 60_000L), onFoot.resolvedAt(ServerTime(20 * 60_000L)))
+
+        val onArrival = ReachStop.OnArrival(ServerTime(14 * 60_000L))
+        assertEquals(ServerTime(14 * 60_000L), onArrival.resolvedAt(ServerTime(10 * 60_000L)))
+        assertEquals(ServerTime(14 * 60_000L), onArrival.resolvedAt(ServerTime(20 * 60_000L)))
     }
 
     @Test
     fun thePlansStart_standsInOnlyForARideNothingPrecedes() {
-        // With a walk ahead of the ride, the walk's end is when the rider gets to the stop; the plan's
-        // start is when they left home, and must not displace it.
+        // With a walk ahead of the ride, the walk is how the rider gets to the stop; the plan's start is
+        // when they left home, and must not displace it.
         val transit = TripLogBuilder
             .build(
                 legs = listOf(walkLeg, transitLeg),
@@ -329,7 +386,7 @@ class TripLogBuilderTest {
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(walkLeg.endTime, transit.reachStopTime)
+        assertEquals(ReachStop.OnFoot(walkLeg.duration), transit.reachStop)
     }
 
     @Test

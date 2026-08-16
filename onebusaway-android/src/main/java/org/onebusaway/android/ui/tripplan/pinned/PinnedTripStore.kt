@@ -60,7 +60,7 @@ data class PinnedTrip(
     val selectedIndex: Int,
     val pinnedAt: WallTime
 ) {
-    /** The option the rider actually pinned — the one the resume card describes. */
+    /** The option the rider actually pinned — the one the resume FAB describes. */
     val selectedItinerary: TripItinerary get() = itineraries[selectedIndex]
 }
 

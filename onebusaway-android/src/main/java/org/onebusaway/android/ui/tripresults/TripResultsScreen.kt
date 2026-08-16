@@ -454,6 +454,10 @@ private fun OptionCard(
                 symbols = option.symbols,
                 minHeight = summaryHeights.tallest,
                 onNaturalHeight = summaryHeights::report,
+                // Named here because this card has no parent width to obey: the [Column] above measures
+                // it at [IntrinsicSize.Max] under the picker's horizontal scroll, so the line it wraps at
+                // is the card's own or nothing.
+                wrapAt = SUMMARY_WRAP_WIDTH,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
@@ -478,22 +482,27 @@ private val PINNED_CARD_BORDER = 2.dp
  * nothing drawable to say gets no summary at all — an empty tinted strip would be worse than the card
  * simply starting at its stats.
  *
- * Shared by the option card and the pinned-trip resume card (#2053), which describes the parked trip in
+ * Shared by the option card and the pinned-trip resume FAB (#2053), which describes the parked trip in
  * the same language the picker used to choose it.
+ *
+ * [wrapAt] is where the line breaks, and defaults to not choosing one — the ordinary Compose contract,
+ * where the width the parent gives is the only bound. The option card is the exception and says so at its
+ * own call site: it is measured at an unbounded width, so it has to name a line or it would never wrap.
  */
 @Composable
 internal fun ModeSymbolSummary(
     symbols: List<ModeSymbol>,
     modifier: Modifier = Modifier,
     minHeight: Int = 0,
-    onNaturalHeight: (Int) -> Unit = {}
+    onNaturalHeight: (Int) -> Unit = {},
+    wrapAt: Dp = Dp.Infinity
 ) {
     val drawn = remember(symbols) {
         symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
     }
     if (drawn.isEmpty()) return
     SymbolFlow(
-        wrapAt = SUMMARY_WRAP_WIDTH,
+        wrapAt = wrapAt,
         minHeight = minHeight,
         onNaturalHeight = onNaturalHeight,
         modifier = modifier
@@ -515,7 +524,8 @@ internal fun ModeSymbolSummary(
 
 /**
  * The summary line's layout: its symbols packed left to right, wrapping onto the next line as soon as
- * the following one would carry the line past [wrapAt] (#2081).
+ * the following one would carry the line past [wrapAt] (#2081), or past the width the parent gives when
+ * [wrapAt] is [Dp.Infinity].
  *
  * Not a `FlowRow`, for one reason: every child here is measured **unbounded**, so a symbol that is by
  * itself wider than [wrapAt] takes a line of its own and widens the card rather than being measured into
@@ -562,7 +572,9 @@ private class SymbolFlowPolicy(
         // Measured unbounded — the point of the whole layout, see [SymbolFlow].
         val placeables = measurables.map { it.measure(Constraints()) }
         val widths = placeables.map { it.width }
-        // Whichever binds first: the line we chose, or a genuinely narrower parent.
+        // Whichever binds first: the line we chose, or a genuinely narrower parent. An infinite [wrapAt]
+        // chooses no line of its own — `roundToPx` carries it to `Constraints.Infinity` — leaving the
+        // parent's width the only thing that breaks one.
         val lines = packLines(widths, minOf(constraints.maxWidth, wrapAt.roundToPx()), gapX)
         val lineHeights = lines.map { line -> line.maxOf { placeables[it].height } }
         val width = constraints.constrainWidth(lines.maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0)

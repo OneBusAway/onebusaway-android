@@ -54,8 +54,6 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
-import org.onebusaway.android.map.render.PinnedTripBitmaps
-import org.onebusaway.android.map.render.PinnedTripMarker
 import org.onebusaway.android.map.render.RentalBand
 import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.render.RouteBadge
@@ -121,7 +119,6 @@ class GoogleMapRenderer(
             ContextCompat.getColor(context, R.color.route_stop_outline)
         )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
-    private var pinnedTripByMarker: Pair<Marker, PinnedTripMarker>? = null
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -265,7 +262,6 @@ class GoogleMapRenderer(
         staticPolylines.forEach { it.remove() }
         staticPolylines.clear()
         rentalByMarker.clear()
-        pinnedTripByMarker = null
         continuationBadgeByMarker.clear()
         routeBadgeByMarker.clear()
     }
@@ -305,21 +301,6 @@ class GoogleMapRenderer(
                     rentalByMarker[marker] = rental
                 }
             }
-        }
-
-        // The parked trip's head (#2053). Drawn with the static markers so it survives every mode the
-        // rider explores through, which is the whole point of a pin. Its title exists only so a tap opens
-        // the window; the InfoWindowAdapter draws PinnedTripInfoWindow in place of the title text.
-        snapshot.pinnedTripMarker?.let { pinned ->
-            val marker = map.addMarkerOrFail(
-                MarkerOptions()
-                    .position(pinned.point.toLatLng())
-                    .icon(descriptorCache.get("pinned-trip") { PinnedTripBitmaps.pin(context) })
-                    .zIndex(PINNED_TRIP_Z_INDEX)
-                    .title(context.getString(R.string.trip_plan_pinned_resume))
-            )
-            staticMarkers.add(marker)
-            pinnedTripByMarker = marker to pinned
         }
 
         for ((_, generic) in snapshot.genericMarkers) {
@@ -893,8 +874,6 @@ class GoogleMapRenderer(
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
-    fun pinnedTripForMarker(marker: Marker): PinnedTripMarker? = pinnedTripByMarker?.takeIf { it.first == marker }?.second
-
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
     /** The route-continuation badge (#1691) tapped, or null if [marker] isn't that badge. */
@@ -942,18 +921,6 @@ class GoogleMapRenderer(
         // the three that never needed lifting.
         private const val TRIP_BAND_Z_INDEX = 2f
         private const val FAST_ESTIMATE_Z_INDEX = 4f
-
-        /**
-         * The parked trip's pin (#2053) tops the scale, and this is a *tappability* decision before it is
-         * a drawing one: gms sends a tap to the topmost marker under the finger, so anything above the pin
-         * takes taps meant for it. A stop sitting under the pin is the ordinary case — trips start at
-         * stops — and left at the default z-index the stop (0.75) swallowed every tap on it.
-         *
-         * Above even the fast-estimate marker because of what it is: the one object on this map the rider
-         * put there themselves, and the only way back to a trip they parked. Everything it can cover is
-         * something they can still reach by moving the map a little; the pin is not.
-         */
-        private const val PINNED_TRIP_Z_INDEX = 5f
 
         // The ping ripple draws above the route line/band (gms always draws Circles beneath markers, so it
         // never covers the vehicle icon regardless of this value).

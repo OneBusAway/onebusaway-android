@@ -32,6 +32,4 @@ object NoOpObaMapCallbacks : ObaMapCallbacks {
     override fun onRentalClick(place: RentalPlace) {}
 
     override fun onRentalInfoWindowClick(place: RentalPlace) {}
-
-    override fun onPinnedTripInfoWindowClick() {}
 }

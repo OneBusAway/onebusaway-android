@@ -162,7 +162,6 @@ fun InfrastructureIssueDestination(navController: NavController) {
             override fun onRentalClick(place: org.onebusaway.android.map.rental.RentalPlace) {}
 
             override fun onRentalInfoWindowClick(place: org.onebusaway.android.map.rental.RentalPlace) {}
-            override fun onPinnedTripInfoWindowClick() {}
         }
     }
 

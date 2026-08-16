@@ -65,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -148,15 +149,15 @@ fun MapFeature(
     modifier: Modifier = Modifier,
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
     onMapLongPress: (GeoPoint) -> Unit = {},
-    // Tapping the parked trip's info window takes the rider back into it (#2053). HomeScreen owns the
-    // pin, so the map only reports the tap.
-    onResumePinnedTrip: () -> Unit = {}
+    // How tall the stops notice currently is, or 0 with none showing (#2229). Reported because the
+    // parked-trip button sits in the *host's* overlay layer and has to clear this one, which lives here —
+    // the same padding/inset bridging this module already does.
+    onStopsBannerHeight: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
     // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
     val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
-    val currentOnResumePinnedTrip by rememberUpdatedState(onResumePinnedTrip)
     // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
     // inset updates on every frame of the keyboard animation, and reading it here directly would
     // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
@@ -302,10 +303,6 @@ fun MapFeature(
 
             override fun onRentalInfoWindowClick(place: RentalPlace) {
                 MapNavigation.openRentalLink(context, place)
-            }
-
-            override fun onPinnedTripInfoWindowClick() {
-                currentOnResumePinnedTrip()
             }
         }
     }
@@ -500,12 +497,20 @@ fun MapFeature(
             .clipToBounds()
             .mapTopChromeOverlayInset()
     ) {
-        StopsInfoBanner(
-            banner = mapBanner(stopsBanner.forFocus(currentFocus), rentalsNeedCloserZoom),
-            regionName = mapViewModel.currentRegionName.orEmpty(),
-            onViewServiceArea = mapViewModel::zoomToRegion,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
+        // Measured through a wrapper that is always here rather than on the notice itself: the notice
+        // emits *nothing* when there is nothing to say, and a modifier on something that isn't composed
+        // never reports the shrink — it would just leave its last height standing.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .onSizeChanged { onStopsBannerHeight(it.height) }
+        ) {
+            StopsInfoBanner(
+                banner = mapBanner(stopsBanner.forFocus(currentFocus), rentalsNeedCloserZoom),
+                regionName = mapViewModel.currentRegionName.orEmpty(),
+                onViewServiceArea = mapViewModel::zoomToRegion
+            )
+        }
         if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
             val zoom = camera?.zoom?.toFloat() ?: seed.zoom
             Text(

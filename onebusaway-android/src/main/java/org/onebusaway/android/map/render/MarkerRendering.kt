@@ -24,17 +24,17 @@ import android.graphics.Path
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
-import org.onebusaway.android.R
 import org.onebusaway.android.util.requireDrawable
 
 /**
  * Shared low-level map-marker drawing, used by the flavor-neutral bitmap factories ([VehicleBitmaps],
  * [RentalBitmaps]) and the Google-flavor [StopIconFactory][org.onebusaway.android.map.googlemapsv2.StopIconFactory]
- * / renderer, so the "rasterize a drawable" and "pin_base + centered glyph" operations live in one place.
+ * / renderer, so the "rasterize a drawable" and "fill a body + center a glyph on it" operations live in
+ * one place.
  */
 object MarkerRendering {
 
-    /** pin_base is authored on a 24-unit grid; marker geometry is in those units. */
+    /** Marker artwork is authored on a 24-unit grid; marker geometry is in those units. */
     const val GRID = 24f
 
     /**
@@ -47,10 +47,6 @@ object MarkerRendering {
      * geometry. A marker rendered below full scale thins with everything else on it.
      */
     const val MARKER_STROKE_DP = 2f
-
-    /** The pin_base head center (grid units) — where the mode/vehicle glyph is centered. */
-    const val HEAD_CX = 12f
-    const val HEAD_CY = 8f
 
     /**
      * Black or white, whichever actually contrasts better against [background].
@@ -91,35 +87,12 @@ object MarkerRendering {
     }
 
     /**
-     * Draws a pin_base teardrop tinted [pinColor] filling `[0,contentPx]` on [canvas], then a
-     * [glyphRes] glyph tinted [glyphColor] centered on the head at [glyphSize] grid units.
-     */
-    fun drawPinAndGlyph(
-        canvas: Canvas,
-        context: Context,
-        contentPx: Int,
-        scale: Float,
-        pinColor: Int,
-        @DrawableRes glyphRes: Int,
-        glyphColor: Int,
-        glyphSize: Float
-    ) {
-        val pin = requireDrawable(context, R.drawable.pin_base).mutate()
-        pin.setBounds(0, 0, contentPx, contentPx)
-        pin.setTint(pinColor)
-        pin.draw(canvas)
-
-        // Glyph centered on the pin head.
-        drawGlyph(canvas, context, glyphRes, HEAD_CX * scale, HEAD_CY * scale, glyphSize / 2f * scale, glyphColor)
-    }
-
-    /**
      * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], then a [glyphRes]
      * glyph tinted [glyphColor] centered on it at [glyphSize] grid units.
      *
-     * The circular counterpart of [drawPinAndGlyph]'s teardrop, drawn for the rental badge that sits
-     * inside its charge ring ([RentalBitmaps]). The vehicle badge is a disc too, but it stacks occupancy
-     * on its own body, so it composes the parts itself rather than coming through here.
+     * Drawn for the rental badge that sits inside its charge ring ([RentalBitmaps]). The vehicle badge is
+     * a disc too, but it stacks occupancy on its own body, so it composes the parts itself rather than
+     * coming through here.
      */
     fun drawCircleAndGlyph(
         canvas: Canvas,
@@ -149,10 +122,10 @@ object MarkerRendering {
      *
      * This is the only rim this file draws, and [outlineColor] is a parameter because it is the caller's
      * call: the rim separates a marker from the **base map**, which the app restyles for dark mode
-     * (#2055). Marker *artwork* — [drawPinAndGlyph]'s glyph, [drawCircleAndGlyph]'s — carries no rim at
-     * all; it sits on a fill chosen to contrast with it, so a hairline had nothing to separate it from.
+     * (#2055). Marker *artwork* — [drawCircleAndGlyph]'s glyph — carries no rim at all; it sits on a fill
+     * chosen to contrast with it, so a hairline had nothing to separate it from.
      *
-     * The path counterpart of [drawPinAndGlyph]'s teardrop: the route/trip maps center a vehicle badge
+     * The path counterpart of [drawCircleAndGlyph]'s disc: the route/trip maps center a vehicle badge
      * on the route line rather than floating a pin off it (#1752), and since #2194 that badge is a disc
      * optionally unioned with an occupancy tab. What goes *on* the body — glyph, occupancy pips — the
      * caller layers itself with [drawGlyph] / [drawOutlined], since only it knows how those stack.
@@ -171,7 +144,7 @@ object MarkerRendering {
 
     /**
      * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
-     * in pixels). The shared stamp behind [drawPinAndGlyph]'s glyph and the vehicle marker's mode glyph.
+     * in pixels). The shared stamp behind [drawCircleAndGlyph]'s glyph and the vehicle marker's mode glyph.
      */
     internal fun drawGlyph(
         canvas: Canvas,

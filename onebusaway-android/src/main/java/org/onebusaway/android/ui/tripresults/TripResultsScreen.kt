@@ -454,6 +454,10 @@ private fun OptionCard(
                 symbols = option.symbols,
                 minHeight = summaryHeights.tallest,
                 onNaturalHeight = summaryHeights::report,
+                // Named here because this card has no parent width to obey: the [Column] above measures
+                // it at [IntrinsicSize.Max] under the picker's horizontal scroll, so the line it wraps at
+                // is the card's own or nothing.
+                wrapAt = SUMMARY_WRAP_WIDTH,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
@@ -481,10 +485,9 @@ private val PINNED_CARD_BORDER = 2.dp
  * Shared by the option card and the pinned-trip resume FAB (#2053), which describes the parked trip in
  * the same language the picker used to choose it.
  *
- * [wrapAt] is where the line breaks. It defaults to the width of the card this summary was drawn for; a
- * caller that is not that card passes **null** to break at whatever width it is actually given instead,
- * which is the difference between a summary laid across its host and one packed into a card's worth of
- * it in the middle of somewhere wider.
+ * [wrapAt] is where the line breaks, and defaults to not choosing one — the ordinary Compose contract,
+ * where the width the parent gives is the only bound. The option card is the exception and says so at its
+ * own call site: it is measured at an unbounded width, so it has to name a line or it would never wrap.
  */
 @Composable
 internal fun ModeSymbolSummary(
@@ -492,7 +495,7 @@ internal fun ModeSymbolSummary(
     modifier: Modifier = Modifier,
     minHeight: Int = 0,
     onNaturalHeight: (Int) -> Unit = {},
-    wrapAt: Dp? = SUMMARY_WRAP_WIDTH
+    wrapAt: Dp = Dp.Infinity
 ) {
     val drawn = remember(symbols) {
         symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
@@ -522,7 +525,7 @@ internal fun ModeSymbolSummary(
 /**
  * The summary line's layout: its symbols packed left to right, wrapping onto the next line as soon as
  * the following one would carry the line past [wrapAt] (#2081), or past the width the parent gives when
- * [wrapAt] is null.
+ * [wrapAt] is [Dp.Infinity].
  *
  * Not a `FlowRow`, for one reason: every child here is measured **unbounded**, so a symbol that is by
  * itself wider than [wrapAt] takes a line of its own and widens the card rather than being measured into
@@ -538,7 +541,7 @@ internal fun ModeSymbolSummary(
  */
 @Composable
 private fun SymbolFlow(
-    wrapAt: Dp?,
+    wrapAt: Dp,
     minHeight: Int,
     onNaturalHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -558,7 +561,7 @@ private fun SymbolFlow(
  * width this layout then packs into, by construction rather than by argument.
  */
 private class SymbolFlowPolicy(
-    private val wrapAt: Dp?,
+    private val wrapAt: Dp,
     private val minHeight: Int,
     private val onNaturalHeight: (Int) -> Unit
 ) : MeasurePolicy {
@@ -569,9 +572,10 @@ private class SymbolFlowPolicy(
         // Measured unbounded — the point of the whole layout, see [SymbolFlow].
         val placeables = measurables.map { it.measure(Constraints()) }
         val widths = placeables.map { it.width }
-        // Whichever binds first: the line we chose, or a genuinely narrower parent. A null [wrapAt]
-        // chooses no line of its own, leaving the parent's width the only thing that breaks one.
-        val lines = packLines(widths, minOf(constraints.maxWidth, wrapLimitPx(wrapAt)), gapX)
+        // Whichever binds first: the line we chose, or a genuinely narrower parent. An infinite [wrapAt]
+        // chooses no line of its own — `roundToPx` carries it to `Constraints.Infinity` — leaving the
+        // parent's width the only thing that breaks one.
+        val lines = packLines(widths, minOf(constraints.maxWidth, wrapAt.roundToPx()), gapX)
         val lineHeights = lines.map { line -> line.maxOf { placeables[it].height } }
         val width = constraints.constrainWidth(lines.maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0)
         // The height these lines want, and the height they are given: a card whose summary wraps to fewer
@@ -603,11 +607,8 @@ private class SymbolFlowPolicy(
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
         val gapX = SYMBOL_GAP.roundToPx()
         val widths = measurables.map { it.maxIntrinsicWidth(Constraints.Infinity) }
-        return packLines(widths, wrapLimitPx(wrapAt), gapX).maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0
+        return packLines(widths, wrapAt.roundToPx(), gapX).maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0
     }
-
-    /** [wrapAt] in pixels, or "no line of my own" — which leaves the parent's width the only bound. */
-    private fun Density.wrapLimitPx(wrapAt: Dp?): Int = if (wrapAt == null) Constraints.Infinity else wrapAt.roundToPx()
 }
 
 /**

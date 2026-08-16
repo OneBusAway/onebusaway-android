@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home.map
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,6 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,14 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.tripplan.pinned.PinnedLabel
-import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripSummary
 import org.onebusaway.android.ui.tripresults.ModeSymbolSummary
 
 /**
@@ -77,21 +75,16 @@ import org.onebusaway.android.ui.tripresults.ModeSymbolSummary
  */
 @Composable
 fun PinnedTripFab(
-    state: PinnedTripCardState,
+    state: PinnedTripSummary,
     onResume: () -> Unit,
     onUnpin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Naming the trip is a getString + String.format, and the pin behind it changes only when the rider
-    // pins something, so the work is held rather than repeated on every recomposition of the chrome.
-    val resources = LocalResources.current
-    val name = remember(resources, state.destination) {
-        val destination = when (val label = state.destination) {
-            is PinnedLabel.Text -> label.value
-            is PinnedLabel.Resource -> resources.getString(label.id)
-        }
-        resources.getString(R.string.trip_plan_pinned_trip_title, destination)
+    val destination = when (val label = state.destination) {
+        is PinnedLabel.Text -> label.value
+        is PinnedLabel.Resource -> stringResource(label.id)
     }
+    val name = stringResource(R.string.trip_plan_pinned_trip_title, destination)
     val resumeLabel = stringResource(R.string.trip_plan_pinned_resume)
     var confirmingUnpin by remember { mutableStateOf(false) }
     // A Surface wearing the extended FAB's shape rather than a FloatingActionButton, for the same reason
@@ -105,7 +98,6 @@ fun PinnedTripFab(
         modifier = modifier,
         shape = FloatingActionButtonDefaults.extendedFabShape,
         color = FloatingActionButtonDefaults.containerColor,
-        contentColor = contentColorFor(FloatingActionButtonDefaults.containerColor),
         shadowElevation = PINNED_TRIP_FAB_ELEVATION
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -118,11 +110,10 @@ fun PinnedTripFab(
                     // width the host offers.
                     .weight(1f, fill = false)
                     // "Resume this trip" is what the tap does, not what the button is, so it is the
-                    // click's own label rather than a line drawn inside it. Merged so the region
-                    // announces as one button carrying the trip's name, not as a glyph and a row of
-                    // route badges a screen reader has to walk separately.
+                    // click's own label rather than a line drawn inside it. `clickable` merges its own
+                    // descendants, so the region already announces as one button carrying the trip's
+                    // name rather than as a glyph and a row of badges to be walked separately.
                     .clickable(onClickLabel = resumeLabel, onClick = onResume)
-                    .semantics(mergeDescendants = true) {}
                     // Held off the pill's leading edge, which is a 16dp corner the glyph would otherwise
                     // sit inside the curve of.
                     .padding(
@@ -149,23 +140,26 @@ fun PinnedTripFab(
                 // button, which separated the summary far harder than it needed to. A wash of the
                 // content colour reads as the same surface, slightly recessed — and it follows the pill
                 // into dark mode without a second colour having to be kept in step with it.
-                Surface(
-                    shape = RoundedCornerShape(SUMMARY_CORNER),
-                    color = LocalContentColor.current.copy(alpha = SUMMARY_TINT_ALPHA)
-                ) {
-                    // Wrapped against this button rather than against the option card the summary was
-                    // drawn for: that card's line is 176dp, so on a button the width of most of the
-                    // screen the symbols packed themselves into a card's worth of it and left the rest
-                    // empty. Null puts the break wherever this button actually runs out.
-                    ModeSymbolSummary(
-                        state.symbols,
-                        modifier = Modifier.padding(
+                // Drawn as a background rather than nested in a Surface: a Surface is not just a fill,
+                // it also plants a pointer-input node that would swallow map gestures over this patch —
+                // the same reason the stops notice avoids one (see MapFeature).
+                //
+                // The summary breaks its lines against this button rather than against the option card it
+                // was drawn for, whose 176dp line would otherwise pack the symbols into a card's worth of
+                // a button the width of most of the screen. The default is to obey the parent, which here
+                // is what the button actually has room for.
+                ModeSymbolSummary(
+                    state.symbols,
+                    modifier = Modifier
+                        .background(
+                            LocalContentColor.current.copy(alpha = SUMMARY_TINT_ALPHA),
+                            RoundedCornerShape(SUMMARY_CORNER)
+                        )
+                        .padding(
                             horizontal = SUMMARY_PADDING_HORIZONTAL,
                             vertical = SUMMARY_PADDING_VERTICAL
-                        ),
-                        wrapAt = null
-                    )
-                }
+                        )
+                )
             }
             IconButton(onClick = { confirmingUnpin = true }) {
                 Icon(
@@ -176,9 +170,6 @@ fun PinnedTripFab(
             }
         }
     }
-    // Confirmed rather than immediate: the pin is the only thing holding that plan, so a mis-tap on a
-    // small glyph would spend the whole journey the rider parked — the very cost pinning exists to
-    // avoid. The resume half needs no such guard; it costs a tap to undo.
     if (confirmingUnpin) {
         AlertDialog(
             onDismissRequest = { confirmingUnpin = false },

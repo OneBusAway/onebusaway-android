@@ -33,7 +33,7 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.tripplan.pinned.PinnedLabel
-import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripSummary
 import org.onebusaway.android.ui.tripresults.LegBadge
 import org.onebusaway.android.ui.tripresults.ModeSymbol
 import org.onebusaway.android.ui.tripresults.TransitMode
@@ -123,7 +123,7 @@ class PinnedTripFabTest {
         composeRule.setContent {
             ObaTheme {
                 PinnedTripFab(
-                    state = PinnedTripCardState(
+                    state = PinnedTripSummary(
                         destination = PinnedLabel.Text("Ballard"),
                         symbols = listOf(
                             ModeSymbol.Transit(

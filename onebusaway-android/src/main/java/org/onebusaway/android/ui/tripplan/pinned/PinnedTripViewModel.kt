@@ -49,7 +49,7 @@ sealed interface PinnedLabel {
  * Everything the resume FAB draws — the legs the parked trip rides — plus where it goes, which the button
  * announces rather than draws.
  */
-data class PinnedTripCardState(
+data class PinnedTripSummary(
     val destination: PinnedLabel,
     val symbols: List<ModeSymbol>
 )
@@ -93,13 +93,13 @@ class PinnedTripViewModel @Inject constructor(
         store.pinned.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**
-     * The pinned trip as the card draws it.
+     * The pinned trip as the button draws it.
      *
-     * Summarized here, once per change of pin, rather than in the card: summarizing decodes every leg's
+     * Summarized here, once per change of pin, rather than in the button: summarizing decodes every leg's
      * geometry and is emphatically not a per-recomposition cost.
      */
-    val card: StateFlow<PinnedTripCardState?> = pinned
-        .mapLatest { pin -> pin?.let { cardStateFor(it) } }
+    val summary: StateFlow<PinnedTripSummary?> = pinned
+        .mapLatest { pin -> pin?.let { summaryFor(it) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     private val _pendingResumeIndex = MutableStateFlow<Int?>(null)
@@ -119,7 +119,7 @@ class PinnedTripViewModel @Inject constructor(
      * A failed write leaves the previous pin standing rather than taking the process down with it. Both
      * of these are fire-and-forget from a gesture, so an escaping `SQLiteException` — a full disk, a
      * corrupt database — would reach `viewModelScope`'s handler and crash the app for the sake of a
-     * bookmark. The rider loses the pin they just took, which the absent card says plainly, and can take
+     * bookmark. The rider loses the pin they just took, which the absent button says plainly, and can take
      * it again.
      */
     fun pin(
@@ -163,7 +163,14 @@ class PinnedTripViewModel @Inject constructor(
         pin(current.params, current.departNow, itineraries, match.index)
     }
 
-    /** The rider cleared the pin. Guarded like [pin], and for the same reason. */
+    /**
+     * The rider cleared the pin. Guarded like [pin], and for the same reason.
+     *
+     * Whether to *ask* first is the caller's call, and the two answers in the app are both deliberate:
+     * `PinnedTripFab` confirms, because there the parked trip is off screen and the plan it holds is the
+     * only copy — nothing else remembers it. The results-sheet controls don't, because there the trip is
+     * on screen and re-pinning it is one gesture away.
+     */
     fun unpin() {
         viewModelScope.launch {
             runCatchingCancellable { store.unpin() }
@@ -181,9 +188,9 @@ class PinnedTripViewModel @Inject constructor(
         _pendingResumeIndex.value = null
     }
 
-    private suspend fun cardStateFor(pin: PinnedTrip): PinnedTripCardState? {
+    private suspend fun summaryFor(pin: PinnedTrip): PinnedTripSummary? {
         val option = results.summarize(pin.itineraries).getOrNull()?.getOrNull(pin.selectedIndex) ?: return null
-        return PinnedTripCardState(
+        return PinnedTripSummary(
             destination = pinnedDestinationLabel(pin.params, pin.selectedItinerary),
             symbols = option.symbols
         )
@@ -193,7 +200,7 @@ class PinnedTripViewModel @Inject constructor(
         /**
          * How long the pin flows stay warm with no collector. Long enough to ride out the recomposition
          * gap as the rider moves between directions and the map — the two places that read them — so
-         * the card doesn't have to re-summarize a trip nothing changed.
+         * the button doesn't have to re-summarize a trip nothing changed.
          */
         const val STOP_TIMEOUT_MS = 5_000L
 

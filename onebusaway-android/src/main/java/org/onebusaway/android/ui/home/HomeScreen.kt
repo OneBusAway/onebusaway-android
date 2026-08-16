@@ -272,11 +272,14 @@ fun HomeScreen(
                 // on currentFocus would reset this to 0 when switching between two equal-height banners, framing
                 // the map as if no banner showed. The disappearance case resets it via the banner's else branch.
                 var focusBannerBottomPx by remember { mutableIntStateOf(0) }
-                // The other two things sharing the top-of-map band, each reported by an always-present
-                // wrapper so a hidden one reads as 0 rather than leaving its last height behind. The
-                // parked-trip button (#2229) stacks below whichever of the three is currently tallest.
+// How tall the top-of-map overlay layer currently is, and the stops notice beside it — the two
+                // things the parked-trip button (#2229) stacks below. The layer is measured whole rather
+                // than overlay by overlay: its occupants all hang from the top of the band and overlap
+                // each other, so its own height *is* the tallest of them, and an overlay added there
+                // later is cleared without anyone having to remember this. The stops notice is measured
+                // separately only because it lives in the map's own overlay layer, not this one.
+                var overlayBandHeightPx by remember { mutableIntStateOf(0) }
                 var stopsBannerHeightPx by remember { mutableIntStateOf(0) }
-                var weatherHeightPx by remember { mutableIntStateOf(0) }
                 // The directions trip-plan form card's absolute bottom edge (window px), so the map's top inset
                 // covers the form/FAB during directions (the itinerary-step focus centers in the band below it).
                 var directionsFormBottomPx by remember { mutableIntStateOf(0) }
@@ -719,7 +722,7 @@ fun HomeScreen(
 
                             // ---- The parked trip plan (#2053) ------------------------------------
                             val pinnedTrip by pinnedTripViewModel.pinned.collectAsStateWithLifecycle()
-                            val pinnedCard by pinnedTripViewModel.card.collectAsStateWithLifecycle()
+                            val pinnedSummary by pinnedTripViewModel.summary.collectAsStateWithLifecycle()
                             val pendingResumeIndex by pinnedTripViewModel.pendingResumeIndex
                                 .collectAsStateWithLifecycle()
                             // Whether the plan on screen is the pinned one — so the controls read Unpin,
@@ -873,69 +876,71 @@ fun HomeScreen(
                                     // Every top-of-map overlay sits below the chrome row via one shared inset
                                     // (status bar + clearance), so no individual overlay has to know the FAB-row height.
                                     Box(Modifier.fillMaxSize().mapTopChromeOverlayInset()) {
-                                        HomeMapOverlays(
-                                            weatherViewModel = weatherViewModel,
-                                            donationViewModel = donationViewModel,
-                                            surveyViewModel = surveyViewModel,
-                                            focusBannerState = focusBannerState,
-                                            onCloseFocus = homeViewModel::clearMapFocus,
-                                            onToggleFavorite = {
-                                                when (focusBannerState) {
-                                                    is FocusBannerState.Stop ->
-                                                        currentFocus.focusedStop?.let {
-                                                            focusBannerViewModel.toggleStopFavorite(it)
-                                                        }
-                                                    is FocusBannerState.Route ->
-                                                        focusBannerViewModel.toggleRouteFavorite(
-                                                            focusBannerState.header
-                                                        )
-                                                    null -> Unit
-                                                }
-                                            },
-                                            onShowAlerts = { serviceAlertsVisible = true },
-                                            onRecenterStop = {
-                                                homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
-                                            },
-                                            // The direction menu calls straight into the map VM (which
-                                            // re-filters stops/vehicles + persists the choice), like the height report below.
-                                            onSelectRouteDirection = { directionId ->
-                                                homeViewModel.selectStandaloneRouteDirection(directionId)
-                                                mapViewModel.selectRouteDirection(directionId)
-                                            },
-                                            // Tapping the header body reframes the map to the route's full extent (VM
-                                            // re-issues the retained route framing).
-                                            onFrameRoute = {
-                                                homeViewModel.reframeFocusedRoute(mapViewModel.viewport)
-                                            },
-                                            onLearnMore = onLearnMore,
-                                            onOpenSurvey = onOpenSurvey,
-                                            focusBannerTopPx = focusBannerTopPx,
-                                            // This layer converts measured card height to its map-space bottom edge;
-                                            // the map VM adds marker clearance and owns the resulting content padding.
-                                            onFocusBannerBottom = { focusBannerBottomPx = it },
-                                            onWeatherHeight = { weatherHeightPx = it }
-                                        )
+                                        // Wrap-height and measured, so the band reports what it actually
+                                        // occupies. An overlay that emits nothing measures 0, which is
+                                        // why this wrapper is always composed rather than the reporting
+                                        // hanging off any one of them.
+                                        Box(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .onSizeChanged { overlayBandHeightPx = it.height }
+                                        ) {
+                                            HomeMapOverlays(
+                                                weatherViewModel = weatherViewModel,
+                                                donationViewModel = donationViewModel,
+                                                surveyViewModel = surveyViewModel,
+                                                focusBannerState = focusBannerState,
+                                                onCloseFocus = homeViewModel::clearMapFocus,
+                                                onToggleFavorite = {
+                                                    when (focusBannerState) {
+                                                        is FocusBannerState.Stop ->
+                                                            currentFocus.focusedStop?.let {
+                                                                focusBannerViewModel.toggleStopFavorite(it)
+                                                            }
+                                                        is FocusBannerState.Route ->
+                                                            focusBannerViewModel.toggleRouteFavorite(
+                                                                focusBannerState.header
+                                                            )
+                                                        null -> Unit
+                                                    }
+                                                },
+                                                onShowAlerts = { serviceAlertsVisible = true },
+                                                onRecenterStop = {
+                                                    homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
+                                                },
+                                                // The direction menu calls straight into the map VM (which
+                                                // re-filters stops/vehicles + persists the choice), like the height report below.
+                                                onSelectRouteDirection = { directionId ->
+                                                    homeViewModel.selectStandaloneRouteDirection(directionId)
+                                                    mapViewModel.selectRouteDirection(directionId)
+                                                },
+                                                // Tapping the header body reframes the map to the route's full extent (VM
+                                                // re-issues the retained route framing).
+                                                onFrameRoute = {
+                                                    homeViewModel.reframeFocusedRoute(mapViewModel.viewport)
+                                                },
+                                                onLearnMore = onLearnMore,
+                                                onOpenSurvey = onOpenSurvey,
+                                                focusBannerTopPx = focusBannerTopPx,
+                                                // This layer converts measured card height to its map-space bottom edge;
+                                                // the map VM adds marker clearance and owns the resulting content padding.
+                                                onFocusBannerBottom = { focusBannerBottomPx = it }
+                                            )
+                                        }
                                         // The parked trip (#2229). Top-of-map rather than down in the
                                         // FAB column, where it rode the arrivals sheet's lift and so
                                         // moved every time a drawer did — a standing reminder shouldn't
                                         // be animating.
                                         //
-                                        // It clears everything else in this band — the focus banner, the
-                                        // "zoom in to see more stops" notice, and the weather chip — by
-                                        // their *measured* heights rather than by any assumption about
-                                        // what they are. They all hang from the top of the band and
-                                        // overlap each other, so the tallest is the whole stack; with all
-                                        // three away the button sits directly under the chrome row.
-                                        // Drawn after the overlays, so it stays tappable if one ever
-                                        // grows into it.
-                                        pinnedCard?.takeIf { showPinnedTrip }?.let { card ->
-                                            val clearPx = maxOf(
-                                                (focusBannerBottomPx - focusBannerTopPx).coerceAtLeast(0),
-                                                stopsBannerHeightPx,
-                                                weatherHeightPx
-                                            )
+                                        // It clears everything else in the band by measured height
+                                        // rather than by any assumption about what is there — see
+                                        // overlayBandHeightPx. With the band empty it sits directly under
+                                        // the chrome row. Drawn after the overlays, so it stays tappable
+                                        // if one ever grows into it.
+                                        pinnedSummary?.takeIf { showPinnedTrip }?.let { summary ->
+                                            val clearPx = maxOf(overlayBandHeightPx, stopsBannerHeightPx)
                                             PinnedTripFab(
-                                                state = card,
+                                                state = summary,
                                                 onResume = onResumePinnedTrip,
                                                 onUnpin = pinnedTripViewModel::unpin,
                                                 modifier = Modifier
@@ -1279,25 +1284,17 @@ private fun BoxScope.HomeMapOverlays(
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
     focusBannerTopPx: Int,
-    onFocusBannerBottom: (Int) -> Unit,
-    // How tall the weather chip currently is, or 0 with none showing — the parked-trip button clears it.
-    onWeatherHeight: (Int) -> Unit
+    onFocusBannerBottom: (Int) -> Unit
 ) {
     // The caller offsets this whole overlay layer below the top chrome (one shared inset), so the
     // overlays only carry their own side margins here.
     // The weather chip feature module: self-wiring from its ViewModel. Sits below the floating search
     // field (which now occupies the top-end corner), not beside it.
-    // Measured through a wrapper that is always here rather than on the chip itself: the chip emits
-    // *nothing* while it is hidden or has no reading, and a modifier on something that isn't composed
-    // never reports the shrink — it would just leave its last height standing.
-    Box(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .padding(end = 16.dp)
-            .onSizeChanged { onWeatherHeight(it.height) }
-    ) {
-        WeatherFeature(viewModel = weatherViewModel, onNearby = true)
-    }
+    WeatherFeature(
+        viewModel = weatherViewModel,
+        onNearby = true,
+        modifier = Modifier.align(Alignment.TopEnd).padding(end = 16.dp)
+    )
     // The donation feature module: the card (DonationsManager-gated) plus its dismiss dialog.
     DonationFeature(
         viewModel = donationViewModel,

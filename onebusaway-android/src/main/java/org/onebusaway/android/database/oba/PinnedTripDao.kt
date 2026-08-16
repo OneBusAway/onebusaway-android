@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.Flow
  * pattern) because of size alone: an itinerary carries every leg's encoded geometry and turn-by-turn
  * steps, so [itinerariesJson] runs to tens of kilobytes. Preferences DataStore rewrites its whole
  * file on every unrelated write and keeps its slots in a cache for the app's life; a row read only
- * when the card actually draws belongs on disk.
+ * when the button actually draws belongs on disk.
  *
  * @param pinId always [SINGLE_PIN_ID]. There is exactly one pinned trip — pinning replaces — so the
  *        key is a sentinel rather than an identity, which makes "exactly one" structural instead of
@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.Flow
  *        carry.
  * @param itinerariesJson every option the plan returned, encoded by
  *        [org.onebusaway.android.directions.model.toJson]. All of them, not just the chosen one: a
- *        picker redrawn with a single card would state that the planner found one option, and the
+ *        picker redrawn with a single option would state that the planner found one, and the
  *        only way back to the alternatives would be the network the snapshot exists to avoid.
  * @param selectedIndex which of those options the rider pinned. A column rather than a field inside
  *        [itinerariesJson] because it is the one value a reader validates *against the other blob's

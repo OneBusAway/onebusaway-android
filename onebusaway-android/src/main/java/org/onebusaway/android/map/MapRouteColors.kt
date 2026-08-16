@@ -69,11 +69,13 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  * chroma taken to the far end of the tone scale *away from the basemap* — the dark end on the light basemap,
  * the light end when [darkMode].
  *
- * How far out along that scale is [case]'s to say. A [RouteLineCase.SELECTION] takes the very end of it and a
- * [RouteLineCase.OUTLINE] stops just short, so the rider's selected leg is the *brightest* edge on the map as
- * well as the heaviest — selection said on two channels rather than on thickness alone. The headroom left
- * above the outline's own tone is small (see the constants), so this is a nudge on top of the weight step and
- * not a second signal that could carry selection by itself.
+ * How far out along that scale is [case]'s to say, and this is the map's second selection signal (#2226). A
+ * [RouteLineCase.OUTLINE] — the hairline every directions ride wears — stops where a case still carries a
+ * trace of its line's hue. A [RouteLineCase.SELECTION], the case the rider's own leg wears, goes to the
+ * literal end and comes back achromatic. So the selected leg's edge is not merely *lighter* than the edges
+ * around it on the dark basemap: it is the only white one, where the rest are tinted with the routes they
+ * wrap. That categorical difference is what a rider actually picks out, and it is why the two tones can sit
+ * as close as 1.29:1 and still read apart.
  *
  * The direction is deliberately the opposite of the halo convention for map *labels*, which carry the
  * background's own value to punch glyphs out of busy detail. Tried that way first and the case vanished on
@@ -82,22 +84,22 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  * a line needs here is the contrast a label already has from its own ink.
  *
  * These are near-black and near-white, and that is the point: the case is a **separator**, not a second
- * colour. The sRGB gamut holds little chroma at either end of the tone scale, so a case here keeps only a
- * trace of its line's hue. That is a deliberate trade: maximum tonal contrast is what makes a 1.5dp edge
- * visible at all, and the line's own colour is already saying which route it is.
+ * colour. That is a deliberate trade — maximum tonal contrast is what makes a 1.5dp edge visible at all, and
+ * the line's own colour is already saying which route it is.
  *
- * The light end has to go *further* than "light" to get there, which is what #2226 was: at tone 90 the gamut
- * still holds plenty of chroma for the warm and green hues — a green line at chroma 68 cased at chroma 68 —
- * so the case came out as a lighter, still-saturated version of its own line rather than an edge on it. Since
- * selection is said with case *thickness* (#2082), a case a rider can't pick out from its line is a highlight
- * they can't read, and dark mode was the theme wearing it. At tone 98 the gamut squeezes the same cases under
- * chroma 27, and the gap to a basemap-palette line (tone 55) is 43 against the dark end's 45 — so neither
- * theme's case is the weak one any more.
+ * How much of that colour survives is not the same at the two ends, and #2226 is what the difference costs. At
+ * the dark end sRGB holds little chroma, so a case there really is a near-black hairline. At the light end it
+ * holds a great deal for the warm and green hues — a green line at chroma 68 cases at chroma 68 — so an outline
+ * on the dark basemap comes out as a lighter, still-saturated version of its own line. That is fine for what an
+ * outline is *for* (holding a faded ride off the basemap; it has never said anything about selection), and it
+ * was fatal for the thing selection was being said with, since a case a rider can't pick out from its line
+ * leaves nothing for its thickness to be read against. Hence the split: the selection case goes all the way to
+ * tone 100, where the gamut has nothing left to give it and it lands on white.
  *
- * What the tones cost is at that light end: a hue with nearly no chroma left to carry it can land some way off
- * its line's, where the dark end holds every hue within a degree or two. That is the right trade for a channel
- * with nothing left in it — a case is read as an edge, not as a colour — and it is why the tones are asymmetric
- * in *what they preserve* as well as in their distance from the middle.
+ * So the selection case is the one route colour on this map that keeps *no* hue at all, deliberately, and the
+ * asymmetry runs the other way at the light basemap: tone 5 is still dark enough to carry a hue, so there the
+ * selected case is a deeper version of its line rather than a colourless one. The signal in each theme is
+ * whatever that theme's end of the scale can offer — white on the dark map, depth on the light one.
  *
  * Absolute tones rather than an offset from [lineColor]'s own tone: what a case has to contrast with is the
  * basemap, which sits at a fixed value per theme, so the target is a property of the theme and not of the line
@@ -171,20 +173,23 @@ private const val MAP_ROUTE_CHROMA = 75.0
 private const val MAP_ROUTE_TONE = 55.0
 
 // The two ends of the tone scale an ordinary case is pinned to, chosen for maximum contrast with the basemap
-// it has to separate its line from — and, since a case's thickness is what marks selection, with that line as
-// well (#2226). Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as it can usefully go
-// without becoming literal black or white, which the dark end reaches sooner than the light one.
-private const val MAP_ROUTE_CASE_TONE_DARK = 10.0
-private const val MAP_ROUTE_CASE_TONE_LIGHT = 98.0
-
-// ...and the ends themselves, which the rider's selected leg takes: literal black and white, since selection
-// is the one thing worth spending the last of the scale on.
+// it has to separate its line from. Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as
+// a case can go while still reading as *this line's* edge, keeping enough of its hue to say so.
 //
-// Note how little that last step is worth on its own. #2226 took the ordinary case out to where the gamut has
-// almost nothing left, so a selected case sits 1.05:1 from an outline in dark mode and 1.10:1 in light — a
-// difference a rider will not read as a difference. It is here because a selection may as well have the end
-// of the scale, not because brightness now carries the signal: the weight step (0.75dp → 1.5dp per side) is
-// still what says "this is the one you're looking at". Buying real brightness separation would mean pulling
-// MAP_ROUTE_CASE_TONE_LIGHT back down toward 90 to open the gap, which is exactly what #2226 closed.
+// Deliberately left short of the ends below, which is the whole of #2226: an outline that had already spent
+// the scale would leave a selection nothing to step up into. What an outline gives up by stopping here it
+// gives up knowingly — on the dark basemap the warm and green hues case at nearly their line's own chroma,
+// so a green ride wears a green edge. It reads as an edge because it is a lighter one, and it never had to
+// carry selection.
+private const val MAP_ROUTE_CASE_TONE_DARK = 10.0
+private const val MAP_ROUTE_CASE_TONE_LIGHT = 90.0
+
+// ...and the ends themselves, which the rider's selected leg takes. The step is small in tone alone — 1.29:1
+// against an outline on the dark basemap, 1.10:1 on the light one — and that is not what carries it. On the
+// dark map tone 100 leaves the gamut with no chroma to give, so the selected case comes back white while
+// every outline around it stays tinted with the route it wraps; being the only colourless edge on screen is
+// a categorical difference, not a 1.29:1 one. On the light map tone 5 keeps its hue and reads as depth
+// instead. Either way this rides on top of the weight step (0.75dp → 1.5dp per side), which remains the
+// primary thing saying "this is the one you're looking at".
 private const val MAP_SELECTION_CASE_TONE_DARK = 5.0
 private const val MAP_SELECTION_CASE_TONE_LIGHT = 100.0

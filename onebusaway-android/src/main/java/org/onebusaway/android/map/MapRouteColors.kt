@@ -84,8 +84,8 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  * a line needs here is the contrast a label already has from its own ink.
  *
  * These are near-black and near-white, and that is the point: the case is a **separator**, not a second
- * colour. That is a deliberate trade — maximum tonal contrast is what makes a 1.5dp edge visible at all, and
- * the line's own colour is already saying which route it is.
+ * colour. That is a deliberate trade — maximum tonal contrast is what makes an edge this thin visible at all,
+ * and the line's own colour is already saying which route it is.
  *
  * How much of that colour survives is not the same at the two ends, and #2226 is what the difference costs. At
  * the dark end sRGB holds little chroma, so a case there really is a near-black hairline. At the light end it
@@ -104,8 +104,8 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  * Absolute tones rather than an offset from [lineColor]'s own tone: what a case has to contrast with is the
  * basemap, which sits at a fixed value per theme, so the target is a property of the theme and not of the line
  * it wraps. The re-tone itself is [routeCasingColor], shared with the continuation badge's outline so the map's
- * two casings can't drift apart on which channels survive; only the tones differ, and deliberately — a 1.5dp
- * hairline needs far more contrast than a badge outline.
+ * two casings can't drift apart on which channels survive; only the tones differ, and deliberately — a
+ * hairline a dp or two wide needs far more contrast than a badge outline.
  *
  * This is the one deliberate exception to this file's theme independence (see above) — precisely because its
  * whole job is to hold the line apart from a backdrop that itself flips.
@@ -189,7 +189,7 @@ private const val MAP_ROUTE_CASE_TONE_LIGHT = 90.0
 // dark map tone 100 leaves the gamut with no chroma to give, so the selected case comes back white while
 // every outline around it stays tinted with the route it wraps; being the only colourless edge on screen is
 // a categorical difference, not a 1.29:1 one. On the light map tone 5 keeps its hue and reads as depth
-// instead. Either way this rides on top of the weight step (0.75dp → 1.5dp per side), which remains the
+// instead. Either way this rides on top of the weight step (0.75dp → 2.25dp per side), which remains the
 // primary thing saying "this is the one you're looking at".
 private const val MAP_SELECTION_CASE_TONE_DARK = 5.0
 private const val MAP_SELECTION_CASE_TONE_LIGHT = 100.0

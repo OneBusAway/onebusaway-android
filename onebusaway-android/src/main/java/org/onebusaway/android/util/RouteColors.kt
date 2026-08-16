@@ -191,7 +191,7 @@ private const val BADGE_CHIP_TEXT_TONE_DARK = 20.0
  * (`mapRouteLineCaseColor`, #2082) and a continuation badge's outline
  * ([org.onebusaway.android.map.render.ContinuationBadgeBitmaps.routeBadgeOutlineColor]).
  *
- * The two deliberately pick *different* tones — a 1.5dp hairline under a route line needs far more contrast
+ * The two deliberately pick *different* tones — a hairline under a route line needs far more contrast
  * than a badge's outline — so the tone stays the caller's decision. What they share is this: which channels
  * survive, and the opaque-alpha normalization ahead of the conversion, exactly as [routeColorHctOrNull] does
  * it. Written once so the two casings can't drift apart on either.

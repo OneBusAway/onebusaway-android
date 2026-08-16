@@ -75,12 +75,40 @@ class RouteLineWidthProfileTest {
     fun `a case reads as an outline at every zoom, so it stays off the width ramp`() {
         // The case is a fixed dp inset on each side, deliberately not scaled by the line's zoom multiplier: a
         // halo that thinned with its line would stop separating it from the basemap exactly when zoomed out.
-        assertEquals(1.5f, RouteLineCase.SELECTION.widthDp, 0f)
-        // The lighter edge every directions ride wears; selection stays legible against it by being the
-        // heavier of the two, which is what lets it still mean "selected".
+        assertEquals(2.25f, RouteLineCase.SELECTION.widthDp, 0f)
+        // The lighter edge every directions ride wears; selection stays legible against it by being three
+        // times the weight, which is what lets it still mean "selected".
         assertEquals(0.75f, RouteLineCase.OUTLINE.widthDp, 0f)
-        // And both stay finer than the thinnest line they can wrap, so a case reads as that line's edge
-        // rather than as a second line under it.
-        assertTrue(RouteLineCase.SELECTION.extraWidthDp < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
+        // An outline stays finer than the thinnest line it can wrap, so it reads as that line's edge rather
+        // than as a second line under it.
+        assertTrue(RouteLineCase.OUTLINE.extraWidthDp < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
+    }
+
+    @Test
+    fun `a selection case outgrows the approach line, which is the one line it is allowed to`() {
+        // Selection deliberately broke the rule the outline still keeps: at 2.25dp per side it adds 4.5dp to
+        // a line the approach profile draws at 3.5dp, so on *that* line the case is wider than the line and
+        // reads as a band with a coloured core rather than as an edge.
+        //
+        // Accepted, and only there. The approach — where the vehicle is coming from, upstream of the boarding
+        // point — is the one line drawn deliberately too thin to identify itself, and its own profile says so:
+        // "its case, not its width, is what connects it to the ride". A heavier case makes that connection
+        // more legible, not less. Every other line carrying a selection is at least the ride's 15dp, where
+        // 4.5dp is an edge by any reading.
+        //
+        // Pinned as a test because it is the kind of thing a later width tune would trip over unknowingly: if
+        // some *other* profile ever drops under the selection case's own width, that is a real regression and
+        // this is where it should surface.
+        assertTrue(RouteLineCase.SELECTION.extraWidthDp > ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
+        listOf(
+            ITINERARY_RIDE_WIDTH_PROFILE,
+            ITINERARY_STREET_WIDTH_PROFILE,
+            ITINERARY_CONTEXT_WIDTH_PROFILE
+        ).forEach {
+            assertTrue(
+                "a ${it.thicknessDp}dp line is thinner than the ${RouteLineCase.SELECTION.extraWidthDp}dp its case adds",
+                RouteLineCase.SELECTION.extraWidthDp < it.thicknessDp
+            )
+        }
     }
 }

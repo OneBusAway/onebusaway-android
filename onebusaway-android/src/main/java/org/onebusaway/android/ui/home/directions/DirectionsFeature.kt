@@ -148,9 +148,11 @@ import org.onebusaway.android.util.PreferenceUtils
  * point directly on the home map). The itinerary itself renders on the shared home map via the
  * [MapViewModel] directions controller — driven by [TripResultsSheet]'s selection.
  *
- * The address-book (contacts) picker was removed (#1936 tracks accepting place intents from other apps
- * instead). Map-pick is hoisted to the caller ([DirectionsFormCard]'s `onPickEndpoint`);
- * current-location, date/time, and advanced settings are wired here.
+ * The address-book (contacts) picker was removed; the app instead accepts place intents from other apps
+ * (#1936), so the address book hands OneBusAway an address rather than OneBusAway reading the contacts —
+ * see [org.onebusaway.android.ui.nav.PlaceIntents]. Map-pick is hoisted to the caller
+ * ([DirectionsFormCard]'s `onPickEndpoint`); current-location, date/time, and advanced settings are
+ * wired here.
  */
 
 /**

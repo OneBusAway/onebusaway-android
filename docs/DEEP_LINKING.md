@@ -12,6 +12,10 @@ Two families of link, both handled by `HomeActivity` (the app's single Activity)
 | `onebusaway://add-region?name=…&oba-url=…` | Adds that named region and switches to it, after the rider confirms — see below |
 | `https://onebusaway.co/regions/1/stops/1_75403/trips?trip_id=1_18196913&service_date=1698307200.0&stop_sequence=5` | Opens that trip's details, scrolled to the stop in the path |
 
+Those name a **stop, trip or region** — OneBusAway's own vocabulary, which only these two apps speak.
+Separately, the app accepts a **place** named by any other app on the device (a `geo:` URI, a shared maps
+link or address) and plans a trip to it — see [Place intents from other apps](#place-intents-from-other-apps).
+
 ## Custom-scheme links
 
 Every brand answers to the cross-platform `onebusaway://` scheme **and** to its own scheme
@@ -211,6 +215,85 @@ adb shell am start -a android.intent.action.VIEW \
   com.joulespersecond.seattlebusbot
 ```
 
+## Place intents from other apps
+
+Separate from OneBusAway's own link vocabulary above: the app also accepts a **place** named by any other
+app on the device ([#1936](https://github.com/OneBusAway/onebusaway-android/issues/1936)), and opens the
+home map's directions focus with it as the trip's **destination**. The other end defaults to the device's
+current location, so a place that arrives with coordinates plans on the spot; the form's reverse button is
+the way to say "from there" instead.
+
+This is what replaced the trip planner's in-app address-book picker. Rather than asking for the rider's
+contacts and building a picker, the app accepts the place their address book already knows how to hand
+out — via Contacts' own "open this address" action, or the share sheet.
+
+| Intent | Example | What it does |
+| --- | --- | --- |
+| `ACTION_VIEW` `geo:` | `geo:47.6097,-122.3422` | Plans to that point |
+| `ACTION_VIEW` `geo:` | `geo:0,0?q=400+Broad+St%2C+Seattle` | Geocodes the address, then plans to it |
+| `ACTION_VIEW` `geo:` | `geo:0,0?q=47.6097,-122.3422(Space+Needle)` | Plans to that point, labelled |
+| `ACTION_SEND` `text/plain` | `https://maps.apple.com/?ll=47.6,-122.3` | Plans to the place the link names |
+| `ACTION_SEND` `text/plain` | `400 Broad St, Seattle, WA` | Geocodes the text, then plans to it |
+
+### `geo:`
+
+The forms Android
+[documents](https://developer.android.com/guide/components/intents-common#Maps), plus RFC 5870's
+`;`-separated parameters. `?z=` (zoom), `;u=` (uncertainty) and a third `,`-separated altitude component
+are accepted and ignored — this app frames a trip, not a map viewport.
+
+`geo:0,0` is read as the platform's **placeholder** for "the place is in `q`, not in my coordinate", which
+is how Android's documentation spells every `?q=` form and what Contacts emits for a postal address. Where
+a URI carries both a real coordinate and a `q`, the coordinate wins and `q` becomes its label — a sender
+that supplies both means "this position, called that", and geocoding the label would throw away the exact
+answer it already gave us.
+
+### Shared text
+
+`ACTION_SEND` of `text/plain`. Any URI in the text that the app can read wins; otherwise the prose around
+the links is geocoded, with the links themselves stripped out (they are not place names). That is how a
+Google Maps share — `"Pike Place Market\nhttps://maps.app.goo.gl/…"` — resolves: the short link only names
+its place to whoever follows the redirect, and expanding somebody else's URL over the network on a share is
+not something this app does, so the name Maps shared alongside it is used instead.
+
+Readable links are those on an enumerated short list of maps hosts — `maps.google.com`, `www.google.com`,
+`google.com`, `maps.apple.com`, `openstreetmap.org` — read for the parameters those hosts document
+(`q`, `query`, `destination`, `daddr`, `address`, `ll`, OSM's `mlat`/`mlon`), plus Google's
+`…/maps/place/<Name>/@<lat>,<lng>,<zoom>z` place-page path. Where a link names both ends of a journey, only
+the destination is read. Where it names a place both as text and as a coordinate, the coordinate wins and
+the text becomes its label. An unrecognized host costs the rider nothing — its prose is geocoded instead —
+whereas guessing at an unfamiliar host's parameters would send them somewhere wrong.
+
+`https` maps links are deliberately **not** claimed as `ACTION_VIEW`. Doing so would put OneBusAway in the
+chooser for every Google Maps URL on the device, which is not an offer a transit app should be making;
+sharing to us is the rider saying they meant us. `geo:` *is* claimed, because that intent means "open this
+location" and nothing more specific — being in that chooser alongside the map apps is the point.
+
+### Geocoding a place named only as text
+
+Resolved through the same geocoder the trip-plan form's own autocomplete uses, taking its top-ranked
+match. Geocoding is a ranked search with no exact source to consult instead, and this is the answer that
+list already puts first; what keeps it honest is that the result lands as an ordinary **cancellable pill
+showing the name it resolved to**, so a wrong match is visible and one tap from being corrected. Text that
+resolves to nothing is left in the field with its suggestion list live, for the rider to pick from, rather
+than being silently dropped.
+
+### Testing
+
+```bash
+# A point
+adb shell am start -a android.intent.action.VIEW -d 'geo:47.6097,-122.3422' \
+  com.joulespersecond.seattlebusbot
+
+# An address, as Contacts emits it (single-quoted so the shell keeps the +/%)
+adb shell am start -a android.intent.action.VIEW \
+  -d 'geo:0,0?q=400+Broad+St%2C+Seattle%2C+WA' com.joulespersecond.seattlebusbot
+
+# Shared text
+adb shell am start -a android.intent.action.SEND -t text/plain \
+  -e android.intent.extra.TEXT '400 Broad St, Seattle, WA' com.joulespersecond.seattlebusbot
+```
+
 ## Implementation
 
 - `ui/nav/ExternalDeepLinks.kt` — owns this whole vocabulary (schemes, hosts, path shape, parameter
@@ -229,5 +312,10 @@ adb shell am start -a android.intent.action.VIEW \
 - `ui/home/RegionPickerHost.kt` — the picker, including long-press-to-remove for custom regions.
 - `util/ExternalIntents.kt` — `openInBrowser`, the explicit-package browser handoff (and the `<queries>`
   element in `src/main/AndroidManifest.xml` that makes browsers visible to it on API 30+).
+- `ui/nav/PlaceIntents.kt` — separate concern: the *other* apps' vocabulary — `geo:` URIs, maps links and
+  shared text (`parse` is pure and unit-tested in `PlaceIntentsTest`). Consumed by
+  `HomeActivity.maybePlanToPlaceFromIntent`, which opens the directions focus and fills the destination via
+  `TripPlanViewModel.setEndpointPaired` / `setEndpointFromQuery`. Its intent-filters (`geo:` VIEW,
+  `text/plain` SEND) are in `src/main/AndroidManifest.xml`.
 - `ui/nav/DeepLinkUris.kt` — separate concern: the app's *internal* `content://` stop/route
   vocabulary, used by pinned launcher shortcuts and in-app launches.

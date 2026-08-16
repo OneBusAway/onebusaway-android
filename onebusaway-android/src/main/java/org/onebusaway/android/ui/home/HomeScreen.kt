@@ -1104,13 +1104,13 @@ fun HomeScreen(
                                     )
                                 }
                                 // Long-press → "directions from/to here": enters directions and fills the
-                                // chosen endpoint with the pressed point (see setEndpointFromLongPress).
+                                // chosen endpoint with the pressed point (see setEndpointPaired).
                                 longPressPoint?.let { point ->
                                     val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
                                     DirectionsLongPressMenu(
                                         onChooseSlot = { slot ->
                                             homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointFromLongPress(slot, mapPoint)
+                                            tripPlanViewModel.setEndpointPaired(slot, mapPoint)
                                             longPressPoint = null
                                         },
                                         onDismiss = { longPressPoint = null }

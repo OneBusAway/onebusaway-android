@@ -66,9 +66,12 @@ import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.PlaceIntents
 import org.onebusaway.android.ui.nav.readRouteReveal
 import org.onebusaway.android.ui.report.ReportLauncher
 import org.onebusaway.android.ui.survey.SurveyViewModel
+import org.onebusaway.android.ui.tripplan.TripEndpoint
+import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.toGeocoded
@@ -238,6 +241,7 @@ class HomeActivity : AppCompatActivity() {
     private fun applyLaunchIntentSideEffects(intent: Intent) {
         applyIntentSideEffects(intent)
         maybeRestoreDirectionsFromIntent(intent)
+        maybePlanToPlaceFromIntent(intent)
         maybeRevealTrackedRouteFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
@@ -301,6 +305,42 @@ class HomeActivity : AppCompatActivity() {
             itineraries = itineraries
         )
     }
+
+    /**
+     * A place another app handed us (#1936): a `geo:` URI — what the address book emits for a postal
+     * address, and what every maps app understands — or a maps link / address shared to us as text. See
+     * [PlaceIntents], which owns that vocabulary.
+     *
+     * Opens the directions focus with the place as the trip's **destination**, its other end paired with
+     * the device's fix by [TripPlanViewModel.setEndpointPaired], so a place that arrives with coordinates
+     * plans on the spot. The sender named one place, not a journey; "take me there" is what a rider who
+     * opens a transit app from an address means, and the form's own reverse button is the way to say the
+     * other thing.
+     *
+     * Runs here, with the other launch-intent focus changes, because this is where the ViewModels are:
+     * the directions focus is home-map state rather than a NavHost destination, so [IntentRouteMapper]
+     * correctly resolves these intents to no route at all.
+     */
+    private fun maybePlanToPlaceFromIntent(intent: Intent) {
+        val place = PlaceIntents.placeForIntent(intent) ?: return
+        viewModel.enterDirections()
+        when (place) {
+            is PlaceIntents.Place.Point ->
+                tripPlanViewModel.setEndpointPaired(TripEndpointSlot.TO, place.toEndpoint())
+            is PlaceIntents.Place.Query ->
+                tripPlanViewModel.setEndpointFromQuery(TripEndpointSlot.TO, place.text)
+        }
+    }
+
+    /**
+     * A place that arrived with coordinates, as a plan endpoint: [TripEndpoint.Geocoded] when the sender
+     * named it, and otherwise [TripEndpoint.MapPoint] — whose fixed "Selected location" label is the
+     * honest one for a bare coordinate, and whose terminals the plan reverse-geocodes for the itinerary
+     * anyway ([TripPlanViewModel] `placeNameOf`).
+     */
+    private fun PlaceIntents.Place.Point.toEndpoint(): TripEndpoint = label
+        ?.let { TripEndpoint.Geocoded(displayName = it, lat = lat, lon = lon) }
+        ?: TripEndpoint.MapPoint(lat = lat, lon = lon)
 
     /**
      * Runs the domain mutations implied by certain incoming intents, kept out of [IntentRouteMapper]'s

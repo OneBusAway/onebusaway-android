@@ -82,6 +82,15 @@ class TripPlanViewModelTest {
         }
     }
 
+    /** A geocoder whose forward lookup answers only when the test completes [pending]. */
+    private class DeferredGeocodeRepository(
+        private val pending: CompletableDeferred<Result<List<TripEndpoint.Geocoded>>>
+    ) : GeocodeRepository {
+        override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> = pending.await()
+
+        override suspend fun reverse(lat: Double, lon: Double): Result<String?> = Result.success(null)
+    }
+
     /** A geocoder whose reverse lookup never answers, to exercise the plan's naming timeout. */
     private class StalledGeocodeRepository : GeocodeRepository {
         override suspend fun suggest(query: String) = Result.success(emptyList<TripEndpoint.Geocoded>())
@@ -315,7 +324,7 @@ class TripPlanViewModelTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
-        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpointPaired(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
         val state = vm.formState.value
@@ -334,11 +343,82 @@ class TripPlanViewModelTest {
         vm.setEndpoint(TripEndpointSlot.FROM, origin)
         advanceUntilIdle()
 
-        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpointPaired(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
         assertTrue(vm.formState.value.canSubmit)
         assertEquals(1, plan.calls)
+    }
+
+    // --- a place another app named as text (#1936) ---------------------------------------------------
+
+    @Test
+    fun `a place named as text resolves to the geocoder's top match and plans`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val geocode = FakeGeocodeRepository(Result.success(listOf(destination, origin)))
+        val vm = viewModel(geocode = geocode, plan = plan)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
+        advanceUntilIdle()
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        advanceUntilIdle()
+
+        assertEquals("400 Broad St", geocode.lastQuery)
+        assertEquals(destination, vm.formState.value.to)
+        assertEquals(1, plan.calls)
+    }
+
+    /** The text is on screen before the geocoder answers, so the form says what the app was opened for. */
+    @Test
+    fun `a place named as text shows its text while the lookup is out`() = runTest {
+        val pending = CompletableDeferred<Result<List<TripEndpoint.Geocoded>>>()
+        val vm = viewModel(geocode = DeferredGeocodeRepository(pending))
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        runCurrent()
+
+        assertEquals(TripEndpoint.FreeText("400 Broad St"), vm.formState.value.to)
+
+        pending.complete(Result.success(listOf(destination)))
+        advanceUntilIdle()
+        assertEquals(destination, vm.formState.value.to)
+    }
+
+    /** A rider who types over the field while the lookup is out keeps what they typed. */
+    @Test
+    fun `an edit during the lookup is not overwritten by its result`() = runTest {
+        val pending = CompletableDeferred<Result<List<TripEndpoint.Geocoded>>>()
+        val vm = viewModel(geocode = DeferredGeocodeRepository(pending))
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        runCurrent()
+        vm.onQueryChange(TripEndpointSlot.TO, "Space Needle")
+        pending.complete(Result.success(listOf(destination)))
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText("Space Needle"), vm.formState.value.to)
+    }
+
+    @Test
+    fun `a place named as text that resolves to nothing is left in the field for the rider`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(geocode = FakeGeocodeRepository(Result.success(emptyList())), plan = plan)
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "nowhere at all")
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText("nowhere at all"), vm.formState.value.to)
+        assertEquals(0, plan.calls)
+    }
+
+    @Test
+    fun `a failed lookup leaves the text in the field rather than dropping it`() = runTest {
+        val vm = viewModel(geocode = FakeGeocodeRepository(Result.failure(IOException("offline"))))
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText("400 Broad St"), vm.formState.value.to)
     }
 
     @Test

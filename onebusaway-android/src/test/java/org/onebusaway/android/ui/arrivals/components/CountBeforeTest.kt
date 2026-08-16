@@ -16,6 +16,8 @@
 package org.onebusaway.android.ui.arrivals.components
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 
@@ -57,5 +59,30 @@ class CountBeforeTest {
     @Test
     fun `an empty strip has nothing to rule`() {
         assertEquals(0, ruleAt(emptyList(), ServerTime(9 * 60_000L)))
+    }
+
+    // anyAtOrAfter — whether the ruled strip keeps a boardable pill at all (#2228). Its boundary must be
+    // the complement of countBefore's, so it is checked against the same departures.
+
+    private fun boardable(departures: List<ServerTime>, moment: ServerTime) = anyAtOrAfter(departures, moment) { it }
+
+    @Test
+    fun `a departure after the moment is boardable`() {
+        assertTrue(boardable(minutes(2, 9, 17), ServerTime(10 * 60_000L)))
+    }
+
+    @Test
+    fun `a departure exactly at the moment is boardable, like the rule leaves it`() {
+        assertTrue(boardable(minutes(2, 9), ServerTime(9 * 60_000L)))
+    }
+
+    @Test
+    fun `nothing is boardable when the rider arrives after everything the feed knows`() {
+        assertFalse(boardable(minutes(2, 9, 17), ServerTime(60 * 60_000L)))
+    }
+
+    @Test
+    fun `nothing is boardable in an empty feed`() {
+        assertFalse(boardable(emptyList(), ServerTime(9 * 60_000L)))
     }
 }

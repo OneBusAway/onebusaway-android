@@ -133,6 +133,14 @@ internal data class EtaStripMarker(
 internal fun <T> countBefore(items: List<T>, moment: ServerTime, timeOf: (T) -> ServerTime): Int = items.count { timeOf(it) < moment }
 
 /**
+ * Whether any of [items] falls at or after [moment] — i.e. whether a strip ruled at [moment] would have
+ * at least one pill the rule has not passed. The complement of [countBefore]'s boundary (an item exactly
+ * at the moment counts, for the same reason), so the two can never disagree about which side a pill is
+ * on. Vacuously false for no items: a feed with nothing in it has nothing boardable either.
+ */
+internal fun <T> anyAtOrAfter(items: List<T>, moment: ServerTime, timeOf: (T) -> ServerTime): Boolean = items.any { timeOf(it) >= moment }
+
+/**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
  * in feed order from the first one; the strip never auto-scrolls, so a trip whose ETA has gone
  * negative just keeps counting down in place. When the pills overflow the row, a chevron appears at
@@ -201,7 +209,13 @@ internal fun EtaStrip(
         scope.launch { state.animateScrollBy(delta) }
     }
 
-    Row(modifier, verticalAlignment = Alignment.Bottom) {
+    // Sized to its own tallest child (the reference pill frame) so the gutters' fillMaxHeight has a
+    // bound to fill and their chevrons centre on the pills. Without it a host that hands the strip no
+    // height bound (the directions drawer's log row) leaves each gutter at its icon's height, and the
+    // bottom alignment below drops the chevrons to the strip's foot (#2228). The frame answers the
+    // intrinsic query this asks (see ReferencePillHeightFrame), and the arrivals row's own
+    // IntrinsicSize.Min host nests over it fine.
+    Row(modifier.height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom) {
         // Left gutter: a chevron back toward earlier arrivals, shown once the strip is scrolled off its
         // start. Reserved (like the right gutter) so toggling it never reflows the pills.
         ScrollChevronGutter(

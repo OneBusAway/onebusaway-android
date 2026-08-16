@@ -511,11 +511,11 @@ private fun DirectionStopEtaStripContent(
     var revealed by rememberSaveable { mutableStateOf(false) }
     val nothingBoardable = reachStopTime != null && countBefore(interleaved, reachStopTime) { it.first.displayTime } == interleaved.size
     if (nothingBoardable && !revealed) {
-        NoBoardableDeparturesLine(modifier = rowPadding, onReveal = { revealed = true })
+        NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
         return
     }
     if (interleaved.isEmpty()) {
-        NoEtasText(rowPadding)
+        NoEtasText(modifier.then(rowPadding))
         return
     }
     val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }

@@ -293,7 +293,8 @@ class TripLogBuilderTest {
         // Nothing precedes the ride, so the rider is at the stop from the plan's start — for a "leave at
         // 5pm" plan, 5pm — which is what a depart-at plan names (#2228). Not the ride's own departure:
         // that would dim every earlier one, including the ones a rider already there could catch.
-        val start = ServerTime(4 * 60_000L)
+        // Earlier than the leg's own departure (4 min), so a build that reached for that instead would fail.
+        val start = ServerTime(2 * 60_000L)
         val transit = TripLogBuilder
             .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef), plannedStart = start)
             .filterIsInstance<TripLogEntry.Transit>()

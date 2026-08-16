@@ -56,22 +56,15 @@ internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyli
 }
 
 /**
- * The line the rider has selected, wrapped in the heavier [RouteLineCase.SELECTION] case — the map's one way
- * of saying "this is the one you're looking at" (#2082). Selection deliberately changes nothing else: a leg
- * keeps the weight, colour and dash that say what *kind* of line it is, so drilling into it doesn't restyle
- * the trip around it.
- *
- * It overwrites whatever case the line already carried, which for a directions ride is the hairline
- * [RouteLineCase.OUTLINE] every ride wears: selection is the *step up* in edge weight, so a line that already
- * has an edge simply gets a heavier one. The case's colour is the renderer's to resolve, since it depends on
- * the current theme (see [mapRouteLineCaseColor]).
- */
-internal fun RoutePolyline.withCase(): RoutePolyline = copy(case = RouteLineCase.SELECTION)
-
-/**
  * The selected transit route upstream of the boarding point — where the vehicle is coming from — drawn as
  * part of the selected line rather than as background: solid, cased like the ride it leads into, at its own
  * thinnest itinerary weight ([ITINERARY_APPROACH_WIDTH_PROFILE]).
+ *
+ * "Cased like the ride" is a colour and not a width: it takes [RouteLineCase.APPROACH], which draws in the
+ * selection colour at a lighter weight. The two read as one line stepping down at the boarding point, which
+ * is the point, while the case still fits the 3.5dp line it wraps — a full [RouteLineCase.SELECTION] would
+ * add more width than the approach line has, and the thinnest line on the map would draw as a selection band
+ * with a coloured core.
  *
  * It was previously the map's faintest dashed line, a hair thinner than the receded itinerary legs beside
  * it, so the rider read two near-identical thin strokes meaning quite different things (#2082). Chevrons
@@ -81,8 +74,9 @@ internal fun List<RoutePolyline>.asSelectedRouteApproach(): List<RoutePolyline> 
     line.copy(
         widthProfile = ITINERARY_APPROACH_WIDTH_PROFILE,
         directional = false,
-        dash = RouteLineDash.NONE
-    ).withCase()
+        dash = RouteLineDash.NONE,
+        case = RouteLineCase.APPROACH
+    )
 }
 
 /**

@@ -63,7 +63,7 @@ object InterlineSeamMark {
     /**
      * The mark's weight where the line it cuts is at its full width, which for every line that carries one
      * today is [ITINERARY_RIDE_WIDTH_PROFILE]'s close-zoom thickness. A ruled line, in the same family as the
-     * cases around these lines ([RouteLineCase.OUTLINE] is 0.75dp per side, [RouteLineCase.SELECTION] 1.5dp)
+     * cases around these lines ([RouteLineCase.OUTLINE] is 0.75dp per side, [RouteLineCase.SELECTION] 2.25dp)
      * — because that is what it is: the casing of the joint, not a symbol laid over the corridor.
      *
      * Expressed as a ratio of the line's width rather than in absolute dp, since the bitmap scales as a

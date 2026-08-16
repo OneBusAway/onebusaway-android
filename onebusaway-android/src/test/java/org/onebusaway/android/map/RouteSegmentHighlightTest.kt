@@ -18,7 +18,6 @@ package org.onebusaway.android.map
 import kotlin.math.cos
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
@@ -105,9 +104,10 @@ class RouteSegmentHighlightTest {
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, overlay.widthProfile)
         assertEquals(0xFF00FF00.toInt(), overlay.color)
         assertFalse(overlay.directional)
-        // Both halves of the selected route carry a case, so the approach and the ride read as one line
-        // rather than as two things that happen to meet.
-        assertEquals(RouteLineCase.SELECTION, approach.case)
+        // Both halves of the selected route carry a case in the selection colour, so the approach and the
+        // ride read as one line rather than as two things that happen to meet. The approach's is the lighter
+        // weight, because at 3.5dp it is thinner than a full selection case is wide.
+        assertEquals(RouteLineCase.APPROACH, approach.case)
         assertEquals(RouteLineCase.SELECTION, overlay.case)
     }
 
@@ -132,8 +132,8 @@ class RouteSegmentHighlightTest {
         assertEquals(RouteLineDash.TRAIL, result[1].dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, result[2].widthProfile)
         // Only the selected route is cased: the rest of the rider's journey is context, not selection.
-        assertNotEquals(RouteLineCase.SELECTION, result[1].case)
-        assertEquals(RouteLineCase.SELECTION, result[0].case)
+        assertEquals(RouteLineCase.NONE, result[1].case)
+        assertEquals(RouteLineCase.APPROACH, result[0].case)
         assertEquals(RouteLineCase.SELECTION, result[2].case)
     }
 

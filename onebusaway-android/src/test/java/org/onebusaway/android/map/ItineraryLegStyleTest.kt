@@ -319,22 +319,92 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `a case goes to the end of the tone scale away from the basemap, keeping its line's hue`() {
+    fun `an outline goes to the end of the tone scale away from the basemap, keeping its line's hue`() {
         // A case goes *against* the basemap — near-black on the light map, near-white on the dark one.
         // Device-checked twice over: tinting it toward the map put it at the map's own value and it vanished,
         // and a mid-way tone was still too weak at this width to register.
         //
-        // At those tones sRGB holds little chroma, so a case ends up mostly a separator rather than a second
-        // colour — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour
-        // that's left is its own line's and not a neighbouring one's.
+        // An outline stops short of the very end, keeping enough chroma to read as *this line's* edge, so the
+        // hue is asserted in both themes. The end itself belongs to the selection case below.
         ItineraryLegKind.entries.forEach { kind ->
             val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).color)
 
             listOf(false to 10.0, true to 90.0).forEach { (darkMode, expectedTone) ->
-                val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
+                val case = caseHct(line, darkMode)
                 assertEquals("$kind case tone (darkMode=$darkMode)", expectedTone, case.tone, CHANNEL_TOLERANCE)
                 assertEquals("$kind case hue (darkMode=$darkMode)", line.hue, case.hue, HUE_TOLERANCE_DEGREES)
             }
+        }
+    }
+
+    @Test
+    fun `the selected leg's case clears its own line on the dark basemap, whatever the line's hue`() {
+        // #2226: selection is said with case *thickness* (#2082), which a rider can only read when the case is
+        // visibly not the line. The selected leg used to case at the outline's own tone 90, and at that tone
+        // sRGB still holds a saturated version of the warm and green hues — so a green line got a green case
+        // and the highlight didn't register in dark mode.
+        //
+        // Swept over the hue circle rather than run on the three leg colours because that is where it failed:
+        // how much chroma survives a re-tone is a property of the hue's own gamut, so a policy can be correct
+        // for the blues and wrong for the greens, which is exactly what the old one was. Tone 100 is past the
+        // end of every hue's gamut, which is what makes this hold for all of them at once.
+        (0 until 360 step 10).forEach { hue ->
+            val line = Hct.fromInt(mapRouteLineColor(hue.toDouble()))
+            val case = caseHct(line, darkMode = true, case = RouteLineCase.SELECTION)
+
+            assertTrue(
+                "hue $hue: case tone ${case.tone} is only ${case.tone - line.tone} above its line's ${line.tone}",
+                case.tone - line.tone >= MIN_SELECTION_CASE_TONE_STEP
+            )
+            assertTrue(
+                "hue $hue: case kept chroma ${case.chroma} of its line's ${line.chroma} — a colour, not an edge",
+                case.chroma <= MAX_SELECTION_CASE_CHROMA
+            )
+        }
+    }
+
+    @Test
+    fun `the selected leg's case takes the very end of the scale, an outline stops short of it`() {
+        // The second half of #2226: what separates the rider's leg from the rides beside it is not the tone
+        // step (1.29:1 on the dark basemap, 1.10:1 on the light one — neither is a difference on its own) but
+        // that on the dark map only the selected case is *colourless*, every outline around it staying tinted
+        // with the route it wraps. That is asserted by the hue-circle case above; asserted here is the policy
+        // it rests on — a selection is never cased less far out than an outline beside it, in either theme.
+        val onDark = caseTone(ANY_MAP_LINE, darkMode = true, case = RouteLineCase.SELECTION)
+        val onLight = caseTone(ANY_MAP_LINE, darkMode = false, case = RouteLineCase.SELECTION)
+
+        assertEquals(100.0, onDark, CHANNEL_TOLERANCE)
+        assertEquals(5.0, onLight, CHANNEL_TOLERANCE)
+        assertTrue(onDark > caseTone(ANY_MAP_LINE, darkMode = true, case = RouteLineCase.OUTLINE))
+        assertTrue(onLight < caseTone(ANY_MAP_LINE, darkMode = false, case = RouteLineCase.OUTLINE))
+    }
+
+    @Test
+    fun `an uncased line answers with the outline's tone, for the interline cut that reads it`() {
+        // The cutover slash takes its line's case colour whether or not that line wears a case (see
+        // `InterlineSeamMark`) — it *is* a hairline joint's casing. So NONE resolves rather than throwing or
+        // falling through to the selection tone, and it resolves to the hairline's own.
+        listOf(false, true).forEach { darkMode ->
+            assertEquals(
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.OUTLINE),
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.NONE),
+                CHANNEL_TOLERANCE
+            )
+        }
+    }
+
+    @Test
+    fun `the approach cases in the selection's colour, which is why it is a weight and not a colour`() {
+        // The approach and the ride it leads into have to read as one route line stepping down at the
+        // boarding point, and they only do while their cases are the same colour — so APPROACH is a lighter
+        // *weight* of the selection case, never a tone of its own. Nothing else checks this: the two live in
+        // the same `when` arm, and moving one out would compile and pass everything but this.
+        listOf(false, true).forEach { darkMode ->
+            assertEquals(
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.SELECTION),
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.APPROACH),
+                CHANNEL_TOLERANCE
+            )
         }
     }
 
@@ -370,7 +440,10 @@ class ItineraryLegStyleTest {
         }
     }
 
-    private fun caseTone(line: Hct, darkMode: Boolean) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode)).tone
+    /** [line]'s case as an [Hct], the one spelling of that conversion in this file. */
+    private fun caseHct(line: Hct, darkMode: Boolean, case: RouteLineCase = RouteLineCase.OUTLINE) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode, case))
+
+    private fun caseTone(line: Hct, darkMode: Boolean, case: RouteLineCase = RouteLineCase.OUTLINE) = caseHct(line, darkMode, case).tone
 
     /** A walk → ride → walk trip as drawn lines, at the given leg indices. */
     private fun tripOf(walk: Int, ride: Int, walk2: Int) = listOf(
@@ -494,11 +567,22 @@ class ItineraryLegStyleTest {
 
         val BASEMAP: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
 
+        // A map-palette line of no particular hue, for the cases that are about the *tone* a case lands on —
+        // which is a property of the theme and the weight, never of the line (see the case just below).
+        val ANY_MAP_LINE: Hct = Hct.fromInt(mapRouteLineColor(hue = 250.0))
+
         // The re-tone clamps to each hue's own sRGB gamut limit, so a hue can shift a degree or two.
         const val HUE_TOLERANCE_DEGREES = 3.0
 
         // Chroma likewise clamps to the gamut: a hue that can't hold the full chroma at this tone lands
         // slightly under it. Wide enough to absorb that, far too narrow to hide a different policy.
         const val CHANNEL_TOLERANCE = 2.0
+
+        // What the selected leg's case has to clear on the dark basemap to read as an edge on its line rather
+        // than as a lighter shade of it (#2226): a tonal step of the dark end's order, and so little of the
+        // line's own chroma left that no hue comes back tinted at all. The policy delivers 45 and 2.9, so
+        // these are floors on it and not restatements of it — an outline's tone 90 fails both.
+        const val MIN_SELECTION_CASE_TONE_STEP = 40.0
+        const val MAX_SELECTION_CASE_CHROMA = 10.0
     }
 }

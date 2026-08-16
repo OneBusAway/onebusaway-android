@@ -81,6 +81,11 @@ val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
  * won't travel it, and it's here to say where the vehicle arrives from. Its case, not its width, is what
  * connects it to the ride — which is what lets it be this thin without being mistaken for context.
  *
+ * Thin enough that it is what bounds a case's width: it takes [RouteLineCase.APPROACH] rather than the full
+ * [RouteLineCase.SELECTION] precisely because a selection case adds 4.5dp, more than this line's own 3.5dp,
+ * and the thinnest line on the map would then draw as a band with a coloured core instead of a line with an
+ * edge. Same colour, lighter weight. `RouteLineWidthProfileTest` pins the pairing.
+ *
  * It used to be the map's faintest line (2dp) *and* dashed, which put it within a hair of the receded
  * itinerary legs around it — the two competed instead of reading as different things (#2082).
  */

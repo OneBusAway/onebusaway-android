@@ -75,12 +75,44 @@ class RouteLineWidthProfileTest {
     fun `a case reads as an outline at every zoom, so it stays off the width ramp`() {
         // The case is a fixed dp inset on each side, deliberately not scaled by the line's zoom multiplier: a
         // halo that thinned with its line would stop separating it from the basemap exactly when zoomed out.
-        assertEquals(1.5f, RouteLineCase.SELECTION.widthDp, 0f)
-        // The lighter edge every directions ride wears; selection stays legible against it by being the
-        // heavier of the two, which is what lets it still mean "selected".
+        assertEquals(2.25f, RouteLineCase.SELECTION.widthDp, 0f)
+        // The approach's own weight: the selection colour on a line too thin to carry the selection width.
+        assertEquals(1f, RouteLineCase.APPROACH.widthDp, 0f)
+        // The lighter edge every directions ride wears; selection stays legible against it by being three
+        // times the weight, which is what lets it still mean "selected".
         assertEquals(0.75f, RouteLineCase.OUTLINE.widthDp, 0f)
-        // And both stay finer than the thinnest line they can wrap, so a case reads as that line's edge
-        // rather than as a second line under it.
-        assertTrue(RouteLineCase.SELECTION.extraWidthDp < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
+        // Ascending, so that a heavier case always means a stronger claim on the rider's attention.
+        assertEquals(
+            RouteLineCase.entries.map { it.widthDp }.sorted(),
+            RouteLineCase.entries.map { it.widthDp }
+        )
+    }
+
+    @Test
+    fun `every case is finer than the thinnest line that asks for it`() {
+        // The rule that makes a case read as its line's *edge* rather than as a second line under it — and
+        // the reason APPROACH exists at all. A selection case adds 4.5dp, which is more width than the
+        // approach line (3.5dp) has; taking the full selection weight there drew the thinnest line on the map
+        // as a band with a coloured core. So the approach asks for a lighter case in the same colour, and the
+        // rule holds everywhere again.
+        //
+        // Checked per case against what can actually ask for it, rather than against the thinnest profile on
+        // the map, since that is what the claim means. A later width tune that drops one of these lines under
+        // its own case surfaces here.
+        listOf(
+            // Every directions ride wears an outline, and a focused on-street leg keeps it too.
+            RouteLineCase.OUTLINE to ITINERARY_RIDE_WIDTH_PROFILE,
+            RouteLineCase.OUTLINE to ITINERARY_STREET_WIDTH_PROFILE,
+            // Only the approach.
+            RouteLineCase.APPROACH to ITINERARY_APPROACH_WIDTH_PROFILE,
+            // The ridden span, and a focused itinerary leg of either kind.
+            RouteLineCase.SELECTION to ITINERARY_RIDE_WIDTH_PROFILE,
+            RouteLineCase.SELECTION to ITINERARY_STREET_WIDTH_PROFILE
+        ).forEach { (case, profile) ->
+            assertTrue(
+                "$case adds ${case.extraWidthDp}dp to a line only ${profile.thicknessDp}dp wide",
+                case.extraWidthDp < profile.thicknessDp
+            )
+        }
     }
 }

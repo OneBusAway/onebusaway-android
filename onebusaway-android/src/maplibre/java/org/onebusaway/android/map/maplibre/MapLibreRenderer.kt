@@ -109,7 +109,7 @@ class MapLibreRenderer(
     // the basemap it separates its line from does (see [mapRouteLineCaseColor]). Shared by everything that
     // draws in it — the case itself, and the interline cut, which is why they can't drift apart.
     private val caseColorOf: (RoutePolyline) -> Int =
-        { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) }
+        { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context), it.case) }
 
     // The marks on a route line's ends, drawn as style layers because the classic polyline annotation has no
     // configurable cap: the endpoint bulbs, and the interline cutover slashes (#2127). Rendered together

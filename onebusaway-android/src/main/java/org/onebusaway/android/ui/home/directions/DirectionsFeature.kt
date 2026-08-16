@@ -125,6 +125,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
 import org.onebusaway.android.ui.tripresults.FocusedLeg
+import org.onebusaway.android.ui.tripresults.ReachStop
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripLogEntry
@@ -132,6 +133,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
+import org.onebusaway.android.ui.tripresults.resolvedAt
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.DisplayFormat
@@ -405,23 +407,24 @@ fun DirectionsResultsSheet(
  * An alternative with no OBA id, or with nothing upcoming at this stop, is simply left out — its name
  * still appears on the card's "or …" line.
  *
- * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStopTime] —
- * when the plan has them reach this stop — is ruled across it (#2125): departures before it are ones
- * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
+ * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStop] — how
+ * the plan gets them to this stop — is ruled across it (#2125): departures before it are ones they
+ * can't be here for, and the first pill after the rule is the soonest one they can actually board.
  * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
  * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
  *
- * When the feed holds no departure at or after [reachStopTime] — a plan that leaves later than the
+ * When the feed holds departures but none at or after that rule — a plan that leaves later than the
  * arrivals window reaches, so every pill would be dimmed and the rule would close the strip — the strip
  * collapses to one line saying so, with a tap to show it anyway (#2228). The line is not a threshold
- * on how soon the trip must be: it is exactly the case where the feed has nothing boardable to show, and
- * a later poll that brings a boardable departure puts the strip back on its own.
+ * on how soon the trip must be: it is exactly the case where the feed has departures but none the rider
+ * can board, and a later poll that brings a boardable one puts the strip back on its own. A poll with no
+ * departures at all keeps its own "no upcoming arrivals" line — there is nothing behind a "Show" there.
  */
 @Composable
 internal fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
-    reachStopTime: ServerTime?,
+    reachStop: ReachStop?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
@@ -470,7 +473,7 @@ internal fun DirectionStopEtaStrip(
     val session = hoistedSession ?: ownSession ?: return
     DirectionStopEtaStripContent(
         routeLeg = routeLeg,
-        reachStopTime = reachStopTime,
+        reachStop = reachStop,
         session = session,
         rowPadding = rowPadding,
         pillFocus = pillFocus,
@@ -482,7 +485,7 @@ internal fun DirectionStopEtaStrip(
 @Composable
 private fun DirectionStopEtaStripContent(
     routeLeg: RouteLegRef,
-    reachStopTime: ServerTime?,
+    reachStop: ReachStop?,
     session: ArrivalsSession,
     rowPadding: Modifier,
     pillFocus: EtaPillFocus?,
@@ -504,18 +507,21 @@ private fun DirectionStopEtaStripContent(
         }
     }
     val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
-    // Collapsed when the rule would land past the last pill — the very count the strip places its rule
-    // by, so the line and the rule can't disagree about what is boardable (nothing at all counts:
-    // an empty feed has nothing boardable either). Never without a reach time. Once shown anyway the
-    // strip stays up for this stop, though a strip that has come to hold a boardable pill needs no reveal.
+    // The rule as of this poll: the strip resolves it again on its own live clock (#2227), which only
+    // ever carries a walk rule *forward*, so this reading collapses the strip no sooner than the strip's
+    // own rule would and the next poll settles it either way. Null when the plan puts nothing before this
+    // ride, and when the poll brought no pill to read its server clock off.
+    val ruleAt = reachStop?.let { stop -> interleaved.firstOrNull()?.let { stop.resolvedAt(it.first.serverNow) } }
+    // Held above the branches so a poll that empties the strip doesn't forget that the rider asked to see
+    // it; a strip that has come to hold a boardable pill needs no reveal in the first place.
     var revealed by rememberSaveable { mutableStateOf(false) }
-    val nothingBoardable = reachStopTime != null && countBefore(interleaved, reachStopTime) { it.first.displayTime } == interleaved.size
-    if (nothingBoardable && !revealed) {
-        NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
+    val stripState = stopEtaStripState(interleaved, ruleAt) { it.first.displayTime }
+    if (stripState == StopEtaStripState.NO_ARRIVALS) {
+        NoEtasText(modifier.then(rowPadding))
         return
     }
-    if (interleaved.isEmpty()) {
-        NoEtasText(modifier.then(rowPadding))
+    if (stripState == StopEtaStripState.NOTHING_BOARDABLE && !revealed) {
+        NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
         return
     }
     val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
@@ -525,22 +531,70 @@ private fun DirectionStopEtaStripContent(
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
         routeBadgeFor = { badgesByTrip[it] },
-        marker = reachStopTime?.let { rememberReachStopMarker(it) },
+        marker = reachStop?.let { rememberReachStopMarker(it) },
         focus = pillFocus
     )
 }
 
-/** The strip's "you get here at …" rule for [reachStopTime]. The clock string is memoized because the
- *  format call is locale work that only changes with the plan, not with each arrivals poll. */
+/**
+ * The strip's "you get here at …" rule for [reachStop].
+ *
+ * The rule is handed to [EtaStrip] as a *resolver* against the strip's own live clock rather than as
+ * an instant: a [ReachStop.OnFoot] is now plus the walk (#2227), so it has to move with the clock, and
+ * the strip is the one place already ticking one (#1781) — its pills and this rule then read the same
+ * now. That reads as the rule holding still at the rider's walking distance while the pills flow past
+ * it, which is exactly what it means: everything left of the rule is a departure they can no longer
+ * walk to in time. A [ReachStop.OnArrival] is an absolute moment and ignores the clock it is handed.
+ *
+ * Remembered so the marker is one stable object per plan: the strip keys its per-minute spoken text on
+ * it, and the strip's own callers are already stable between polls.
+ */
 @Composable
-private fun rememberReachStopMarker(reachStopTime: ServerTime): EtaStripMarker {
+private fun rememberReachStopMarker(reachStop: ReachStop): EtaStripMarker {
     val context = LocalContext.current
-    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
-    return EtaStripMarker(
-        at = reachStopTime,
-        contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
-        passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
-    )
+    val passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
+    return remember(reachStop, context, passedStateDescription) {
+        EtaStripMarker(
+            at = reachStop::resolvedAt,
+            contentDescription = { at ->
+                context.getString(R.string.directions_stop_eta_reach_stop, DisplayFormat.formatTime(context, at.epochMs))
+            },
+            passedStateDescription = passedStateDescription
+        )
+    }
+}
+
+/** What a stop's ETA strip has to show for one poll — see [stopEtaStripState] for the precedence. */
+internal enum class StopEtaStripState {
+
+    /** The departures themselves, ruled at the moment the rider gets here when the plan says one. */
+    PILLS,
+
+    /** The poll holds no departure at this stop at all, boardable or not. */
+    NO_ARRIVALS,
+
+    /** It holds departures, and the rider reaches the stop after every one of them (#2228). */
+    NOTHING_BOARDABLE
+}
+
+/**
+ * Which state [items] and the reach rule [ruleAt] put the strip in. Pure, so the precedence between the
+ * two empty-ish states is tested rather than only readable off a pair of early returns.
+ *
+ * [NO_ARRIVALS][StopEtaStripState.NO_ARRIVALS] wins over
+ * [NOTHING_BOARDABLE][StopEtaStripState.NOTHING_BOARDABLE]: a poll with no departures at all has nothing
+ * to reveal, so the collapsed line's "Show" would promise the rider a strip and hand them back the same
+ * sentence. The collapsed line is for a feed that *does* hold departures, every one of them before the
+ * rider can get here.
+ *
+ * Nothing-boardable is decided by the very count the strip places its rule by ([countBefore]), so the
+ * line and the rule can't disagree about what is boardable. Without a rule ([ruleAt] null — the plan
+ * puts nothing before this ride) no departure is out of reach and the pills always stand.
+ */
+internal fun <T> stopEtaStripState(items: List<T>, ruleAt: ServerTime?, timeOf: (T) -> ServerTime): StopEtaStripState = when {
+    items.isEmpty() -> StopEtaStripState.NO_ARRIVALS
+    ruleAt != null && countBefore(items, ruleAt, timeOf) == items.size -> StopEtaStripState.NOTHING_BOARDABLE
+    else -> StopEtaStripState.PILLS
 }
 
 /**

@@ -77,6 +77,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.rememberLiveServerTime
+import org.onebusaway.android.time.wholeMinute
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
@@ -109,13 +110,20 @@ import org.onebusaway.android.util.DisplayFormat
  * order, so the strip's trips must be chronological for the rule to divide them into a before and an
  * after — which is what the pill order means anyway.
  *
- * [contentDescription] is what a screen reader reads for the rule itself; [passedStateDescription] is
- * what it reads on each pill the rule has passed, since a pill's dimming is otherwise invisible to it
- * and a rule further down the row comes too late to explain a departure already announced.
+ * [at] resolves the moment against the strip's own live clock (the ticking "now" its pills count down
+ * from), so a moment that is *relative* to now — "the rider gets here in a 4-minute walk" (#2227) —
+ * moves with the clock while an absolute one simply ignores the argument. Resolving here rather than
+ * in the caller keeps the strip on the one clock it already ticks (#1781): the rule and the pills it
+ * divides can never read two different nows.
+ *
+ * [contentDescription] is what a screen reader reads for the rule itself, given the resolved moment
+ * (it usually prints it as a clock time); [passedStateDescription] is what it reads on each pill the
+ * rule has passed, since a pill's dimming is otherwise invisible to it and a rule further down the row
+ * comes too late to explain a departure already announced.
  */
-internal data class EtaStripMarker(
-    val at: ServerTime,
-    val contentDescription: String,
+internal class EtaStripMarker(
+    val at: (now: ServerTime) -> ServerTime,
+    val contentDescription: (at: ServerTime) -> String,
     val passedStateDescription: String
 )
 
@@ -162,15 +170,20 @@ internal fun EtaStrip(
     // first pill it precedes (see MarkedItem), so that pill's index is the rule's. Only the initial
     // position: rememberLazyListState reads it once, and a later poll leaves the viewport where the
     // user has it (the LazyRow's keys keep it on the same pills). Unmarked, the strip starts at its
-    // first pill.
+    // first pill. A relative rule (#2227) is resolved here on the poll's own clock rather than the live
+    // one below — this is read before the first tick, and a second of drift cannot move which pill leads.
     state: LazyListState = rememberLazyListState(
-        initialFirstVisibleItemIndex = marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } ?: 0
+        initialFirstVisibleItemIndex = marker
+            ?.at(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
+            ?.let { at -> countBefore(trips, at) { trip -> trip.displayTime } }
+            ?: 0
     )
 ) {
     // All of this strip's trips share one poll (one route/direction group from a single
     // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
-    // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
-    // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
+    // a redundant per-pill ticker/coroutine (issue #1781); the marker rule resolves against this same
+    // clock rather than ticking one of its own. ServerTime(0) is an inert placeholder for the
+    // (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
     val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
     // Remembered because reading the live clock above recomposes this whole body once a second, and
     // this would otherwise re-run the caller's lambda over every trip on each of those ticks. It only
@@ -191,9 +204,18 @@ internal fun EtaStrip(
         // there are one or two clock lines.
         ArrivalClock(expected = "0:00", corrects = "0:01".takeIf { clocks.any { clock -> clock.corrects != null } })
     }
-    // Where the marker's moment falls among these departures. Remembered for the same reason: the live
-    // clock recomposes this body every second, but the answer only moves when a poll brings new trips.
-    val markerIndex = remember(trips, marker) { marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } }
+    // The marker's moment, and where it falls among these departures. NOT remembered: a moment relative
+    // to now (a walk, #2227) moves with the clock, so the answer legitimately changes tick to tick, and
+    // counting a strip's pills is cheaper than a memo miss. What IS held to the minute is the rule's
+    // spoken text — it prints the moment as a clock time, so it can only change when the minute does,
+    // and formatting it is locale work with no business running every second.
+    val markerAt = marker?.at?.invoke(liveNow)
+    val markerIndex = markerAt?.let { countBefore(trips, it) { trip -> trip.displayTime } }
+    val markerDescription = if (marker != null && markerAt != null) {
+        remember(marker, markerAt.wholeMinute) { marker.contentDescription(markerAt) }
+    } else {
+        null
+    }
 
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
@@ -270,7 +292,7 @@ internal fun EtaStrip(
                     // The rule rides inside the item it precedes: a LazyListScope can't emit a lone item
                     // partway through an itemsIndexed block without splitting the trips in two and
                     // duplicating the pill below. Null on every other item, so only one carries it.
-                    MarkedItem(marker?.takeIf { markerIndex == index }) {
+                    MarkedItem(marker, markerDescription?.takeIf { markerIndex == index }) {
                         EtaPillWithMenu(
                             trip = trip,
                             clock = clocks[index],
@@ -293,8 +315,8 @@ internal fun EtaStrip(
                 }
                 // A marker past the last departure — the rider gets to the stop after everything the feed
                 // knows about — closes the strip instead of vanishing.
-                if (marker != null && markerIndex != null && markerIndex >= trips.size) {
-                    item(key = ETA_STRIP_MARKER_TAG) { EtaStripMarkerRule(marker) }
+                if (markerDescription != null && markerIndex != null && markerIndex >= trips.size) {
+                    item(key = ETA_STRIP_MARKER_TAG) { EtaStripMarkerRule(markerDescription) }
                 }
             }
         }
@@ -347,12 +369,20 @@ private val MARKER_WIDTH = 3.dp
  *  is a NUL-joined tuple of OBA ids, so a bare word can't collide with one. */
 internal const val ETA_STRIP_MARKER_TAG = "etaStripMarker"
 
-/** One LazyRow item: [pill], preceded by [marker]'s rule when this is the pill it stands before. Spaced
- *  as two adjacent pills would be, so the rule doesn't crowd the strip's rhythm. A [marker] of null —
- *  every other pill, and every pill on the unmarked arrivals path — emits the pill alone, adding no
- *  layout node of its own. */
+/**
+ * One LazyRow item: [pill], preceded by the strip's [marker] rule when this is the pill it stands
+ * before — [ruleDescription] is the rule's spoken text then, and null on every other pill. Spaced as
+ * two adjacent pills would be, so the rule doesn't crowd the strip's rhythm.
+ *
+ * The item's shape is decided by whether the *strip* has a marker, not by whether the rule stands
+ * here: a marked strip's every pill sits in this Row, with the rule conditionally before it. Deciding
+ * per pill would put the pill under a different parent when the rule arrives or leaves — and a walk
+ * rule (#2227) crosses a pill as the clock runs — which recreates the pill's subtree and drops its
+ * open long-press menu. On the unmarked arrivals path ([marker] null) the pill is emitted alone,
+ * adding no layout node of its own.
+ */
 @Composable
-private fun MarkedItem(marker: EtaStripMarker?, pill: @Composable () -> Unit) {
+private fun MarkedItem(marker: EtaStripMarker?, ruleDescription: String?, pill: @Composable () -> Unit) {
     if (marker == null) {
         pill()
         return
@@ -362,24 +392,24 @@ private fun MarkedItem(marker: EtaStripMarker?, pill: @Composable () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
         verticalAlignment = Alignment.Bottom
     ) {
-        EtaStripMarkerRule(marker)
+        if (ruleDescription != null) EtaStripMarkerRule(ruleDescription)
         pill()
     }
 }
 
 /**
  * The marker itself: a full-height rounded rule in the theme's primary colour, standing between the
- * departures on either side of the moment it marks. It names that moment for a screen reader, since a
- * rule says nothing on its own; what the dimming beside it means is said on the dimmed pills
+ * departures on either side of the moment it marks. [description] names that moment for a screen
+ * reader, since a rule says nothing on its own; what the dimming beside it means is said on the dimmed pills
  * ([passedByMarker]), where a screen reader actually meets it.
  */
 @Composable
-private fun EtaStripMarkerRule(marker: EtaStripMarker) {
+private fun EtaStripMarkerRule(description: String) {
     VerticalDivider(
         modifier = Modifier
             .testTag(ETA_STRIP_MARKER_TAG)
             .clip(RoundedCornerShape(MARKER_WIDTH / 2))
-            .semantics { contentDescription = marker.contentDescription },
+            .semantics { contentDescription = description },
         thickness = MARKER_WIDTH,
         color = MaterialTheme.colorScheme.primary
     )
@@ -763,8 +793,8 @@ private fun EtaStripMarkedPreview() {
     EtaStripPreviewFrame(
         trips = northgatePills(4),
         marker = EtaStripMarker(
-            at = ServerTime(16 * 60_000L),
-            contentDescription = "You get to this stop at 3:19pm",
+            at = { ServerTime(16 * 60_000L) },
+            contentDescription = { "You get to this stop at 3:19pm" },
             passedStateDescription = "Leaves before you get here"
         )
     )

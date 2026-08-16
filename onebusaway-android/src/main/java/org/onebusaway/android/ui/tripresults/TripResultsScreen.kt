@@ -120,6 +120,7 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.app.FeatureFlags
@@ -2282,7 +2283,7 @@ private fun previewTransitLeg(
     mode = mode,
     routeColorHex = routeColorHex,
     headsign = headsign,
-    reachStopTime = ServerTime(3 * 60_000L),
+    reachStop = ReachStop.OnFoot(3.minutes),
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
     durationMinutes = 16,
@@ -2311,7 +2312,7 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     rideEvents = emptyList(),
     alerts = alerts
 ).copy(
-    reachStopTime = ServerTime(20 * 60_000L),
+    reachStop = ReachStop.OnFoot(20.minutes),
     boardTime = ServerTime(24 * 60_000L),
     exitTime = ServerTime(84 * 60_000L),
     durationMinutes = 60,

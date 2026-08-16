@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -296,12 +297,20 @@ class TripLogBuilderTest {
     @Test
     fun aMultiLegAccess_reachesTheStopByTheWholeWayThere() {
         // A bikeshare access is two street legs — walk to the vehicle, then ride it to the stop — and
-        // the rider's way there is both of them, so the walk-time the rule uses is their sum.
-        val toTheBike = walkLeg.copy(duration = 3.minutes)
-        val onTheBike = walkLeg.copy(mode = TripMode.BICYCLE, duration = 7.minutes, rentedVehicle = true)
+        // the rider's way there is both of them, so the walk-time the rule uses spans the whole run:
+        // from the walk's start to the ride's end, whatever the legs' own durations say (the adapters
+        // zero an omitted one, which a sum would swallow silently).
+        val toTheBike = walkLeg.copy(startTime = ServerTime(0L), endTime = ServerTime(3 * 60_000L), duration = 3.minutes)
+        val onTheBike = walkLeg.copy(
+            mode = TripMode.BICYCLE,
+            startTime = ServerTime(3 * 60_000L),
+            endTime = ServerTime(10 * 60_000L),
+            duration = Duration.ZERO, // omitted on the wire
+            rentedVehicle = true
+        )
         val transit = TripLogBuilder
             .build(
-                legs = listOf(toTheBike, onTheBike, transitLeg),
+                legs = listOf(toTheBike, onTheBike, transitLeg.copy(startTime = ServerTime(10 * 60_000L))),
                 flatDirections = listOf(walkDir, walkDir, boardDir, alightDir),
                 routeLegRefs = listOf(null, null, transitRef)
             )

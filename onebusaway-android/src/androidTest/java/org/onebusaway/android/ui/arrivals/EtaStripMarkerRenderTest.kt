@@ -71,8 +71,8 @@ class EtaStripMarkerRenderTest {
                 routeBadgeFor = { RouteBadge(it.shortName ?: error("preview route must have a name"), null) },
                 // previewArrival anchors serverNow at 0, so a departure N minutes out sits at N * 60_000.
                 marker = EtaStripMarker(
-                    at = ServerTime(reachStopMinutes * 60_000L),
-                    contentDescription = description,
+                    at = { ServerTime(reachStopMinutes * 60_000L) },
+                    contentDescription = { description },
                     passedStateDescription = passedDescription
                 )
             )

@@ -1019,7 +1019,8 @@ fun HomeScreen(
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
                                             // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
-                                            // ruled at the moment the plan has the rider reach the stop (#2125).
+                                            // ruled at how the plan gets the rider to the stop (#2125): a transfer's
+                                            // arrival, or — for the first ride — the walk from now (#2227).
                                             stopEtaStrip = { ride, stop ->
                                                 // The focused leg's boarding stop: the one strip that reads the
                                                 // hoisted session rather than opening a second one on the stop the

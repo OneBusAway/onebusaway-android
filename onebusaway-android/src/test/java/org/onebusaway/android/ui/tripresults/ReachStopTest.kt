@@ -21,7 +21,7 @@ import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 
 /**
- * JVM tests for [ReachStop.resolvedAt] — the one place the two shapes of "how the rider gets to this
+ * JVM tests for [resolvedAt] — the one place the two shapes of "how the rider gets to this
  * stop" collapse to a comparable instant, and so the whole of what putting a clock to them means.
  */
 class ReachStopTest {

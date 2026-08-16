@@ -87,9 +87,6 @@ import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.pickRideDirection
-import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.time.rememberLiveServerTime
-import org.onebusaway.android.time.wholeMinute
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
@@ -135,6 +132,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
+import org.onebusaway.android.ui.tripresults.resolvedAt
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.DisplayFormat
@@ -495,85 +493,76 @@ private fun DirectionStopEtaStripContent(
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
 
     val content = state as? ArrivalsUiState.Content ?: return // nothing until the first load lands
-    // Remembered as a block because a walk rule ticks (see [rememberReachStopMarker]) and so recomposes
-    // this body every second, while none of this moves between polls: the route lookups, the merge into
-    // one chronological strip, and the badge index are all functions of the poll and the leg alone.
-    val (trips, badgesByTrip) = remember(content.routeGroups, routeLeg) {
-        val plannedGroup = content.routeGroups.pickRoute(routeLeg.routeId, routeLeg.headsign)
-        val alternativeGroups = routeLeg.alternatives.mapNotNull { alternative ->
-            content.routeGroups.pickRoute(alternative.routeId, alternative.headsign)
-                ?.let { alternative to it }
-        }
-        val routeTrips = buildList {
-            plannedGroup?.let { add(routeLeg.etaPlannedBadge(it.representative.lineName) to it.trips) }
-            alternativeGroups.forEach { (alternative, group) ->
-                add(RouteBadge(alternative.shortName, alternative.routeColor) to group.trips)
-            }
-        }
-        val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
-        interleaved.map { it.first } to interleaved.associate { (trip, badge) -> trip to badge }
+    val plannedGroup = content.routeGroups.pickRoute(routeLeg.routeId, routeLeg.headsign)
+    val alternativeGroups = routeLeg.alternatives.mapNotNull { alternative ->
+        content.routeGroups.pickRoute(alternative.routeId, alternative.headsign)
+            ?.let { alternative to it }
     }
-    // The rule the strip is ruled at, resolved once so the collapse decision below and the mark drawn
-    // across the pills are the same instant and cannot disagree. Null when the plan puts nothing before
-    // this ride, and when the poll holds no pill at all — there is then no server clock to measure a
-    // walk rule against, and nothing for it to rule on either.
-    val marker = reachStop?.let { stop ->
-        trips.firstOrNull()?.let { rememberReachStopMarker(stop, it.serverNow) }
+    val routeTrips = buildList {
+        plannedGroup?.let { add(routeLeg.etaPlannedBadge(it.representative.lineName) to it.trips) }
+        alternativeGroups.forEach { (alternative, group) ->
+            add(RouteBadge(alternative.shortName, alternative.routeColor) to group.trips)
+        }
     }
-    // Collapsed when the rule would land past the last pill — the very count the strip places its rule
-    // by, so the line and the rule can't disagree about what is boardable (nothing at all counts:
-    // an empty feed has nothing boardable either). Never without a reach time. Once shown anyway the
-    // strip stays up for this stop, though a strip that has come to hold a boardable pill needs no reveal.
+    val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
+    // The rule as of this poll: the strip resolves it again on its own live clock (#2227), which only
+    // ever carries a walk rule *forward*, so this reading collapses the strip no sooner than the strip's
+    // own rule would and the next poll settles it either way. Null when the plan puts nothing before this
+    // ride, and when the poll brought no pill to read its server clock off.
+    val ruleAt = reachStop?.let { stop -> interleaved.firstOrNull()?.let { stop.resolvedAt(it.first.serverNow) } }
+    // Collapsed when the rule lands past the last pill — the very count the strip places its rule by, so
+    // the line and the rule can't disagree about what is boardable (nothing at all counts: an empty feed
+    // has nothing boardable either). Never without a reach time. Once shown anyway the strip stays up for
+    // this stop, though a strip that has come to hold a boardable pill needs no reveal.
     var revealed by rememberSaveable { mutableStateOf(false) }
     val nothingBoardable = reachStop != null &&
-        (marker == null || countBefore(trips, marker.at) { it.displayTime } == trips.size)
+        (ruleAt == null || countBefore(interleaved, ruleAt) { it.first.displayTime } == interleaved.size)
     if (nothingBoardable && !revealed) {
         NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
         return
     }
-    if (trips.isEmpty()) {
+    if (interleaved.isEmpty()) {
         NoEtasText(modifier.then(rowPadding))
         return
     }
+    val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
     EtaStrip(
-        trips = trips,
+        trips = interleaved.map { it.first },
         actionsFor = { content.actions[it.tripId] },
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
         routeBadgeFor = { badgesByTrip[it] },
-        marker = marker,
+        marker = reachStop?.let { rememberReachStopMarker(it) },
         focus = pillFocus
     )
 }
 
 /**
- * The strip's "you get here at …" rule for [reachStop], measured against [serverNow] (this poll's
- * server clock).
+ * The strip's "you get here at …" rule for [reachStop].
  *
- * A [ReachStop.OnFoot] rule is *now* plus the walk (#2227), so it is the one shape that has to move
- * with the clock rather than sit where the plan fixed it, and only it pays for a ticking one. That
- * reads as the rule holding still at the rider's walking distance while the pills flow past it, which
- * is exactly what it means: everything left of the rule is a departure they can no longer walk to in
- * time. A [ReachStop.OnArrival] rule is an absolute moment, ignores the "now" it's handed, and so is
- * left on the poll clock — a strip past the first ride never ticks at all.
+ * The rule is handed to [EtaStrip] as a *resolver* against the strip's own live clock rather than as
+ * an instant: a [ReachStop.OnFoot] is now plus the walk (#2227), so it has to move with the clock, and
+ * the strip is the one place already ticking one (#1781) — its pills and this rule then read the same
+ * now. That reads as the rule holding still at the rider's walking distance while the pills flow past
+ * it, which is exactly what it means: everything left of the rule is a departure they can no longer
+ * walk to in time. A [ReachStop.OnArrival] is an absolute moment and ignores the clock it is handed.
  *
- * This is a second live clock in a subtree where [EtaStrip] already ticks its own, which its #1781
- * comment is otherwise right to warn against. It is one coroutine on the one strip whose rule walks,
- * and the alternative — resolving the rule inside [EtaStrip] — would have to carry this rule's clock
- * string and its string resources into a component shared with the arrivals drawer, which has no plan
- * and no rule. The clock string is memoized on the whole minute it falls in, not on the ticking value:
- * it is printed to the minute, and formatting it is locale work with no business running every second.
+ * Remembered so the marker is one stable object per plan: the strip keys its per-minute spoken text on
+ * it, and the strip's own callers are already stable between polls.
  */
 @Composable
-private fun rememberReachStopMarker(reachStop: ReachStop, serverNow: ServerTime): EtaStripMarker {
+private fun rememberReachStopMarker(reachStop: ReachStop): EtaStripMarker {
     val context = LocalContext.current
-    val at = reachStop.resolvedAt(if (reachStop is ReachStop.OnFoot) rememberLiveServerTime(serverNow) else serverNow)
-    val clock = remember(at.wholeMinute, context) { DisplayFormat.formatTime(context, at.epochMs) }
-    return EtaStripMarker(
-        at = at,
-        contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
-        passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
-    )
+    val passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
+    return remember(reachStop, context, passedStateDescription) {
+        EtaStripMarker(
+            at = reachStop::resolvedAt,
+            contentDescription = { at ->
+                context.getString(R.string.directions_stop_eta_reach_stop, DisplayFormat.formatTime(context, at.epochMs))
+            },
+            passedStateDescription = passedStateDescription
+        )
+    }
 }
 
 /**

@@ -65,20 +65,20 @@ private fun rememberTickingElapsedTime(): ElapsedTime {
 internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, nowElapsed: ElapsedTime): ServerTime = serverTime + (nowElapsed - anchorElapsed).coerceAtLeast(Duration.ZERO)
 
 /**
- * The whole minutes between [now] and [displayTime]: each instant floored to its own minute and
- * *then* subtracted — not the whole minutes of the difference, which disagrees for most of every
- * minute. It is the number the arrivals ETA pill prints, so anything else showing an ETA for the
- * same arrival has to compute it this way or be off by one; sharing the function is what makes that
- * structural instead of a promise in a comment.
+ * The whole minutes between [now] and [displayTime]: each instant floored to its own minute
+ * ([wholeMinute]) and *then* subtracted — not the whole minutes of the difference, which disagrees for
+ * most of every minute. It is the number the arrivals ETA pill prints, so anything else showing an ETA
+ * for the same arrival has to compute it this way or be off by one; sharing the function is what makes
+ * that structural instead of a promise in a comment.
  */
-fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epochMs / MS_PER_MINUTE - now.epochMs / MS_PER_MINUTE
+fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.wholeMinute - now.wholeMinute
 
 /**
- * The whole minute this instant falls in, counted from the epoch — the same flooring [etaMinutes] does
- * to each of its operands, named so it can be used on its own.
+ * The whole minute this instant falls in, counted from the epoch — the one minute-floor [etaMinutes]
+ * and [untilNextMinute] are both written in terms of.
  *
- * Its use is as a memo key: anything derived from a *ticking* clock but printed only to the minute (a
- * formatted clock time, say) should recompute when this changes rather than on every tick.
+ * On its own it is a memo key: anything derived from a *ticking* clock but printed only to the minute
+ * (a formatted clock time, say) should recompute when this changes rather than on every tick.
  */
 val ServerTime.wholeMinute: Long get() = epochMs / MS_PER_MINUTE
 
@@ -92,6 +92,6 @@ val ServerTime.wholeMinute: Long get() = epochMs / MS_PER_MINUTE
  * coarser leaves the number one minute high for the rest of the interval, which is exactly how two
  * surfaces showing the same arrival come to disagree by one.
  */
-fun untilNextMinute(now: ServerTime): Duration = (MS_PER_MINUTE - now.epochMs % MS_PER_MINUTE).milliseconds
+fun untilNextMinute(now: ServerTime): Duration = ((now.wholeMinute + 1) * MS_PER_MINUTE - now.epochMs).milliseconds
 
 private const val MS_PER_MINUTE = 60 * 1000L

@@ -15,13 +15,13 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-import kotlin.time.Duration
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.routeDisplayShortName
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.geoPointOrNull
 
@@ -85,7 +85,7 @@ object TripLogBuilder {
         var cursor = 0
         legs.forEachIndexed { legIndex, leg ->
             val legPoints = leg.legGeometry?.decodedPoints().orEmpty()
-            if (leg.mode?.isOnStreetNonTransit == true) {
+            if (leg.isStreet) {
                 val walk = flatDirections.getOrNull(cursor++) ?: return@forEachIndexed
                 entries += walkEntry(leg, walk, legPoints, legIndex, isTransfer = legs.isTransferAt(legIndex))
             } else {
@@ -126,29 +126,40 @@ object TripLogBuilder {
      * How the plan gets the rider to the boarding stop of the transit leg at [legIndex] — see
      * [ReachStop], which carries the whole rationale for the two shapes.
      *
-     * All this decides is which shape applies, and the line is whether anything before this leg is
-     * transit. If nothing is, the street legs from the itinerary's origin (usually one walk; a
-     * bikeshare access is a walk to the vehicle then a ride on it) are the whole of how the rider gets
-     * here, and it's their combined [TripLeg.duration] that carries — the leading street run is the one
-     * OTP shifts. Otherwise something *carries* them here and the plan commits to when it lands.
+     * All this decides is which shape applies, and the line is whether anything before this leg is a
+     * ride. If nothing is, the street legs from the itinerary's origin (usually one walk; a bikeshare
+     * access is a walk to the vehicle then a ride on it) are the whole of how the rider gets here, and
+     * how long that run takes is what carries — measured as the run's own start-to-end span (both ends
+     * wire-guaranteed) rather than a sum of [TripLeg.duration]s, which the adapters default to zero
+     * when the wire omits one and would then quietly rule the strip at "now". The run's legs abut, so
+     * the two agree whenever a sum is possible. Otherwise something *carries* the rider here and the
+     * plan commits to when it lands.
+     *
+     * Street-vs-ride is [isStreet], the same predicate that sorts every leg into a walk or a transit
+     * entry above, so a leg this builder draws as a ride is never counted as part of the walk here.
      *
      * When this leg opens the itinerary nothing carries the rider and nothing is walked: they are at the
      * stop from the plan's own start, which a depart-at plan names ([plannedStart], #2228) and stands
      * there as the moment they reach it. An arrive-by plan says nothing about when they set out, and
      * that absence is carried as null rather than substituted for with the ride's own departure — see
-     * [TripLogEntry.Transit.reachStop] for what that would tell the rider. The [legIndex] == 0 guard is
-     * what says so — an empty run of preceding legs would otherwise pass the all-street test and
-     * fabricate a zero-length walk.
+     * [TripLogEntry.Transit.reachStop] for what that would tell the rider. The empty-run guard is what
+     * says so: an empty run would otherwise pass the all-street test and fabricate a zero-length walk.
      */
     private fun List<TripLeg>.reachStopFor(legIndex: Int, plannedStart: ServerTime?): ReachStop? {
-        if (legIndex == 0) return plannedStart?.let(ReachStop::OnArrival)
-        val precedingLegs = take(legIndex)
-        return if (precedingLegs.all { it.mode?.isOnStreetNonTransit == true }) {
-            ReachStop.OnFoot(precedingLegs.fold(Duration.ZERO) { total, leg -> total + leg.duration })
+        val precedingLegs = take(legIndex).ifEmpty { return plannedStart?.let(ReachStop::OnArrival) }
+        return if (precedingLegs.all { it.isStreet }) {
+            ReachStop.OnFoot(precedingLegs.last().endTime - precedingLegs.first().startTime)
         } else {
             ReachStop.OnArrival(precedingLegs.last().endTime)
         }
     }
+
+    /**
+     * Whether this leg is one the rider moves themself along (a walk, or a bike/car leg) rather than a
+     * ride — the one split this builder makes, so it is made in one place. A leg whose wire mode the
+     * app doesn't map ([TripLeg.mode] null) falls on the ride side, everywhere alike.
+     */
+    private val TripLeg.isStreet: Boolean get() = mode?.isOnStreetNonTransit == true
 
     private fun walkEntry(
         leg: TripLeg,

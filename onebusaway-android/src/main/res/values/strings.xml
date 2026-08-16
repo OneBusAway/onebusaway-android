@@ -1030,13 +1030,13 @@
          patchy, and riders arrive expecting parity with commercial map apps.
          Note: %1$s is replaced with app_name for white-label support. -->
     <string name="directions_safety_title">Directions may be wrong</string>
-    <string name="directions_safety_body">%1$s builds walking directions from open map data that is often missing crosswalks, traffic signals and sidewalks. A route may send you across a busy street where there is no safe place to cross.</string>
-    <string name="directions_safety_body_secondary">Always look for a marked crossing and use your own judgment. Do not rely on these directions to keep you safe.</string>
+    <!-- One string rather than a paragraph each: the two are never shown apart, and the caution banner
+         below expands to exactly this text, so splitting them would be an invariant with no owner. -->
+    <string name="directions_safety_body">%1$s builds walking directions from open map data that is often missing crosswalks, traffic signals and sidewalks. A route may send you across a busy street where there is no safe place to cross.\n\nAlways look for a marked crossing and use your own judgment. Do not rely on these directions to keep you safe.</string>
     <!-- The button that acknowledges the notice; nothing else dismisses it into the planner. -->
     <string name="directions_safety_acknowledge">I understand</string>
-    <!-- The standing caution at the head of every itinerary detail. Tapping it expands the same
-         explanation the one-time notice gave, which is the only way back to that text once
-         acknowledged. -->
+    <!-- The caution at the head of every itinerary detail. Tapping it expands the same explanation the
+         one-time notice gave, which is the only way back to that text once acknowledged. -->
     <string name="directions_caution_banner">Directions can be wrong. Always use caution.</string>
     <!-- Content descriptions for that caution banner&#8217;s chevron. -->
     <string name="directions_caution_show_details">Show safety details</string>

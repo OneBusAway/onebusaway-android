@@ -1142,11 +1142,12 @@ fun HomeScreen(
                                 }
                                 // The one-time "these directions may be wrong" acknowledgement (#2218).
                                 // Gated on the focus alone, not on pickTarget, so every way into
-                                // directions passes through it; declining leaves the way Back does.
-                                DirectionsSafetyNotice(
-                                    active = directionsActive,
-                                    onDecline = homeViewModel::navigateBackInDirections
-                                )
+                                // directions passes through it.
+                                if (directionsActive) {
+                                    DirectionsSafetyNotice(
+                                        onDecline = homeViewModel::leaveDirections
+                                    )
+                                }
                             }
                         }
                     }

@@ -76,10 +76,10 @@ internal fun markSafetyNoticeAcknowledged(prefs: PreferencesRepository) {
  * [DirectionsCautionBanner][org.onebusaway.android.ui.tripresults.DirectionsCautionBanner] is the
  * standing reminder.
  *
- * Shown whenever [active] and the acknowledgement is still owed, which covers *every* way into
- * directions (the drawer, the map long-press menu, a pinned-trip resume, a monitor notification):
- * they all land on the same [CurrentFocus.Directions][org.onebusaway.android.ui.home.CurrentFocus]
- * that [active] is read from, so none of them can slip past it.
+ * The caller composes it only while directions has the focus, which covers *every* way in (the
+ * drawer, the map long-press menu, a pinned-trip resume, a monitor notification): they all land on the
+ * same [CurrentFocus.Directions][org.onebusaway.android.ui.home.CurrentFocus], so none of them can
+ * slip past it.
  *
  * It is a full-screen [Dialog] rather than a sibling in the host's `Box` because it needs its own
  * window: that is what puts it unconditionally over the map, the form card *and* the results sheet,
@@ -91,22 +91,23 @@ internal fun markSafetyNoticeAcknowledged(prefs: PreferencesRepository) {
  * but the rider is never trapped behind it either.
  */
 @Composable
-internal fun DirectionsSafetyNotice(active: Boolean, onDecline: () -> Unit) {
+internal fun DirectionsSafetyNotice(onDecline: () -> Unit) {
     val context = LocalContext.current
     // Resolved once rather than per recomposition, matching the remember { …EntryPoint.get(…) }
-    // pattern elsewhere. The repository reads its own writes synchronously, so the initial read
-    // already reflects an acknowledgement made earlier in this process.
+    // pattern elsewhere.
     val prefs = remember { PreferencesEntryPoint.get(context) }
-    // Seeded from prefs and flipped locally on acknowledgement: the write is async-persisted, and
-    // this is what closes the notice on the very next frame rather than on the next process.
-    var pending by rememberSaveable { mutableStateOf(isSafetyNoticePending(prefs)) }
-    if (!active || !pending) return
+    // State rather than a bare read, because a preference isn't snapshot-observed and the button tap
+    // needs something to recompose on. `remember`, not `rememberSaveable`: the preference is already
+    // the durable record of this exact bit, and it reads its own writes synchronously, so re-seeding
+    // from it — on a config change, or on the next entry into directions — is always right.
+    var pending by remember { mutableStateOf(isSafetyNoticePending(prefs)) }
+    if (!pending) return
 
     Dialog(
         onDismissRequest = onDecline,
         properties = DialogProperties(
-            // A tap outside can't reach it (it fills the window), but saying so keeps the intent
-            // explicit: the only two answers are the button and Back.
+            // The content fills the window, so there is no outside to tap; pinned false anyway, so
+            // the two answers stay the two the KDoc names even if the layout ever changes.
             dismissOnClickOutside = false,
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false
@@ -142,11 +143,6 @@ internal fun DirectionsSafetyNotice(active: Boolean, onDecline: () -> Unit) {
                         R.string.directions_safety_body,
                         stringResource(R.string.app_name)
                     ),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.directions_safety_body_secondary),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(Modifier.height(32.dp))

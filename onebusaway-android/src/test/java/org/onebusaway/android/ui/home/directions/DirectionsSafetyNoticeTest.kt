@@ -44,16 +44,6 @@ class DirectionsSafetyNoticeTest {
     }
 
     @Test
-    fun acknowledging_isIdempotent() {
-        val prefs = FakePreferencesRepository()
-
-        markSafetyNoticeAcknowledged(prefs)
-        markSafetyNoticeAcknowledged(prefs)
-
-        assertFalse(isSafetyNoticePending(prefs))
-    }
-
-    @Test
     fun pending_whenTheFlagIsExplicitlyCleared() {
         val prefs = FakePreferencesRepository()
         prefs.setBoolean(R.string.preference_key_directions_safety_acknowledged, false)

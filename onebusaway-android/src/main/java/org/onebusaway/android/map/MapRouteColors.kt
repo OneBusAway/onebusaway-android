@@ -115,6 +115,12 @@ internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean, case: Rout
 /**
  * How far out the tone scale [case] goes, for the theme it is drawn in.
  *
+ * [RouteLineCase.APPROACH] answers with the *selection* tone, not one of its own, and that is the whole
+ * reason it is a separate weight rather than a separate colour: the approach and the ride it leads into have
+ * to read as one route line stepping down at the boarding point, which they only do if their cases are the
+ * same colour. What differs between them is width, which is a statement about the lines (one is 3.5dp and
+ * one is 15dp) and not about what they mean.
+ *
  * [RouteLineCase.NONE] answers alongside the outline rather than being rejected, because an uncased line can
  * still need this colour: the interline cutover slash is drawn in its line's case colour whether or not that
  * line asked for an edge of its own (see `InterlineSeamMark`), and a hairline joint's casing is what that
@@ -122,7 +128,7 @@ internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean, case: Rout
  */
 private fun caseTone(case: RouteLineCase, darkMode: Boolean): Double = when (case) {
     RouteLineCase.NONE, RouteLineCase.OUTLINE -> if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK
-    RouteLineCase.SELECTION -> if (darkMode) MAP_SELECTION_CASE_TONE_LIGHT else MAP_SELECTION_CASE_TONE_DARK
+    RouteLineCase.APPROACH, RouteLineCase.SELECTION -> if (darkMode) MAP_SELECTION_CASE_TONE_LIGHT else MAP_SELECTION_CASE_TONE_DARK
 }
 
 /**

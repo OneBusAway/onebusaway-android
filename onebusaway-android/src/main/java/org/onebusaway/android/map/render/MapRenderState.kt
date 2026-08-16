@@ -87,23 +87,30 @@ enum class RouteLineDash {
  *  - [OUTLINE] — a hairline edge that holds a directions ride off the basemap. Every ride in a drawn
  *    itinerary carries it, so it says nothing about selection; it is there because a faded, badge-toned
  *    line has less of its own contrast to spend against the map than a full-strength one does.
- *  - [SELECTION] — the heavier case marking the line the rider has selected (#2082). Selection used to be
- *    said with a width, but the map already spends width on what a line *is* (a ride, an on-street leg,
- *    route context), so saying two things with one channel left neither legible. It stays legible against
- *    [OUTLINE] because it is three times the weight of it — selection is now a *heavier* edge, not the only
- *    edge. Two weights read as one edge and a thicker one; three read as an edge and a band, which is what
- *    this wants, since the thing it competes with for attention is the line it wraps and not the basemap.
+ *  - [APPROACH] — the selected line's *approach*: where the vehicle is coming from, upstream of where the
+ *    rider boards. It draws in the selection colour, so the approach and the ride read as one route line
+ *    stepping down at the boarding point, but at a lighter weight, because it wraps the thinnest line on the
+ *    map ([ITINERARY_APPROACH_WIDTH_PROFILE], 3.5dp) and a full selection case there would be wider than the
+ *    line inside it.
+ *  - [SELECTION] — the heaviest case, marking the line the rider has actually selected (#2082). Selection
+ *    used to be said with a width, but the map already spends width on what a line *is* (a ride, an
+ *    on-street leg, route context), so saying two things with one channel left neither legible. It stays
+ *    legible against [OUTLINE] because it is three times the weight of it — selection is now a *heavier*
+ *    edge, not the only edge. Two weights read as one edge and a thicker one; three read as an edge and a
+ *    band, which is what this wants, since the thing it competes with for attention is the line it wraps and
+ *    not the basemap.
  *
  * The widths are deliberately *not* on the zoom ramp: a case is an outline, and an outline that thins with
  * its line stops separating it from the basemap at exactly the zoom where the line is hardest to pick out.
  *
- * [SELECTION] is wide enough to out-measure one line it wraps — the itinerary approach, at 3.5dp — which is
- * accepted for the reason that profile gives: the approach is recognised by its case rather than by its
- * width. See [ITINERARY_APPROACH_WIDTH_PROFILE]; `RouteLineWidthProfileTest` pins it as the only one.
+ * Every one of them stays finer than the thinnest line that asks for it, so a case always reads as that
+ * line's edge and never as a second line under it — which is the whole reason [APPROACH] exists as its own
+ * weight rather than the approach simply taking [SELECTION]. `RouteLineWidthProfileTest` pins that pairing.
  */
 enum class RouteLineCase(val widthDp: Float) {
     NONE(0f),
     OUTLINE(0.75f),
+    APPROACH(1.5f),
     SELECTION(2.25f);
 
     /** What this case adds to its line's *total* width — both sides. Derived here so no caller has to

@@ -36,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,8 +72,8 @@ internal fun markSafetyNoticeAcknowledged(prefs: PreferencesRepository) {
  * arrive expecting parity with commercial map apps. Tuning OTP is the real fix; this is the honest
  * disclosure that has to hold in the meantime, and it is shown once rather than on every plan because
  * the per-itinerary
- * [DirectionsCautionBanner][org.onebusaway.android.ui.tripresults.DirectionsCautionBanner] is the
- * standing reminder.
+ * [DirectionsCautionBanner][org.onebusaway.android.ui.tripresults.DirectionsCautionBanner] is what
+ * repeats it.
  *
  * The caller composes it only while directions has the focus, which covers *every* way in (the
  * drawer, the map long-press menu, a pinned-trip resume, a monitor notification): they all land on the

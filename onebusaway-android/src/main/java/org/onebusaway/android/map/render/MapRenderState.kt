@@ -98,7 +98,9 @@ enum class RouteLineDash {
  *    legible against [OUTLINE] because it is three times the weight of it — selection is now a *heavier*
  *    edge, not the only edge. Two weights read as one edge and a thicker one; three read as an edge and a
  *    band, which is what this wants, since the thing it competes with for attention is the line it wraps and
- *    not the basemap.
+ *    not the basemap. Asking for it changes nothing else about a line: it keeps the weight, colour and dash
+ *    that say what *kind* of line it is, so drilling into one doesn't restyle the trip around it. It simply
+ *    replaces the [OUTLINE] a directions ride already wore, selection being the step up in edge weight.
  *
  * The widths are deliberately *not* on the zoom ramp: a case is an outline, and an outline that thins with
  * its line stops separating it from the basemap at exactly the zoom where the line is hardest to pick out.

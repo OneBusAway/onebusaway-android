@@ -113,7 +113,7 @@ internal fun TripLeg.legKind(): ItineraryLegKind = when {
  * read from the drawer's ordered rows and from the leg's endpoint bulbs instead.
  *
  * A ride also carries [RouteLineCase.OUTLINE] for that reason — every ride, so the edge says nothing about
- * selection; the rider's selected leg steps up to [RouteLineCase.SELECTION] ([withCase]). A mode leg has no
+ * selection; the rider's selected leg steps up to [RouteLineCase.SELECTION]. A mode leg has no
  * case, as it has no fading to compensate for.
  */
 internal fun itineraryLegStyle(
@@ -211,7 +211,7 @@ internal fun itineraryLegCaps(legs: List<TripLeg>): List<ItineraryLegCaps> {
 }
 
 /**
- * The drawn itinerary composed around a leg focus (#2048): the focused leg(s) cased ([withCase]) and
+ * The drawn itinerary composed around a leg focus (#2048): the focused leg(s) cased ([RouteLineCase.SELECTION]) and
  * re-appended last so they draw on top. Focusing a leg therefore *marks* it within the whole journey rather
  * than erasing — or restyling — the rest of the trip, so the rider keeps where this leg sits in the journey,
  * which is exactly what a leg drawn alone can't say.
@@ -230,7 +230,7 @@ internal fun itineraryLegCaps(legs: List<TripLeg>): List<ItineraryLegCaps> {
 internal fun List<ItineraryLegLine>.withLegFocus(focusedLegIndices: Set<Int>): List<RoutePolyline> {
     val (focused, rest) = partition { it.legIndex in focusedLegIndices }
     if (focused.isEmpty()) return map { it.line }
-    return rest.map { it.line } + focused.map { it.line.withCase() }
+    return rest.map { it.line } + focused.map { it.line.copy(case = RouteLineCase.SELECTION) }
 }
 
 /**

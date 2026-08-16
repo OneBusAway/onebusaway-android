@@ -330,7 +330,7 @@ class ItineraryLegStyleTest {
             val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).color)
 
             listOf(false to 10.0, true to 90.0).forEach { (darkMode, expectedTone) ->
-                val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode, RouteLineCase.OUTLINE))
+                val case = caseHct(line, darkMode)
                 assertEquals("$kind case tone (darkMode=$darkMode)", expectedTone, case.tone, CHANNEL_TOLERANCE)
                 assertEquals("$kind case hue (darkMode=$darkMode)", line.hue, case.hue, HUE_TOLERANCE_DEGREES)
             }
@@ -350,7 +350,7 @@ class ItineraryLegStyleTest {
         // end of every hue's gamut, which is what makes this hold for all of them at once.
         (0 until 360 step 10).forEach { hue ->
             val line = Hct.fromInt(mapRouteLineColor(hue.toDouble()))
-            val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true, case = RouteLineCase.SELECTION))
+            val case = caseHct(line, darkMode = true, case = RouteLineCase.SELECTION)
 
             assertTrue(
                 "hue $hue: case tone ${case.tone} is only ${case.tone - line.tone} above its line's ${line.tone}",
@@ -370,19 +370,13 @@ class ItineraryLegStyleTest {
         // that on the dark map only the selected case is *colourless*, every outline around it staying tinted
         // with the route it wraps. That is asserted by the hue-circle case above; asserted here is the policy
         // it rests on — a selection is never cased less far out than an outline beside it, in either theme.
-        val line = Hct.fromInt(mapRouteLineColor(hue = 250.0))
+        val onDark = caseTone(ANY_MAP_LINE, darkMode = true, case = RouteLineCase.SELECTION)
+        val onLight = caseTone(ANY_MAP_LINE, darkMode = false, case = RouteLineCase.SELECTION)
 
-        assertEquals(100.0, caseTone(line, darkMode = true, case = RouteLineCase.SELECTION), CHANNEL_TOLERANCE)
-        assertEquals(5.0, caseTone(line, darkMode = false, case = RouteLineCase.SELECTION), CHANNEL_TOLERANCE)
-
-        assertTrue(
-            caseTone(line, darkMode = true, case = RouteLineCase.SELECTION) >
-                caseTone(line, darkMode = true, case = RouteLineCase.OUTLINE)
-        )
-        assertTrue(
-            caseTone(line, darkMode = false, case = RouteLineCase.SELECTION) <
-                caseTone(line, darkMode = false, case = RouteLineCase.OUTLINE)
-        )
+        assertEquals(100.0, onDark, CHANNEL_TOLERANCE)
+        assertEquals(5.0, onLight, CHANNEL_TOLERANCE)
+        assertTrue(onDark > caseTone(ANY_MAP_LINE, darkMode = true, case = RouteLineCase.OUTLINE))
+        assertTrue(onLight < caseTone(ANY_MAP_LINE, darkMode = false, case = RouteLineCase.OUTLINE))
     }
 
     @Test
@@ -390,12 +384,25 @@ class ItineraryLegStyleTest {
         // The cutover slash takes its line's case colour whether or not that line wears a case (see
         // `InterlineSeamMark`) — it *is* a hairline joint's casing. So NONE resolves rather than throwing or
         // falling through to the selection tone, and it resolves to the hairline's own.
-        val line = Hct.fromInt(mapRouteLineColor(hue = 250.0))
-
         listOf(false, true).forEach { darkMode ->
             assertEquals(
-                caseTone(line, darkMode, case = RouteLineCase.OUTLINE),
-                caseTone(line, darkMode, case = RouteLineCase.NONE),
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.OUTLINE),
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.NONE),
+                CHANNEL_TOLERANCE
+            )
+        }
+    }
+
+    @Test
+    fun `the approach cases in the selection's colour, which is why it is a weight and not a colour`() {
+        // The approach and the ride it leads into have to read as one route line stepping down at the
+        // boarding point, and they only do while their cases are the same colour — so APPROACH is a lighter
+        // *weight* of the selection case, never a tone of its own. Nothing else checks this: the two live in
+        // the same `when` arm, and moving one out would compile and pass everything but this.
+        listOf(false, true).forEach { darkMode ->
+            assertEquals(
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.SELECTION),
+                caseTone(ANY_MAP_LINE, darkMode, case = RouteLineCase.APPROACH),
                 CHANNEL_TOLERANCE
             )
         }
@@ -433,7 +440,10 @@ class ItineraryLegStyleTest {
         }
     }
 
-    private fun caseTone(line: Hct, darkMode: Boolean, case: RouteLineCase = RouteLineCase.OUTLINE) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode, case)).tone
+    /** [line]'s case as an [Hct], the one spelling of that conversion in this file. */
+    private fun caseHct(line: Hct, darkMode: Boolean, case: RouteLineCase = RouteLineCase.OUTLINE) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode, case))
+
+    private fun caseTone(line: Hct, darkMode: Boolean, case: RouteLineCase = RouteLineCase.OUTLINE) = caseHct(line, darkMode, case).tone
 
     /** A walk → ride → walk trip as drawn lines, at the given leg indices. */
     private fun tripOf(walk: Int, ride: Int, walk2: Int) = listOf(
@@ -556,6 +566,10 @@ class ItineraryLegStyleTest {
         val DIRECTIONS: RouteLinePalette = directionsRouteLinePalette(dark = false)
 
         val BASEMAP: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
+
+        // A map-palette line of no particular hue, for the cases that are about the *tone* a case lands on —
+        // which is a property of the theme and the weight, never of the line (see the case just below).
+        val ANY_MAP_LINE: Hct = Hct.fromInt(mapRouteLineColor(hue = 250.0))
 
         // The re-tone clamps to each hue's own sRGB gamut limit, so a hue can shift a degree or two.
         const val HUE_TOLERANCE_DEGREES = 3.0

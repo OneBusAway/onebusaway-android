@@ -144,6 +144,12 @@ class GoogleMapRenderer(
     private val staticMarkers = mutableListOf<Marker>()
     private val staticPolylines = mutableListOf<Polyline>()
 
+    // A line's case colour, read at draw time rather than carried on the line: it follows the theme, because
+    // the basemap it separates its line from does (see [mapRouteLineCaseColor]). Shared by everything that
+    // draws in it — the case itself, and the interline cut, which is why they can't drift apart.
+    private val caseColorOf: (RoutePolyline) -> Int =
+        { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context), it.case) }
+
     // Whole-route lines are reconciled independently from the combined static snapshot: stop list,
     // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
     // lives in the shared [RoutePolylineReconciler] (#1906); only the four gms-specific line operations
@@ -153,9 +159,7 @@ class GoogleMapRenderer(
         createLine = ::addRoutePolyline,
         removeLines = { lines -> lines.forEach { it.remove() } },
         setWidth = { line, width -> line.width = width },
-        // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
-        // theme, because the basemap it separates its line from does (see [mapRouteLineCaseColor]).
-        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context), it.case) },
+        caseColorOf = caseColorOf,
         caseExtraWidth = { it.case.extraWidthDp * density }
     )
 
@@ -402,13 +406,12 @@ class GoogleMapRenderer(
     }
 
     /**
-     * The interline cutover slash ([InterlineSeamMark]), drawn in the cut line's own case colour — resolved
-     * here rather than by the producer because it follows the theme, exactly as a line's case does (see
-     * [mapRouteLineCaseColor]). The whole line is passed, not just its colour, because that colour is the
-     * line's *case* colour and so depends on the weight of case it wears.
+     * The interline cutover slash ([InterlineSeamMark]), drawn in the cut line's own case colour — through
+     * the very [caseColorOf] the case itself is drawn with, so the two cannot answer differently. The whole
+     * line is passed, not just its colour, because a case colour depends on the weight of case it wears.
      */
     private fun interlineSeamCap(polyline: RoutePolyline): CustomCap {
-        val color = mapRouteLineCaseColor(polyline.resolvedColor, ThemeUtils.isInDarkMode(context), polyline.case)
+        val color = caseColorOf(polyline)
         val descriptor = descriptorCache.get("interline-seam:$color") { InterlineSeamMark.bitmap(color) }
         return CustomCap(descriptor, InterlineSeamMark.REFERENCE_WIDTH_PX)
     }

@@ -99,20 +99,20 @@ class RouteLineWidthProfileTest {
         // Checked per case against what can actually ask for it, rather than against the thinnest profile on
         // the map, since that is what the claim means. A later width tune that drops one of these lines under
         // its own case surfaces here.
-        mapOf(
+        listOf(
             // Every directions ride wears an outline, and a focused on-street leg keeps it too.
-            RouteLineCase.OUTLINE to listOf(ITINERARY_RIDE_WIDTH_PROFILE, ITINERARY_STREET_WIDTH_PROFILE),
+            RouteLineCase.OUTLINE to ITINERARY_RIDE_WIDTH_PROFILE,
+            RouteLineCase.OUTLINE to ITINERARY_STREET_WIDTH_PROFILE,
             // Only the approach.
-            RouteLineCase.APPROACH to listOf(ITINERARY_APPROACH_WIDTH_PROFILE),
+            RouteLineCase.APPROACH to ITINERARY_APPROACH_WIDTH_PROFILE,
             // The ridden span, and a focused itinerary leg of either kind.
-            RouteLineCase.SELECTION to listOf(ITINERARY_RIDE_WIDTH_PROFILE, ITINERARY_STREET_WIDTH_PROFILE)
-        ).forEach { (case, profiles) ->
-            profiles.forEach {
-                assertTrue(
-                    "$case adds ${case.extraWidthDp}dp to a line only ${it.thicknessDp}dp wide",
-                    case.extraWidthDp < it.thicknessDp
-                )
-            }
+            RouteLineCase.SELECTION to ITINERARY_RIDE_WIDTH_PROFILE,
+            RouteLineCase.SELECTION to ITINERARY_STREET_WIDTH_PROFILE
+        ).forEach { (case, profile) ->
+            assertTrue(
+                "$case adds ${case.extraWidthDp}dp to a line only ${profile.thicknessDp}dp wide",
+                case.extraWidthDp < profile.thicknessDp
+            )
         }
     }
 }

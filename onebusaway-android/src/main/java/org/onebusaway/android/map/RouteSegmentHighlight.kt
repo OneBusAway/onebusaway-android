@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaStop
@@ -144,8 +145,9 @@ internal fun routePolylinesWithSegment(
             color = colorOf(span),
             points = span.points,
             widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
+            case = RouteLineCase.SELECTION,
             startMark = if (span.startsCutover) RouteLineMark.INTERLINE_CUT else RouteLineMark.NONE
-        ).withCase()
+        )
     }
     if (overlay.isEmpty()) return itineraryContext + base
     return base.asSelectedRouteApproach() + itineraryContext + overlay

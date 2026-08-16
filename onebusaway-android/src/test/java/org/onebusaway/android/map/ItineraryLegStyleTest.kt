@@ -319,22 +319,54 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `a case goes to the end of the tone scale away from the basemap, keeping its line's hue`() {
+    fun `a case goes to the end of the tone scale away from the basemap`() {
         // A case goes *against* the basemap — near-black on the light map, near-white on the dark one.
         // Device-checked twice over: tinting it toward the map put it at the map's own value and it vanished,
         // and a mid-way tone was still too weak at this width to register.
         //
         // At those tones sRGB holds little chroma, so a case ends up mostly a separator rather than a second
-        // colour — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour
-        // that's left is its own line's and not a neighbouring one's.
+        // colour — a deliberate trade for contrast. The dark end still has room to carry the line's *hue*, so
+        // it does, and that is asserted here: the trace of colour left on it is its own line's and not a
+        // neighbouring one's. The light end deliberately goes past where there is a hue left to keep — see
+        // the #2226 case below, which is what put it there.
         ItineraryLegKind.entries.forEach { kind ->
             val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).color)
 
-            listOf(false to 10.0, true to 90.0).forEach { (darkMode, expectedTone) ->
+            listOf(false to 10.0, true to 98.0).forEach { (darkMode, expectedTone) ->
                 val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
                 assertEquals("$kind case tone (darkMode=$darkMode)", expectedTone, case.tone, CHANNEL_TOLERANCE)
-                assertEquals("$kind case hue (darkMode=$darkMode)", line.hue, case.hue, HUE_TOLERANCE_DEGREES)
             }
+            assertEquals(
+                "$kind case hue",
+                line.hue,
+                Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = false)).hue,
+                HUE_TOLERANCE_DEGREES
+            )
+        }
+    }
+
+    @Test
+    fun `the light end of the case scale clears its own line, whatever the line's hue`() {
+        // #2226: selection is said with case *thickness* (#2082), which a rider can only read when the case is
+        // visibly not the line. The light end sat at tone 90 — 35 above a map line against the dark end's 45
+        // below it — and at that tone sRGB still holds a saturated version of the warm and green hues, so a
+        // green line got a green case and the highlight didn't register in dark mode.
+        //
+        // Swept over the hue circle rather than run on the three leg colours because that is where it failed:
+        // how much chroma survives a re-tone is a property of the hue's own gamut, so a policy can be correct
+        // for the blues and wrong for the greens, which is exactly what this one was.
+        (0 until 360 step 10).forEach { hue ->
+            val line = Hct.fromInt(mapRouteLineColor(hue.toDouble()))
+            val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true))
+
+            assertTrue(
+                "hue $hue: case tone ${case.tone} is only ${case.tone - line.tone} above its line's ${line.tone}",
+                case.tone - line.tone >= MIN_LIGHT_CASE_TONE_STEP
+            )
+            assertTrue(
+                "hue $hue: case kept chroma ${case.chroma} of its line's ${line.chroma} — a colour, not an edge",
+                case.chroma <= MAX_LIGHT_CASE_CHROMA
+            )
         }
     }
 
@@ -500,5 +532,12 @@ class ItineraryLegStyleTest {
         // Chroma likewise clamps to the gamut: a hue that can't hold the full chroma at this tone lands
         // slightly under it. Wide enough to absorb that, far too narrow to hide a different policy.
         const val CHANNEL_TOLERANCE = 2.0
+
+        // What the light end of the case scale has to clear to read as an edge on its line rather than as a
+        // lighter shade of it (#2226): a tonal step of the dark end's order, and little enough of the line's
+        // own chroma left that no hue comes back saturated. The tones sit at 43 and under 27 respectively, so
+        // these are floors on the policy and not restatements of it.
+        const val MIN_LIGHT_CASE_TONE_STEP = 40.0
+        const val MAX_LIGHT_CASE_CHROMA = 30.0
     }
 }

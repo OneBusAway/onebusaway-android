@@ -76,10 +76,21 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  *
  * These are near-black and near-white, and that is the point: the case is a **separator**, not a second
  * colour. The sRGB gamut holds little chroma at either end of the tone scale, so a case here keeps only a
- * trace of its line's hue — measured across the leg hues, as little as chroma 13 where its line carries 75.
- * That is a deliberate trade: maximum tonal contrast is what makes a 1.5dp edge visible at all, and the
- * line's own colour is already saying which route it is. (Its *hue* does survive, within a couple of degrees,
- * so what colour is left is the right one.)
+ * trace of its line's hue. That is a deliberate trade: maximum tonal contrast is what makes a 1.5dp edge
+ * visible at all, and the line's own colour is already saying which route it is.
+ *
+ * The light end has to go *further* than "light" to get there, which is what #2226 was: at tone 90 the gamut
+ * still holds plenty of chroma for the warm and green hues — a green line at chroma 68 cased at chroma 68 —
+ * so the case came out as a lighter, still-saturated version of its own line rather than an edge on it. Since
+ * selection is said with case *thickness* (#2082), a case a rider can't pick out from its line is a highlight
+ * they can't read, and dark mode was the theme wearing it. At tone 98 the gamut squeezes the same cases under
+ * chroma 27, and the gap to a basemap-palette line (tone 55) is 43 against the dark end's 45 — so neither
+ * theme's case is the weak one any more.
+ *
+ * What the tones cost is at that light end: a hue with nearly no chroma left to carry it can land some way off
+ * its line's, where the dark end holds every hue within a degree or two. That is the right trade for a channel
+ * with nothing left in it — a case is read as an edge, not as a colour — and it is why the tones are asymmetric
+ * in *what they preserve* as well as in their distance from the middle.
  *
  * Absolute tones rather than an offset from [lineColor]'s own tone: what a case has to contrast with is the
  * basemap, which sits at a fixed value per theme, so the target is a property of the theme and not of the line
@@ -143,7 +154,8 @@ private const val MAP_ROUTE_CHROMA = 75.0
 private const val MAP_ROUTE_TONE = 55.0
 
 // The two ends of the tone scale a case is pinned to, chosen for maximum contrast with the basemap it has to
-// separate its line from. Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as it can
-// usefully go without becoming literal black or white.
+// separate its line from — and, since a case's thickness is what marks selection, with that line as well
+// (#2226). Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as it can usefully go
+// without becoming literal black or white, which the dark end reaches sooner than the light one.
 private const val MAP_ROUTE_CASE_TONE_DARK = 10.0
-private const val MAP_ROUTE_CASE_TONE_LIGHT = 90.0
+private const val MAP_ROUTE_CASE_TONE_LIGHT = 98.0

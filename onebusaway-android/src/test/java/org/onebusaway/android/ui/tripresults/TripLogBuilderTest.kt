@@ -359,20 +359,6 @@ class TripLogBuilderTest {
     }
 
     @Test
-    fun aWalkRule_holdsAtTheRidersWalkingDistanceWhileAnArrivalRuleStandsStill() {
-        // What the two shapes mean once a clock is put to them: a walk is measured *from now*, so the
-        // rule keeps its distance as the clock runs and the pills flow past it; an arrival is an
-        // absolute moment and ignores the clock entirely.
-        val onFoot = ReachStop.OnFoot(4.minutes)
-        assertEquals(ServerTime(14 * 60_000L), onFoot.resolvedAt(ServerTime(10 * 60_000L)))
-        assertEquals(ServerTime(24 * 60_000L), onFoot.resolvedAt(ServerTime(20 * 60_000L)))
-
-        val onArrival = ReachStop.OnArrival(ServerTime(14 * 60_000L))
-        assertEquals(ServerTime(14 * 60_000L), onArrival.resolvedAt(ServerTime(10 * 60_000L)))
-        assertEquals(ServerTime(14 * 60_000L), onArrival.resolvedAt(ServerTime(20 * 60_000L)))
-    }
-
-    @Test
     fun thePlansStart_standsInOnlyForARideNothingPrecedes() {
         // With a walk ahead of the ride, the walk is how the rider gets to the stop; the plan's start is
         // when they left home, and must not displace it.

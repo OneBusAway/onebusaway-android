@@ -244,10 +244,8 @@ sealed interface TripLogEntry {
  *    the plan's own start is that moment instead (#2228) — a "leave at 5pm" plan has them at the stop
  *    at 5pm.
  *  - [OnFoot] — the rider makes their own way here from the itinerary's origin, and all the plan really
- *    knows is [duration]: how long that takes. It emphatically does **not** know when they set off,
- *    because OTP time-shifts the leading access leg to land exactly on the departure it picked — see
- *    [OnFoot] for the measurements. Resolved against the live clock at the point of use, so the rule
- *    means "if you set off now".
+ *    knows is [duration]: how long that takes, not when they set off. See [OnFoot] for why. Resolved
+ *    against the live clock at the point of use, so the rule means "if you set off now".
  *
  * The distinction is a type rather than a nullable "…or use the duration" flag so the two can't be
  * confused at a call site: an absolute instant and an amount of time are not interchangeable, and the
@@ -255,38 +253,45 @@ sealed interface TripLogEntry {
  */
 sealed interface ReachStop {
 
+    /**
+     * The moment the rider reaches the stop, as of [now] — an [OnArrival]'s own instant, or [now] plus
+     * the walk for an [OnFoot]. The one place the two shapes collapse to a comparable instant, so the
+     * ETA strip's rule and anything else that wants one can't disagree about how.
+     */
+    fun resolvedAt(now: ServerTime): ServerTime
+
     /** The rider is at this stop at [at] — the leg that brings them here ends then, or the plan starts then. */
-    data class OnArrival(val at: ServerTime) : ReachStop
+    data class OnArrival(val at: ServerTime) : ReachStop {
+        override fun resolvedAt(now: ServerTime): ServerTime = at
+    }
 
     /**
      * The rider walks (or bikes/scooters) here from the trip's origin, and it takes [duration].
      *
      * Deliberately a duration and not the access leg's own end time. OTP time-shifts the *leading*
-     * street leg of an itinerary as late as it can — it ends exactly at the departure it was planned
-     * for, so the rider never stands waiting — which makes that end time a restatement of `boardTime`
-     * and nothing more. (Measured against the live Puget Sound OTP2 server: across depart-after and
-     * arrive-by searches alike, the first street leg's end equalled the first transit leg's start every
-     * time, with the leg's *start* shifted up to ~34 min past the search time; every later street leg,
-     * by contrast, began exactly when the preceding leg ended, unshifted.) Ruling the strip there is the
-     * "substitute boardTime" mistake [TripLogEntry.Transit] warns about, one indirection removed: it
-     * dims every departure before the planned one, including the ones the rider could comfortably walk
-     * to and catch.
+     * street leg of an itinerary as late as it can — it ends on the departure it was planned for, so
+     * the rider never stands waiting — which makes that end time a restatement of `boardTime` and
+     * nothing more. Ruling the strip there is the "substitute boardTime" mistake [TripLogEntry.Transit]
+     * warns about, one indirection removed: it dims every departure before the planned one, including
+     * the ones the rider could comfortably walk to and catch.
      *
-     * The duration survives that shift untouched, so it is the one fact about the access leg worth
+     * Measured against both of this app's protocols, so the one rule below is not an OTP2 finding
+     * applied to OTP1 on faith — the two servers differ only in rounding:
+     *  - OTP2 (`planConnection`, Puget Sound), depart-after and arrive-by alike: the first street leg's
+     *    end equalled the first transit leg's start every time, its *start* shifted up to ~34 min past
+     *    `searchDateTime`.
+     *  - OTP1 (REST `/plan`, same region): the same, landing 1 s before the board, with starts shifted
+     *    up to ~25 min past `plan.date`.
+     * Every later street leg, on both, began exactly when the preceding leg ended — unshifted, which is
+     * why [OnArrival] can keep taking that leg's end at face value.
+     *
+     * The duration survives the shift untouched, so it is the one fact about the access leg worth
      * carrying: added to the live clock it answers the question the strip is actually asked — of these
      * departures, which can I still get to?
      */
-    data class OnFoot(val duration: Duration) : ReachStop
-}
-
-/**
- * The moment this rider reaches the stop, as of [now] — [ReachStop.OnArrival]'s own instant, or [now]
- * plus the walk for [ReachStop.OnFoot]. The one place the two shapes collapse to a comparable instant,
- * so the ETA strip's rule and anything else that wants one can't disagree about how.
- */
-fun ReachStop.resolvedAt(now: ServerTime): ServerTime = when (this) {
-    is ReachStop.OnArrival -> at
-    is ReachStop.OnFoot -> now + duration
+    data class OnFoot(val duration: Duration) : ReachStop {
+        override fun resolvedAt(now: ServerTime): ServerTime = now + duration
+    }
 }
 
 /**

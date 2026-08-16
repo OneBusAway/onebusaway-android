@@ -22,7 +22,6 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.routeDisplayShortName
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.geoPointOrNull
 
@@ -125,29 +124,29 @@ object TripLogBuilder {
 
     /**
      * How the plan gets the rider to the boarding stop of the transit leg at [legIndex] — see
-     * [ReachStop] for why the answer has two shapes and [ReachStop.OnFoot] for the OTP behaviour that
-     * forces the split.
+     * [ReachStop], which carries the whole rationale for the two shapes.
      *
-     * The rider reaches this stop *on foot* exactly when nothing before this leg is transit: the street
-     * legs from the itinerary's origin (usually one walk; a bikeshare access is a walk to the vehicle
-     * then a ride on it) are the whole of how they get here, and OTP has shifted them, so only their
-     * combined [TripLeg.duration] survives as a fact. Otherwise something *carries* them here and the
-     * plan commits to when it lands — the preceding leg's end, whether that's the inbound ride of a
-     * transfer or the transfer walk off it, neither of which OTP shifts.
+     * All this decides is which shape applies, and the line is whether anything before this leg is
+     * transit. If nothing is, the street legs from the itinerary's origin (usually one walk; a
+     * bikeshare access is a walk to the vehicle then a ride on it) are the whole of how the rider gets
+     * here, and it's their combined [TripLeg.duration] that carries — the leading street run is the one
+     * OTP shifts. Otherwise something *carries* them here and the plan commits to when it lands.
      *
      * When this leg opens the itinerary nothing carries the rider and nothing is walked: they are at the
      * stop from the plan's own start, which a depart-at plan names ([plannedStart], #2228) and stands
      * there as the moment they reach it. An arrive-by plan says nothing about when they set out, and
      * that absence is carried as null rather than substituted for with the ride's own departure — see
-     * [TripLogEntry.Transit.reachStop] for what that would tell the rider.
+     * [TripLogEntry.Transit.reachStop] for what that would tell the rider. The [legIndex] == 0 guard is
+     * what says so — an empty run of preceding legs would otherwise pass the all-street test and
+     * fabricate a zero-length walk.
      */
     private fun List<TripLeg>.reachStopFor(legIndex: Int, plannedStart: ServerTime?): ReachStop? {
         if (legIndex == 0) return plannedStart?.let(ReachStop::OnArrival)
-        val precedingLegs = subList(0, legIndex)
+        val precedingLegs = take(legIndex)
         return if (precedingLegs.all { it.mode?.isOnStreetNonTransit == true }) {
             ReachStop.OnFoot(precedingLegs.fold(Duration.ZERO) { total, leg -> total + leg.duration })
         } else {
-            ReachStop.OnArrival(this[legIndex - 1].endTime)
+            ReachStop.OnArrival(precedingLegs.last().endTime)
         }
     }
 

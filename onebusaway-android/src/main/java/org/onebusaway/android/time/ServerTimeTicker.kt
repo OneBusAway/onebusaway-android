@@ -74,6 +74,15 @@ internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, 
 fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epochMs / MS_PER_MINUTE - now.epochMs / MS_PER_MINUTE
 
 /**
+ * The whole minute this instant falls in, counted from the epoch — the same flooring [etaMinutes] does
+ * to each of its operands, named so it can be used on its own.
+ *
+ * Its use is as a memo key: anything derived from a *ticking* clock but printed only to the minute (a
+ * formatted clock time, say) should recompute when this changes rather than on every tick.
+ */
+val ServerTime.wholeMinute: Long get() = epochMs / MS_PER_MINUTE
+
+/**
  * How long from [now] until every [etaMinutes] measured against it prints one less — i.e. until this
  * clock crosses into its next whole minute. Always positive: on the boundary itself, a whole minute
  * remains until the *next* one.

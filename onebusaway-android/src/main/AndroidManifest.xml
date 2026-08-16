@@ -152,15 +152,13 @@
                 <data android:host="add-region" />
                 <data android:host="view-stop" />
             </intent-filter>
-            <!-- Place intents from other apps (#1936) — the vocabulary lives in
-                 org.onebusaway.android.ui.nav.PlaceIntents, and HomeActivity.maybePlanToPlaceFromIntent
-                 opens the directions focus with the place as the destination. This is what replaced the
-                 trip planner's in-app address-book picker: instead of reading the rider's contacts, we
-                 accept the place their address book already knows how to hand out.
-
-                 `geo:` is the platform's standard "open this location" — what Contacts emits for a postal
-                 address — so claiming it puts OneBusAway in the same chooser as the map apps, which is
-                 where a rider wanting transit directions to an address is looking. -->
+            <!-- Place intents from other apps (#1936): `geo:` (the platform's "open this location", what
+                 the address book emits for a postal address) and shared `text/plain` (a maps link or a
+                 bare address). Both are read by org.onebusaway.android.ui.nav.PlaceIntents — which owns
+                 this vocabulary and the reasoning behind these two filters, including why https maps
+                 links are deliberately not claimed here — and consumed by
+                 HomeActivity.maybePlanToPlaceFromIntent, which opens the directions focus with the place
+                 as the trip's destination. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -168,10 +166,6 @@
 
                 <data android:scheme="geo" />
             </intent-filter>
-            <!-- The share sheet: shared text may be a maps link (PlaceIntents.MAPS_HOSTS) or just an
-                 address. Maps links are read *here* and deliberately not claimed as https ACTION_VIEW,
-                 which would put this app in the chooser for every Google Maps URL on the device — not an
-                 offer a transit app should be making. Sharing to us is the rider saying they meant us. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 

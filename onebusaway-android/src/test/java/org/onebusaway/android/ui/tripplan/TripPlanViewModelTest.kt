@@ -69,10 +69,12 @@ class TripPlanViewModelTest {
         var reverseResult: Result<String?> = Result.success(null)
     ) : GeocodeRepository {
         var lastQuery: String? = null
+        var suggestCalls = 0
         val reverseCalls = mutableListOf<Pair<Double, Double>>()
 
         override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> {
             lastQuery = query
+            suggestCalls++
             return result
         }
 
@@ -399,26 +401,46 @@ class TripPlanViewModelTest {
         assertEquals(TripEndpoint.FreeText("Space Needle"), vm.formState.value.to)
     }
 
+    /**
+     * A lookup that succeeded with nothing has already given its answer, so the question isn't repeated
+     * through the field's debounced pipeline — the geocoder is asked exactly once.
+     */
     @Test
     fun `a place named as text that resolves to nothing is left in the field for the rider`() = runTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
-        val vm = viewModel(geocode = FakeGeocodeRepository(Result.success(emptyList())), plan = plan)
+        val geocode = FakeGeocodeRepository(Result.success(emptyList()))
+        val vm = viewModel(geocode = geocode, plan = plan)
 
         vm.setEndpointFromQuery(TripEndpointSlot.TO, "nowhere at all")
         advanceUntilIdle()
 
         assertEquals(TripEndpoint.FreeText("nowhere at all"), vm.formState.value.to)
+        assertEquals(1, geocode.suggestCalls)
         assertEquals(0, plan.calls)
     }
 
+    /** A lookup that *failed*, by contrast, is worth retrying — the field's own pipeline is armed. */
     @Test
-    fun `a failed lookup leaves the text in the field rather than dropping it`() = runTest {
-        val vm = viewModel(geocode = FakeGeocodeRepository(Result.failure(IOException("offline"))))
+    fun `a failed lookup leaves the text in the field and retries`() = runTest {
+        val geocode = FakeGeocodeRepository(Result.failure(IOException("offline")))
+        val vm = viewModel(geocode = geocode)
 
         vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
         advanceUntilIdle()
 
         assertEquals(TripEndpoint.FreeText("400 Broad St"), vm.formState.value.to)
+        assertEquals(2, geocode.suggestCalls)
+    }
+
+    @Test
+    fun `a blank place name asks the geocoder nothing`() = runTest {
+        val geocode = FakeGeocodeRepository(Result.success(emptyList()))
+        val vm = viewModel(geocode = geocode)
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "   ")
+        advanceUntilIdle()
+
+        assertEquals(0, geocode.suggestCalls)
     }
 
     @Test

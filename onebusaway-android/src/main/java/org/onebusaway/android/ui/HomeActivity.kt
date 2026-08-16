@@ -68,9 +68,9 @@ import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.PlaceIntents
 import org.onebusaway.android.ui.nav.readRouteReveal
+import org.onebusaway.android.ui.nav.toEndpoint
 import org.onebusaway.android.ui.report.ReportLauncher
 import org.onebusaway.android.ui.survey.SurveyViewModel
-import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
@@ -331,16 +331,6 @@ class HomeActivity : AppCompatActivity() {
                 tripPlanViewModel.setEndpointFromQuery(TripEndpointSlot.TO, place.text)
         }
     }
-
-    /**
-     * A place that arrived with coordinates, as a plan endpoint: [TripEndpoint.Geocoded] when the sender
-     * named it, and otherwise [TripEndpoint.MapPoint] — whose fixed "Selected location" label is the
-     * honest one for a bare coordinate, and whose terminals the plan reverse-geocodes for the itinerary
-     * anyway ([TripPlanViewModel] `placeNameOf`).
-     */
-    private fun PlaceIntents.Place.Point.toEndpoint(): TripEndpoint = label
-        ?.let { TripEndpoint.Geocoded(displayName = it, lat = lat, lon = lon) }
-        ?: TripEndpoint.MapPoint(lat = lat, lon = lon)
 
     /**
      * Runs the domain mutations implied by certain incoming intents, kept out of [IntentRouteMapper]'s

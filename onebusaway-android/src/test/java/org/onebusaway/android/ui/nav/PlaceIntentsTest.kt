@@ -21,6 +21,7 @@ import org.junit.Test
 import org.onebusaway.android.ui.nav.PlaceIntents.Place
 import org.onebusaway.android.ui.nav.PlaceIntents.PlaceRequest
 import org.onebusaway.android.ui.nav.PlaceIntents.parse
+import org.onebusaway.android.ui.tripplan.TripEndpoint
 
 /**
  * Unit tests for the place-intent vocabulary (#1936) — the `geo:` URIs, maps links and shared text
@@ -228,6 +229,25 @@ class PlaceIntentsTest {
     fun `an empty share names nothing`() {
         assertNull(shared("   "))
         assertNull(parse(PlaceRequest()))
+    }
+
+    // --- as a plan endpoint -------------------------------------------------------------------------
+
+    @Test
+    fun `a named point becomes a geocoded endpoint carrying its name`() {
+        assertEquals(
+            TripEndpoint.Geocoded("Space Needle", lat = 47.6205, lon = -122.3493),
+            Place.Point(47.6205, -122.3493, "Space Needle").toEndpoint()
+        )
+    }
+
+    /** Nothing to call it, so it becomes the same kind of endpoint a map pick makes. */
+    @Test
+    fun `an unnamed point becomes a map-point endpoint`() {
+        assertEquals(
+            TripEndpoint.MapPoint(lat = 47.6205, lon = -122.3493),
+            Place.Point(47.6205, -122.3493).toEndpoint()
+        )
     }
 
     // --- precedence ---------------------------------------------------------------------------------

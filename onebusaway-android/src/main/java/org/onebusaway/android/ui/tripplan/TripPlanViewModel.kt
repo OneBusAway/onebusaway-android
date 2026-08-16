@@ -248,19 +248,23 @@ class TripPlanViewModel @Inject constructor(
      * opened for; a rider who types over it in the meantime wins.
      */
     fun setEndpointFromQuery(slot: TripEndpointSlot, query: String) {
+        if (query.isBlank()) return
         val typed = TripEndpoint.FreeText(query)
-        _formState.update { it.withEndpoint(slot, typed) }
-        replanOrClearResult()
+        setEndpoint(slot, typed)
         viewModelScope.launch {
-            val match = geocode.suggest(query).getOrNull()?.firstOrNull()
+            // Called instead of [suggestionsFor] because that folds a failed lookup into an empty one,
+            // and the two want different things below.
+            val suggestions = geocode.suggest(query)
             // The rider may have typed over the field while the lookup was out — theirs wins.
             if (_formState.value.endpointAt(slot) != typed) return@launch
-            if (match == null) {
-                // Hand the text to the field's own debounced lookup, so the rider has a list to pick from.
-                queries.getValue(slot).value = query
-                return@launch
+            val match = suggestions.getOrNull()?.firstOrNull()
+            when {
+                match != null -> setEndpointPaired(slot, match)
+                // A lookup that *failed* is worth asking again, so arm the field's own debounced pipeline.
+                // One that succeeded with nothing is not — re-asking would only repeat the same answer,
+                // and [setEndpoint] has already left the field showing the text with no suggestions.
+                suggestions.isFailure -> queries.getValue(slot).value = query
             }
-            setEndpointPaired(slot, match)
         }
     }
 

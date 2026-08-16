@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.nav
 import android.content.Intent
 import java.net.URI
 import java.net.URLDecoder
+import org.onebusaway.android.ui.tripplan.TripEndpoint
 
 /**
  * The one place that knows how *another app* names a place to this one (#1936) — the vocabulary behind
@@ -112,13 +113,13 @@ object PlaceIntents {
     private fun parseGeoUri(uri: String): Place? {
         val schemeSpecificPart = uri.substring(GEO_SCHEME.length)
         val uriPoint = parseCoordinates(schemeSpecificPart.substringBefore('?'))
-        val query = formParams(schemeSpecificPart.substringAfter('?', "")).nonBlank(PARAM_Q)
+        val q = formParams(schemeSpecificPart.substringAfter('?', "")).nonBlank(PARAM_Q)
             // No `q` to fall back on, so a URI that is nothing but the placeholder names nothing at all.
-            ?: return uriPoint?.takeIf { it != GEO_PLACEHOLDER }
+            ?: return uriPoint?.takeUnless { it.isGeoPlaceholder }
         // `q` may itself be a coordinate, optionally labelled.
-        labelledCoordinates(query)?.let { return it }
+        labelledCoordinates(q)?.let { return it }
         // Otherwise it is text, and it only *labels* the URI when the URI carries a real position.
-        return if (uriPoint == null || uriPoint == GEO_PLACEHOLDER) query(query) else uriPoint.copy(label = normalized(query))
+        return if (uriPoint == null || uriPoint.isGeoPlaceholder) query(q) else uriPoint.copy(label = normalized(q))
     }
 
     // --- maps links ---------------------------------------------------------------------------------
@@ -132,30 +133,28 @@ object PlaceIntents {
      * shares alongside the link is the better source anyway.
      */
     private fun parseMapsUrl(url: String): Place? {
-        val link = parseUrl(url) ?: return null
-        if (link.host !in MAPS_HOSTS) return null
+        val link = parseMapsLink(url) ?: return null
         osmMarker(link.params)?.let { return it }
         googlePlacePath(link.pathSegments)?.let { return it }
-        val values = PLACE_PARAMS.mapNotNull { link.params.nonBlank(it) }
+        // Each candidate classified once, as either a position or text.
+        val candidates = PLACE_PARAMS.mapNotNull { link.params.nonBlank(it) }.map { it to labelledCoordinates(it) }
         // An exact coordinate beats text wherever it is spelled, because it needs no geocoder and can't
         // resolve to the wrong place: `maps.apple.com/?q=Home&ll=47.6,-122.3` means that position, named
         // Home. Text is the answer only when no parameter carries a position.
-        val text = values.firstOrNull { labelledCoordinates(it) == null }
-        values.firstNotNullOfOrNull { labelledCoordinates(it) }
-            ?.let { return it.copy(label = it.label ?: text?.let(::normalized)) }
-        return text?.let { query(it) }
+        val text = candidates.firstOrNull { (_, point) -> point == null }?.first
+        val point = candidates.firstNotNullOfOrNull { (_, point) -> point }
+        return point?.copy(label = point.label ?: text?.let(::normalized)) ?: text?.let(::query)
     }
 
     /** `…/maps/place/<Name>/@<lat>,<lng>,<zoom>z/…` — how a Google Maps place page is copied out. */
     private fun googlePlacePath(pathSegments: List<String>): Place.Point? {
         val at = pathSegments.firstOrNull { it.startsWith(GOOGLE_AT_PREFIX) } ?: return null
         val point = parseCoordinates(at.removePrefix(GOOGLE_AT_PREFIX)) ?: return null
-        val placeIndex = pathSegments.indexOf(GOOGLE_PLACE_SEGMENT)
-        val name = if (placeIndex < 0) {
-            null
-        } else {
-            pathSegments.getOrNull(placeIndex + 1)?.takeIf { !it.startsWith(GOOGLE_AT_PREFIX) }?.let(::normalized)
-        }
+        // dropWhile rather than indexOf: a URL with no `place` segment leaves nothing to take, where
+        // `indexOf` + 1 would wrap -1 around to the first segment and name the place "maps".
+        val name = pathSegments.dropWhile { it != GOOGLE_PLACE_SEGMENT }.drop(1).firstOrNull()
+            ?.takeUnless { it.startsWith(GOOGLE_AT_PREFIX) }
+            ?.let(::normalized)
         return point.copy(label = name)
     }
 
@@ -213,6 +212,18 @@ object PlaceIntents {
         return Place.Point(lat, lon)
     }
 
+    /**
+     * `geo:0,0` — the platform's documented spelling of "this URI names its place in `q`, not in its own
+     * coordinate": every `?q=` form in Android's common-intents documentation is written `geo:0,0?q=…`,
+     * and Contacts emits exactly that for a postal address.
+     *
+     * Read as the sentinel it is, rather than as a position off West Africa. The alternative — letting the
+     * coordinate always win — would geocode nothing but would also send every address-book address to the
+     * middle of the Atlantic; letting `q` always win would instead discard a real coordinate whenever a
+     * sender supplies both, which the labelled forms do.
+     */
+    private val Place.Point.isGeoPlaceholder: Boolean get() = lat == 0.0 && lon == 0.0
+
     /** `<lat>,<lng>(<label>)` — [parseCoordinates] plus `geo:`'s optional parenthesised label. */
     private fun labelledCoordinates(value: String): Place.Point? {
         val open = value.indexOf('(')
@@ -221,20 +232,29 @@ object PlaceIntents {
         return parseCoordinates(value.substring(0, open))?.copy(label = normalized(label))
     }
 
-    /** An `http`/`https` URL decomposed into the parts [parseMapsUrl] reads, or null if it isn't one. */
-    private fun parseUrl(url: String): Link? {
+    /**
+     * Decomposes [url] into the parts [parseMapsUrl] reads, or null if it isn't a link on one of
+     * [MAPS_HOSTS]. Scheme and host are checked before anything is decoded, so an `https` URL we have no
+     * table for — the app's own `onebusaway.co` deep links land here on every launch — costs one `URI`
+     * parse rather than a decode of every path segment and query parameter.
+     */
+    private fun parseMapsLink(url: String): MapsLink? {
         val uri = runCatching { URI(url) }.getOrNull() ?: return null
         if (uri.scheme?.lowercase() !in WEB_SCHEMES) return null
-        return Link(
-            host = uri.host?.lowercase(),
+        if (uri.host?.lowercase() !in MAPS_HOSTS) return null
+        return MapsLink(
             pathSegments = uri.rawPath.orEmpty().split('/').filter { it.isNotEmpty() }.map(::formDecode),
             params = formParams(uri.rawQuery.orEmpty())
         )
     }
 
-    /** An already-decomposed maps link. */
-    private data class Link(
-        val host: String?,
+    /**
+     * An already-decomposed maps link. Named for what it is rather than reusing [ExternalDeepLinks.Link]:
+     * the two carry the same shape of fact but not the same decoding — that one's parameters come from
+     * `Uri.getQueryParameter`, which leaves `+` as a literal plus, where these are form-decoded (see
+     * [formDecode]) — and one `Link` per vocabulary is clearer than one type with two meanings.
+     */
+    private data class MapsLink(
         val pathSegments: List<String>,
         val params: Map<String, String>
     )
@@ -263,18 +283,6 @@ object PlaceIntents {
     private const val GEO_SCHEME = "geo:"
 
     private val WEB_SCHEMES = setOf("http", "https")
-
-    /**
-     * `geo:0,0` — the platform's documented spelling of "this URI names its place in `q`, not in its own
-     * coordinate": every `?q=` form in Android's common-intents documentation is written `geo:0,0?q=…`,
-     * and Contacts emits exactly that for a postal address.
-     *
-     * Read as the sentinel it is, rather than as a position off West Africa. The alternative — letting the
-     * coordinate always win — would geocode nothing but would also send every address-book address to the
-     * middle of the Atlantic; letting `q` always win would instead discard a real coordinate whenever a
-     * sender supplies both, which the labelled forms above do.
-     */
-    private val GEO_PLACEHOLDER = Place.Point(0.0, 0.0)
 
     /**
      * The maps hosts whose shared links are read. Deliberately a short, exact list rather than a pattern:
@@ -313,3 +321,17 @@ object PlaceIntents {
 
     private val WHITESPACE = Regex("""\s+""")
 }
+
+/**
+ * An incoming place that arrived with coordinates, as a trip-plan endpoint: [TripEndpoint.Geocoded] when
+ * the sender named it, and otherwise [TripEndpoint.MapPoint] — whose fixed "Selected location" label is
+ * the honest one for a bare coordinate, and whose terminals a plan reverse-geocodes for the itinerary
+ * anyway (`TripPlanViewModel.placeNameOf`).
+ *
+ * Top-level and `internal` — like [org.onebusaway.android.ui.tripplan.toGeocoded], the sibling adapter
+ * that turns a geocoder result into the same type — so this stays JVM-unit-testable rather than being
+ * buried in the Activity that consumes it.
+ */
+internal fun PlaceIntents.Place.Point.toEndpoint(): TripEndpoint = label
+    ?.let { TripEndpoint.Geocoded(displayName = it, lat = lat, lon = lon) }
+    ?: TripEndpoint.MapPoint(lat = lat, lon = lon)

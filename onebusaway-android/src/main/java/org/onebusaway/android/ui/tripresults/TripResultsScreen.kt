@@ -1040,7 +1040,7 @@ fun TripResultsSheet(
     // highlighting a trip the map isn't showing.
     LaunchedEffect(itineraries) {
         val index = initialOptionIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        resultsViewModel.setItineraries(itineraries, initialIndex = index)
+        resultsViewModel.setItineraries(itineraries, initialIndex = index, plannedStart = params?.plannedStart)
         itineraries.getOrNull(index)?.let { showItinerary(it) }
         if (!fromSnapshot) maybeStartTripUpdates(activity, params, itineraries, index)
         onOptionsSeeded()
@@ -1134,6 +1134,8 @@ private val RAIL_WIDTH = 34.dp
 private val RAIL_SPLIT = 22.dp // node centre, measured from the row's top — where the spine's colour flips
 private val ROW_TOP = 10.dp
 private val ROW_BOTTOM = 10.dp
+private val CONTENT_START_GAP = 8.dp // between the spine cell and the content column
+private val CONTENT_END_INSET = 10.dp // the content column's (and a footer's) inset from the row's end
 private val RAIL_STROKE = 3.dp
 private val BAND_RADIUS = 13.dp
 private val BAND_INSET = 2.dp
@@ -1326,12 +1328,21 @@ private fun LogRow(
 
         is RowContent.BoardHeader -> {
             val transit = content.entry
-            LogRowScaffold(model, onClick = null, onToggleExpand = { onToggle(i) }) {
+            LogRowScaffold(
+                model = model,
+                onClick = null,
+                onToggleExpand = { onToggle(i) },
+                // The board stop's live ETA strip, under the whole row rather than in the content
+                // column, so it runs to the row's edge instead of stopping short at the expand chevron
+                // (#2228). The whole ride, not just its route/stop: the strip also rules the plan's own
+                // arrival at this stop across the live ETAs (#2125), and a pill tap frames the ride's
+                // geometry on the map.
+                footer = transit.routeLeg.board?.let { stop -> { stopEtaStrip(transit, stop) } }
+            ) {
                 BoardContent(
                     entry = transit,
                     onFocus = { focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint) },
-                    onFocusPoint = onFocusPoint,
-                    stopEtaStrip = stopEtaStrip
+                    onFocusPoint = onFocusPoint
                 )
             }
         }
@@ -1395,6 +1406,11 @@ internal fun focusTransit(
  * The spine and the leg's band are drawn by the row itself ([drawRowChrome]) rather than by a
  * full-height child, so the row needs no intrinsic measurement and each one can stand alone as a lazy
  * list item.
+ *
+ * [footer] is a second band of content laid *under* the content column and the expand chevron's
+ * segment, spanning from the content column's start to the row's own end inset — for content that wants
+ * the row's full width and has no business being narrowed by the chevron (the board row's ETA strip,
+ * #2228). It stays inside the row's chrome, so the leg's band and spine run behind it as one.
  */
 @Composable
 private fun LogRowScaffold(
@@ -1403,6 +1419,7 @@ private fun LogRowScaffold(
     onClickLabel: String? = null,
     compact: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
+    footer: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -1420,7 +1437,7 @@ private fun LogRowScaffold(
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
         else -> null to null
     }
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             // drawWithCache, not drawBehind: the dash effect and every Dp→px conversion are resolved
@@ -1435,71 +1452,82 @@ private fun LogRowScaffold(
                 } else {
                     Modifier
                 }
-            ),
-        verticalAlignment = Alignment.Top
-    ) {
-        // Centered in the time column — halfway between the screen edge and the spine.
-        Column(
-            modifier = Modifier
-                .width(timeWidth)
-                .padding(top = rowTop),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            time?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    // The column is sized for the common short time; a locale with a wide am/pm marker
-                    // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
-                    maxLines = 2
-                )
-            }
-            delta?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.outline,
-                    maxLines = 1
-                )
-            }
-        }
-        Box(Modifier.width(RAIL_WIDTH)) {
-            LogNode(model.content, model.nodeColors)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .defaultMinSize(
-                    minHeight = when {
-                        compact -> 0.dp
-                        // A tappable row keeps the platform's minimum touch target.
-                        onClick != null -> ROW_MIN_TOUCH_HEIGHT
-                        else -> ROW_MIN_HEIGHT
-                    }
-                )
-                .padding(
-                    start = 8.dp,
-                    top = if (compact) 0.dp else rowTop,
-                    bottom = if (compact) 0.dp else ROW_BOTTOM,
-                    end = 10.dp
-                ),
-            content = content
-        )
-        // Its own segment at the row's right edge — centred on the row's full height, not just the
-        // header line's — rather than sharing the content column's Row and bumping that line's height
-        // out to the chevron's touch target (#2040).
-        if (model.expandable && onToggleExpand != null) {
-            ExpandChevron(
-                expanded = model.expanded,
-                onToggle = onToggleExpand,
-                label = expandLabel(model),
-                modifier = Modifier.align(Alignment.CenterVertically)
             )
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            // Centered in the time column — halfway between the screen edge and the spine.
+            Column(
+                modifier = Modifier
+                    .width(timeWidth)
+                    .padding(top = rowTop),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                time?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        // The column is sized for the common short time; a locale with a wide am/pm marker
+                        // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
+                        maxLines = 2
+                    )
+                }
+                delta?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1
+                    )
+                }
+            }
+            Box(Modifier.width(RAIL_WIDTH)) {
+                LogNode(model.content, model.nodeColors)
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(
+                        minHeight = when {
+                            compact -> 0.dp
+                            // A tappable row keeps the platform's minimum touch target.
+                            onClick != null -> ROW_MIN_TOUCH_HEIGHT
+                            else -> ROW_MIN_HEIGHT
+                        }
+                    )
+                    .padding(
+                        start = CONTENT_START_GAP,
+                        top = if (compact) 0.dp else rowTop,
+                        // A footer takes over the row's bottom inset, so the two read as one block.
+                        bottom = if (compact || footer != null) 0.dp else ROW_BOTTOM,
+                        end = CONTENT_END_INSET
+                    ),
+                content = content
+            )
+            // Its own segment at the row's right edge — centred on the content's full height, not just the
+            // header line's — rather than sharing the content column's Row and bumping that line's height
+            // out to the chevron's touch target (#2040). A footer sits below this segment, not beside it.
+            if (model.expandable && onToggleExpand != null) {
+                ExpandChevron(
+                    expanded = model.expanded,
+                    onToggle = onToggleExpand,
+                    label = expandLabel(model),
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+        }
+        footer?.let {
+            Box(
+                Modifier.padding(
+                    start = timeWidth + RAIL_WIDTH + CONTENT_START_GAP,
+                    end = CONTENT_END_INSET,
+                    bottom = ROW_BOTTOM
+                )
+            ) { it() }
         }
     }
 }
@@ -1965,13 +1993,12 @@ private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
 private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
     onFocus: () -> Unit,
-    onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
+    onFocusPoint: (GeoPoint) -> Unit
 ) {
     // The route/headsign block highlights the leg on the map; expanding its steps is the scaffold's
-    // own chevron segment (#2040), not a side effect of this tap. The board stop + ETA strip below is a
-    // third, separate tap target that zooms to the stop. Because this control is this inner block rather
-    // than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
+    // own chevron segment (#2040), not a side effect of this tap. The board stop below is a third,
+    // separate tap target that zooms to the stop. Because this control is this inner block rather than
+    // the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
     // content clears 48dp on its own in practice; this is the guarantee, not the usual case.)
     Column(
         Modifier
@@ -2005,9 +2032,6 @@ private fun ColumnScope.BoardContent(
             stopName = stop.name,
             onClick = { stop.point?.let(onFocusPoint) }
         )
-        // The whole ride, not just its route/stop: the strip also rules the plan's own arrival at this
-        // stop across the live ETAs (#2125), and a pill tap frames the ride's geometry on the map.
-        stopEtaStrip(entry, stop)
     }
 }
 

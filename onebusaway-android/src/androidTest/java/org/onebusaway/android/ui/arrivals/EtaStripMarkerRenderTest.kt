@@ -17,12 +17,16 @@ package org.onebusaway.android.ui.arrivals
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -56,8 +60,8 @@ class EtaStripMarkerRenderTest {
      * Each pill wears its route's badge so a pill can be located by a string no other node holds — an ETA
      * or clock-time match would risk colliding with a neighbour's subline.
      */
-    private fun setContent(vararg names: String, reachStopMinutes: Long) = composeRule.setContent {
-        Box(Modifier.fillMaxWidth()) {
+    private fun setContent(vararg names: String, reachStopMinutes: Long, width: Dp? = null) = composeRule.setContent {
+        Box(width?.let { Modifier.width(it) } ?: Modifier.fillMaxWidth()) {
             EtaStrip(
                 trips = names.mapIndexed { i, name ->
                     previewArrival(name, "Rainier Beach", etaMinutes = 3L + i * 8, tripId = "trip_$i")
@@ -109,6 +113,22 @@ class EtaStripMarkerRenderTest {
         val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
 
         assertTrue("rule at ${rule.left} must follow route A", boundsOf("A").right <= rule.left)
+    }
+
+    @Test
+    fun anOverflowingStripOpensWithTheRuleAtItsLeftEdge() {
+        // Six departures in a strip too narrow to show them all; the rider gets there after the first
+        // two. The strip opens on the rule (#2228) — the catchable departures lead, and the two already
+        // ruled out sit behind the "earlier" chevron rather than taking the first two slots.
+        setContent("A", "B", "C", "D", "E", "F", reachStopMinutes = 14, width = 200.dp)
+
+        val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
+        val firstCatchable = boundsOf("C")
+
+        composeRule.onNodeWithText("A").assertIsNotDisplayed()
+        composeRule.onNodeWithText("B").assertIsNotDisplayed()
+        assertTrue("rule ending at ${rule.right} must precede route C at ${firstCatchable.left}", rule.right <= firstCatchable.left)
+        assertTrue("rule at ${rule.left} must open the strip, not sit past its first slot", rule.left < 40.dp)
     }
 
     @Test

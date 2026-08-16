@@ -48,11 +48,16 @@ import org.onebusaway.android.util.geoPointOrNull
  */
 object TripLogBuilder {
 
-    /** [routeLegRefs] is aligned to [legs]: the resolved route/stop identity per transit leg, else null. */
+    /**
+     * [routeLegRefs] is aligned to [legs]: the resolved route/stop identity per transit leg, else null.
+     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart] — what stands in
+     * for "the end of the leg before" when the itinerary opens on transit; null when the plan doesn't say.
+     */
     fun build(
         legs: List<TripLeg>,
         flatDirections: List<Direction>,
-        routeLegRefs: List<RouteLegRef?>
+        routeLegRefs: List<RouteLegRef?>,
+        plannedStart: ServerTime? = null
     ): List<TripLogEntry> {
         if (legs.isEmpty()) return emptyList()
         val entries = ArrayList<TripLogEntry>(legs.size + 2)
@@ -102,11 +107,12 @@ object TripLogBuilder {
                         legIndex = legIndex,
                         // When the rider gets to the board stop: the end of the leg that brought them
                         // there (a walk, or the ride they transfer off). An itinerary that opens on a
-                        // transit leg has no such leg — the rider is at the stop from the start — and
-                        // that is a genuine absence, not a moment to substitute for: see
-                        // TripLogEntry.Transit.reachStopTime for what standing in the ride's own
-                        // departure would tell the rider.
-                        reachStopTime = legs.getOrNull(legIndex - 1)?.endTime,
+                        // transit leg has no such leg — the rider is at the stop from the plan's start —
+                        // so the plan's own start stands in there, when it has one (a depart-at plan);
+                        // an arrive-by plan says nothing about when they set out, and that absence is
+                        // carried as null rather than substituted for with the ride's own departure: see
+                        // TripLogEntry.Transit.reachStopTime for what that would tell the rider.
+                        reachStopTime = if (legIndex == 0) plannedStart else legs[legIndex - 1].endTime,
                         ref = routeLegRefs.getOrNull(legIndex)
                     )
                 }

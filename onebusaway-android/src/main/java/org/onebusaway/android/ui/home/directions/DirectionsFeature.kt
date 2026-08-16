@@ -94,6 +94,7 @@ import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaPillFocus
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
+import org.onebusaway.android.ui.arrivals.components.countBefore
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
@@ -409,6 +410,12 @@ fun DirectionsResultsSheet(
  * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
  * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
  * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
+ *
+ * When the feed holds no departure at or after [reachStopTime] — a plan that leaves later than the
+ * arrivals window reaches, so every pill would be dimmed and the rule would close the strip — the strip
+ * collapses to one line saying so, with a tap to show it anyway (#2228). The line is not a threshold
+ * on how soon the trip must be: it is exactly the case where the feed has nothing boardable to show, and
+ * a later poll that brings a boardable departure puts the strip back on its own.
  */
 @Composable
 internal fun DirectionStopEtaStrip(
@@ -431,8 +438,8 @@ internal fun DirectionStopEtaStrip(
 ) {
     val stopId = stop.stopId
     val point = stop.point
-    // Left-justified to the content column; the old start indent was a holdover from the indented-sub-row design.
-    val rowPadding = Modifier.fillMaxWidth().padding(end = 12.dp, top = 2.dp, bottom = 8.dp)
+    // Edge to edge: the log row already insets its content from the sheet's edges (#2228).
+    val rowPadding = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp)
     // Without an OBA id + location there is no stop to query, so draw nothing at all. "No upcoming
     // arrivals" is reserved for a stop we *did* look up (below) — saying it here would report an
     // unidentifiable stop as one with no service.
@@ -497,8 +504,18 @@ private fun DirectionStopEtaStripContent(
         }
     }
     val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
+    // Collapsed when the rule would land past the last pill — the very count the strip places its rule
+    // by, so the line and the rule can't disagree about what is boardable (nothing at all counts:
+    // an empty feed has nothing boardable either). Never without a reach time. Once shown anyway the
+    // strip stays up for this stop, though a strip that has come to hold a boardable pill needs no reveal.
+    var revealed by rememberSaveable { mutableStateOf(false) }
+    val nothingBoardable = reachStopTime != null && countBefore(interleaved, reachStopTime) { it.first.displayTime } == interleaved.size
+    if (nothingBoardable && !revealed) {
+        NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
+        return
+    }
     if (interleaved.isEmpty()) {
-        NoEtasText(rowPadding)
+        NoEtasText(modifier.then(rowPadding))
         return
     }
     val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
@@ -549,6 +566,26 @@ internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge =
  *  Delegates to [pickRideDirection] rather than repeating the rule, so the strip and the map's ride
  *  selection resolve a leg to the same direction group by construction. */
 private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? = pickRideDirection(routeId, headsign, routeIdOf = { it.routeId }, headsignOf = { it.headsign })
+
+/**
+ * The collapsed strip for a stop the feed has nothing boardable at yet: the rider gets there after
+ * every departure the poll knows about. Tapping "Show" hands over to the strip proper via [onReveal].
+ * The line names only the fact — the row's own time column already says when the rider boards.
+ */
+@Composable
+internal fun NoBoardableDeparturesLine(modifier: Modifier = Modifier, onReveal: () -> Unit) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(R.string.directions_stop_eta_none_boardable),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onReveal) {
+            Text(stringResource(R.string.directions_stop_eta_show_anyway))
+        }
+    }
+}
 
 @Composable
 private fun NoEtasText(modifier: Modifier) {

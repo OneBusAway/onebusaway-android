@@ -134,13 +134,17 @@ internal fun <T> countBefore(items: List<T>, moment: ServerTime, timeOf: (T) -> 
 
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
- * in feed order from the first one; the strip never auto-scrolls, so a trip whose ETA has gone
- * negative just keeps counting down in place. When the pills overflow the row, a chevron appears at
- * that edge to signal there's more to scroll to; tapping it moves the strip one viewport that
- * direction (or to the end, whichever is closer). The chevron's own tap target is a narrow side
- * gutter separate from the pills, so it never blocks the strip's own drag-to-scroll.
+ * in feed order; the strip never auto-scrolls, so a trip whose ETA has gone negative just keeps
+ * counting down in place. When the pills overflow the row, a chevron appears at that edge to signal
+ * there's more to scroll to; tapping it moves the strip one viewport that direction (or to the end,
+ * whichever is closer). The chevron's own tap target is a narrow side gutter separate from the pills,
+ * so it never blocks the strip's own drag-to-scroll.
  *
- * [marker] optionally rules one moment across the strip — see [EtaStripMarker].
+ * [marker] optionally rules one moment across the strip — see [EtaStripMarker]. A marked strip *opens*
+ * with the rule at its left edge (#2228): the departures the rider can catch are what the row is for,
+ * so they lead, and the ones already ruled out sit behind the "earlier" chevron. This is only where the
+ * strip starts — a fixed initial position, not a glide, so it can't contend with the user's own scroll
+ * (the #1801/#1974 class) — and it holds where the user leaves it thereafter.
  */
 @Composable
 internal fun EtaStrip(
@@ -154,8 +158,14 @@ internal fun EtaStrip(
     /** The trip this strip's row is drilled into, if any — see [EtaPillFocus]. */
     focus: EtaPillFocus? = null,
     // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
-    // the strip mid-scroll.
-    state: LazyListState = rememberLazyListState()
+    // the strip mid-scroll. The default opens on the marker's item — the rule rides at the front of the
+    // first pill it precedes (see MarkedItem), so that pill's index is the rule's. Only the initial
+    // position: rememberLazyListState reads it once, and a later poll leaves the viewport where the
+    // user has it (the LazyRow's keys keep it on the same pills). Unmarked, the strip starts at its
+    // first pill.
+    state: LazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } ?: 0
+    )
 ) {
     // All of this strip's trips share one poll (one route/direction group from a single
     // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
@@ -201,7 +211,11 @@ internal fun EtaStrip(
         scope.launch { state.animateScrollBy(delta) }
     }
 
-    Row(modifier, verticalAlignment = Alignment.Bottom) {
+    // Bound to the tallest child so the gutters' fillMaxHeight has something to fill (and their
+    // chevrons centre on the pills) even when the host gives no height bound — the directions drawer's
+    // log row, where the bottom alignment otherwise dropped them to the foot (#2228).
+    // ReferencePillHeightFrame answers the intrinsic query.
+    Row(modifier.height(IntrinsicSize.Min), verticalAlignment = Alignment.Bottom) {
         // Left gutter: a chevron back toward earlier arrivals, shown once the strip is scrolled off its
         // start. Reserved (like the right gutter) so toggling it never reflows the pills.
         ScrollChevronGutter(

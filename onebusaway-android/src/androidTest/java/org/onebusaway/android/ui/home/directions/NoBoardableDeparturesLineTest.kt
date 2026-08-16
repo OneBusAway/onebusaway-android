@@ -23,13 +23,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
-import org.onebusaway.android.util.DisplayFormat
 
 /**
  * The one-line stand-in for a Board row's ETA strip when the feed has nothing the rider can board
- * (#2228): it names when they get to the stop, and its "Show" hands over to the strip.
+ * (#2228): it says so, and its "Show" hands over to the strip.
  */
 class NoBoardableDeparturesLineTest {
 
@@ -40,15 +38,13 @@ class NoBoardableDeparturesLineTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
-    fun namesTheReachTime_andShowRevealsTheStrip() {
-        val reach = ServerTime(1_800_000_000_000L)
+    fun saysSo_andShowRevealsTheStrip() {
         var reveals = 0
         composeRule.setContent {
-            NoBoardableDeparturesLine(reachStopTime = reach, onReveal = { reveals++ })
+            NoBoardableDeparturesLine(onReveal = { reveals++ })
         }
 
-        val clock = DisplayFormat.formatTime(context, reach.epochMs)
-        composeRule.onNodeWithText(context.getString(R.string.directions_stop_eta_none_boardable, clock)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(R.string.directions_stop_eta_none_boardable)).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.directions_stop_eta_show_anyway)).performClick()
         assertEquals(1, reveals)
     }

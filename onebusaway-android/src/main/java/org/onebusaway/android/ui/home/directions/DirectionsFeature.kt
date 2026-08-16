@@ -511,7 +511,7 @@ private fun DirectionStopEtaStripContent(
     // pill needs no reveal.
     var revealed by rememberSaveable { mutableStateOf(false) }
     if (reachStopTime != null && !revealed && !anyAtOrAfter(interleaved, reachStopTime) { it.first.displayTime }) {
-        NoBoardableDeparturesLine(reachStopTime = reachStopTime, modifier = rowPadding, onReveal = { revealed = true })
+        NoBoardableDeparturesLine(modifier = rowPadding, onReveal = { revealed = true })
         return
     }
     if (interleaved.isEmpty()) {
@@ -568,19 +568,16 @@ internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge =
 private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? = pickRideDirection(routeId, headsign, routeIdOf = { it.routeId }, headsignOf = { it.headsign })
 
 /**
- * The collapsed strip for a stop the feed has nothing boardable at yet: the rider gets there at
- * [reachStopTime], after every departure the poll knows about. Tapping "Show" hands over to the strip
- * proper via [onReveal].
+ * The collapsed strip for a stop the feed has nothing boardable at yet: the rider gets there after
+ * every departure the poll knows about. Tapping "Show" hands over to the strip proper via [onReveal].
+ * The line names only the fact — the row's own time column already says when the rider boards.
  */
 @Composable
-internal fun NoBoardableDeparturesLine(reachStopTime: ServerTime, modifier: Modifier = Modifier, onReveal: () -> Unit) {
-    val context = LocalContext.current
-    // Locale work that only changes with the plan, not with each arrivals poll.
-    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
+internal fun NoBoardableDeparturesLine(modifier: Modifier = Modifier, onReveal: () -> Unit) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = stringResource(R.string.directions_stop_eta_none_boardable, clock),
-            style = MaterialTheme.typography.bodySmall,
+            text = stringResource(R.string.directions_stop_eta_none_boardable),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )

@@ -1008,8 +1008,8 @@
     <string name="directions_stop_eta_departure_missed">Leaves before you get here</string>
     <!-- The one-line stand-in for a Board row's live ETA strip when the arrivals feed holds no departure at
          or after the moment the plan has the rider reach that stop (a trip planned for later than the feed
-         reaches). %1$s is a clock time, e.g. "3:19pm". -->
-    <string name="directions_stop_eta_none_boardable">You get here at %1$s · no live departures for then yet</string>
+         reaches). -->
+    <string name="directions_stop_eta_none_boardable">No live departures yet</string>
     <!-- Button on that line that shows the strip anyway (its departures all dimmed as already missed). -->
     <string name="directions_stop_eta_show_anyway">Show</string>
     <!-- Content descriptions for the chevron on a service-alert banner above the directions, which

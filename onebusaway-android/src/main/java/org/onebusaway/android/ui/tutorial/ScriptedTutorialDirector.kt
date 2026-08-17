@@ -47,7 +47,8 @@ data class ScriptedTutorialActions(
     val showRentals: suspend () -> Unit,
     val showTripDestination: suspend () -> Unit,
     val planDemoTrip: suspend () -> Unit,
-    val showOtherItinerary: suspend () -> Unit
+    val showOtherItinerary: suspend () -> Unit,
+    val focusRouteLeg: suspend () -> Unit
 )
 
 /**
@@ -110,6 +111,7 @@ fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActi
             TutorialAction.SHOW_TRIP_DESTINATION -> current.showTripDestination()
             TutorialAction.PLAN_DEMO_TRIP -> current.planDemoTrip()
             TutorialAction.SHOW_OTHER_ITINERARY -> current.showOtherItinerary()
+            TutorialAction.FOCUS_ROUTE_LEG -> current.focusRouteLeg()
         }
     }
 }

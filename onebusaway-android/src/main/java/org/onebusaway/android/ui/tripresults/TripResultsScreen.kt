@@ -1304,8 +1304,18 @@ private fun TripLogList(
         }
         // Keyed by row identity, not position, so opening a leg doesn't discard the subcompositions of
         // every row below it — a board row's live ETA session survives the insert.
+        // The scripted tour rings the trip's first ride to explain focusing a stage (#2164). Resolved
+        // here, where the rows are already flattened, so the row composable stays unaware of it.
+        val firstRideKey = rows.firstOrNull { it.content is RowContent.BoardHeader }?.key
         items(rows, key = { it.key }) { row ->
-            LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+            val anchored = if (row.key == firstRideKey) {
+                Modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ROUTE_LEG)
+            } else {
+                Modifier
+            }
+            Box(anchored) {
+                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+            }
         }
     }
 }

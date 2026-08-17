@@ -965,6 +965,10 @@
     <string name="tutorial_scripted_itinerary_detail_text">Tap a row to open it up — the map draws that
         trip, and you can step through each leg of it.
     </string>
+    <string name="tutorial_scripted_leg_title">Focus route stage</string>
+    <string name="tutorial_scripted_leg_text">Tap on a route stage to show it on the map, along with
+        upcoming vehicles for that route segment.
+    </string>
     <string name="tutorial_scripted_pin_title">Keep a trip</string>
     <string name="tutorial_scripted_pin_text">Long-press a trip to easily return to it from the map.</string>
 

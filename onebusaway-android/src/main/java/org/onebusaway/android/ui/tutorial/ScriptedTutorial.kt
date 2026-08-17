@@ -56,7 +56,10 @@ enum class TutorialAction {
     PLAN_DEMO_TRIP,
 
     /** Select a different itinerary from the ones planned, so the map redraws with another trip. */
-    SHOW_OTHER_ITINERARY
+    SHOW_OTHER_ITINERARY,
+
+    /** Drill into one ride of the chosen trip, drawing that leg and the vehicles running it. */
+    FOCUS_ROUTE_LEG
 }
 
 /**
@@ -116,6 +119,9 @@ object ScriptedTutorial {
      * step-by-step directions and so named the wrong thing.
      */
     const val KEY_ITINERARIES = "tutorial_scripted_itineraries"
+
+    /** A ride within the chosen trip — the row that focuses that leg and its vehicles on the map. */
+    const val KEY_ROUTE_LEG = "tutorial_scripted_route_leg"
 
     /**
      * The currently selected option card. The steps after the comparison one are about a single
@@ -261,6 +267,14 @@ object ScriptedTutorial {
             // sees the map redraw. Saying "tap a row to see it on the map" over an unchanged map
             // demonstrates nothing.
             action = TutorialAction.SHOW_OTHER_ITINERARY
+        ),
+        // 15b. One ride within the chosen trip.
+        TutorialStep(
+            id = "tutorial_scripted_leg",
+            anchorId = KEY_ROUTE_LEG,
+            title = R.string.tutorial_scripted_leg_title,
+            body = R.string.tutorial_scripted_leg_text,
+            action = TutorialAction.FOCUS_ROUTE_LEG
         ),
         // 16. Keeping one.
         TutorialStep(

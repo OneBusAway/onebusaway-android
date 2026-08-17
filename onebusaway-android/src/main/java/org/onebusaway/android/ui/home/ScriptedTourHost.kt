@@ -38,8 +38,10 @@ import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripresults.TripLogEntry
 import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
+import org.onebusaway.android.ui.tripresults.focusTransit
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.ScriptedTutorialActions
@@ -274,6 +276,23 @@ internal fun rememberScriptedTutorialActions(
                         if (target == results.selectedIndex) (target + 1) % results.options.size else target
                     )
                 }
+            },
+            focusRouteLeg = {
+                // The chosen trip's first ride. Driven through `focusTransit` — the same function the
+                // row's own tap calls — so the tour drills in exactly the way a rider would, including
+                // its fallbacks for a leg with no resolved route or no geometry.
+                val results = tripResultsViewModel.state.value as? TripResultsUiState.Success
+                results?.directions
+                    ?.filterIsInstance<TripLogEntry.Transit>()
+                    ?.firstOrNull()
+                    ?.let { transit ->
+                        focusTransit(
+                            entry = transit,
+                            onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
+                            onFocusLeg = homeViewModel::focusItineraryLegOnMap,
+                            onFocusPoint = homeViewModel::focusItineraryPointOnMap
+                        )
+                    }
             }
         )
     }

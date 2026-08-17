@@ -69,6 +69,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -96,6 +97,8 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -120,6 +123,7 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -203,6 +207,22 @@ fun TripResultsHeader(
     // card: [CenteredLongPressMenu] is a Dialog, so it draws in the same place whichever card raised it,
     // and the strip has no business composing three of them to show at most one.
     var menuForIndex by remember(success.options) { mutableStateOf<Int?>(null) }
+    // Where each card sits inside the scrolling row, so the selected one can be brought into view.
+    val cardSpans = remember(success.options) { mutableStateMapOf<Int, ClosedFloatingPointRange<Float>>() }
+    // Selecting an option should never leave it hanging off an edge — the rider can't compare a card
+    // they can only see a sliver of. It matters most when the selection was *not* made by tapping a
+    // visible card: the scripted tour opens one further along the strip (#2164), and a restored pinned
+    // trip can be any option at all.
+    LaunchedEffect(success.selectedIndex, cardSpans[success.selectedIndex], scrollState.viewportSize) {
+        val span = cardSpans[success.selectedIndex] ?: return@LaunchedEffect
+        val viewport = scrollState.viewportSize.takeIf { it > 0 } ?: return@LaunchedEffect
+        val target = when {
+            span.start < scrollState.value -> span.start
+            span.endInclusive > scrollState.value + viewport -> span.endInclusive - viewport
+            else -> return@LaunchedEffect
+        }
+        scrollState.animateScrollTo(target.roundToInt().coerceAtLeast(0))
+    }
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
@@ -239,11 +259,17 @@ fun TripResultsHeader(
                     // The scripted tour's later trip steps are about one option — opening it, and
                     // pinning it — so they ring the selected card rather than the whole strip (#2164).
                     // Anchored on selection, so the outline follows when a step picks a different one.
-                    modifier = if (selected) {
-                        Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ITINERARY_CARD)
-                    } else {
-                        Modifier
-                    }
+                    modifier = Modifier
+                        .onGloballyPositioned {
+                            cardSpans[index] = it.positionInParent().x..(it.positionInParent().x + it.size.width)
+                        }
+                        .then(
+                            if (selected) {
+                                Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ITINERARY_CARD)
+                            } else {
+                                Modifier
+                            }
+                        )
                 )
             }
         }

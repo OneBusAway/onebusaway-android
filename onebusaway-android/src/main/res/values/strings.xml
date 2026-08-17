@@ -926,7 +926,7 @@
         on the map.
     </string>
     <string name="tutorial_scripted_arrivals_title">Live arrivals</string>
-    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, with the nearest
+    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, with the soonest
         departure on the left.
     </string>
     <string name="tutorial_scripted_route_title">Tap a route</string>
@@ -954,15 +954,13 @@
     <string name="tutorial_scripted_plan_press_title">Planning a trip</string>
     <string name="tutorial_scripted_plan_press_text">Long-press anywhere on the map to route to it.</string>
     <string name="tutorial_scripted_plan_title">Here’s the trip</string>
-    <string name="tutorial_scripted_plan_text">These are the ways to get there from where you pressed.</string>
+    <string name="tutorial_scripted_plan_text">Here are some routes to the chosen destination.</string>
     <string name="tutorial_scripted_trip_options_title">Narrow it down</string>
     <string name="tutorial_scripted_trip_options_text">Choose which kinds of transit you’ll take, how
         far you’ll walk, and when you want to leave or arrive.
     </string>
     <string name="tutorial_scripted_itineraries_title">Several ways to go</string>
-    <string name="tutorial_scripted_itineraries_text">Each row is a different way to make the trip.
-        Compare how long they take and what you’d ride.
-    </string>
+    <string name="tutorial_scripted_itineraries_text">Each row is a different way to make the trip.</string>
     <string name="tutorial_scripted_itinerary_detail_title">See it on the map</string>
     <string name="tutorial_scripted_itinerary_detail_text">Tap a row to open it up — the map draws that
         trip, and you can step through each leg of it.

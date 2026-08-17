@@ -406,9 +406,9 @@ fun TutorialOverlay(state: TutorialState) {
                 // Opening: grow from nothing to full size, so a step change pops rather than slides.
                 val grown = bounds.inflate(pulsePx + burstPx)
                 val rect = grown.scaledAbout(grown.center, openFraction.value)
-                    // Kept inside the screen so a target as large as the map — the opening "this is the
-                    // map" step — still shows its outline rather than drawing it off every edge.
-                    .clampedInto(size, edgeInsetPx)
+                    // Only a target too big for the screen — the opening "this is the map" step — is
+                    // pulled in; everything else keeps its true bounds so the ring stays concentric.
+                    .shrunkToFit(size, edgeInsetPx)
                 val corner = minOf(rect.minDimension / 2f, maxCornerPx)
                 val fade = 1f - finishProgress.value
                 drawRoundRect(
@@ -611,18 +611,23 @@ private fun Rect.scaledAbout(about: Offset, factor: Float): Rect = Rect(
 )
 
 /**
- * This rect held inside a [size]-sized area, [inset] in from its edges.
+ * This rect shrunk about its centre until it fits a [size]-sized area with [inset] to spare, or
+ * returned untouched when it already does.
  *
- * Only ever shrinks: a target already on screen is untouched, while one as large as the whole map is
- * pulled back to where its outline can actually be seen. A rect that would invert under the inset
- * collapses to its centre rather than turning inside out.
+ * The point is the opening step, whose target is the whole map: its outline would otherwise be drawn
+ * entirely off every edge and never seen. Everything else must pass through unchanged — an earlier
+ * version pulled each edge in independently, which left a control near the screen edge (the rentals
+ * button) ringed by an outline that was narrower on one side and visibly off-centre. Shrinking about
+ * the centre keeps the outline concentric with whatever it is naming; a target genuinely at the edge
+ * keeps its true bounds and simply lets the ring bleed off screen, which is where the control is.
  */
-private fun Rect.clampedInto(size: Size, inset: Float): Rect {
-    val minLeft = inset
-    val minTop = inset
-    val maxRight = (size.width - inset).coerceAtLeast(minLeft)
-    val maxBottom = (size.height - inset).coerceAtLeast(minTop)
-    val l = left.coerceIn(minLeft, maxRight)
-    val t = top.coerceIn(minTop, maxBottom)
-    return Rect(l, t, right.coerceIn(l, maxRight), bottom.coerceIn(t, maxBottom))
+private fun Rect.shrunkToFit(size: Size, inset: Float): Rect {
+    val maxWidth = (size.width - 2 * inset).coerceAtLeast(0f)
+    val maxHeight = (size.height - 2 * inset).coerceAtLeast(0f)
+    if (width <= maxWidth && height <= maxHeight) return this
+    val scale = minOf(
+        if (width > maxWidth) maxWidth / width else 1f,
+        if (height > maxHeight) maxHeight / height else 1f
+    )
+    return scaledAbout(center, scale)
 }

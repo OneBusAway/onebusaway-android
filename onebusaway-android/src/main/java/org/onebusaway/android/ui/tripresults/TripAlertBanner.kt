@@ -15,14 +15,8 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,9 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -43,14 +35,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.compose.components.AlertSurface
 import org.onebusaway.android.ui.compose.components.linkifyUrls
-import org.onebusaway.android.ui.icons.AppIcons
 
 /**
- * One service alert over the trip planner's directions (#2143), drawn on the app's shared
- * severity-tinted [AlertSurface] so a suspension reads the same here as it does on the arrivals
- * screen.
+ * One service alert over the trip planner's directions (#2143), drawn on the shared
+ * [ExpandableAlertBanner] so a suspension reads the same here as it does on the arrivals screen — and
+ * the same as the safety caution it may sit beside.
  *
  * Collapsed it is the feed's headline alone — enough, under the leg's own header, to know that ride is
  * in doubt. Tapping expands the full description in place, plus the agency's own
@@ -67,39 +57,16 @@ internal fun TripAlertBanner(alert: TripAlertItem, modifier: Modifier = Modifier
     // Keyed on the alert's content identity, so a re-plan that returns the same alert keeps it open and
     // one that returns a different alert doesn't inherit the old one's expansion.
     var expanded by rememberSaveable(alert.contentId) { mutableStateOf(false) }
-    AlertSurface(
+    ExpandableAlertBanner(
         severity = alert.severity,
-        modifier = modifier,
-        onClick = if (alert.hasDetail) ({ expanded = !expanded }) else null
+        summary = alert.summary,
+        expanded = expanded,
+        onToggle = if (alert.hasDetail) ({ expanded = !expanded }) else null,
+        showDetailsRes = R.string.directions_alert_show_details,
+        hideDetailsRes = R.string.directions_alert_hide_details,
+        modifier = modifier
     ) {
-        // Top-aligned: the glyph and the chevron mark the alert, and on an expanded one they belong
-        // beside its first line rather than floating down beside the middle of the description.
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_warning_24),
-                contentDescription = null
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(text = alert.summary, style = MaterialTheme.typography.bodyMedium)
-                if (expanded) {
-                    AlertDetail(alert)
-                }
-            }
-            if (alert.hasDetail) {
-                Icon(
-                    imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
-                    contentDescription = stringResource(
-                        if (expanded) {
-                            R.string.directions_alert_hide_details
-                        } else {
-                            R.string.directions_alert_show_details
-                        }
-                    ),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
+        AlertDetail(alert)
     }
 }
 

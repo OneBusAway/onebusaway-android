@@ -1168,6 +1168,20 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Leave directions outright, asking nothing — the answer to a modal the rider declined rather than
+     * to a gesture (today, backing out of the safety notice, #2218).
+     *
+     * Deliberately *not* [navigateBackInDirections]: that is a three-rung ladder (pop a sub-focus, else
+     * stage the #2140 confirmation, else exit), and only its last rung is what declining means. Borrowed
+     * for a modal it misbehaves the moment there is anything to pop or to confirm — a pinned-trip resume
+     * puts a drawn plan behind the notice on the rider's very first visit, and the ladder would answer
+     * Back by raising a confirm dialog *underneath* the full-screen notice still covering the screen.
+     * Unlike [confirmExitDirections] this needs no staged-exit guard: it isn't a control on the trip
+     * surface (#2075) but the dismissal of a modal that is itself the only thing on screen.
+     */
+    fun leaveDirections() = exitDirections()
+
+    /**
      * The system Back gesture while in directions. A leg the user drilled into — its route, or an
      * on-street leg framed on its own — steps back out of that leg first, so Back reverses the drill-in
      * (restoring the camera it moved) instead of leaving the trip behind (#2075); only from the plain

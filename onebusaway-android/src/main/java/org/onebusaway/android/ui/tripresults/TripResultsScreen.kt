@@ -1250,6 +1250,10 @@ private fun TripLogList(
             reminderControl()
             HorizontalDivider()
             Spacer(Modifier.height(LOG_EDGE_GAP))
+            // Below the picker, above the steps: the walking legs are what it qualifies, and it is
+            // true of every option rather than of the one being compared (#2218).
+            DirectionsCautionBanner()
+            Spacer(Modifier.height(LOG_EDGE_GAP))
         }
         // Keyed by row identity, not position, so opening a leg doesn't discard the subcompositions of
         // every row below it — a board row's live ETA session survives the insert.

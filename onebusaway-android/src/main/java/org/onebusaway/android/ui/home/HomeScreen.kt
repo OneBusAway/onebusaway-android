@@ -99,6 +99,7 @@ import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
+import org.onebusaway.android.ui.home.directions.DirectionsSafetyNotice
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -1138,6 +1139,14 @@ fun HomeScreen(
                                         },
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit
+                                    )
+                                }
+                                // The one-time "these directions may be wrong" acknowledgement (#2218).
+                                // Gated on the focus alone, not on pickTarget, so every way into
+                                // directions passes through it.
+                                if (directionsActive) {
+                                    DirectionsSafetyNotice(
+                                        onDecline = homeViewModel::leaveDirections
                                     )
                                 }
                             }

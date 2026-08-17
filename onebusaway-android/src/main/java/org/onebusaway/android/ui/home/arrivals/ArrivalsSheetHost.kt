@@ -41,6 +41,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
@@ -52,6 +53,7 @@ import org.onebusaway.android.ui.home.StopRouteSelection
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.TutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
@@ -173,7 +175,14 @@ internal fun ArrivalsSheetHost(
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
             selectedTripId = selectedRoute?.selectedTripId,
             onContentHeight = onContentHeight,
-            etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA)
+            // The onboarding spotlight targets inside the first arrivals row. The ETA pill is shared
+            // with the older opportunistic arrivals tutorial; the badge and star are the scripted
+            // tour's own (#2164).
+            anchors = ArrivalRowAnchors(
+                eta = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
+                badge = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ROUTE_BADGE),
+                star = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ROUTE_STAR)
+            )
         )
     }
 }

@@ -17,45 +17,50 @@ package org.onebusaway.android.ui.tutorial
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * Drives the welcome tutorial's map-stop spotlight in a map-SDK-agnostic way: while the
- * [WelcomeTutorial.KEY_MAP_STOP] step is up it picks the visible stop nearest the screen center,
- * projects it to screen coordinates through the neutral [projector], and reports those bounds to the
- * spotlight overlay. When the user advances past the step (not "X"), it focuses that stop via
- * [onFocusStop] so the arrivals tutorial continues.
+ * Puts the scripted tour's "tap a stop" spotlight over a real stop marker on the map (#2164), in a
+ * map-SDK-agnostic way: while that step is up it finds the demo system's anchor stop among the drawn
+ * markers, projects it to screen coordinates through the neutral [projector], and reports those bounds
+ * to the spotlight overlay.
+ *
+ * Pinning to a *named* stop is the whole point. The tour's caption promises a stop served by three
+ * routes, and the step after it opens that stop's arrivals — so the spotlight has to land on the stop
+ * the script is about, not on whichever one happens to be nearest the middle of the screen (which is
+ * all the retired live-data welcome tutorial could manage, and why its next step so often described
+ * arrivals the rider wasn't looking at).
+ *
+ * Advancing past the step is handled by `ScriptedTutorialDirector`, which focuses the same stop through
+ * the ordinary reveal path — so every one of the tour's actions is driven from one place rather than a
+ * couple of them reaching in from the map layer.
  *
  * It depends only on the flavor-neutral map seam ([MapProjector] / [StopMarker]), never a map SDK, so
- * any map flavor that publishes a projector lights this up. A null [projector] (map not laid out, or a
- * flavor that doesn't publish one) leaves the overlay showing its plain full-screen card.
+ * any map flavor that publishes a projector lights this up. Until the projector is ready and the demo
+ * stop has been drawn, no bounds are reported and the overlay shows its plain full-screen card, which is
+ * the correct rendering for "there is nothing to point at yet".
  *
  * The overlay is modal (it blocks map gestures) so the camera is static during the step; the short poll
- * just keeps the target fresh until the projector is ready and stops have loaded.
+ * just keeps the target fresh while the stops load in.
  */
 @Composable
 fun MapStopSpotlight(
     projector: MapProjector?,
-    currentStops: () -> List<StopMarker>,
-    onFocusStop: (StopMarker) -> Unit
+    currentStops: () -> List<StopMarker>
 ) {
     val tutorialState = LocalTutorialState.current ?: return
-    val active = tutorialState.current?.id == WelcomeTutorial.KEY_MAP_STOP
+    val active = tutorialState.current?.anchorId == ScriptedTutorial.KEY_STOP
     val windowSize = LocalWindowInfo.current.containerSize
     val markerRadiusPx = with(LocalDensity.current) { 20.dp.toPx() }
-    var chosenStop by remember { mutableStateOf<StopMarker?>(null) }
 
     LaunchedEffect(active, projector) {
         val proj = projector ?: return@LaunchedEffect
@@ -63,14 +68,12 @@ fun MapStopSpotlight(
         val centerX = windowSize.width / 2f
         val centerY = windowSize.height / 2f
         while (true) {
-            val nearest = nearestProjected(currentStops(), { it.point }, centerX, centerY) {
-                proj.toScreen(it)
-            }
+            val anchorStops = currentStops().filter { it.id == DemoModeController.ANCHOR_STOP_ID }
+            val nearest = nearestProjected(anchorStops, { it.point }, centerX, centerY) { proj.toScreen(it) }
             if (nearest != null) {
-                val (marker, offset) = nearest
-                chosenStop = marker
+                val offset = nearest.second
                 tutorialState.reportBounds(
-                    WelcomeTutorial.KEY_MAP_STOP,
+                    ScriptedTutorial.KEY_STOP,
                     Rect(
                         offset.x - markerRadiusPx,
                         offset.y - markerRadiusPx,
@@ -80,14 +83,6 @@ fun MapStopSpotlight(
                 )
             }
             delay(120)
-        }
-    }
-
-    val completed = tutorialState.completedStepId
-    LaunchedEffect(completed) {
-        if (completed == WelcomeTutorial.KEY_MAP_STOP) {
-            chosenStop?.let(onFocusStop)
-            tutorialState.consumeCompletion()
         }
     }
 }

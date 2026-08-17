@@ -753,10 +753,6 @@
     <string name="night_light_cancel">Cancelar luz de noche</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">¡Bienvenido a %1$s!</string>
-    <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
-        de llegada.
-    </string>
     <string name="tutorial_opt_out_dialog_title">¿Mostrar el tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">¿Te gustaría ver las ventanas emergentes que describen como
         usar %1$s? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el

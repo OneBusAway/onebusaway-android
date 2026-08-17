@@ -46,6 +46,10 @@ import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.api.data.VehicleSearchDataSource
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
+import org.onebusaway.android.demo.DemoModeController
+import org.onebusaway.android.demo.DemoModeState
+import org.onebusaway.android.demo.DemoRentalPlacesRepository
+import org.onebusaway.android.demo.DemoTripPlanRepository
 import org.onebusaway.android.extrapolation.data.DefaultTripObservationFetcher
 import org.onebusaway.android.extrapolation.data.DefaultTripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripObservationFetcher
@@ -245,8 +249,17 @@ abstract class RepositoryModule {
     @Binds
     abstract fun bindGeocodeRepository(impl: DefaultGeocodeRepository): GeocodeRepository
 
+    // The read-only view of demo mode, for collaborators that react to it but must not switch it.
     @Binds
-    abstract fun bindTripPlanRepository(impl: DefaultTripPlanRepository): TripPlanRepository
+    @Singleton
+    abstract fun bindDemoModeState(impl: DemoModeController): DemoModeState
+
+    // The demo-aware decorators (#2164). Each wraps the real impl and answers from the bundled demo
+    // transit system only while the scripted tutorial has demo mode on, so the tutorial's trip-plan
+    // and bike-layer steps have guaranteed content while normal use is untouched. The OBA side needs
+    // no decorator: ObaApiProvider is a single seam and branches there.
+    @Binds
+    abstract fun bindTripPlanRepository(impl: DemoTripPlanRepository): TripPlanRepository
 
     @Binds
     abstract fun bindAdvancedSettingsRepository(
@@ -269,7 +282,7 @@ abstract class RepositoryModule {
     abstract fun bindRouteMapRepository(impl: DefaultRouteMapRepository): RouteMapRepository
 
     @Binds
-    abstract fun bindRentalPlacesRepository(impl: DefaultRentalPlacesRepository): RentalPlacesRepository
+    abstract fun bindRentalPlacesRepository(impl: DemoRentalPlacesRepository): RentalPlacesRepository
 
     // HomeViewModel's collaborators (so it can become a plain @HiltViewModel — D6).
     @Binds

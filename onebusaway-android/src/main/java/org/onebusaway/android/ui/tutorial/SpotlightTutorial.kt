@@ -82,18 +82,28 @@ import org.onebusaway.android.ui.icons.AppIcons
 
 /**
  * One step of a spotlight tutorial: a caption (title + body, optional trailing [bodyIcon]) anchored to
- * a UI target by [id]. [id] doubles as the anchor key ([Modifier.tutorialAnchor]) and, for persisted
- * tutorials, the "already shown" preference key — so a step's target and its shown-flag stay in sync.
+ * a UI target by [anchorId]. [id] is the step's own identity and, for persisted tutorials, its
+ * "already shown" preference key.
+ *
+ * [anchorId] defaults to [id], which is the right thing for a tutorial whose steps each spotlight a
+ * different target — the two were one field until the scripted tour (#2164) needed several consecutive
+ * steps to say different things about the *same* target (three about the itinerary list, two about the
+ * ETA pill). Sharing the id outright would have made those steps indistinguishable to everything that
+ * keys on it, starting with the overlay's own step-change animation.
+ *
+ * [action] is what the app should *do* when this step opens — the mechanism the scripted tour (#2164)
+ * is built on. A step that says "tap a route to see its vehicles" performs that navigation itself, so
+ * what the caption describes is always what is on screen behind it, whatever the user does. Null (the
+ * default) is a step that only narrates what is already there, which is every step of the older
+ * opportunistic tutorials.
  */
 data class TutorialStep(
     val id: String,
     @param:StringRes val title: Int,
     @param:StringRes val body: Int,
     @param:DrawableRes val bodyIcon: Int? = null,
-    // When this is the last step of its sequence, the advance button reads "Finish" — unless this step
-    // continues into a follow-on tutorial (e.g. the welcome map-stop step chains into the arrivals tour),
-    // in which case it keeps reading "Next".
-    val continuesAfter: Boolean = false
+    val action: TutorialAction? = null,
+    val anchorId: String = id
 )
 
 /**
@@ -121,18 +131,9 @@ class TutorialState {
     val isLast: Boolean get() = index >= steps.size - 1
 
     /**
-     * The id of the last step the user advanced *past* to finish a sequence (vs skipping it); null until
-     * [consumeCompletion]. Lets a step's normal completion trigger a follow-on action — e.g. the welcome
-     * map-stop step focuses its spotlighted stop so the arrivals tutorial continues.
-     */
-    var completedStepId by mutableStateOf<String?>(null)
-        private set
-
-    /**
-     * True while the genuinely-final step plays its expand-to-fill finish flourish: [current] keeps
-     * returning that step (so the overlay stays up and animating) until [onFinishExpanded] clears it. A
-     * step that continues into a follow-on tutorial doesn't set this — it clears at once so the next
-     * sequence can pop open — and neither does a skip / "X" ([dismiss]).
+     * True while the final step plays its expand-to-fill finish flourish: [current] keeps returning that
+     * step (so the overlay stays up and animating) until [onFinishExpanded] clears it. A skip / "X"
+     * ([dismiss]) doesn't set it — the flourish is the reward for reaching the end.
      */
     var finishing by mutableStateOf(false)
         private set
@@ -145,21 +146,16 @@ class TutorialState {
     }
 
     /**
-     * Advance to the next step. Finishing the last step signals completion and either clears at once (if
-     * it continues into a follow-on tutorial) or enters the [finishing] flourish, which clears once the
-     * overlay reports it has played ([onFinishExpanded]). A no-op while already [finishing].
+     * Advance to the next step. Advancing past the last one enters the [finishing] flourish, which
+     * clears once the overlay reports it has played ([onFinishExpanded]). A no-op while already
+     * [finishing].
      */
     fun advance() {
         if (finishing) return
-        if (index < steps.size - 1) {
-            index++
-            return
-        }
-        completedStepId = current?.id
-        if (current?.continuesAfter == true) clear() else finishing = true
+        if (index < steps.size - 1) index++ else finishing = true
     }
 
-    /** End the tutorial immediately (skip / "X") WITHOUT signalling completion or playing the flourish. */
+    /** End the tutorial immediately (skip / "X"), without playing the finish flourish. */
     fun dismiss() = clear()
 
     /** The overlay calls this once the finish flourish has expanded off-screen, ending the tutorial. */
@@ -169,11 +165,6 @@ class TutorialState {
         steps = emptyList()
         index = 0
         finishing = false
-    }
-
-    /** Acknowledge a [completedStepId] so it isn't handled again. */
-    fun consumeCompletion() {
-        completedStepId = null
     }
 
     /**
@@ -242,13 +233,18 @@ fun TutorialOverlay(state: TutorialState) {
     // The step the spotlight is currently drawn around. It lags [step] across a transition: when the step
     // changes the cutout shrinks shut over the old target, this flips to the new step, and the cutout grows
     // back open over the new target — so the spotlight never slides between the two positions.
-    var spotlightStepId by remember { mutableStateOf(step.id) }
+    var spotlightStep by remember { mutableStateOf(step) }
     // 0 = closed (no cutout, full scrim); 1 = fully open. Scales the cutout radius (see the Canvas below).
     val openFraction = remember { Animatable(0f) }
     LaunchedEffect(step.id) {
-        if (step.id != spotlightStepId) {
-            openFraction.animateTo(0f, tween(SPOTLIGHT_CLOSE_MILLIS, easing = FastOutLinearInEasing))
-            spotlightStepId = step.id
+        if (step.id != spotlightStep.id) {
+            // Consecutive steps about the *same* target (the scripted tour's three itinerary-list steps)
+            // keep the cutout open and just swap the caption: shutting and reopening it over unchanged
+            // bounds reads as a glitch rather than as a move.
+            if (step.anchorId != spotlightStep.anchorId) {
+                openFraction.animateTo(0f, tween(SPOTLIGHT_CLOSE_MILLIS, easing = FastOutLinearInEasing))
+            }
+            spotlightStep = step
         }
         // The springy reopen — also the initial pop-in, where there's no close half to run first.
         openFraction.animateTo(1f, tween(SPOTLIGHT_OPEN_MILLIS, easing = SPOTLIGHT_BOUNCE_EASING))
@@ -264,10 +260,10 @@ fun TutorialOverlay(state: TutorialState) {
         }
     }
 
-    // The cutout tracks the transitioning [spotlightStepId]; the caption jumps straight to the incoming
+    // The cutout tracks the transitioning [spotlightStep]; the caption jumps straight to the incoming
     // step (its text is the next thing to read), so its placement keys off that target.
-    val spotlightTarget = state.boundsFor(spotlightStepId)?.translate(-overlayOrigin.x, -overlayOrigin.y)
-    val captionTarget = state.boundsFor(step.id)?.translate(-overlayOrigin.x, -overlayOrigin.y)
+    val spotlightTarget = state.boundsFor(spotlightStep.anchorId)?.translate(-overlayOrigin.x, -overlayOrigin.y)
+    val captionTarget = state.boundsFor(step.anchorId)?.translate(-overlayOrigin.x, -overlayOrigin.y)
 
     // A gentle, continuous "bounce" for the annulus around the cutout — an overshooting ease-in-out so
     // the ring springs out a little past its resting thickness and settles back, repeatedly.
@@ -427,13 +423,9 @@ private fun TutorialCaption(
                     )
                 }
             }
-            // A single advance action: "Next", or "Finish" on the genuinely-final step (a last step that
-            // doesn't continue into a follow-on tutorial). The corner "X" ends the tutorial outright.
-            val advanceLabel = if (isLast && !step.continuesAfter) {
-                R.string.tutorial_button_finish
-            } else {
-                R.string.pager_button_next
-            }
+            // A single advance action: "Next", or "Finish" on the last step. The corner "X" ends the
+            // tutorial outright.
+            val advanceLabel = if (isLast) R.string.tutorial_button_finish else R.string.pager_button_next
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, end = 12.dp),
                 horizontalArrangement = Arrangement.End

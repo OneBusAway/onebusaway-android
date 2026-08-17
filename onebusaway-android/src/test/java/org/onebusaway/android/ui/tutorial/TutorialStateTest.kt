@@ -23,13 +23,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [TutorialState]'s step machine — in particular the distinction that drives the
- * welcome→arrivals hand-off: advancing past the last step signals completion ([completedStepId]) while
- * dismissing ("X") does not.
+ * Unit tests for [TutorialState]'s step machine — in particular the distinction between reaching the
+ * end of a sequence, which plays the finish flourish, and dismissing it with "X", which doesn't.
  */
 class TutorialStateTest {
 
-    private fun step(id: String, continuesAfter: Boolean = false) = TutorialStep(id = id, title = 0, body = 0, continuesAfter = continuesAfter)
+    private fun step(id: String) = TutorialStep(id = id, title = 0, body = 0)
 
     @Test
     fun `start with an empty list is a no-op`() {
@@ -58,12 +57,11 @@ class TutorialStateTest {
     }
 
     @Test
-    fun `advancing past a final step signals completion and enters the finish flourish`() {
+    fun `advancing past a final step enters the finish flourish`() {
         val state = TutorialState()
         state.start(listOf(step("a"), step("b")))
         state.advance() // -> b (last)
-        state.advance() // -> finishing (b doesn't continue into a follow-on)
-        assertEquals("b", state.completedStepId)
+        state.advance() // -> finishing
         assertTrue(state.finishing)
         // The overlay keeps showing the final step until it has played the expand-to-fill flourish.
         assertTrue(state.active)
@@ -92,42 +90,32 @@ class TutorialStateTest {
     }
 
     @Test
-    fun `a final step that continues hands off at once without a flourish`() {
-        val state = TutorialState()
-        state.start(listOf(step("a", continuesAfter = true)))
-        state.advance() // completes + clears so the follow-on sequence can start
-        assertEquals("a", state.completedStepId)
-        assertFalse(state.finishing)
-        assertFalse(state.active)
-        assertNull(state.current)
-    }
-
-    @Test
-    fun `dismiss ends the tutorial WITHOUT signalling completion`() {
+    fun `dismiss ends the tutorial without playing the flourish`() {
         val state = TutorialState()
         state.start(listOf(step("a"), step("b")))
         state.dismiss()
         assertFalse(state.active)
-        assertNull(state.completedStepId)
+        assertFalse(state.finishing)
+        assertNull(state.current)
     }
 
     @Test
-    fun `dismiss on the last step also does not signal completion`() {
+    fun `dismiss on the last step also skips the flourish`() {
         val state = TutorialState()
         state.start(listOf(step("a"))) // single step -> already the last
         assertTrue(state.isLast)
         state.dismiss()
-        assertNull(state.completedStepId)
+        assertFalse(state.active)
+        assertFalse(state.finishing)
     }
 
     @Test
-    fun `consumeCompletion clears the completed step id`() {
-        val state = TutorialState()
-        state.start(listOf(step("a")))
-        state.advance() // completes
-        assertEquals("a", state.completedStepId)
-        state.consumeCompletion()
-        assertNull(state.completedStepId)
+    fun `a step anchors on its own id unless it names another target`() {
+        assertEquals("a", step("a").anchorId)
+        assertEquals(
+            "shared_target",
+            TutorialStep(id = "a", title = 0, body = 0, anchorId = "shared_target").anchorId
+        )
     }
 
     @Test

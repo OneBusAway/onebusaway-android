@@ -25,6 +25,7 @@ import okhttp3.OkHttpClient
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.api.asObaFailure
 import org.onebusaway.android.api.contract.ObaWebService
+import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.util.runCatchingCancellable
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -37,12 +38,18 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
  * changes. The shared [OkHttpClient] (carrying [ApiParamsInterceptor]) is reused across rebuilds —
  * only the lightweight Retrofit proxy is replaced. Region switches are rare, so the rebuild-on-change
  * cost is negligible.
+ *
+ * This is also the app's single OBA seam — every one of the `api/data` sources reaches the API through
+ * [call] / [callOrNull] — which is what lets the scripted tutorial's demo mode (#2164) substitute a
+ * whole offline deployment here ([DemoModeController.obaService]) without any data source, repository,
+ * view model or screen knowing about it.
  */
 @Singleton
 class ObaApiProvider @Inject constructor(
     private val resolver: ObaEndpointResolver,
     private val client: OkHttpClient,
-    private val json: Json
+    private val json: Json,
+    private val demoMode: DemoModeController
 ) {
     private var cachedBase: Uri? = null
     private var cachedService: ObaWebService? = null
@@ -58,6 +65,7 @@ class ObaApiProvider @Inject constructor(
      * classify app-level codes on one type.
      */
     suspend fun <T> call(block: suspend (ObaWebService) -> T): Result<T> {
+        demoService()?.let { return attempt { block(it) } }
         val service = service() ?: return Result.failure(noEndpoint())
         return attempt { block(service) }
     }
@@ -67,9 +75,19 @@ class ObaApiProvider @Inject constructor(
      * that treat "no region" as nothing-to-show rather than an error.
      */
     suspend fun <T> callOrNull(block: suspend (ObaWebService) -> T): Result<T?> {
+        demoService()?.let { return attempt { block(it) } }
         val service = service() ?: return Result.success(null)
         return attempt { block(service) }
     }
+
+    /**
+     * The demo deployment while the scripted tutorial has demo mode on, else null.
+     *
+     * Checked ahead of [service] rather than inside it so the demo tour needs no endpoint at all: it
+     * runs with no region selected, no API key and no network, which is precisely the fragility in the
+     * live-data tutorial that #2164 set out to remove.
+     */
+    private fun demoService(): ObaWebService? = if (demoMode.isActive) demoMode.obaService else null
 
     /** Runs [block], mapping an OBA-stated failure to [ObaApiException] and keeping cancellation out. */
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = runCatchingCancellable { block() }

@@ -135,6 +135,9 @@ import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
 import org.onebusaway.android.ui.tripresults.resolvedAt
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
@@ -190,7 +193,14 @@ fun DirectionsFormCard(
         tonalElevation = 3.dp,
         shadowElevation = 3.dp
     ) {
-        Column(Modifier.heightIn(max = maxHeight).verticalScroll(rememberScrollState())) {
+        Column(
+            Modifier
+                .heightIn(max = maxHeight)
+                .verticalScroll(rememberScrollState())
+                // The scripted tour's "narrow it down" step spotlights the whole form — the mode
+                // pickers, the walk preference and the depart/arrive time are one choice (#2164).
+                .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_OPTIONS)
+        ) {
             TripPlanForm(
                 state = state,
                 onQueryChange = viewModel::onQueryChange,

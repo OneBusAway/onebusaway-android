@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -54,7 +55,8 @@ data class MapChromeState(
 @HiltViewModel
 class MapChromeViewModel @Inject constructor(
     prefsRepo: PreferencesRepository,
-    regionRepo: RegionRepository
+    regionRepo: RegionRepository,
+    demoMode: DemoModeState
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapChromeState())
@@ -87,15 +89,21 @@ class MapChromeViewModel @Inject constructor(
                 prefsRepo.observeBoolean(R.string.preference_key_show_zoom_controls, false),
                 prefsRepo.observeBoolean(R.string.preference_key_left_hand_mode, false),
                 rentals.combine(buttonShown) { it, shown -> it to shown },
-                regionRepo.region,
+                // Paired rather than passed as a sixth flow so this stays inside the typed five-flow
+                // overload, for the same reason the three rental preferences are combined above.
+                regionRepo.region.combine(demoMode.active) { region, demo -> region to demo },
                 prefsRepo.observeString(R.string.preference_key_otp_api_url, null)
-            ) { zoomControls, leftHand, (rentalPrefs, shown), region, otpUrl ->
+            ) { zoomControls, leftHand, (rentalPrefs, shown), (region, demoActive), otpUrl ->
                 val (master, bikes, scooters) = rentalPrefs
                 // Reactive re-derivation of rental availability for this consumer, tracking region +
                 // the OTP-URL pref, so this stays a live flow while the trip-planning call sites
                 // resolve theirs per-call from a Context. This chrome drives the rental *map layer*
                 // (its buttons), hence the station-layer question rather than the trip-planning one.
-                val rentalsEnabled = BikeshareAvailability.isStationLayerEnabled(region, otpUrl)
+                //
+                // The demo transit system always publishes rentals (#2164): the scripted tutorial's
+                // micromobility step has to have a button to point at whatever region the user is
+                // actually in, and demo mode is exactly the promise that the tour's content is there.
+                val rentalsEnabled = demoActive || BikeshareAvailability.isStationLayerEnabled(region, otpUrl)
                 val rentalsOn = rentalsEnabled && master
                 MapChromeState(
                     zoomControls = zoomControls,

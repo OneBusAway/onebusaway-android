@@ -446,6 +446,19 @@ class MapViewModel @Inject constructor(
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) = mapHost.centerOn(lat, lon, animate)
 
+    /**
+     * Put a fixed place on screen at a fixed zoom.
+     *
+     * The scripted tutorial's opening move (#2164): the tour runs on a bundled demo transit system, so
+     * it has to aim the camera at that system's city whatever city the rider is actually in — which is
+     * neither a recenter (their zoom is arbitrary) nor a my-location move. [CameraCommand.SetZoom]
+     * keeps the centre and [CameraCommand.Recenter] keeps the zoom, so the pair lands both.
+     */
+    fun aimAt(point: GeoPoint, zoom: Float, animate: Boolean) {
+        mapHost.dispatchGesture(CameraCommand.SetZoom(zoom))
+        mapHost.dispatchGesture(CameraCommand.Recenter(point, animate, applyRouteBias = false))
+    }
+
     /** Recenter on the focused stop after the arrivals sheet expands over it (a Home map directive). */
     fun recenterOnFocusedStop(point: GeoPoint) {
         mapHost.dispatchGesture(

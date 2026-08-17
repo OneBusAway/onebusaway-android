@@ -534,14 +534,12 @@ fun MapFeature(
         }
     }
 
-    // The welcome tutorial's map-stop spotlight, wired from the flavor-neutral map seam (the published
-    // projector + the shared stop list) so this host knows nothing of the underlying map SDK. A tap
-    // focuses the chosen stop exactly like a marker tap, continuing into the arrivals tutorial.
+    // The scripted tour's map-stop spotlight, wired from the flavor-neutral map seam (the published
+    // projector + the shared stop list) so this host knows nothing of the underlying map SDK.
     val mapStopProjector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
     MapStopSpotlight(
         projector = mapStopProjector,
-        currentStops = { mapViewModel.renderState.snapshot.value.stops },
-        onFocusStop = { callbacks.onStopClick(it) }
+        currentStops = { mapViewModel.renderState.snapshot.value.stops }
     )
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a

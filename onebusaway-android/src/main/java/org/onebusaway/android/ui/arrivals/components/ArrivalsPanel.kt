@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This panel threads a named per-element anchor modifier (etaAnchor) a host attaches to a specific
+// This panel threads a bundle of per-element anchor modifiers (ArrivalRowAnchors) a host attaches to specific
 // sub-element for the onboarding spotlight — not the root `modifier` — so ModifierParameter's "name it
 // modifier" rule doesn't apply here.
 @file:Suppress("ModifierParameter")
@@ -63,9 +63,9 @@ fun ArrivalsPanel(
     // Reports the list's total content height in px so the host can fit the peek to short stops; not
     // reported until the whole list is laid out.
     onContentHeight: (heightPx: Int) -> Unit,
-    // An opaque anchor modifier a host may attach to the first row's ETA pill (e.g. for an onboarding
-    // spotlight). The panel stays ignorant of what it's for.
-    etaAnchor: Modifier = Modifier
+    // Opaque anchor modifiers a host may attach to the first row's pill / badge / star (e.g. for an
+    // onboarding spotlight). The panel stays ignorant of what they're for.
+    anchors: ArrivalRowAnchors = ArrivalRowAnchors()
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -103,8 +103,8 @@ fun ArrivalsPanel(
                     // Home presents alerts in a centered modal owned by the focus banner.
                     showAlerts = false,
                     contentPadding = PaddingValues(bottom = navBarInset),
-                    // The onboarding spotlight anchors on the first route row's ETA pill.
-                    etaAnchor = etaAnchor
+                    // The onboarding spotlight anchors on the first route row.
+                    anchors = anchors
                 )
             }
         }

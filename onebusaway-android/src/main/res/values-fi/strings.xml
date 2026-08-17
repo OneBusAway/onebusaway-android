@@ -598,10 +598,6 @@
     <string name="night_light_cancel">Peruuta</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">Tervetuloa %1$siin!</string>
-    <string name="tutorial_welcome_text">Napsauta pysäkkiä (vihreä piste kartallla) nähdäksesi
-        saapumisajat.
-    </string>
     <string name="tutorial_arrival_header_arrival_info_title">Kuinka kauan kunnes bussini saapuu?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">Näin kauan! Taustaväri kertoo onko 

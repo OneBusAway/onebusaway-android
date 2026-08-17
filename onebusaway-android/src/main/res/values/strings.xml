@@ -871,10 +871,6 @@
 
     <!-- Tutorials -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="tutorial_welcome_title">Welcome to %1$s!</string>
-    <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
-        times.
-    </string>
     <string name="tutorial_opt_out_dialog_title">Show tutorial?</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="tutorial_opt_out_dialog_text">Would you like to see popup descriptions for how to use %1$s? You can always turn the popups on or off in Settings, or show the tutorial later via Help.</string>
@@ -897,10 +893,70 @@
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>
     <string name="tutorial_button_finish">Finish</string>
-    <!-- The welcome onboarding step that spotlights a real stop on the map -->
-    <string name="tutorial_welcome_map_stop_title">Here’s a stop</string>
-    <string name="tutorial_welcome_map_stop_text">Tap a green dot like this one on the map to see its
-        arrival times.
+
+    <!-- The scripted guided tour. It runs on a built-in demo transit system, so every step has
+         something to point at no matter where the rider is or whether they are online. -->
+    <!-- Note: %1$s is replaced with app_name for white-label support -->
+    <string name="tutorial_scripted_map_title">Welcome to %1$s</string>
+    <string name="tutorial_scripted_map_text">This is the map. It shows the transit stops around you,
+        and the vehicles running between them. We’ll take a quick tour using a sample transit system.
+    </string>
+    <string name="tutorial_scripted_stop_title">Tap a stop</string>
+    <string name="tutorial_scripted_stop_text">Tapping a stop opens its arrivals. This one is served
+        by three routes.
+    </string>
+    <string name="tutorial_scripted_arrivals_title">Live arrivals</string>
+    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, and the pills count
+        down to each one. The nearest departure is always first.
+    </string>
+    <string name="tutorial_scripted_route_title">Tap a route</string>
+    <string name="tutorial_scripted_route_text">Tapping a route badge draws the whole route and shows
+        every vehicle running on it right now.
+    </string>
+    <string name="tutorial_scripted_vehicle_title">Tap an arrival</string>
+    <string name="tutorial_scripted_vehicle_text">Tapping a pill picks out the one vehicle behind that
+        arrival, so you can see where your bus actually is.
+    </string>
+    <string name="tutorial_scripted_legend_title">What the colors mean</string>
+    <string name="tutorial_scripted_legend_text">A pill’s color tells you how the vehicle is running
+        against its schedule. A corner star marks a route you’ve saved, and a warning triangle means
+        there’s a service alert to read.
+    </string>
+    <string name="tutorial_scripted_star_title">Save it for later</string>
+    <string name="tutorial_scripted_star_text">Stops and routes can both be starred. Tap the star on a
+        route here, or the one in the stop’s header to save the whole stop.
+    </string>
+    <string name="tutorial_scripted_starred_list_title">Your starred items</string>
+    <string name="tutorial_scripted_starred_list_text">Everything you star ends up in this menu, ready
+        the next time you open the app.
+    </string>
+    <string name="tutorial_scripted_back_title">Backing out</string>
+    <string name="tutorial_scripted_back_text">Swipe back, or press Back, to unwind one step at a time
+        — vehicle, then route, then stop — until you’re looking at the plain map again.
+    </string>
+    <string name="tutorial_scripted_rentals_title">Bikes and scooters</string>
+    <string name="tutorial_scripted_rentals_text">Micromobility has its own layer. Switch it on here to
+        see the bikes, scooters and docks nearby, with how much charge each one has left.
+    </string>
+    <string name="tutorial_scripted_plan_title">Planning a trip</string>
+    <string name="tutorial_scripted_plan_text">Long-press anywhere on the map to route to it. We’ve
+        planned a sample trip to show you what comes back.
+    </string>
+    <string name="tutorial_scripted_trip_options_title">Narrow it down</string>
+    <string name="tutorial_scripted_trip_options_text">Choose which kinds of transit you’ll take, how
+        far you’ll walk, and when you want to leave or arrive.
+    </string>
+    <string name="tutorial_scripted_itineraries_title">Several ways to go</string>
+    <string name="tutorial_scripted_itineraries_text">Each row is a different way to make the trip.
+        Compare how long they take and what you’d ride.
+    </string>
+    <string name="tutorial_scripted_itinerary_detail_title">See it on the map</string>
+    <string name="tutorial_scripted_itinerary_detail_text">Tap a row to open it up — the map draws that
+        trip, and you can step through each leg of it.
+    </string>
+    <string name="tutorial_scripted_pin_title">Keep a trip</string>
+    <string name="tutorial_scripted_pin_text">Long-press a trip to pin it. A pinned trip stays put so
+        you can check on it as your departure gets closer.
     </string>
 
     <!-- Permissions -->

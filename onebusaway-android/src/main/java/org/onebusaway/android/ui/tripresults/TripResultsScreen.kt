@@ -153,6 +153,9 @@ import org.onebusaway.android.ui.compose.theme.isDarkTheme
 import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
@@ -962,6 +965,9 @@ fun TripResultsList(
     CompositionLocalProvider(LocalUnitsAreMetric provides unitsAreMetric()) {
         Box(
             modifier
+                // The scripted tour spotlights the option list for three consecutive steps (#2164):
+                // comparing the options, opening one, and pinning it.
+                .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ITINERARIES)
                 .fillMaxSize()
                 .background(colorResource(R.color.md_theme_surfaceContainer))
         ) {

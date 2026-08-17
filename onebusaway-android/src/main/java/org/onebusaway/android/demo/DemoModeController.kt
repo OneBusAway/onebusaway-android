@@ -146,8 +146,25 @@ class DemoModeController @Inject constructor(
          */
         val CAMERA_TARGET: GeoPoint = GeoPoint(47.615158, -122.324638)
 
-        /** Close enough to see individual stops and their route labels, wide enough to show a few blocks. */
-        const val CAMERA_ZOOM: Float = 16.5f
+        /**
+         * The opening framing: wide enough that the demo system reads as a *network* — the three routes
+         * running out of Capitol Hill along Broadway and Pine — rather than a handful of markers on one
+         * street, which is not what the tour's first caption is about.
+         *
+         * Deliberately below [org.onebusaway.android.map.render.STOP_DOT_ZOOM_THRESHOLD], where stops
+         * collapse from their directional icons to plain dots. At this altitude that is the right
+         * rendering: a chain of dots along a street reads as a *line*, which is the thing the opening
+         * step is pointing at. [DETAIL_ZOOM] brings the icons back one step later.
+         */
+        const val CAMERA_ZOOM: Float = 14.5f
+
+        /**
+         * Where the camera settles once the tour focuses its stop — close enough for a stop to look
+         * like a stop again, and for the arrivals steps that follow to be about one bay rather than a
+         * neighbourhood. The tour opens wide ([CAMERA_ZOOM]) and comes in to here, which is also what
+         * puts the zoom back after stepping *out* of the route view.
+         */
+        const val DETAIL_ZOOM: Float = 16f
 
         /** The stop the tour focuses — the one with three routes the script narrates. */
         const val ANCHOR_STOP_ID: String = "1_11140"

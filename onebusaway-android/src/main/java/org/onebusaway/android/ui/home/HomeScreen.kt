@@ -636,8 +636,7 @@ fun HomeScreen(
                             mapViewModel.clearAllFocus()
                             mapViewModel.aimAt(
                                 DemoModeController.CAMERA_TARGET,
-                                DemoModeController.CAMERA_ZOOM,
-                                animate = false
+                                DemoModeController.CAMERA_ZOOM
                             )
                             tourRunning = true
                             tutorialState.start(ScriptedTutorial.steps)
@@ -660,7 +659,10 @@ fun HomeScreen(
                         // The rental layer is a persisted preference, so showing it during the tour is
                         // the one change that would otherwise outlive it.
                         mapViewModel.setRentalsVisible(undo.rentalsVisible)
-                        undo.viewport?.let(mapViewModel::restoreViewport)
+                        // On a first launch the tour can start before the camera has ever settled, so
+                        // there is no viewport to put back; fall back to the region fit the map would
+                        // have opened on, rather than leaving the rider parked in the demo's city.
+                        undo.viewport?.let(mapViewModel::restoreViewport) ?: mapViewModel.zoomToRegion()
                     }
                     tourUndo = null
                     demoMode.exit()

@@ -36,6 +36,7 @@ import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
@@ -447,16 +448,22 @@ class MapViewModel @Inject constructor(
     fun centerOn(lat: Double, lon: Double, animate: Boolean) = mapHost.centerOn(lat, lon, animate)
 
     /**
-     * Put a fixed place on screen at a fixed zoom.
+     * Put a fixed place on screen at a fixed zoom, and *keep* it there until something else frames the
+     * map.
      *
      * The scripted tutorial's opening move (#2164): the tour runs on a bundled demo transit system, so
-     * it has to aim the camera at that system's city whatever city the rider is actually in — which is
-     * neither a recenter (their zoom is arbitrary) nor a my-location move. [CameraCommand.SetZoom]
-     * keeps the centre and [CameraCommand.Recenter] keeps the zoom, so the pair lands both.
+     * it has to aim the camera at that system's city whatever city the rider is actually in.
+     *
+     * A retained [FramingIntent] rather than a pair of camera gestures, because the tour can start
+     * before the map is ready to be moved. Gestures go out on a replay-0 flow — one dispatched with no
+     * adapter subscribed is simply discarded — and on a first launch the tutorial fires while the map is
+     * still coming up, so the aim was dropped and the rider was left looking at their own region with a
+     * caption describing a stop that wasn't there. A framing intent is replayed to a late or re-created
+     * adapter, and it also outranks the region fit the map applies on startup, which would otherwise
+     * land after the aim and undo it.
      */
-    fun aimAt(point: GeoPoint, zoom: Float, animate: Boolean) {
-        mapHost.dispatchGesture(CameraCommand.SetZoom(zoom))
-        mapHost.dispatchGesture(CameraCommand.Recenter(point, animate, applyRouteBias = false))
+    fun aimAt(point: GeoPoint, zoom: Float) {
+        mapHost.frame(FramingIntent.Point(point, zoom))
     }
 
     /** Recenter on the focused stop after the arrivals sheet expands over it (a Home map directive). */

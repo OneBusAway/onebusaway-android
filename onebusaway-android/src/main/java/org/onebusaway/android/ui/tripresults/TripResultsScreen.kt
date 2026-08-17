@@ -979,6 +979,10 @@ fun TripResultsList(
     CompositionLocalProvider(LocalUnitsAreMetric provides unitsAreMetric()) {
         Box(
             modifier
+                // The scripted tour rings the whole drawer when it shows what a trip plan came back
+                // with (#2164); the option strip has its own, tighter anchor for the steps that are
+                // about choosing between them.
+                .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_DRAWER)
                 .fillMaxSize()
                 .background(colorResource(R.color.md_theme_surfaceContainer))
         ) {

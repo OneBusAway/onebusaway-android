@@ -19,10 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Puts the scripted tour's "tap a stop" spotlight over a real stop marker on the map (#2164), in a
@@ -73,6 +75,47 @@ fun MapStopSpotlight(
                         offset.y - markerRadiusPx,
                         offset.x + markerRadiusPx,
                         offset.y + markerRadiusPx
+                    )
+                )
+            }
+            delay(120)
+        }
+    }
+}
+
+/**
+ * Reports the screen position of a fixed geographic [point] as a spotlight target, so a step can ring
+ * somewhere on the map that has no marker of its own — the scripted tour's long-press step, which is
+ * about the place the rider would press rather than anything drawn there (#2164).
+ *
+ * The sibling of [MapStopSpotlight]: same neutral projection seam, same short poll, but the target is a
+ * coordinate the caller names instead of one of the drawn markers. Reports nothing while [anchorId]
+ * isn't the current step's target, or while the point is off screen — which is the honest rendering for
+ * "there is nothing there to point at".
+ */
+@Composable
+fun MapPointSpotlight(
+    projector: MapProjector?,
+    point: GeoPoint,
+    anchorId: String,
+    radius: Dp = 28.dp
+) {
+    val tutorialState = LocalTutorialState.current ?: return
+    val active = tutorialState.current?.anchorId == anchorId
+    val radiusPx = with(LocalDensity.current) { radius.toPx() }
+
+    LaunchedEffect(active, projector, point, anchorId) {
+        val proj = projector ?: return@LaunchedEffect
+        if (!active) return@LaunchedEffect
+        while (true) {
+            proj.toScreen(point)?.let { offset ->
+                tutorialState.reportBounds(
+                    anchorId,
+                    Rect(
+                        offset.x - radiusPx,
+                        offset.y - radiusPx,
+                        offset.x + radiusPx,
+                        offset.y + radiusPx
                     )
                 )
             }

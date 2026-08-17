@@ -213,6 +213,9 @@ internal fun rememberScriptedTutorialActions(
             setDrawerOpen = { open -> if (open) drawerState.open() else drawerState.close() },
             // Just the focus unwind, which is what backing out of a route actually does — the camera
             // stays where the rider left it rather than springing somewhere new.
+            showTripDestination = {
+                mapViewModel.aimAt(DemoModeController.TRIP_PLAN_DESTINATION, DemoModeController.CAMERA_ZOOM)
+            },
             resetMap = homeViewModel::clearMapFocus,
             showRentals = {
                 // Reached backwards from the trip-planning step, the app is still in directions, which
@@ -260,12 +263,16 @@ internal fun rememberScriptedTutorialActions(
                 )
             },
             showOtherItinerary = {
-                // Step to the *next* option, wrapping. The point of the step is that the map redraws, so
-                // it has to land somewhere other than where it already is; which option in particular
-                // doesn't matter, and stepping keeps it right however many the planner returned.
+                // Not simply the *next* option: the demo plan's first two are both light rail over the
+                // same alignment, so stepping one along redrew a line the rider couldn't tell from the
+                // one before it. [DISTINCT_ITINERARY_INDEX] is the bus, which visibly takes a different
+                // road. Clamped, so a shorter plan still lands somewhere other than where it started.
                 val results = tripResultsViewModel.state.value as? TripResultsUiState.Success
                 if (results != null && results.options.size > 1) {
-                    tripResultsViewModel.selectOption((results.selectedIndex + 1) % results.options.size)
+                    val target = DISTINCT_ITINERARY_INDEX.coerceAtMost(results.options.lastIndex)
+                    tripResultsViewModel.selectOption(
+                        if (target == results.selectedIndex) (target + 1) % results.options.size else target
+                    )
                 }
             }
         )
@@ -281,3 +288,11 @@ internal fun rememberScriptedTutorialActions(
  * shows an un-reaimed camera.
  */
 private const val FOCUS_SETTLE_MILLIS = 250L
+
+/**
+ * The demo plan option the tour opens to show the map redraw — the third, which is the bus.
+ *
+ * The first two are both light rail on the same alignment, so switching between them changed the line's
+ * colour and nothing else; the step's whole claim is that the map follows your choice.
+ */
+private const val DISTINCT_ITINERARY_INDEX = 2

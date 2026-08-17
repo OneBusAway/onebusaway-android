@@ -97,7 +97,7 @@ import org.onebusaway.android.ui.icons.AppIcons
  *
  * [extra] is optional content the caption renders under its body — the colour legend, for the step
  * that explains it. [gesture] mimes an action over the target for a step whose subject is a gesture
- * rather than a control.
+ * rather than a control, and [captionAtTop] overrides where the caption sits.
  *
  * [action] is what the app should *do* when this step opens — the mechanism the scripted tour (#2164)
  * is built on. A step that says "tap a route to see its vehicles" performs that navigation itself, so
@@ -113,7 +113,16 @@ data class TutorialStep(
     val action: TutorialAction? = null,
     val anchorId: String = id,
     val extra: TutorialExtra? = null,
-    val gesture: TutorialGesture? = null
+    val gesture: TutorialGesture? = null,
+    /**
+     * Forces the caption to the top of the screen, overriding the automatic placement.
+     *
+     * That placement only knows where the *target* is, and keeps the caption on the opposite half. It
+     * has no idea what else is on screen — so a step whose target sits mid-screen while the arrivals
+     * drawer fills the bottom gets a caption laid over the drawer, which is usually the thing the next
+     * step is about.
+     */
+    val captionAtTop: Boolean = false
 )
 
 /**
@@ -434,6 +443,7 @@ fun TutorialOverlay(state: TutorialState) {
         // settle invisible.
         val rootHeightPx = constraints.maxHeight.toFloat()
         val alignment = when {
+            step.captionAtTop -> Alignment.TopCenter
             captionTarget == null || captionTarget.isEmpty -> Alignment.BottomCenter
             captionTarget.center.y > rootHeightPx / 2f -> Alignment.TopCenter
             else -> Alignment.BottomCenter

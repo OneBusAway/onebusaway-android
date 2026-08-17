@@ -922,18 +922,20 @@
         and the vehicles running between them.
     </string>
     <string name="tutorial_scripted_stop_title">Tap a stop</string>
-    <string name="tutorial_scripted_stop_text">Tapping a stop opens its arrivals.</string>
+    <string name="tutorial_scripted_stop_text">Tapping a stop opens its arrivals and shows its routes
+        on the map.
+    </string>
     <string name="tutorial_scripted_arrivals_title">Live arrivals</string>
-    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, and the pills count
-        down to each one. The nearest departure is always first.
+    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, with the nearest
+        departure on the left.
     </string>
     <string name="tutorial_scripted_route_title">Tap a route</string>
     <string name="tutorial_scripted_route_text">Tap a route badge to draw the whole route and show
         every vehicle running on it right now.
     </string>
     <string name="tutorial_scripted_vehicle_title">Tap an arrival</string>
-    <string name="tutorial_scripted_vehicle_text">Tapping a pill picks out the one vehicle behind that
-        arrival, so you can see where your bus actually is.
+    <string name="tutorial_scripted_vehicle_text">Tap an arrival pill to highlight the associated
+        vehicle on the map.
     </string>
     <string name="tutorial_scripted_legend_title">What the colors mean</string>
     <string name="tutorial_scripted_legend_text">A pill’s color shows if it’s running on schedule.</string>
@@ -966,9 +968,7 @@
         trip, and you can step through each leg of it.
     </string>
     <string name="tutorial_scripted_pin_title">Keep a trip</string>
-    <string name="tutorial_scripted_pin_text">Long-press a trip to pin it. A pinned trip stays put so
-        you can check on it as your departure gets closer.
-    </string>
+    <string name="tutorial_scripted_pin_text">Long-press a trip to easily return to it from the map.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Location permissions</string>

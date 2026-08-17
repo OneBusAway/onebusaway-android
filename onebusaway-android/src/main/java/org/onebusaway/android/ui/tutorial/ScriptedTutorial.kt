@@ -49,6 +49,9 @@ enum class TutorialAction {
     /** Switch the micromobility layer on so the rental markers are drawn. */
     SHOW_RENTALS,
 
+    /** Bring the demo trip's destination into view, so the long-press step has somewhere to point. */
+    SHOW_TRIP_DESTINATION,
+
     /** Enter trip planning with the demo trip's endpoints filled in, as a map long-press does. */
     PLAN_DEMO_TRIP,
 
@@ -101,6 +104,12 @@ object ScriptedTutorial {
      */
     const val KEY_TRIP_OPTIONS = "tutorial_scripted_trip_options"
 
+    /** The point on the map the demo trip runs to — what the long-press step rings and mimes on. */
+    const val KEY_TRIP_DESTINATION = "tutorial_scripted_trip_destination"
+
+    /** The whole trip-results drawer: the options, the caution notice and the step-by-step directions. */
+    const val KEY_TRIP_DRAWER = "tutorial_scripted_trip_drawer"
+
     /**
      * The horizontally scrollable strip of itinerary option cards — for the step about choosing
      * *between* them. The strip, not the whole results sheet, which is mostly the selected trip's
@@ -136,6 +145,10 @@ object ScriptedTutorial {
             id = KEY_STOP,
             title = R.string.tutorial_scripted_stop_title,
             body = R.string.tutorial_scripted_stop_text,
+            // The stop sits mid-screen, so the automatic placement would put the caption at the bottom
+            // — straight over the arrivals drawer this step has just opened, which is the thing the
+            // rider is meant to look at.
+            captionAtTop = true,
             action = TutorialAction.FOCUS_DEMO_STOP
         ),
         // 3. Arrivals, grouped by route.
@@ -207,15 +220,19 @@ object ScriptedTutorial {
         // and it gets its own step so the rider watches the press before the answer appears.
         TutorialStep(
             id = "tutorial_scripted_plan_press",
-            anchorId = KEY_MAP,
+            // The destination itself, not the whole map: the press has a *place*, and ringing the
+            // screen would say the gesture works anywhere without showing where this one landed.
+            anchorId = KEY_TRIP_DESTINATION,
             title = R.string.tutorial_scripted_plan_press_title,
             body = R.string.tutorial_scripted_plan_press_text,
-            gesture = TutorialGesture.LONG_PRESS
+            gesture = TutorialGesture.LONG_PRESS,
+            action = TutorialAction.SHOW_TRIP_DESTINATION
         ),
         // 12b. What that press produced.
         TutorialStep(
             id = "tutorial_scripted_plan",
-            anchorId = KEY_ITINERARIES,
+            // The whole drawer: what came back is the options *and* the directions under them.
+            anchorId = KEY_TRIP_DRAWER,
             title = R.string.tutorial_scripted_plan_title,
             body = R.string.tutorial_scripted_plan_text,
             action = TutorialAction.PLAN_DEMO_TRIP

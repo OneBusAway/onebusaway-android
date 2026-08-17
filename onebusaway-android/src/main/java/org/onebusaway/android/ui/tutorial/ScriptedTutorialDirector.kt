@@ -45,6 +45,7 @@ data class ScriptedTutorialActions(
     val setDrawerOpen: suspend (Boolean) -> Unit,
     val resetMap: suspend () -> Unit,
     val showRentals: suspend () -> Unit,
+    val showTripDestination: suspend () -> Unit,
     val planDemoTrip: suspend () -> Unit,
     val showOtherItinerary: suspend () -> Unit
 )
@@ -106,6 +107,7 @@ fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActi
                 current.resetMap()
             }
             TutorialAction.SHOW_RENTALS -> current.showRentals()
+            TutorialAction.SHOW_TRIP_DESTINATION -> current.showTripDestination()
             TutorialAction.PLAN_DEMO_TRIP -> current.planDemoTrip()
             TutorialAction.SHOW_OTHER_ITINERARY -> current.showOtherItinerary()
         }

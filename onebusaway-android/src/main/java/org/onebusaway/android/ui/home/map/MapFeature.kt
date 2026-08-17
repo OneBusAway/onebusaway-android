@@ -116,6 +116,7 @@ import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.MapPointSpotlight
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
@@ -547,6 +548,13 @@ fun MapFeature(
         projector = mapStopProjector,
         currentStops = { mapViewModel.renderState.snapshot.value.stops },
         targetStopId = DemoModeController.ANCHOR_STOP_ID
+    )
+    // The tour's long-press step rings the place the rider would press — the demo trip's destination —
+    // which has no marker of its own until the trip is planned.
+    MapPointSpotlight(
+        projector = mapStopProjector,
+        point = DemoModeController.TRIP_PLAN_DESTINATION,
+        anchorId = ScriptedTutorial.KEY_TRIP_DESTINATION
     )
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a

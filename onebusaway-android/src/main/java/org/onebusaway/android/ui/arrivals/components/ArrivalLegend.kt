@@ -59,11 +59,36 @@ import org.onebusaway.android.util.ScheduleDeviation.Status
 @Composable
 fun ArrivalLegend(modifier: Modifier = Modifier, compact: Boolean = false) {
     val rowPadding = if (compact) 5.dp else 12.dp
+
+    // Compact rows are bare labels: the tutorial caption above them already says what the colours are
+    // for, so repeating "Green means…" beside a green swatch is noise. The dialog has no such caption
+    // and keeps the fuller wording, which is also where the ±1.5 minute band is stated.
+    fun label(short: Int, full: Int) = if (compact) short else full
     Column(modifier) {
-        LegendRow(Status.ON_TIME, predicted = true, label = R.string.main_help_legend_ontime, rowPadding)
-        LegendRow(Status.EARLY, predicted = true, label = R.string.main_help_legend_early, rowPadding)
-        LegendRow(Status.DELAYED, predicted = true, label = R.string.main_help_legend_late, rowPadding)
-        LegendRow(Status.SCHEDULED, predicted = false, label = R.string.main_help_legend_scheduled, rowPadding)
+        LegendRow(
+            Status.ON_TIME,
+            predicted = true,
+            label = label(R.string.tutorial_legend_ontime, R.string.main_help_legend_ontime),
+            rowPadding
+        )
+        LegendRow(
+            Status.EARLY,
+            predicted = true,
+            label = label(R.string.tutorial_legend_early, R.string.main_help_legend_early),
+            rowPadding
+        )
+        LegendRow(
+            Status.DELAYED,
+            predicted = true,
+            label = label(R.string.tutorial_legend_late, R.string.main_help_legend_late),
+            rowPadding
+        )
+        LegendRow(
+            Status.SCHEDULED,
+            predicted = false,
+            label = label(R.string.tutorial_legend_scheduled, R.string.main_help_legend_scheduled),
+            rowPadding
+        )
         if (!compact) {
             LegendRow(
                 Status.SCHEDULED,
@@ -77,10 +102,10 @@ fun ArrivalLegend(modifier: Modifier = Modifier, compact: Boolean = false) {
         // vehicle is drawn on the map right now, so tapping the pill flies the camera to it. Tinted
         // from the host's content colour, since this legend is drawn both in a plain dialog and on the
         // tutorial's branded card.
-        GlyphRow(R.string.main_help_legend_on_map, rowPadding) {
+        GlyphRow(label(R.string.tutorial_legend_on_map, R.string.main_help_legend_on_map), rowPadding) {
             OnMapIndicator(color = LocalContentColor.current, modifier = Modifier.fillMaxSize())
         }
-        GlyphRow(R.string.main_help_legend_realtime, rowPadding) {
+        GlyphRow(label(R.string.tutorial_legend_tracked, R.string.main_help_legend_realtime), rowPadding) {
             RealtimeIndicator(color = LocalContentColor.current, modifier = Modifier.fillMaxSize())
         }
     }

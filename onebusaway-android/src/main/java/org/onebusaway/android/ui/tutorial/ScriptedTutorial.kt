@@ -102,11 +102,17 @@ object ScriptedTutorial {
     const val KEY_TRIP_OPTIONS = "tutorial_scripted_trip_options"
 
     /**
-     * The horizontally scrollable strip of itinerary option cards. The strip, not the whole results
-     * sheet: three consecutive steps are about choosing *between* options, and ringing the entire sheet
-     * (which is mostly the selected trip's step-by-step directions) named the wrong thing.
+     * The horizontally scrollable strip of itinerary option cards — for the step about choosing
+     * *between* them. The strip, not the whole results sheet, which is mostly the selected trip's
+     * step-by-step directions and so named the wrong thing.
      */
     const val KEY_ITINERARIES = "tutorial_scripted_itineraries"
+
+    /**
+     * The currently selected option card. The steps after the comparison one are about a single
+     * option — opening it, and pinning it — so they ring that card rather than the whole picker.
+     */
+    const val KEY_ITINERARY_CARD = "tutorial_scripted_itinerary_card"
 
     /**
      * The tour, in order. Step numbering follows the issue's script.
@@ -196,15 +202,22 @@ object ScriptedTutorial {
             body = R.string.tutorial_scripted_rentals_text,
             action = TutorialAction.SHOW_RENTALS
         ),
-        // 12. Planning a trip.
+        // 12a. The gesture itself, on a map that hasn't been asked for anything yet. A long press
+        // leaves nothing on screen to ring, so the overlay mimes it rather than only describing it —
+        // and it gets its own step so the rider watches the press before the answer appears.
+        TutorialStep(
+            id = "tutorial_scripted_plan_press",
+            anchorId = KEY_MAP,
+            title = R.string.tutorial_scripted_plan_press_title,
+            body = R.string.tutorial_scripted_plan_press_text,
+            gesture = TutorialGesture.LONG_PRESS
+        ),
+        // 12b. What that press produced.
         TutorialStep(
             id = "tutorial_scripted_plan",
-            anchorId = KEY_MAP,
+            anchorId = KEY_ITINERARIES,
             title = R.string.tutorial_scripted_plan_title,
             body = R.string.tutorial_scripted_plan_text,
-            // A long press leaves nothing on screen to ring, so the overlay mimes the gesture over
-            // the map instead of only describing it.
-            gesture = TutorialGesture.LONG_PRESS,
             action = TutorialAction.PLAN_DEMO_TRIP
         ),
         // 13. Narrowing the search.
@@ -224,7 +237,7 @@ object ScriptedTutorial {
         // 15. Drilling into one.
         TutorialStep(
             id = "tutorial_scripted_itinerary_detail",
-            anchorId = KEY_ITINERARIES,
+            anchorId = KEY_ITINERARY_CARD,
             title = R.string.tutorial_scripted_itinerary_detail_title,
             body = R.string.tutorial_scripted_itinerary_detail_text,
             // Opens a *different* option than the one the previous step left selected, so the rider
@@ -235,9 +248,11 @@ object ScriptedTutorial {
         // 16. Keeping one.
         TutorialStep(
             id = "tutorial_scripted_pin",
-            anchorId = KEY_ITINERARIES,
+            anchorId = KEY_ITINERARY_CARD,
             title = R.string.tutorial_scripted_pin_title,
-            body = R.string.tutorial_scripted_pin_text
+            body = R.string.tutorial_scripted_pin_text,
+            // Mimed on the card itself, since that is the thing to press.
+            gesture = TutorialGesture.LONG_PRESS
         )
     )
 }

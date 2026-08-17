@@ -225,15 +225,25 @@ fun TripResultsHeader(
                 .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val tutorialState = LocalTutorialState.current
             success.options.forEachIndexed { index, option ->
+                val selected = index == success.selectedIndex
                 OptionCard(
                     option = option,
                     winners = winners[index],
-                    selected = index == success.selectedIndex,
+                    selected = selected,
                     pinned = index == pinnedOptionIndex,
                     summaryHeights = summaryHeights,
                     onClick = { onSelectOption(index) },
-                    onLongClick = onTogglePin?.let { { menuForIndex = index } }
+                    onLongClick = onTogglePin?.let { { menuForIndex = index } },
+                    // The scripted tour's later trip steps are about one option — opening it, and
+                    // pinning it — so they ring the selected card rather than the whole strip (#2164).
+                    // Anchored on selection, so the outline follows when a step picks a different one.
+                    modifier = if (selected) {
+                        Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ITINERARY_CARD)
+                    } else {
+                        Modifier
+                    }
                 )
             }
         }
@@ -411,7 +421,8 @@ private fun OptionCard(
     pinned: Boolean,
     summaryHeights: SummaryHeights,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     val background = colorResource(
         if (selected) R.color.trip_plan_card_background_selected else R.color.trip_plan_card_background
@@ -436,7 +447,7 @@ private fun OptionCard(
         // Wrap to the content width (a sensible floor so short options aren't tiny); the row scrolls.
         // The ceiling is the summary line's own — it wraps at [OPTION_CARD_MAX_WIDTH] rather than the
         // card being cut to it (see [SymbolFlow]).
-        modifier = Modifier
+        modifier = modifier
             .widthIn(min = 104.dp)
             // Tap selects; the card's secondary action (pin) is a long press, as it is on an arrivals
             // row — the picker has no width for an overflow button and one here would crowd it.

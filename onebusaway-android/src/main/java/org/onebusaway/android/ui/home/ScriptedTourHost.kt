@@ -82,13 +82,10 @@ internal fun rememberScriptedTutorialActions(
                     ),
                     animate = true
                 )
-                // Revealing a stop clears the map focus first, and that clear travels through a
-                // directive which drops retained framing on its way (see [showRentals]) — so the zoom
-                // has to follow it rather than race it.
-                delay(FOCUS_SETTLE_MILLIS)
-                // Come in from the opening overview. This is also what restores the zoom when the rider
-                // steps *back* out of the route view, which frames the whole line.
-                mapViewModel.aimAt(DemoModeController.CAMERA_TARGET, DemoModeController.DETAIL_ZOOM)
+                // Deliberately no zoom change. Tapping a stop in the app recenters the map and leaves
+                // the zoom alone, so the tour does too: a step that quietly flew the camera in would
+                // teach the rider a behaviour the app doesn't have, and they'd read the ordinary
+                // recentre as the tutorial being broken.
             },
             showDemoRoute = {
                 val route = demoMode.featuredRoute ?: return@ScriptedTutorialActions

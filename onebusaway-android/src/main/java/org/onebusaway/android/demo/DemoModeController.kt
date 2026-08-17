@@ -154,17 +154,13 @@ class DemoModeController @Inject constructor(
          * Deliberately below [org.onebusaway.android.map.render.STOP_DOT_ZOOM_THRESHOLD], where stops
          * collapse from their directional icons to plain dots. At this altitude that is the right
          * rendering: a chain of dots along a street reads as a *line*, which is the thing the opening
-         * step is pointing at. [DETAIL_ZOOM] brings the icons back one step later.
+         * step is pointing at.
+         *
+         * This is where the tour *stays* until a step genuinely reframes the map (opening a route,
+         * drawing a trip). Nothing zooms in when the stop is focused — the app doesn't, so neither does
+         * the tour.
          */
         const val CAMERA_ZOOM: Float = 14.5f
-
-        /**
-         * Where the camera settles once the tour focuses its stop — close enough for a stop to look
-         * like a stop again, and for the arrivals steps that follow to be about one bay rather than a
-         * neighbourhood. The tour opens wide ([CAMERA_ZOOM]) and comes in to here, which is also what
-         * puts the zoom back after stepping *out* of the route view.
-         */
-        const val DETAIL_ZOOM: Float = 16f
 
         /** The stop the tour focuses — the one with three routes the script narrates. */
         const val ANCHOR_STOP_ID: String = "1_11140"

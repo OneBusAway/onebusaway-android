@@ -264,7 +264,7 @@ class DemoScenarioTest {
      */
     @Test
     fun `no run on the road is missing from the active list`() {
-        for (offsetSeconds in 0 until 600 step 5) {
+        for (offsetSeconds in 0 until 600) {
             val at = now + offsetSeconds * 1000L
             val listed = DemoScenario.activeRuns(fixture, routeId, at).map { it.index }.toSet()
             // Check a generous band of indices by brute force, independent of the window under test.
@@ -281,7 +281,7 @@ class DemoScenarioTest {
         val geometry = fixture.routeStops.getValue(routeId)
         val stopDistance = geometry.distanceTo(anchorStopId)!!
         val horizonMs = 45 * 60 * 1000L
-        for (offsetSeconds in 0 until 600 step 5) {
+        for (offsetSeconds in 0 until 600) {
             val at = now + offsetSeconds * 1000L
             val listed = DemoScenario.arrivalsAt(fixture, anchorStopId, at).map { it.run.index }.toSet()
             val brute = (-20L..20L).map { DemoScenario.runById(fixture, DemoScenario.tripIdFor(routeId, indexNear(at) + it))!! }
@@ -303,11 +303,11 @@ class DemoScenarioTest {
 
     @Test
     fun `the service date is local midnight in the agency's zone`() {
-        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
-        assertTrue("service date cannot be after now", serviceDate <= now)
-        assertTrue("service date must be within a day of now", now - serviceDate < DAY_MS)
-        // Midnight in a whole-hour zone lands on an exact hour boundary.
-        assertEquals(0L, serviceDate % 3_600_000L)
+        // The agency's zone, not the JVM's and not UTC. `now` is 2026-05-28T13:26:40-07:00, so the
+        // service date is that day's midnight in America/Los_Angeles — written out rather than
+        // recomputed, since recomputing it the same way the implementation does would assert nothing.
+        // A UTC-day implementation would answer 2026-05-28T00:00Z, seven hours early.
+        assertEquals(1_779_951_600_000L, DemoScenario.serviceDateMs(fixture, now))
     }
 
     @Test
@@ -344,8 +344,6 @@ class DemoScenarioTest {
     }
 
     private companion object {
-        const val DAY_MS = 24 * 60 * 60 * 1000L
-
         /**
          * An index landing on the cycle's "clearly late" slot. The cycle is
          * `[0, +330, -240, +45]`, so any index ≡ 1 (mod 4) is late.

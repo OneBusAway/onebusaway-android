@@ -256,7 +256,10 @@ abstract class RepositoryModule {
     // transit system only while the scripted tutorial has demo mode on, so the tutorial's trip-plan
     // and bike-layer steps have guaranteed content while normal use is untouched. The OBA side needs
     // no decorator: ObaApiProvider is a single seam and branches there.
+    // @Singleton because the demo side parses and caches the bundled plan on first use, and this is
+    // injected at more than one site: unscoped, each site would get its own instance and re-decode it.
     @Binds
+    @Singleton
     abstract fun bindTripPlanRepository(impl: DemoTripPlanRepository): TripPlanRepository
 
     @Binds

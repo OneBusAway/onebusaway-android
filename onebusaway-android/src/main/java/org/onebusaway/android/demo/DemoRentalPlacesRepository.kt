@@ -38,7 +38,7 @@ import org.onebusaway.android.map.rental.RentalPlacesRepository
  * looking at. The bounding box is honoured so panning behaves normally.
  */
 class DemoRentalPlacesRepository @Inject constructor(
-    private val demoMode: DemoModeController,
+    private val demoMode: DemoModeState,
     private val real: DefaultRentalPlacesRepository
 ) : RentalPlacesRepository {
 

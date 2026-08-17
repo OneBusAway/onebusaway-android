@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.tutorial
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -106,6 +105,8 @@ class ScriptedTutorialTest {
     @Test
     fun `the shipped tour opens on the map and ends on a finishable step`() {
         assertEquals(ScriptedTutorial.KEY_MAP, ScriptedTutorial.steps.first().anchorId)
-        assertTrue(ScriptedTutorial.steps.size > 1)
+        // The fixed length is the point of a *scripted* tour (#2164) — it walks the issue's script, so
+        // a step appearing or disappearing is a change to what the tour teaches, not an incidental one.
+        assertEquals(17, ScriptedTutorial.steps.size)
     }
 }

@@ -208,6 +208,7 @@ class MapViewModel @Inject constructor(
         rentalPlacesRepository = rentalPlacesRepository,
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
+        demoMode = demoMode,
         scope = viewModelScope
     )
 

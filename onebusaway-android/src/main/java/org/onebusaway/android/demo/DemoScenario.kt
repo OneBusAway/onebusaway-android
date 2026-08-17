@@ -60,6 +60,13 @@ object DemoScenario {
     )
 
     /**
+     * The routes this simulator runs buses on — the keys of [SERVICE], published so the fixture's own
+     * route set can be checked against them when it loads (see `DemoModeController`). A fixture route
+     * with no entry here is not an error anywhere; it just never has a bus on it.
+     */
+    val SERVICED_ROUTE_IDS: Set<String> get() = SERVICE.keys
+
+    /**
      * The schedule deviations demo buses run at, in seconds (+late / −early), cycled by run index.
      *
      * Authored rather than random so the tour can *teach* the deviation colors: the cycle covers each

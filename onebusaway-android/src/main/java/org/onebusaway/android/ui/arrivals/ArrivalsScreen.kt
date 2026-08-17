@@ -382,8 +382,9 @@ internal fun ArrivalsList(
      *  the head of the list. Hosts that own a collapse toggle pass its state so alerts stay hidden
      *  until expanded; the default keeps them visible. Changes animate (see the "alerts" item). */
     showAlerts: Boolean = true,
-    /** An opaque anchor modifier applied to the first route row's ETA pill (e.g. the home sheet's
-     *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
+    /** Spotlight anchors for the first route row — its ETA pill, its route badge and its favourite
+     *  star, each addressable on its own so a tutorial can point at one without the others (e.g. the
+     *  home sheet's onboarding spotlight). The defaults are no-ops for hosts that don't spotlight. */
     anchors: ArrivalRowAnchors = ArrivalRowAnchors()
 ) {
     val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {

@@ -20,9 +20,11 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.onebusaway.android.R
 import org.onebusaway.android.util.GeoPoint
@@ -116,6 +118,19 @@ class DemoModeController @Inject constructor(
             ?.tripId
     }
 
+    /**
+     * Parse the bundled fixture, off the main thread, before anything asks for it.
+     *
+     * [fixture] and [obaService] are `by lazy`, so whoever touches them first pays for the read and the
+     * decode — and after [enter] that first toucher is the arrivals poll or a map draw, on the main
+     * thread. The tour's host calls this from its own coroutine before entering, so the work has already
+     * happened by the time the demo deployment starts answering. Safe to call more than once, and safe
+     * not to call at all: the `lazy` still does the job, just later and less politely.
+     */
+    suspend fun prepare() {
+        withContext(Dispatchers.IO) { obaService }
+    }
+
     /** Turn the demo system on. Idempotent. */
     fun enter() {
         _active.value = true
@@ -131,11 +146,36 @@ class DemoModeController @Inject constructor(
             .bufferedReader()
             .use { it.readText() }
         json.decodeFromString<DemoTransitFixture>(body)
+            .also(::warnAboutFixtureDrift)
     }.getOrElse {
         // An unreadable fixture leaves an empty demo system: the tour still runs its captions, it just
         // has nothing to point at. Better than taking the app down over onboarding content.
         Log.e(TAG, "Failed to parse the bundled demo transit fixture", it)
         DemoTransitFixture()
+    }
+
+    /**
+     * Say so when the bundled fixture and the ids the app names by hand have drifted apart.
+     *
+     * The fixture is captured geometry; [DemoScenario]'s timetable, the tour's featured route and its
+     * anchor stop are hand-written constants keyed on that capture's ids. Re-cutting the fixture without
+     * moving them doesn't fail — it *empties*: a route with no service pattern simply never runs a bus,
+     * and the tour then narrates an empty map. There is nothing to fall back to, so this only names the
+     * mismatch loudly at the one moment it becomes knowable.
+     */
+    private fun warnAboutFixtureDrift(fixture: DemoTransitFixture) {
+        val unserviced = fixture.routeStops.keys - DemoScenario.SERVICED_ROUTE_IDS
+        if (unserviced.isNotEmpty()) {
+            Log.w(TAG, "Demo fixture carries routes with no timetable, so they run no buses: $unserviced")
+        }
+        val missing = (DemoScenario.SERVICED_ROUTE_IDS + FEATURED_ROUTE_ID + DemoScenario.ALERT_ROUTE_ID)
+            .filterNot { it in fixture.routeStops }
+        if (missing.isNotEmpty()) {
+            Log.w(TAG, "Demo fixture is missing routes the tour and its timetable name: $missing")
+        }
+        if (fixture.anchorStop == null || fixture.anchorStopId != ANCHOR_STOP_ID) {
+            Log.w(TAG, "Demo fixture's anchor stop is '${fixture.anchorStopId}', not the '$ANCHOR_STOP_ID' the tour focuses")
+        }
     }
 
     companion object {

@@ -24,9 +24,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.rental.RentalDensity
@@ -63,6 +63,7 @@ class RentalLayerController(
     private val rentalPlacesRepository: RentalPlacesRepository,
     private val prefsRepository: PreferencesRepository,
     private val regionRepository: RegionRepository,
+    private val demoMode: DemoModeState,
     private val scope: CoroutineScope
 ) {
 
@@ -149,8 +150,11 @@ class RentalLayerController(
                 visibleLayers,
                 // The rental server itself is an input, not a fact read once inside the collector: a
                 // region switch changes which endpoint answers, and neither the camera nor the toggles
-                // need move for that to happen. Distinct so an unrelated region field can't re-fire it.
-                regionRepository.region.map { rentalSourceKey() }.distinctUntilChanged()
+                // need move for that to happen. Demo mode is the second such switch (#2164) — entering
+                // and leaving it changes who answers without touching the region. Distinct so an
+                // unrelated region field can't re-fire it.
+                combine(regionRepository.region, demoMode.active) { _, _ -> rentalSourceKey() }
+                    .distinctUntilChanged()
             ) { camera, layers, source -> Triple(camera, layers, source) }
                 // collectLatest so a newer viewport cancels an in-flight load (the old loadJob?.cancel()).
                 .collectLatest { (camera, layers, source) ->
@@ -191,6 +195,12 @@ class RentalLayerController(
      * the flow can be distinct on.
      */
     private fun rentalSourceKey(): String? {
+        // The demo transit system publishes its own rentals from the device (#2164), so it has a server
+        // to ask wherever the rider is — including in a region with no bikeshare at all, and on a first
+        // launch with no region resolved yet. Answered before the region gate rather than inside
+        // [DemoRentalPlacesRepository], because a null here stops the loader before the repository is
+        // ever reached: the tour's micromobility step would light its button over an empty map.
+        if (demoMode.isActive) return DEMO_RENTAL_SOURCE
         val customUrl = prefsRepository.getString(R.string.preference_key_otp_api_url, null)
         if (!BikeshareAvailability.isStationLayerEnabled(regionRepository.currentRegion(), customUrl)) return null
         return rentalSource(
@@ -289,5 +299,14 @@ class RentalLayerController(
     private fun clearRentals() {
         host.renderState.clearRentals()
         host.setRentalsNeedCloserZoom(false)
+    }
+
+    private companion object {
+        /**
+         * The source key demo mode answers under. Distinct from every real one (those are OTP URLs), so
+         * entering or leaving the demo system invalidates the viewport cache in [placesFor] the same way
+         * a region switch does, rather than redrawing the other deployment's vehicles.
+         */
+        const val DEMO_RENTAL_SOURCE = "demo"
     }
 }

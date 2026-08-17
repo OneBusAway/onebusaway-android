@@ -21,6 +21,8 @@ import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.toTripItinerary
 import org.onebusaway.android.api.contract.OtpPlanParser
@@ -49,14 +51,20 @@ import org.onebusaway.android.ui.tripplan.TripPlanRepository
  */
 class DemoTripPlanRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val demoMode: DemoModeController,
+    private val demoMode: DemoModeState,
     private val real: DefaultTripPlanRepository
 ) : TripPlanRepository {
 
-    override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> = if (demoMode.isActive) Result.success(demoItineraries()) else real.plan(params)
+    override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> = if (demoMode.isActive) {
+        // Off the caller's dispatcher for the same reason the real repository is: the first call through
+        // here reads and decodes 27 KB of bundled JSON, and this one is reached from the main thread.
+        Result.success(withContext(Dispatchers.IO) { demoItineraries(WallTime.now()) })
+    } else {
+        real.plan(params)
+    }
 
     @WorkerThread
-    override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> = if (demoMode.isActive) demoItineraries() else real.planBlocking(builder)
+    override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> = if (demoMode.isActive) demoItineraries(WallTime.now()) else real.planBlocking(builder)
 
     /**
      * The bundled plan as captured, parsed once for the process.
@@ -79,12 +87,12 @@ class DemoTripPlanRepository @Inject constructor(
         }
     }
 
-    /** The bundled plan, re-dated so it departs from now. */
-    private fun demoItineraries(): List<TripItinerary> = rebase(captured)
+    /** The bundled plan, re-dated so it departs from [now]. */
+    private fun demoItineraries(now: WallTime): List<TripItinerary> = rebase(captured, now)
 
     /**
-     * Shifts a captured plan onto the current clock so its departures read as "in a few minutes"
-     * however long after capture the tour runs.
+     * Shifts a captured plan onto [now] so its departures read as "in a few minutes" however long after
+     * capture the tour runs.
      *
      * The shift is a single delta applied to **every** absolute instant in the model, which keeps the
      * plan internally consistent: leg durations, waits and transfer slack are all differences between
@@ -98,12 +106,13 @@ class DemoTripPlanRepository @Inject constructor(
      * absolute instants (`TripPlace` carries none), so this enumeration is complete rather than a
      * best-effort sweep — and [ServerTime]'s typed arithmetic is what makes that checkable.
      */
-    private fun rebase(itineraries: List<TripItinerary>): List<TripItinerary> {
+    private fun rebase(itineraries: List<TripItinerary>, now: WallTime): List<TripItinerary> {
         val earliest = itineraries.minOfOrNull { it.startTime } ?: return itineraries
         // Demo mode answers entirely from the device, so the demo planner's clock *is* the device wall
         // clock. That identity is stated here — the one deliberate crossing between the two domains,
-        // like TripState.withStatus's — rather than left implicit in a bare Long.
-        val target = ServerTime(WallTime.now().epochMs) + FIRST_DEPARTURE_LEAD
+        // like TripState.withStatus's — rather than left implicit in a bare Long. The reading itself is
+        // the caller's, per CLAUDE.md: nothing in here asks what time it is.
+        val target = ServerTime(now.epochMs) + FIRST_DEPARTURE_LEAD
         val shift = target - earliest
         return itineraries.map { itinerary ->
             itinerary.copy(

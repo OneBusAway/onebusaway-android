@@ -93,7 +93,6 @@ fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActi
         val governing = governingActionIndex(steps, stepIndex) ?: return@LaunchedEffect
         if (governing == appliedActionIndex) return@LaunchedEffect
         val action = steps[governing].action ?: return@LaunchedEffect
-        appliedActionIndex = governing
         // The overlay opens each step with a ~300ms shrink-and-spring transition. Letting that start
         // first means the app's own change — a drawer sliding out, the camera flying to a stop — plays
         // *under* a spotlight that is already moving, instead of both competing on the first frame.
@@ -113,6 +112,11 @@ fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActi
             TutorialAction.SHOW_OTHER_ITINERARY -> current.showOtherItinerary()
             TutorialAction.FOCUS_ROUTE_LEG -> current.focusRouteLeg()
         }
+        // Recorded *after* the action has run, not before it. This effect is cancelled the moment the
+        // step changes, so a Next press during the lead-in delay kills the dispatch — and since the
+        // next step usually shares the same governing action, marking it applied up front would have
+        // the following step skip it as already in effect and narrate a screen nothing ever set up.
+        appliedActionIndex = governing
     }
 }
 

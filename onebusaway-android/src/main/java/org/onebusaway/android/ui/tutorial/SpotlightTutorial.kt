@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tutorial
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
@@ -351,18 +352,17 @@ fun TutorialOverlay(state: TutorialState) {
         label = "annulusPulse"
     )
 
-    // The long-press mime: one 0->1 sweep per cycle, restarting rather than reversing so the press
-    // reads as repeated taps-and-holds rather than a ring breathing in and out. Only collected while a
-    // step actually asks for a gesture.
-    val gesturePhase by rememberInfiniteTransition(label = "gesture").animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = LONG_PRESS_CYCLE_MILLIS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "longPress"
-    )
+    // The long-press mime, animated only for the two steps that mime one — the branch drops the
+    // transition out of the composition entirely for every other step, rather than leaving a timer
+    // running for a phase nothing reads.
+    val gesturePhase = if (step.gesture != null) rememberLongPressPhase() else 0f
+
+    // Back ends the tutorial, exactly as the corner "X" does. Registered here — the overlay is composed
+    // over everything else, so this callback is the innermost one and wins — because the screen
+    // underneath is still fully wired: without it, Back would unwind the map or the directions view out
+    // from under a script that is narrating them, and for the scripted tour (#2164) it would dispose the
+    // host without ever running the teardown that takes the app off the demo transit system.
+    BackHandler { state.dismiss() }
 
     BoxWithConstraints(
         Modifier
@@ -559,6 +559,27 @@ private fun TutorialCaption(
             }
         }
     }
+}
+
+/**
+ * The long-press mime's clock: one 0->1 sweep per cycle, restarting rather than reversing so the press
+ * reads as repeated taps-and-holds rather than a ring breathing in and out.
+ *
+ * Its own composable so the caller can leave it out of the composition on a step that mimes nothing —
+ * an infinite transition runs whether or not anything reads it.
+ */
+@Composable
+private fun rememberLongPressPhase(): Float {
+    val phase by rememberInfiniteTransition(label = "gesture").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = LONG_PRESS_CYCLE_MILLIS, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "longPress"
+    )
+    return phase
 }
 
 /**

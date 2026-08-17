@@ -35,6 +35,7 @@ import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.map.rental.preferenceKey
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
@@ -55,6 +56,8 @@ import org.onebusaway.android.util.GeoPoint
  * Only two things qualify: the camera, because the tour flies it to a city the rider isn't in, and the
  * rental layer, because that toggle is a persisted preference. Every other action the tour takes is
  * in-memory focus state, which its teardown clears outright.
+ *
+ * Mirrored to preferences for the tours that never reach a teardown — see [pendingTourUndo].
  */
 data class ScriptedTourUndo(
     val viewport: MapViewport?,
@@ -63,6 +66,50 @@ data class ScriptedTourUndo(
     val bikesVisible: Boolean,
     val scootersVisible: Boolean
 )
+
+// The tour's undo record on disk. Not user-facing settings, so plain keys rather than strings.xml
+// entries — nothing but the three functions below reads or writes them.
+private const val KEY_TOUR_IN_FLIGHT = "demo_scripted_tour_in_flight"
+private const val KEY_TOUR_UNDO_RENTALS = "demo_scripted_tour_undo_rentals_visible"
+private const val KEY_TOUR_UNDO_BIKES = "demo_scripted_tour_undo_bikes_visible"
+private const val KEY_TOUR_UNDO_SCOOTERS = "demo_scripted_tour_undo_scooters_visible"
+
+/**
+ * What a tour changed and hasn't put back, or null when none is owed an undo.
+ *
+ * The in-memory [ScriptedTourUndo] survives only as long as the composition holding it, and the tour
+ * can outlive that: a configuration change the activity doesn't declare recreates it, and the process
+ * can be killed outright. Either leaves a tour that was never *ended* — demo mode still on (it is
+ * application-scoped) and the rental layer still switched on (those are persisted preferences) — with
+ * nobody left to undo them. This is the record that survives instead, so the next composition unwinds
+ * an interrupted tour exactly the way a finished one unwinds itself.
+ *
+ * **The camera is deliberately not part of it.** It is the one piece of the undo that is a *position*
+ * rather than a setting, and every interruption destroyed the map that was showing it; the restore
+ * falls back to the region fit, which is already what a null viewport means here.
+ */
+private fun PreferencesRepository.pendingTourUndo(): ScriptedTourUndo? = if (!getBoolean(KEY_TOUR_IN_FLIGHT, false)) {
+    null
+} else {
+    ScriptedTourUndo(
+        viewport = null,
+        rentalsVisible = getBoolean(KEY_TOUR_UNDO_RENTALS, RENTALS_VISIBLE_BY_DEFAULT),
+        bikesVisible = getBoolean(KEY_TOUR_UNDO_BIKES, RentalLayer.BIKES.defaultVisible),
+        scootersVisible = getBoolean(KEY_TOUR_UNDO_SCOOTERS, RentalLayer.SCOOTERS.defaultVisible)
+    )
+}
+
+/** Record what the tour is about to change, so the undo outlives the composition that holds it. */
+private fun PreferencesRepository.recordTourUndo(undo: ScriptedTourUndo) {
+    setBoolean(KEY_TOUR_UNDO_RENTALS, undo.rentalsVisible)
+    setBoolean(KEY_TOUR_UNDO_BIKES, undo.bikesVisible)
+    setBoolean(KEY_TOUR_UNDO_SCOOTERS, undo.scootersVisible)
+    // Last, so a record is never advertised before the values it promises are written.
+    setBoolean(KEY_TOUR_IN_FLIGHT, true)
+}
+
+/** The tour has been put back; nothing is owed. */
+private fun PreferencesRepository.clearTourUndo() = setBoolean(KEY_TOUR_IN_FLIGHT, false)
 
 /**
  * Runs the scripted guided tour (#2164): starting it, keeping it supplied with stage directions, and
@@ -73,6 +120,9 @@ data class ScriptedTourUndo(
  * every entry has to have an exit — a rider who finished, skipped, or backed out and found themselves
  * still looking at Capitol Hill with a stranger's bus times would have no way to undo it. Splitting the
  * pair across a long composable is how that goes wrong.
+ *
+ * That includes the exits nobody chose: a tour whose activity was recreated or whose process was killed
+ * is put back on the next composition, from the record [pendingTourUndo] left behind.
  *
  * Renders nothing.
  */
@@ -92,10 +142,39 @@ internal fun ScriptedTourHost(
     // record of whether one is running at all.
     var undo by remember { mutableStateOf<ScriptedTourUndo?>(null) }
 
+    // Putting the app back, wherever the tour stopped. Shared by the ordinary teardown below and by the
+    // interrupted-tour cleanup, so there is exactly one definition of what "leaving the tour" undoes.
+    val restore: (ScriptedTourUndo) -> Unit = { pending ->
+        // The tour drove the app into directions and through a stop focus; unwind both before the real
+        // region's data comes back, so nothing is left focused on a demo id.
+        homeViewModel.clearMapFocus()
+        mapViewModel.clearAllFocus()
+        // The rental layer's switches are persisted preferences, so showing it during the tour is the
+        // one change that would otherwise outlive it.
+        mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, pending.bikesVisible)
+        mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, pending.scootersVisible)
+        mapViewModel.setRentalsVisible(pending.rentalsVisible)
+        // On a first launch the tour can start before the camera has ever settled, so there is no
+        // viewport to put back; fall back to the region fit the map would have opened on, rather than
+        // leaving the rider parked in the demo's city.
+        pending.viewport?.let(mapViewModel::restoreViewport) ?: mapViewModel.zoomToRegion()
+        demoMode.exit()
+        prefsRepo.clearTourUndo()
+        // The tour has already covered what the opportunistic arrivals spotlight teaches, so don't
+        // ambush the rider with it again the first time they open a real stop.
+        ArrivalTutorial.markShown(prefsRepo, ArrivalTutorial.steps)
+    }
+
     LaunchedEffect(Unit) {
+        // A tour that was interrupted rather than ended — the activity recreated by a configuration
+        // change it doesn't declare, or the process killed — left demo mode on and the rental layer
+        // switched on with nobody holding the undo. Clean that up *before* the collector below can
+        // start a fresh one, so the two can never interleave.
+        prefsRepo.pendingTourUndo()?.let(restore)
+
         homeViewModel.showWelcomeTutorial.collect { requested ->
             if (!requested) return@collect
-            undo = ScriptedTourUndo(
+            val starting = ScriptedTourUndo(
                 viewport = mapViewModel.viewport,
                 rentalsVisible = prefsRepo.getBoolean(
                     R.string.preference_key_layer_bikeshare_visible,
@@ -112,6 +191,11 @@ internal fun ScriptedTourHost(
                     RentalLayer.SCOOTERS.defaultVisible
                 )
             )
+            undo = starting
+            prefsRepo.recordTourUndo(starting)
+            // Read and decode the bundled fixture here, off the main thread, rather than leaving the
+            // first arrivals poll to do it on the main one.
+            demoMode.prepare()
             demoMode.enter()
             mapViewModel.clearAllFocus()
             mapViewModel.aimAt(DemoModeController.CAMERA_TARGET, DemoModeController.CAMERA_ZOOM)
@@ -120,29 +204,14 @@ internal fun ScriptedTourHost(
         }
     }
 
-    // Teardown. `active` goes false on the last step's finish flourish and on the corner "X" alike, so
-    // both exits land here and neither can leave the rider stranded in a city they have never been to.
+    // Teardown. `active` goes false on the last step's finish flourish, on the corner "X" and on system
+    // Back alike (see TutorialOverlay's BackHandler), so every exit lands here and none of them can
+    // leave the rider stranded in a city they have never been to.
     LaunchedEffect(undo, tutorialState.active) {
         val pending = undo ?: return@LaunchedEffect
         if (tutorialState.active) return@LaunchedEffect
-        // The tour drove the app into directions and through a stop focus; unwind both before the real
-        // region's data comes back, so nothing is left focused on a demo id.
-        homeViewModel.clearMapFocus()
-        mapViewModel.clearAllFocus()
-        // The rental layer's switches are persisted preferences, so showing it during the tour is the
-        // one change that would otherwise outlive it.
-        mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, pending.bikesVisible)
-        mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, pending.scootersVisible)
-        mapViewModel.setRentalsVisible(pending.rentalsVisible)
-        // On a first launch the tour can start before the camera has ever settled, so there is no
-        // viewport to put back; fall back to the region fit the map would have opened on, rather than
-        // leaving the rider parked in the demo's city.
-        pending.viewport?.let(mapViewModel::restoreViewport) ?: mapViewModel.zoomToRegion()
+        restore(pending)
         undo = null
-        demoMode.exit()
-        // The tour has already covered what the opportunistic arrivals spotlight teaches, so don't
-        // ambush the rider with it again the first time they open a real stop.
-        ArrivalTutorial.markShown(prefsRepo, ArrivalTutorial.steps)
     }
 
     // Each step takes the app to the place its caption is about, so the rider only presses Next.

@@ -25,10 +25,11 @@ import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.models.WheelchairBoarding
-import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripresults.TripResultsUiState
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ScriptedTutorialActions
 import org.onebusaway.android.util.GeoPoint
 
@@ -41,7 +42,10 @@ import org.onebusaway.android.util.GeoPoint
  */
 data class ScriptedTourUndo(
     val viewport: MapViewport?,
-    val rentalsVisible: Boolean
+    /** The rental layer's three preferences: the master switch and each mode toggle. */
+    val rentalsVisible: Boolean,
+    val bikesVisible: Boolean,
+    val scootersVisible: Boolean
 )
 
 /**
@@ -62,11 +66,11 @@ internal fun rememberScriptedTutorialActions(
     homeViewModel: HomeViewModel,
     mapViewModel: MapViewModel,
     tripPlanViewModel: TripPlanViewModel,
-    helpViewModel: HelpViewModel,
+    tripResultsViewModel: TripResultsViewModel,
     drawerState: DrawerState
 ): ScriptedTutorialActions {
     val scope = rememberCoroutineScope()
-    return remember(demoMode, homeViewModel, mapViewModel, tripPlanViewModel, helpViewModel, drawerState) {
+    return remember(demoMode, homeViewModel, mapViewModel, tripPlanViewModel, tripResultsViewModel, drawerState) {
         ScriptedTutorialActions(
             focusDemoStop = {
                 val stop = demoMode.fixture.anchorStop ?: return@ScriptedTutorialActions
@@ -94,16 +98,28 @@ internal fun rememberScriptedTutorialActions(
                 // route view it already has rather than selecting a vehicle that doesn't exist.
                 demoMode.featuredTripId()?.let(homeViewModel::selectFocusedRouteTrip)
             },
-            showLegend = helpViewModel::showLegend,
             setDrawerOpen = { open ->
                 scope.launch { if (open) drawerState.open() else drawerState.close() }
             },
+            // Just the focus unwind, which is what backing out of a route actually does — the camera
+            // stays where the rider left it rather than springing somewhere new.
             resetMap = homeViewModel::clearMapFocus,
             showRentals = {
+                // Bring the neighbourhood back into view first. Unwinding the focus in the previous step
+                // left the camera wherever the last route framing flew it (for the demo 49, the whole
+                // city), where the rentals would be a few overlapping pixels.
+                //
+                // The aim lives here rather than in [resetMap] because clearing the focus travels
+                // through a map *directive*, which the map host consumes a frame or two later and which
+                // drops any retained framing on its way — so an aim issued alongside it would be wiped
+                // by the very thing it was ordered after. Here it is unambiguously the last word.
+                mapViewModel.aimAt(DemoModeController.CAMERA_TARGET, DemoModeController.CAMERA_ZOOM)
                 // The master switch alone can leave nothing drawn: it deliberately preserves whichever
-                // modes the rider had, and both default off. The tour needs markers on screen, so it
-                // asks for bikes explicitly. Both are preferences, and both are restored on teardown.
+                // modes the rider had, and both default off. The demo set has bikes, docks *and*
+                // scooters, so the tour asks for both modes. All three are preferences, and all three
+                // are put back on teardown.
                 mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, true)
+                mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, true)
                 mapViewModel.setRentalsVisible(true)
             },
             planDemoTrip = {
@@ -128,6 +144,15 @@ internal fun rememberScriptedTutorialActions(
                         isTransit = true
                     )
                 )
+            },
+            showOtherItinerary = {
+                // Step to the *next* option, wrapping. The point of the step is that the map redraws, so
+                // it has to land somewhere other than where it already is; which option in particular
+                // doesn't matter, and stepping keeps it right however many the planner returned.
+                val results = tripResultsViewModel.state.value as? TripResultsUiState.Success
+                if (results != null && results.options.size > 1) {
+                    tripResultsViewModel.selectOption((results.selectedIndex + 1) % results.options.size)
+                }
             }
         )
     }

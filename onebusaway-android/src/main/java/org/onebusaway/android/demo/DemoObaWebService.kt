@@ -338,7 +338,8 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     /** One arrival row: the run's real time at the stop, and the schedule it's being measured against. */
     private fun arrival(call: DemoStopCall, now: Long): ArrivalDeparture {
         val run = call.run
-        val predicted = run.isPredicted(now)
+        val predicted = run.hasPrediction(now)
+        val onRoad = run.isOnRoad(now)
         return ArrivalDeparture(
             routeId = run.routeId,
             tripId = run.tripId,
@@ -348,15 +349,24 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             routeLongName = fixture.routeById[run.routeId]?.longName,
             stopSequence = run.geometry.indexOf(call.stopId) ?: 0,
             serviceDate = DemoScenario.serviceDateMs(fixture, now),
-            vehicleId = run.vehicleId.takeIf { predicted },
+            // Only a bus actually out on this trip has a coach number to name.
+            vehicleId = run.vehicleId.takeIf { onRoad },
             predicted = predicted,
             scheduledArrivalTime = call.scheduledArrivalTimeMs,
             scheduledDepartureTime = call.scheduledArrivalTimeMs,
-            // A run with no vehicle out yet has nothing to predict from, so it reports schedule only —
-            // which is what puts a "scheduled" row (and its grey pill) in the demo arrivals list.
+            // A run too far out to have a prediction reports schedule only — which is what puts a
+            // "scheduled" row (and its grey pill) in the demo arrivals list.
             predictedArrivalTime = if (predicted) call.arrivalTimeMs else 0L,
             predictedDepartureTime = if (predicted) call.arrivalTimeMs else 0L,
-            tripStatus = if (predicted) status(run, now) else null,
+            // Three states, one timetable: a bus on the road reports a full status with a position (the
+            // pill draws its map pin); a run whose prediction is known but whose bus hasn't pulled out
+            // reports deviation with no position (the pill draws its broadcast glyph instead); anything
+            // further out has no status at all.
+            tripStatus = when {
+                onRoad -> status(run, now)
+                predicted -> pendingStatus(run, now)
+                else -> null
+            },
             situationIds = situationIdsFor(run.routeId)
         )
     }
@@ -379,8 +389,8 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             nextStopTimeOffset = nextIndex?.let { secondsUntilStop(run, it, now) },
             position = position,
             orientation = run.bearingAt(now).toDouble(),
-            distanceAlongTrip = run.distanceAlongShapeAt(now),
-            scheduledDistanceAlongTrip = run.distanceAlongShapeAt(now) +
+            distanceAlongTrip = run.progressAlongShapeAt(now),
+            scheduledDistanceAlongTrip = run.progressAlongShapeAt(now) +
                 run.deviationSeconds *
                 run.service.speedMetersPerSecond,
             totalDistanceAlongTrip = run.geometry.totalDistance,
@@ -388,11 +398,29 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             lastUpdateTime = now - DEMO_AVL_AGE_MS,
             lastLocationUpdateTime = now - DEMO_AVL_AGE_MS,
             lastKnownLocation = position,
-            lastKnownDistanceAlongTrip = run.distanceAlongShapeAt(now),
+            lastKnownDistanceAlongTrip = run.progressAlongShapeAt(now),
             lastKnownOrientation = run.bearingAt(now).toDouble(),
             blockTripSequence = 0
         )
     }
+
+    /**
+     * The status of a run that is predicted but hasn't pulled out: how late it is running, and nothing
+     * about where it is.
+     *
+     * `activeTripId` still names this trip — the prediction *is* about it — so what makes the arrival
+     * unplottable is the absence of a position, which is the honest reason: no bus has reported one for
+     * this trip yet.
+     */
+    private fun pendingStatus(run: DemoRun, now: Long) = TripStatus(
+        activeTripId = run.tripId,
+        predicted = true,
+        scheduleDeviation = run.deviationSeconds,
+        serviceDate = DemoScenario.serviceDateMs(fixture, now),
+        status = "default",
+        phase = "layover_during",
+        lastUpdateTime = now - DEMO_AVL_AGE_MS
+    )
 
     private fun secondsUntilStop(run: DemoRun, stopIndex: Int, now: Long): Long = (run.timeAtDistance(run.geometry.stopDistances[stopIndex]) - now) / 1000L
 
@@ -403,7 +431,7 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
         includeStatus: Boolean = true
     ) = TripDetailsEntry(
         tripId = run.tripId,
-        status = if (includeStatus && run.isPredicted(now)) status(run, now) else null,
+        status = if (includeStatus && run.isOnRoad(now)) status(run, now) else null,
         schedule = if (includeSchedule) schedule(run, now) else null
     )
 

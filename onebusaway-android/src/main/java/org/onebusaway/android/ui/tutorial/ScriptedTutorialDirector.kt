@@ -35,11 +35,11 @@ data class ScriptedTutorialActions(
     val focusDemoStop: () -> Unit,
     val showDemoRoute: () -> Unit,
     val selectDemoTrip: () -> Unit,
-    val showLegend: () -> Unit,
     val setDrawerOpen: (Boolean) -> Unit,
     val resetMap: () -> Unit,
     val showRentals: () -> Unit,
-    val planDemoTrip: () -> Unit
+    val planDemoTrip: () -> Unit,
+    val showOtherItinerary: () -> Unit
 )
 
 /**
@@ -68,7 +68,6 @@ fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActi
             TutorialAction.FOCUS_DEMO_STOP -> current.focusDemoStop()
             TutorialAction.SHOW_DEMO_ROUTE -> current.showDemoRoute()
             TutorialAction.SELECT_DEMO_TRIP -> current.selectDemoTrip()
-            TutorialAction.SHOW_LEGEND -> current.showLegend()
             TutorialAction.OPEN_DRAWER -> current.setDrawerOpen(true)
             TutorialAction.RESET_MAP -> {
                 current.setDrawerOpen(false)
@@ -76,6 +75,7 @@ fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActi
             }
             TutorialAction.SHOW_RENTALS -> current.showRentals()
             TutorialAction.PLAN_DEMO_TRIP -> current.planDemoTrip()
+            TutorialAction.SHOW_OTHER_ITINERARY -> current.showOtherItinerary()
         }
     }
 }

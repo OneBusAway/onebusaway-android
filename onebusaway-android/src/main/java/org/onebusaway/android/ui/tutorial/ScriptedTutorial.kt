@@ -40,9 +40,6 @@ enum class TutorialAction {
     /** Drill from the focused route into a single vehicle's trip, as tapping an ETA pill does. */
     SELECT_DEMO_TRIP,
 
-    /** Open the arrival-color legend dialog — the app's own, not a tutorial copy of it. */
-    SHOW_LEGEND,
-
     /** Open the navigation drawer, where starred stops and routes live. */
     OPEN_DRAWER,
 
@@ -53,7 +50,10 @@ enum class TutorialAction {
     SHOW_RENTALS,
 
     /** Enter trip planning with the demo trip's endpoints filled in, as a map long-press does. */
-    PLAN_DEMO_TRIP
+    PLAN_DEMO_TRIP,
+
+    /** Select a different itinerary from the ones planned, so the map redraws with another trip. */
+    SHOW_OTHER_ITINERARY
 }
 
 /**
@@ -94,10 +94,18 @@ object ScriptedTutorial {
     /** The map's micromobility (rentals) button. */
     const val KEY_RENTALS = "tutorial_scripted_rentals"
 
-    /** The trip planner's mode / transfer options bar. */
+    /**
+     * The trip planner's action bar — the depart/arrive toggle, the time, and the mode + advanced
+     * buttons. The row itself rather than the whole form: the endpoints above it are the *trip*, and the
+     * step is about narrowing how it's made.
+     */
     const val KEY_TRIP_OPTIONS = "tutorial_scripted_trip_options"
 
-    /** The list of planned itineraries. */
+    /**
+     * The horizontally scrollable strip of itinerary option cards. The strip, not the whole results
+     * sheet: three consecutive steps are about choosing *between* options, and ringing the entire sheet
+     * (which is mostly the selected trip's step-by-step directions) named the wrong thing.
+     */
     const val KEY_ITINERARIES = "tutorial_scripted_itineraries"
 
     /**
@@ -152,7 +160,9 @@ object ScriptedTutorial {
             anchorId = ArrivalTutorial.KEY_ETA,
             title = R.string.tutorial_scripted_legend_title,
             body = R.string.tutorial_scripted_legend_text,
-            action = TutorialAction.SHOW_LEGEND
+            // Rendered inside the caption rather than by opening the app's Legend dialog over the
+            // tutorial: a modal on a modal, hiding the arrivals the legend is about.
+            extra = TutorialExtra.ARRIVAL_LEGEND
         ),
         // 8. Starring — pointed at, never pressed.
         TutorialStep(
@@ -191,6 +201,9 @@ object ScriptedTutorial {
             anchorId = KEY_MAP,
             title = R.string.tutorial_scripted_plan_title,
             body = R.string.tutorial_scripted_plan_text,
+            // A long press leaves nothing on screen to ring, so the overlay mimes the gesture over
+            // the map instead of only describing it.
+            gesture = TutorialGesture.LONG_PRESS,
             action = TutorialAction.PLAN_DEMO_TRIP
         ),
         // 13. Narrowing the search.
@@ -212,7 +225,11 @@ object ScriptedTutorial {
             id = "tutorial_scripted_itinerary_detail",
             anchorId = KEY_ITINERARIES,
             title = R.string.tutorial_scripted_itinerary_detail_title,
-            body = R.string.tutorial_scripted_itinerary_detail_text
+            body = R.string.tutorial_scripted_itinerary_detail_text,
+            // Opens a *different* option than the one the previous step left selected, so the rider
+            // sees the map redraw. Saying "tap a row to see it on the map" over an unchanged map
+            // demonstrates nothing.
+            action = TutorialAction.SHOW_OTHER_ITINERARY
         ),
         // 16. Keeping one.
         TutorialStep(

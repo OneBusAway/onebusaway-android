@@ -97,7 +97,7 @@ class DemoModeController @Inject constructor(
 
     /**
      * The trip the tour's "tap an arrival" step drills into: the next departure of [FEATURED_ROUTE_ID]
-     * from the anchor stop that has a bus actually out on the road.
+     * from the anchor stop that has a bus actually out on the road (only those can be shown on the map).
      *
      * Resolved at the moment the step runs rather than fixed in advance, because the demo timetable
      * moves with the clock — the run that was next when the tour started may have left by the time the
@@ -107,7 +107,7 @@ class DemoModeController @Inject constructor(
     fun featuredTripId(): String? {
         val now = DemoClock.nowMs()
         return DemoScenario.arrivalsAt(fixture, ANCHOR_STOP_ID, now)
-            .firstOrNull { it.run.routeId == FEATURED_ROUTE_ID && it.run.isPredicted(now) }
+            .firstOrNull { it.run.routeId == FEATURED_ROUTE_ID && it.run.isOnRoad(now) }
             ?.run
             ?.tripId
     }

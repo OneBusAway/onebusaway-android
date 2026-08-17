@@ -77,6 +77,8 @@ import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
@@ -630,6 +632,14 @@ fun HomeScreen(
                                 rentalsVisible = prefsRepo.getBoolean(
                                     R.string.preference_key_layer_bikeshare_visible,
                                     false
+                                ),
+                                bikesVisible = prefsRepo.getBoolean(
+                                    R.string.preference_key_layer_bikes_visible,
+                                    RentalLayer.BIKES.defaultVisible
+                                ),
+                                scootersVisible = prefsRepo.getBoolean(
+                                    R.string.preference_key_layer_scooters_visible,
+                                    RentalLayer.SCOOTERS.defaultVisible
                                 )
                             )
                             demoMode.enter()
@@ -656,8 +666,10 @@ fun HomeScreen(
                     homeViewModel.clearMapFocus()
                     mapViewModel.clearAllFocus()
                     tourUndo?.let { undo ->
-                        // The rental layer is a persisted preference, so showing it during the tour is
-                        // the one change that would otherwise outlive it.
+                        // The rental layer's switches are persisted preferences, so showing it during
+                        // the tour is the one change that would otherwise outlive it.
+                        mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, undo.bikesVisible)
+                        mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, undo.scootersVisible)
                         mapViewModel.setRentalsVisible(undo.rentalsVisible)
                         // On a first launch the tour can start before the camera has ever settled, so
                         // there is no viewport to put back; fall back to the region fit the map would
@@ -680,7 +692,7 @@ fun HomeScreen(
                         homeViewModel = homeViewModel,
                         mapViewModel = mapViewModel,
                         tripPlanViewModel = tripPlanViewModel,
-                        helpViewModel = helpViewModel,
+                        tripResultsViewModel = tripResultsViewModel,
                         drawerState = drawerState
                     )
                 )

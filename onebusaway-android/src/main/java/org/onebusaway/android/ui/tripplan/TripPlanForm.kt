@@ -80,6 +80,9 @@ import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
 /** Height of one endpoint row. Android's minimum touch target — the rows are tap-to-edit. */
 private val ENDPOINT_ROW_HEIGHT = 48.dp
@@ -678,7 +681,13 @@ private fun TripActionBar(
     onAdvancedSettings: () -> Unit
 ) {
     Row(
-        modifier = Modifier.formBand().padding(start = ACTION_BAR_START_INSET).height(ACTION_BAR_HEIGHT),
+        modifier = Modifier
+            .formBand()
+            .padding(start = ACTION_BAR_START_INSET)
+            .height(ACTION_BAR_HEIGHT)
+            // The scripted tour's "narrow it down" step rings this row (#2164) — the when/mode/advanced
+            // controls, not the endpoints above them.
+            .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_OPTIONS),
         verticalAlignment = Alignment.CenterVertically
     ) {
         WhenModeSegment(arriving = arriving, onSetArriving = onSetArriving)

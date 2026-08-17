@@ -119,6 +119,13 @@
     <string name="main_help_legend_canceled">Gray with strikethrough means the trip has been
         canceled - this bus is NOT coming
     </string>
+    <!-- The two glyphs an ETA pill can carry; both mean the arrival is real-time -->
+    <string name="main_help_legend_on_map">A pin means the vehicle is on the map right now — tap the
+        arrival to jump to it.
+    </string>
+    <string name="main_help_legend_realtime">A broadcast icon means the arrival is tracked live, but
+        the vehicle isn’t drawn on the map.
+    </string>
     <string name="main_nolocation_title">Location not enabled</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="main_nolocation">%1$s would like your location, do you want to enable it now?</string>

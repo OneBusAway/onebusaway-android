@@ -21,6 +21,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -59,17 +60,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -78,6 +83,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import kotlin.math.hypot
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.arrivals.components.ArrivalLegend
 import org.onebusaway.android.ui.icons.AppIcons
 
 /**
@@ -91,6 +97,10 @@ import org.onebusaway.android.ui.icons.AppIcons
  * ETA pill). Sharing the id outright would have made those steps indistinguishable to everything that
  * keys on it, starting with the overlay's own step-change animation.
  *
+ * [extra] is optional content the caption renders under its body — the colour legend, for the step
+ * that explains it. [gesture] mimes an action over the target for a step whose subject is a gesture
+ * rather than a control.
+ *
  * [action] is what the app should *do* when this step opens — the mechanism the scripted tour (#2164)
  * is built on. A step that says "tap a route to see its vehicles" performs that navigation itself, so
  * what the caption describes is always what is on screen behind it, whatever the user does. Null (the
@@ -103,8 +113,33 @@ data class TutorialStep(
     @param:StringRes val body: Int,
     @param:DrawableRes val bodyIcon: Int? = null,
     val action: TutorialAction? = null,
-    val anchorId: String = id
+    val anchorId: String = id,
+    val extra: TutorialExtra? = null,
+    val gesture: TutorialGesture? = null
 )
+
+/**
+ * Extra content a step's caption renders beneath its body.
+ *
+ * A closed set rather than a `@Composable` slot on [TutorialStep], so a step stays plain data that a
+ * sequence can declare, compare and test without dragging composition into it.
+ */
+enum class TutorialExtra {
+    /** The arrivals colour + glyph legend, shown inline by the "what the colours mean" step. */
+    ARRIVAL_LEGEND
+}
+
+/**
+ * A gesture the overlay mimes over the step's target, for a step that teaches an action with no
+ * control to point at.
+ *
+ * A long press leaves nothing on screen to ring — the affordance *is* the gesture — so the tour shows
+ * it being performed instead of describing it and hoping.
+ */
+enum class TutorialGesture {
+    /** A finger pressing and holding: a dot that swells, with a ring radiating out of it. */
+    LONG_PRESS
+}
 
 /**
  * Drives a spotlight tutorial: the active step sequence, the current index, and the on-screen bounds
@@ -191,9 +226,26 @@ private val SPOTLIGHT_BOUNCE_EASING = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f)
 private const val SPOTLIGHT_CLOSE_MILLIS = 130
 private const val SPOTLIGHT_OPEN_MILLIS = 170
 
-// On a genuine finish, the final cutout grows past the screen edges, dissolving the scrim to reveal the
-// app beneath, then the overlay tears down.
+// On a genuine finish the ring sweeps out past the screen edges and the overlay tears down.
 private const val SPOTLIGHT_FINISH_MILLIS = 300
+
+/** The crisp inner outline drawn right at the target's edge. */
+private val RING_WIDTH = 3.dp
+
+/** A softer, wider outline behind it, so the pointer reads over a busy map as well as a flat panel. */
+private val RING_HALO_WIDTH = 10.dp
+
+/** Air between the target's bounds and the outline. */
+private val RING_PAD = 6.dp
+
+/** How far past its resting size the outline springs on each pulse. */
+private val RING_PULSE = 5.dp
+
+/** Corner rounding. A target smaller than twice this gets a fully rounded outline — i.e. a circle. */
+private val RING_MAX_CORNER = 28.dp
+
+/** How far inside the screen a full-screen target's outline is drawn, so it stays visible. */
+private val RING_EDGE_INSET = 10.dp
 
 /**
  * Provides the active [TutorialState] to deep composables so a target can anchor itself via
@@ -214,16 +266,22 @@ fun Modifier.tutorialAnchor(state: TutorialState?, id: String): Modifier = if (s
 }
 
 /**
- * The spotlight overlay for the active tutorial step: a full-screen scrim with a rounded cutout over
- * the current step's target, plus a caption card (title + body + a Next/Got-it button, and Skip until
- * the last step). Tapping anywhere (or Next) advances; Skip ends it. Renders nothing when no tutorial
- * is active, so it stops intercepting touches the moment the sequence finishes.
+ * The spotlight overlay for the active tutorial step: a pulsing ring around the step's target, plus a
+ * caption card (title + body + Next). Tapping anywhere (or Next) advances; the corner "X" ends it.
+ * Renders nothing when no tutorial is active, so it stops intercepting touches the moment the sequence
+ * finishes.
+ *
+ * **The ring is the whole affordance — there is no scrim.** This used to dim everything outside the
+ * target with a translucent green wash (the legacy ShowcaseView look), which worked for a tutorial that
+ * only pointed at static controls and failed for one that *drives the app*: the scripted tour (#2164)
+ * opens a route on the map behind the caption, and the wash hid the very change the step was narrating.
+ * Attention is directed by the pulsing ring alone, so the app stays fully legible underneath.
  *
  * Drawn as a sibling over the rest of the screen. Targets report their bounds in *root* coordinates;
  * this overlay records its own root position ([positionInRoot]) and translates each target into its
- * local space, so the spotlight lines up wherever the overlay sits in the hierarchy. Until a target
- * has laid out its bounds are null — the scrim then covers the full screen and the caption centers,
- * snapping to the cutout once the bounds arrive.
+ * local space, so the ring lines up wherever the overlay sits in the hierarchy. Until a target has laid
+ * out, no ring is drawn — the caption simply stands alone, which is the honest rendering for "there is
+ * nothing to point at yet".
  */
 @Composable
 fun TutorialOverlay(state: TutorialState) {
@@ -277,6 +335,19 @@ fun TutorialOverlay(state: TutorialState) {
         label = "annulusPulse"
     )
 
+    // The long-press mime: one 0->1 sweep per cycle, restarting rather than reversing so the press
+    // reads as repeated taps-and-holds rather than a ring breathing in and out. Only collected while a
+    // step actually asks for a gesture.
+    val gesturePhase by rememberInfiniteTransition(label = "gesture").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = LONG_PRESS_CYCLE_MILLIS, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "longPress"
+    )
+
     BoxWithConstraints(
         Modifier
             .fillMaxSize()
@@ -285,74 +356,75 @@ fun TutorialOverlay(state: TutorialState) {
             // ShowcaseView's tap-to-continue); the caption's buttons consume their own taps first.
             .pointerInput(step.id) { detectTapGestures { state.advance() } }
     ) {
-        // The legacy ShowcaseView look: a translucent green brand-color overlay (the same
-        // tutorial_background the welcome card uses) with a transparent *circle* punched out over the
-        // target. A denser, fully-opaque green annulus hugs the cutout (thickness ~half the radius) to
-        // emphasize the spotlight, ringed in the darker brand color (the old sv_showcaseColor).
-        val overlayColor = colorResource(R.color.tutorial_background)
-        val annulusColor = overlayColor.copy(alpha = 1f)
+        // The ring: a crisp brand-color outline hugging the target, backed by a softer, wider halo so it
+        // reads against a busy map as well as against a flat panel. Both pulse together.
         val ringColor = colorResource(R.color.theme_primary_variant)
-        val cutoutPad = 12.dp
-        val minRadius = 32.dp
+        val haloColor = colorResource(R.color.tutorial_background)
+        // The target's bounds plus a little air. Kept tight — the ring is a pointer, and a loose one
+        // stops naming which control it means.
+        val ringPadPx = with(LocalDensity.current) { RING_PAD.toPx() }
+        val maxCornerPx = with(LocalDensity.current) { RING_MAX_CORNER.toPx() }
+        val edgeInsetPx = with(LocalDensity.current) { RING_EDGE_INSET.toPx() }
 
-        // Reused across the per-frame pulse redraws so the cutout isn't reallocated each frame.
-        val cutoutPath = remember { Path() }
         Canvas(Modifier.fillMaxSize()) {
-            if (spotlightTarget == null || spotlightTarget.isEmpty) {
-                // No target yet (or a target-less step): a full scrim, fading out if we're finishing.
-                drawRect(overlayColor, alpha = 1f - finishProgress.value)
-            } else {
-                val center = spotlightTarget.center
-                val halfDiagonal =
-                    (hypot(spotlightTarget.width.toDouble(), spotlightTarget.height.toDouble()) / 2.0)
-                        .toFloat()
-                // 1.5x the base radius for a more prominent cutout, scaled by the open/close transition
-                // (0 collapses the cutout to nothing, leaving a full scrim).
-                val openRadius =
-                    maxOf(halfDiagonal + cutoutPad.toPx(), minRadius.toPx()) * 1.5f * openFraction.value
-                // On finish, expand the cutout past the farthest screen corner so the scrim clears entirely;
-                // skipped while not finishing (every frame of the overlay's pulsing lifetime), so the
-                // farthest-corner hypot isn't computed and thrown away ~60 times a second for nothing.
-                val radius =
-                    if (finishProgress.value == 0f) {
-                        openRadius
-                    } else {
-                        lerp(openRadius, farthestCorner(center, size) + minRadius.toPx(), finishProgress.value)
-                    }
-                // Annulus thickness ~half the radius, pulsing ±~45% so the ring bounces around the cutout.
-                // Tied to the *open* radius (not the expanding one) so it stays a steady band as it sweeps
-                // off-screen on finish rather than ballooning.
-                val annulusWidth = (openRadius * 0.5f) * (1f + 0.45f * pulse)
-
-                cutoutPath.rewind()
-                cutoutPath.addOval(Rect(center, radius))
-                // Base translucent overlay everywhere except the transparent cutout (no per-frame Path.op).
-                clipPath(cutoutPath, clipOp = ClipOp.Difference) {
-                    drawRect(overlayColor)
+            val target = spotlightTarget
+            if (target != null && !target.isEmpty) {
+                // A rounded *rectangle* rather than a circle, which is the same thing for a square
+                // target — a stop marker, a star, a route badge all still get a circle — but hugs a wide
+                // one instead of swallowing its surroundings. A circle round the itinerary strip or the
+                // planner's action bar had to be as wide as the row and was therefore taller than the
+                // screen could show, which named everything and so named nothing.
+                val bounds = target.inflate(ringPadPx)
+                // The bounce: the outline springs a little past its resting size and settles back, so
+                // the eye is drawn by motion rather than by dimming everything else.
+                val pulsePx = RING_PULSE.toPx() * pulse
+                // On finish the outline sweeps out past the screen and is gone.
+                val burstPx = if (finishProgress.value == 0f) {
+                    0f
+                } else {
+                    finishProgress.value * (size.maxDimension + RING_MAX_CORNER.toPx())
                 }
-                // More-opaque ring hugging the cutout: a stroke spanning the cutout edge outward.
-                drawCircle(
-                    color = annulusColor,
-                    radius = radius + annulusWidth / 2f,
-                    center = center,
-                    style = Stroke(width = annulusWidth)
+                // Opening: grow from nothing to full size, so a step change pops rather than slides.
+                val grown = bounds.inflate(pulsePx + burstPx)
+                val rect = grown.scaledAbout(grown.center, openFraction.value)
+                    // Kept inside the screen so a target as large as the map — the opening "this is the
+                    // map" step — still shows its outline rather than drawing it off every edge.
+                    .clampedInto(size, edgeInsetPx)
+                val corner = minOf(rect.minDimension / 2f, maxCornerPx)
+                val fade = 1f - finishProgress.value
+                drawRoundRect(
+                    color = haloColor,
+                    topLeft = rect.topLeft,
+                    size = rect.size,
+                    cornerRadius = CornerRadius(corner, corner),
+                    alpha = fade,
+                    style = Stroke(width = RING_HALO_WIDTH.toPx())
                 )
-                // The brand-color ring right at the cutout edge.
-                drawCircle(
+                drawRoundRect(
                     color = ringColor,
-                    radius = radius,
-                    center = center,
-                    style = Stroke(width = 2.dp.toPx())
+                    topLeft = rect.topLeft,
+                    size = rect.size,
+                    cornerRadius = CornerRadius(corner, corner),
+                    alpha = fade,
+                    style = Stroke(width = RING_WIDTH.toPx())
                 )
+                if (step.gesture == TutorialGesture.LONG_PRESS && finishProgress.value == 0f) {
+                    drawLongPress(rect.center, gesturePhase, ringColor)
+                }
             }
         }
 
-        // Keep the caption clear of the spotlight: with no target, center it; otherwise put it on the
-        // opposite half of the screen from the target (our arrival-panel targets sit low, so the caption
-        // rides at the top).
+        // The caption lives at the **bottom** unless the target is down there too, in which case it moves
+        // to the top to stay clear.
+        //
+        // Bottom is also what an unresolved target gets, rather than centre. A target's bounds arrive a
+        // frame or two after the step opens, so a centred default meant the card popped up mid-screen and
+        // then slid down the moment the bounds landed — the "tap a stop" step visibly threw its caption
+        // across the screen on arrival. Defaulting to where it will almost always end up makes that
+        // settle invisible.
         val rootHeightPx = constraints.maxHeight.toFloat()
         val alignment = when {
-            captionTarget == null || captionTarget.isEmpty -> Alignment.Center
+            captionTarget == null || captionTarget.isEmpty -> Alignment.BottomCenter
             captionTarget.center.y > rootHeightPx / 2f -> Alignment.TopCenter
             else -> Alignment.BottomCenter
         }
@@ -423,6 +495,16 @@ private fun TutorialCaption(
                     )
                 }
             }
+            // A step's extra content sits inside the card. The legend used to be shown by opening the
+            // app's Legend *dialog* over the tutorial, which stacked one modal on another and hid the
+            // arrivals the legend was describing.
+            when (step.extra) {
+                TutorialExtra.ARRIVAL_LEGEND -> ArrivalLegend(
+                    modifier = Modifier.padding(top = 8.dp, end = 12.dp),
+                    compact = true
+                )
+                null -> Unit
+            }
             // A single advance action: "Next", or "Finish" on the last step. The corner "X" ends the
             // tutorial outright.
             val advanceLabel = if (isLast) R.string.tutorial_button_finish else R.string.pager_button_next
@@ -436,9 +518,61 @@ private fun TutorialCaption(
     }
 }
 
-/** Distance from [center] to the farthest of the four corners of a [size]-sized area. */
-private fun farthestCorner(center: Offset, size: Size): Float {
-    val dx = maxOf(center.x, size.width - center.x)
-    val dy = maxOf(center.y, size.height - center.y)
-    return hypot(dx.toDouble(), dy.toDouble()).toFloat()
+/**
+ * Mimes a finger pressing and holding at [center]: a dot that swells and holds, with a ring radiating
+ * out of it and fading. [phase] runs 0..1 once per cycle.
+ *
+ * The dot holds at full size for the back half of the cycle, which is what makes this read as a *long*
+ * press rather than a tap — the pause is the whole message.
+ */
+private fun DrawScope.drawLongPress(center: Offset, phase: Float, color: Color) {
+    // The press: swell over the first fifth of the cycle, then hold.
+    val press = (phase / LONG_PRESS_SWELL_FRACTION).coerceAtMost(1f)
+    val dotRadius = LONG_PRESS_DOT_RADIUS.toPx() * (0.55f + 0.45f * press)
+    // The ripple: starts once the finger is down and expands out, fading as it goes.
+    val ripple = ((phase - LONG_PRESS_SWELL_FRACTION) / (1f - LONG_PRESS_SWELL_FRACTION)).coerceIn(0f, 1f)
+    if (ripple > 0f) {
+        drawCircle(
+            color = color,
+            radius = lerp(dotRadius, LONG_PRESS_RIPPLE_RADIUS.toPx(), ripple),
+            center = center,
+            alpha = 1f - ripple,
+            style = Stroke(width = RING_WIDTH.toPx())
+        )
+    }
+    drawCircle(color = color, radius = dotRadius, center = center, alpha = 0.9f)
+}
+
+/** How long one press-and-hold cycle of the long-press mime takes. */
+private const val LONG_PRESS_CYCLE_MILLIS = 1600
+
+/** The fraction of that cycle spent pressing down; the rest is the hold and the ripple. */
+private const val LONG_PRESS_SWELL_FRACTION = 0.2f
+
+private val LONG_PRESS_DOT_RADIUS = 14.dp
+private val LONG_PRESS_RIPPLE_RADIUS = 46.dp
+
+/** This rect scaled about [about] by [factor] — the outline's grow-in on a step change. */
+private fun Rect.scaledAbout(about: Offset, factor: Float): Rect = Rect(
+    left = about.x + (left - about.x) * factor,
+    top = about.y + (top - about.y) * factor,
+    right = about.x + (right - about.x) * factor,
+    bottom = about.y + (bottom - about.y) * factor
+)
+
+/**
+ * This rect held inside a [size]-sized area, [inset] in from its edges.
+ *
+ * Only ever shrinks: a target already on screen is untouched, while one as large as the whole map is
+ * pulled back to where its outline can actually be seen. A rect that would invert under the inset
+ * collapses to its centre rather than turning inside out.
+ */
+private fun Rect.clampedInto(size: Size, inset: Float): Rect {
+    val minLeft = inset
+    val minTop = inset
+    val maxRight = (size.width - inset).coerceAtLeast(minLeft)
+    val maxBottom = (size.height - inset).coerceAtLeast(minTop)
+    val l = left.coerceIn(minLeft, maxRight)
+    val t = top.coerceIn(minTop, maxBottom)
+    return Rect(l, t, right.coerceIn(l, maxRight), bottom.coerceIn(t, maxBottom))
 }

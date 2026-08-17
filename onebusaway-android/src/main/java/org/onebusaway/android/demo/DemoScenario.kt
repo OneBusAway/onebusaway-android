@@ -68,7 +68,7 @@ object DemoScenario {
      * on time, clearly late, clearly early, and slightly-off-but-still-on-time — so however the
      * sliding window of upcoming buses happens to fall when the user starts the tour, the arrivals
      * list shows the colors the legend step is about. (The fourth display state, "scheduled", isn't a
-     * deviation at all: it's what a run that hasn't started yet reports — see [DemoRun.isPredicted].)
+     * deviation at all: it's what a run with no prediction yet reports — see [DemoRun.hasPrediction].)
      */
     private val DEVIATION_CYCLE_SECONDS = listOf(0L, 330L, -240L, 45L)
 
@@ -110,12 +110,12 @@ object DemoScenario {
         // candidates in run-index terms so only the handful that can possibly qualify are ever built,
         // then let the filter — which asks the actual question — decide.
         val travelSeconds = geometry.totalDistance / service.speedMetersPerSecond
-        val newest = service.indexAt(nowMs + DEVIATION_SLACK_SECONDS * 1000L)
+        val newest = service.indexAt(nowMs + DEVIATION_SLACK_SECONDS * 1000L + PULLOUT_MS)
         val oldest = service.indexAt(nowMs - (travelSeconds.toLong() + DEVIATION_SLACK_SECONDS) * 1000L)
         return (oldest..newest)
             .map { run(routeId, service, geometry, it) }
-            .filter { it.distanceAlongShapeAt(nowMs) in 0.0..geometry.totalDistance }
-            .sortedByDescending { it.distanceAlongShapeAt(nowMs) }
+            .filter { it.isOnRoad(nowMs) }
+            .sortedByDescending { it.progressAlongShapeAt(nowMs) }
     }
 
     /**
@@ -250,14 +250,42 @@ data class DemoRun(
     fun distanceAlongShapeAt(nowMs: Long): Double = (nowMs - actualDepartureMs) / 1000.0 * service.speedMetersPerSecond
 
     /**
-     * True when this run is on its shape at [nowMs] and so has a real-time position to report.
-     *
-     * This is what separates a *predicted* demo arrival from a *scheduled* one: a bus that hasn't
-     * pulled out yet has nothing to predict from, which is exactly why a real arrivals board shows the
-     * far-out rows in schedule grey. The tour's "scheduled" legend state is therefore an emergent
-     * property of the simulation rather than a flag someone set.
+     * Where along the shape this run's bus actually *is* at [nowMs] — the same thing, but held at the
+     * start of the line while it waits at the terminus during its pull-out window. This is what the
+     * marker, the sort order and the next-stop countdown read; the raw signed value above is for
+     * deciding whether the run has departed at all.
      */
-    fun isPredicted(nowMs: Long): Boolean = distanceAlongShapeAt(nowMs) in 0.0..geometry.totalDistance
+    fun progressAlongShapeAt(nowMs: Long): Double = distanceAlongShapeAt(nowMs).coerceIn(0.0, geometry.totalDistance)
+
+    /**
+     * True when this run has a bus reporting a position at [nowMs] — the one thing the map can draw a
+     * marker for.
+     *
+     * The window opens [PULLOUT_MS] *before* the run departs, because that is when a real bus starts
+     * being visible: it is sitting at the terminus with the engine running, already assigned to the
+     * trip and already reporting AVL, before it pulls out. Without that, a stop early in its route only
+     * ever had a drawable vehicle for arrivals a few minutes away — so the ETA pills at the demo stop
+     * showed the broadcast glyph and never the map pin, and the tour had no live example of the
+     * difference to point at.
+     */
+    fun isOnRoad(nowMs: Long): Boolean = nowMs >= actualDepartureMs - PULLOUT_MS && distanceAlongShapeAt(nowMs) <= geometry.totalDistance
+
+    /**
+     * True when this run has a real-time prediction at [nowMs], whether or not a vehicle can be drawn
+     * for it yet.
+     *
+     * These are deliberately two different things, and the difference is what the tour's legend step
+     * teaches. An arrival is *predicted* — real-time — as soon as the operator knows how the run is
+     * doing; it only has a **plottable** vehicle once a bus is out on this trip reporting a position. A
+     * run in the window between the two is real-time with nowhere to fly the camera, which is exactly
+     * the case an ETA pill draws its broadcast glyph for rather than its map pin (see
+     * `ArrivalData.hasPlottableVehicle`, #1992). Beyond that window there is no prediction at all and
+     * the row falls back to schedule grey.
+     *
+     * So one timetable produces all three pill states as an emergent property, rather than by flagging
+     * rows by hand.
+     */
+    fun hasPrediction(nowMs: Long): Boolean = isOnRoad(nowMs) || (actualDepartureMs - nowMs) in 0..PREDICTION_LEAD_MS
 
     /** The decoded shape, computed once per run instance and shared by position and bearing lookups. */
     private val polyline: Polyline by lazy {
@@ -265,17 +293,36 @@ data class DemoRun(
     }
 
     /** Where this bus is at [nowMs], or null when it isn't on its shape. */
-    fun positionAt(nowMs: Long): GeoPoint? = if (isPredicted(nowMs)) polyline.interpolate(distanceAlongShapeAt(nowMs)) else null
+    fun positionAt(nowMs: Long): GeoPoint? = if (isOnRoad(nowMs)) polyline.interpolate(progressAlongShapeAt(nowMs)) else null
 
     /** Which way this bus is pointing at [nowMs], in compass degrees. */
-    fun bearingAt(nowMs: Long): Float = polyline.bearingAt(distanceAlongShapeAt(nowMs))
+    fun bearingAt(nowMs: Long): Float = polyline.bearingAt(progressAlongShapeAt(nowMs))
 
     /** The index into [DemoRouteStops.stopIds] of the next stop this run reaches after [nowMs]. */
     fun nextStopIndexAt(nowMs: Long): Int? {
-        val distance = distanceAlongShapeAt(nowMs)
+        val distance = progressAlongShapeAt(nowMs)
         return geometry.stopDistances.indexOfFirst { it >= distance }.takeIf { it >= 0 }
     }
 }
+
+/**
+ * How long before its departure a run's bus is already at the terminus reporting a position.
+ *
+ * Longer than the time any demo route takes to reach the tour's anchor stop, so the next arrival there
+ * always has a drawable vehicle and its ETA pill can show the map pin — while arrivals further out
+ * still fall into the prediction-only window below and show the broadcast glyph instead.
+ */
+private const val PULLOUT_MS = 8 * 60 * 1000L
+
+/**
+ * How long before a run departs its prediction becomes available — the window in which an arrival is
+ * real-time but has no vehicle to draw yet.
+ *
+ * Comfortably longer than a demo headway, so that at any moment the anchor stop's list holds at least
+ * one row in this state alongside rows that do have a vehicle. That is what lets the legend step point
+ * at both pill glyphs at once.
+ */
+private const val PREDICTION_LEAD_MS = 18 * 60 * 1000L
 
 /** One demo run's call at one stop: when it gets there, and how far along its shape that stop is. */
 data class DemoStopCall(

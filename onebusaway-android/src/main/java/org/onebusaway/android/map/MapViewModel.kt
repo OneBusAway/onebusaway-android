@@ -31,6 +31,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.location.LocationRepository
@@ -127,6 +128,7 @@ class MapViewModel @Inject constructor(
     private val tripObservationRepository: TripObservationRepository,
     private val stopDao: StopDao,
     private val stopCache: StopCacheRepository,
+    private val demoMode: DemoModeState,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -140,6 +142,7 @@ class MapViewModel @Inject constructor(
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         prefsRepository = prefsRepository,
+        demoMode = demoMode,
         context = context
     )
 

@@ -206,7 +206,10 @@ fun TripResultsHeader(
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            // The scripted tour rings this strip for three consecutive steps (#2164): comparing the
+            // options, opening a different one, and pinning one.
+            .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ITINERARIES),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ScrollChevronGutter(
@@ -965,9 +968,6 @@ fun TripResultsList(
     CompositionLocalProvider(LocalUnitsAreMetric provides unitsAreMetric()) {
         Box(
             modifier
-                // The scripted tour spotlights the option list for three consecutive steps (#2164):
-                // comparing the options, opening one, and pinning it.
-                .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ITINERARIES)
                 .fillMaxSize()
                 .background(colorResource(R.color.md_theme_surfaceContainer))
         ) {

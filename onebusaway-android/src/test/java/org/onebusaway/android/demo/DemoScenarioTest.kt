@@ -151,12 +151,84 @@ class DemoScenarioTest {
             val at = now + offsetMinutes * 60_000L
             DemoScenario.arrivalsAt(fixture, anchorStopId, at).forEach { call ->
                 seen += ScheduleDeviation.status(
-                    isRealtime = call.run.isPredicted(at),
+                    isRealtime = call.run.hasPrediction(at),
                     deviation = call.run.deviationSeconds.seconds
                 )
             }
         }
         assertEquals(ScheduleDeviation.Status.entries.toSet(), seen)
+    }
+
+    /**
+     * The three pill states the legend step points at, all present at once: a bus on the road (map
+     * pin), a predicted run with no bus out yet (broadcast glyph), and a run too far out to predict
+     * (schedule grey). Sampled across a headway because which runs are in the window slides.
+     */
+    @Test
+    fun `on-road, predicted-only and scheduled arrivals coexist at the demo stop`() {
+        var sawOnRoad = false
+        var sawPredictedOnly = false
+        var sawScheduled = false
+        for (offsetSeconds in 0 until 600 step 30) {
+            val at = now + offsetSeconds * 1000L
+            DemoScenario.arrivalsAt(fixture, anchorStopId, at).forEach { call ->
+                when {
+                    call.run.isOnRoad(at) -> sawOnRoad = true
+                    call.run.hasPrediction(at) -> sawPredictedOnly = true
+                    else -> sawScheduled = true
+                }
+            }
+        }
+        assertTrue("expected a bus on the road (map pin)", sawOnRoad)
+        assertTrue("expected a predicted run with no bus out (broadcast glyph)", sawPredictedOnly)
+        assertTrue("expected a schedule-only row (grey)", sawScheduled)
+    }
+
+    /**
+     * The soonest arrival at the tour's stop must always have a bus already reporting a position, so
+     * its ETA pill shows the map pin rather than the broadcast glyph. That is the whole reason a run's
+     * bus appears at the terminus before it departs — without the pull-out window, a stop early in its
+     * route only had drawable vehicles for arrivals a couple of minutes away.
+     */
+    @Test
+    fun `the next arrival always has a bus that can be drawn`() {
+        for (offsetSeconds in 0 until 900 step 15) {
+            val at = now + offsetSeconds * 1000L
+            val next = DemoScenario.arrivalsAt(fixture, anchorStopId, at).firstOrNull()
+            assertNotNull("no arrivals at +${offsetSeconds}s", next)
+            assertTrue(
+                "the soonest arrival at +${offsetSeconds}s has no drawable bus",
+                next!!.run.isOnRoad(at)
+            )
+            assertNotNull(next.run.positionAt(at))
+        }
+    }
+
+    @Test
+    fun `a bus waiting at the terminus sits at the start of the line`() {
+        val run = DemoScenario.activeRuns(fixture, routeId, now).first()
+        // A minute before this run pulls out — inside the window where its bus is assigned and
+        // reporting, but hasn't started down the line. Derived from the run rather than sampled at a
+        // fixed clock, so the case is exercised whatever time the suite runs at.
+        val waiting = run.actualDepartureMs - 60_000L
+        assertTrue("expected to be before departure", waiting < run.actualDepartureMs)
+        assertTrue("a waiting bus is drawable", run.isOnRoad(waiting))
+        assertTrue("…but has not left yet", run.distanceAlongShapeAt(waiting) < 0.0)
+        assertEquals("held at the start of the line", 0.0, run.progressAlongShapeAt(waiting), 0.0)
+        assertNotNull("a waiting bus still reports a position", run.positionAt(waiting))
+    }
+
+    @Test
+    fun `a predicted run with no bus out yet has no position to draw`() {
+        val geometry = fixture.routeStops.getValue(routeId)
+        val service = DemoRouteService(headwaySeconds = 600, phaseSeconds = 420, speedMetersPerSecond = 5.2)
+        // Find a run that is predicted but hasn't departed — the broadcast-glyph state.
+        val pending = (0L..40L)
+            .map { DemoScenario.runById(fixture, DemoScenario.tripIdFor(routeId, service.indexAt(now) + it))!! }
+            .first { it.hasPrediction(now) && !it.isOnRoad(now) }
+        assertNull("a run with no bus assigned yet has nowhere to be drawn", pending.positionAt(now))
+        assertTrue(pending.distanceAlongShapeAt(now) < 0.0)
+        assertTrue(geometry.totalDistance > 0.0)
     }
 
     @Test
@@ -165,10 +237,11 @@ class DemoScenarioTest {
         // The run that departs one full headway from now cannot be on the road yet.
         val future = DemoScenario.runById(
             fixture,
-            DemoScenario.tripIdFor(routeId, service.indexAt(now) + 4)
+            // Far enough out to be past the prediction lead entirely.
+            DemoScenario.tripIdFor(routeId, service.indexAt(now) + 10)
         )
         requireNotNull(future)
-        assertTrue("a future run must be scheduled-only", !future.isPredicted(now))
+        assertTrue("a far-out run must be scheduled-only", !future.hasPrediction(now))
         assertNull(future.positionAt(now))
     }
 
@@ -197,7 +270,7 @@ class DemoScenarioTest {
             val listed = DemoScenario.activeRuns(fixture, routeId, at).map { it.index }.toSet()
             // Check a generous band of indices by brute force, independent of the window under test.
             val brute = (-20L..20L).map { DemoScenario.runById(fixture, DemoScenario.tripIdFor(routeId, indexNear(at) + it))!! }
-                .filter { it.distanceAlongShapeAt(at) in 0.0..geometry.totalDistance }
+                .filter { it.isOnRoad(at) }
                 .map { it.index }
                 .toSet()
             assertEquals("at +${offsetSeconds}s", brute, listed)

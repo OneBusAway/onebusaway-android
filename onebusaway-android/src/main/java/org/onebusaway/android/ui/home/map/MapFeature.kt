@@ -114,7 +114,10 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
@@ -474,7 +477,9 @@ fun MapFeature(
     ObaMap(
         host = mapViewModel.host,
         callbacks = callbacks,
-        modifier = modifier,
+        // The scripted tour's opening step rings the whole map ("this is the map"), and its
+        // long-press step draws its gesture hint at this surface's centre (#2164).
+        modifier = modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_MAP),
         initialLatitude = seed.point.latitude,
         initialLongitude = seed.point.longitude,
         initialZoom = seed.zoom

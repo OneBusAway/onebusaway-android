@@ -1277,19 +1277,26 @@ private fun TripLogList(
     val rows = rememberLogRows(entries, expanded.toSet())
     val listState = rememberLazyListState()
 
-    // The scripted tour rings the trip's first ride to explain focusing a stage (#2164). Resolved here,
-    // where the rows are already flattened, so the row composable stays unaware of it. The header is
-    // item 0, so the rows are offset by one.
+    // The scripted tour rings parts of this drawer, and the thing it rings has to be on screen (#2164).
+    // Resolved here, where the rows are already flattened, so the row composable stays unaware of it.
+    // The header is item 0, so the rows below it are offset by one.
     val firstRideRow = rows.indexOfFirst { it.content is RowContent.BoardHeader }.takeIf { it >= 0 }
-    val ringingRide = LocalTutorialState.current?.current?.anchorId == ScriptedTutorial.KEY_ROUTE_LEG
-    LaunchedEffect(ringingRide, firstRideRow) {
-        if (!ringingRide || firstRideRow == null) return@LaunchedEffect
-        // Bring the ride up off the bottom of the drawer, where the picker and the caution banner
-        // above it tend to leave it. Offset by a third of the viewport rather than scrolled flush to
-        // the top, so the row lands around the middle with its neighbours still in view — the step is
-        // about picking *one of* the stages.
-        val lift = listState.layoutInfo.viewportSize.height / 3
-        listState.animateScrollToItem(firstRideRow + 1, -lift)
+    val ringing = LocalTutorialState.current?.current?.anchorId
+    LaunchedEffect(ringing, firstRideRow) {
+        when (ringing) {
+            // Bring the ride up off the bottom of the drawer, where the picker and the caution banner
+            // above it tend to leave it. Offset by a third of the viewport rather than scrolled flush
+            // to the top, so the row lands around the middle with its neighbours still in view — the
+            // step is about picking *one of* the stages.
+            ScriptedTutorial.KEY_ROUTE_LEG -> firstRideRow?.let {
+                listState.animateScrollToItem(it + 1, -listState.layoutInfo.viewportSize.height / 3)
+            }
+            // Back to the picker. The step before this one scrolled the drawer down to a ride, which
+            // left the option cards — the thing these steps ring, and the thing the last one asks the
+            // rider to long-press — off the top of the drawer.
+            ScriptedTutorial.KEY_ITINERARY_CARD -> listState.animateScrollToItem(0)
+            else -> Unit
+        }
     }
 
     // The surface reaches the bottom edge; a bottom content padding lets the final leg row be scrolled

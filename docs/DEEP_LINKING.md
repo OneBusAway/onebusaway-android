@@ -257,7 +257,8 @@ its place to whoever follows the redirect, and expanding somebody else's URL ove
 not something this app does, so the name Maps shared alongside it is used instead.
 
 Readable links are those on an enumerated short list of maps hosts — `maps.google.com`, `www.google.com`,
-`google.com`, `maps.apple.com`, `openstreetmap.org` — read for the parameters those hosts document
+`google.com`, `maps.apple.com`, `openstreetmap.org`, `www.openstreetmap.org` — matched exactly, so a
+host and its `www.` form are separate entries. They are read for the parameters those hosts document
 (`q`, `query`, `destination`, `daddr`, `address`, `ll`, OSM's `mlat`/`mlon`), plus Google's
 `…/maps/place/<Name>/@<lat>,<lng>,<zoom>z` place-page path. Where a link names both ends of a journey, only
 the destination is read. Where it names a place both as text and as a coordinate, the coordinate wins and

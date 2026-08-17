@@ -159,10 +159,16 @@
                  links are deliberately not claimed here — and consumed by
                  HomeActivity.maybePlanToPlaceFromIntent, which opens the directions focus with the place
                  as the trip's destination. -->
+            <!-- BROWSABLE as well as DEFAULT, matching what Google Maps declares for `geo:`: without it a
+                 `<a href="geo:…">` on a web page can't reach us, which would make this app the one map
+                 app on the device a geo link can't open. Unlike the BROWSABLE `add-region` filter above,
+                 a hostile page gains nothing worth having here — the worst it can do is open the trip
+                 planner with a destination filled in. Nothing is written and nothing is sent. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="geo" />
             </intent-filter>

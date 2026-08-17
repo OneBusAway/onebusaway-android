@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1274,10 +1275,27 @@ private fun TripLogList(
     // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
     // what makes a toggle recompose this list.
     val rows = rememberLogRows(entries, expanded.toSet())
+    val listState = rememberLazyListState()
+
+    // The scripted tour rings the trip's first ride to explain focusing a stage (#2164). Resolved here,
+    // where the rows are already flattened, so the row composable stays unaware of it. The header is
+    // item 0, so the rows are offset by one.
+    val firstRideRow = rows.indexOfFirst { it.content is RowContent.BoardHeader }.takeIf { it >= 0 }
+    val ringingRide = LocalTutorialState.current?.current?.anchorId == ScriptedTutorial.KEY_ROUTE_LEG
+    LaunchedEffect(ringingRide, firstRideRow) {
+        if (!ringingRide || firstRideRow == null) return@LaunchedEffect
+        // Bring the ride up off the bottom of the drawer, where the picker and the caution banner
+        // above it tend to leave it. Offset by a third of the viewport rather than scrolled flush to
+        // the top, so the row lands around the middle with its neighbours still in view — the step is
+        // about picking *one of* the stages.
+        val lift = listState.layoutInfo.viewportSize.height / 3
+        listState.animateScrollToItem(firstRideRow + 1, -lift)
+    }
 
     // The surface reaches the bottom edge; a bottom content padding lets the final leg row be scrolled
     // clear of the nav chrome without an empty strip below the list.
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = bottomInset + LOG_EDGE_GAP)
     ) {
@@ -1304,9 +1322,7 @@ private fun TripLogList(
         }
         // Keyed by row identity, not position, so opening a leg doesn't discard the subcompositions of
         // every row below it — a board row's live ETA session survives the insert.
-        // The scripted tour rings the trip's first ride to explain focusing a stage (#2164). Resolved
-        // here, where the rows are already flattened, so the row composable stays unaware of it.
-        val firstRideKey = rows.firstOrNull { it.content is RowContent.BoardHeader }?.key
+        val firstRideKey = firstRideRow?.let { rows[it].key }
         items(rows, key = { it.key }) { row ->
             val anchored = if (row.key == firstRideKey) {
                 Modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ROUTE_LEG)

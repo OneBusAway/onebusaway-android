@@ -18,8 +18,7 @@ package org.onebusaway.android.ui.home
 import androidx.compose.material3.DrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.render.MapViewport
@@ -69,7 +68,6 @@ internal fun rememberScriptedTutorialActions(
     tripResultsViewModel: TripResultsViewModel,
     drawerState: DrawerState
 ): ScriptedTutorialActions {
-    val scope = rememberCoroutineScope()
     return remember(demoMode, homeViewModel, mapViewModel, tripPlanViewModel, tripResultsViewModel, drawerState) {
         ScriptedTutorialActions(
             focusDemoStop = {
@@ -98,21 +96,23 @@ internal fun rememberScriptedTutorialActions(
                 // route view it already has rather than selecting a vehicle that doesn't exist.
                 demoMode.featuredTripId()?.let(homeViewModel::selectFocusedRouteTrip)
             },
-            setDrawerOpen = { open ->
-                scope.launch { if (open) drawerState.open() else drawerState.close() }
-            },
+            setDrawerOpen = { open -> if (open) drawerState.open() else drawerState.close() },
             // Just the focus unwind, which is what backing out of a route actually does — the camera
             // stays where the rider left it rather than springing somewhere new.
             resetMap = homeViewModel::clearMapFocus,
             showRentals = {
-                // Bring the neighbourhood back into view first. Unwinding the focus in the previous step
-                // left the camera wherever the last route framing flew it (for the demo 49, the whole
-                // city), where the rentals would be a few overlapping pixels.
-                //
-                // The aim lives here rather than in [resetMap] because clearing the focus travels
-                // through a map *directive*, which the map host consumes a frame or two later and which
-                // drops any retained framing on its way — so an aim issued alongside it would be wiped
-                // by the very thing it was ordered after. Here it is unambiguously the last word.
+                // Reached backwards from the trip-planning step, the app is still in directions, which
+                // has to be unwound before a map layer means anything. Forward this costs nothing:
+                // there is no focus to clear, so it returns without even emitting a directive.
+                homeViewModel.clearMapFocus()
+                // Clearing a focus travels through a map *directive* that the host consumes a frame or
+                // two later, and that drops any retained framing on its way — so the aim below has to
+                // follow it rather than race it. Settling first is why these actions suspend. Worst
+                // case if the wait is short, the camera simply isn't re-aimed.
+                delay(FOCUS_SETTLE_MILLIS)
+                // Bring the neighbourhood back into view. Unwinding the focus left the camera wherever
+                // the last route framing flew it (for the demo 49, the whole city), where the rentals
+                // would be a few overlapping pixels.
                 mapViewModel.aimAt(DemoModeController.CAMERA_TARGET, DemoModeController.CAMERA_ZOOM)
                 // The master switch alone can leave nothing drawn: it deliberately preserves whichever
                 // modes the rider had, and both default off. The demo set has bikes, docks *and*
@@ -157,3 +157,13 @@ internal fun rememberScriptedTutorialActions(
         )
     }
 }
+
+/**
+ * How long to let a focus change reach the map before ordering the camera about.
+ *
+ * A couple of frames' grace rather than a synchronisation point: the map host consumes focus directives
+ * on the main thread a frame or two after they're emitted, and there is no signal published for "that
+ * one has landed". Generous enough that it always has, and harmless when it hasn't — the step just
+ * shows an un-reaimed camera.
+ */
+private const val FOCUS_SETTLE_MILLIS = 250L

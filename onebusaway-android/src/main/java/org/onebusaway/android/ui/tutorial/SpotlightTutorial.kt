@@ -42,8 +42,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -190,6 +192,15 @@ class TutorialState {
         if (index < steps.size - 1) index++ else finishing = true
     }
 
+    /** True when there is an earlier step to return to. False on the first step, and while [finishing]. */
+    val canGoBack: Boolean get() = !finishing && index > 0
+
+    /** Step back to the previous step. A no-op on the first step, or while [finishing]. */
+    fun back() {
+        if (!canGoBack) return
+        index--
+    }
+
     /** End the tutorial immediately (skip / "X"), without playing the finish flourish. */
     fun dismiss() = clear()
 
@@ -267,9 +278,9 @@ fun Modifier.tutorialAnchor(state: TutorialState?, id: String): Modifier = if (s
 
 /**
  * The spotlight overlay for the active tutorial step: a pulsing ring around the step's target, plus a
- * caption card (title + body + Next). Tapping anywhere (or Next) advances; the corner "X" ends it.
- * Renders nothing when no tutorial is active, so it stops intercepting touches the moment the sequence
- * finishes.
+ * caption card (title + body + Back/Next). Only those buttons move the tour, and the corner "X" ends
+ * it. Renders nothing when no tutorial is active, so it stops intercepting touches the moment the
+ * sequence finishes.
  *
  * **The ring is the whole affordance — there is no scrim.** This used to dim everything outside the
  * target with a translucent green wash (the legacy ShowcaseView look), which worked for a tutorial that
@@ -352,9 +363,12 @@ fun TutorialOverlay(state: TutorialState) {
         Modifier
             .fillMaxSize()
             .onGloballyPositioned { overlayOrigin = it.positionInRoot() }
-            // The whole overlay is a tap target so a tap anywhere advances (mirrors the legacy
-            // ShowcaseView's tap-to-continue); the caption's buttons consume their own taps first.
-            .pointerInput(step.id) { detectTapGestures { state.advance() } }
+            // The overlay swallows every touch that isn't one of the caption's own buttons, so the app
+            // underneath can't be operated out from under the script — but it no longer *advances* on
+            // one. Tap-anywhere-to-continue was inherited from the legacy ShowcaseView, and it stopped
+            // being safe the moment there was a Back button to miss: a tap a few pixels off it moved
+            // the tour the other way, which is precisely the mistake Back exists to undo.
+            .pointerInput(step.id) { detectTapGestures { } }
     ) {
         // The ring: a crisp brand-color outline hugging the target, backed by a softer, wider halo so it
         // reads against a busy map as well as against a flat panel. Both pulse together.
@@ -434,7 +448,9 @@ fun TutorialOverlay(state: TutorialState) {
             TutorialCaption(
                 step = step,
                 isLast = state.isLast,
+                canGoBack = state.canGoBack,
                 onNext = state::advance,
+                onBack = state::back,
                 onClose = state::dismiss,
                 modifier = Modifier.align(alignment)
             )
@@ -446,7 +462,9 @@ fun TutorialOverlay(state: TutorialState) {
 private fun TutorialCaption(
     step: TutorialStep,
     isLast: Boolean,
+    canGoBack: Boolean,
     onNext: () -> Unit,
+    onBack: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -457,8 +475,16 @@ private fun TutorialCaption(
             .padding(24.dp)
             .widthIn(max = 360.dp),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
+        // The brand green, not the theme surface. With the scrim gone (see [TutorialOverlay]) a card
+        // painted the ordinary surface colour is the same near-black as the dark-mode map behind it, so
+        // the one thing the rider is meant to read had no edge at all. Branded rather than a fixed
+        // green so a white-label build's own colour carries through, exactly as the ring's does.
+        //
+        // The *dark* brand variant, and fully opaque: `tutorial_background` is the same hue at 87%
+        // alpha, which is right for a scrim covering the screen and wrong for a card — the arrivals
+        // rows behind it read straight through the caption text.
+        color = colorResource(R.color.theme_primary_variant),
+        contentColor = Color.White,
         shadowElevation = 8.dp
     ) {
         // Pass the app name as a format arg to both strings so a branded welcome title ("Welcome to
@@ -491,7 +517,7 @@ private fun TutorialCaption(
                     Icon(
                         painter = painterResource(icon),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = LocalContentColor.current
                     )
                 }
             }
@@ -505,14 +531,25 @@ private fun TutorialCaption(
                 )
                 null -> Unit
             }
-            // A single advance action: "Next", or "Finish" on the last step. The corner "X" ends the
-            // tutorial outright.
+            // Back on the left, advance on the right: "Next", or "Finish" on the last step. The corner
+            // "X" ends the tutorial outright. Back only appears once there is somewhere to go, rather
+            // than sitting there disabled on the first step.
             val advanceLabel = if (isLast) R.string.tutorial_button_finish else R.string.pager_button_next
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, end = 12.dp),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onNext) { Text(stringResource(advanceLabel)) }
+                if (canGoBack) {
+                    TextButton(onClick = onBack, colors = captionButtonColors()) {
+                        Text(stringResource(R.string.tutorial_button_back))
+                    }
+                } else {
+                    Spacer(Modifier.width(0.dp))
+                }
+                TextButton(onClick = onNext, colors = captionButtonColors()) {
+                    Text(stringResource(advanceLabel))
+                }
             }
         }
     }
@@ -551,6 +588,13 @@ private const val LONG_PRESS_SWELL_FRACTION = 0.2f
 
 private val LONG_PRESS_DOT_RADIUS = 14.dp
 private val LONG_PRESS_RIPPLE_RADIUS = 46.dp
+
+/**
+ * The caption's buttons. A [TextButton] takes its label colour from the theme's primary, which is the
+ * brand green — invisible on a brand-green card — so both buttons take the card's own content colour.
+ */
+@Composable
+private fun captionButtonColors() = ButtonDefaults.textButtonColors(contentColor = LocalContentColor.current)
 
 /** This rect scaled about [about] by [factor] — the outline's grow-in on a step change. */
 private fun Rect.scaledAbout(about: Offset, factor: Float): Rect = Rect(

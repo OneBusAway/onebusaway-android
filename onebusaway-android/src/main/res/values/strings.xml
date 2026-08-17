@@ -900,6 +900,7 @@
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>
     <string name="tutorial_button_finish">Finish</string>
+    <string name="tutorial_button_back">Back</string>
 
     <!-- The scripted guided tour. It runs on a built-in demo transit system, so every step has
          something to point at no matter where the rider is or whether they are online. -->

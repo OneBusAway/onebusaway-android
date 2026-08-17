@@ -116,12 +116,15 @@ object ScriptedTutorial {
      * so the arrivals panel keeps a single set of spotlight targets whichever tutorial is running.
      */
     val steps: List<TutorialStep> = listOf(
-        // 1. The map.
+        // 1. The map. It carries an action even though nothing has happened yet, so that stepping
+        // *back* to it from the focused stop has something to return the app to — every step the rider
+        // can land on names the state it wants (see `governingActionIndex`).
         TutorialStep(
             id = "tutorial_scripted_map",
             anchorId = KEY_MAP,
             title = R.string.tutorial_scripted_map_title,
-            body = R.string.tutorial_scripted_map_text
+            body = R.string.tutorial_scripted_map_text,
+            action = TutorialAction.RESET_MAP
         ),
         // 2. A stop, with three routes to talk about.
         TutorialStep(

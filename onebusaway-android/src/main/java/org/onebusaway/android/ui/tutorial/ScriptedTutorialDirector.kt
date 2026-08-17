@@ -19,7 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 
 /**
@@ -29,18 +32,37 @@ import kotlinx.coroutines.delay
  * A bundle of lambdas rather than an interface the host implements, matching how the rest of `HomeScreen`
  * hands capabilities to its feature composables, and so that the director itself stays free of every
  * view model in the app: it knows the *script*, not the wiring.
+ *
+ * They suspend because some of them are a *sequence* — unwinding a focus and then re-aiming the camera
+ * has to happen in that order, and the unwind travels through a map directive the host consumes a frame
+ * or two later. The director already runs them in a coroutine, so this costs nothing.
  */
 @Stable
 data class ScriptedTutorialActions(
-    val focusDemoStop: () -> Unit,
-    val showDemoRoute: () -> Unit,
-    val selectDemoTrip: () -> Unit,
-    val setDrawerOpen: (Boolean) -> Unit,
-    val resetMap: () -> Unit,
-    val showRentals: () -> Unit,
-    val planDemoTrip: () -> Unit,
-    val showOtherItinerary: () -> Unit
+    val focusDemoStop: suspend () -> Unit,
+    val showDemoRoute: suspend () -> Unit,
+    val selectDemoTrip: suspend () -> Unit,
+    val setDrawerOpen: suspend (Boolean) -> Unit,
+    val resetMap: suspend () -> Unit,
+    val showRentals: suspend () -> Unit,
+    val planDemoTrip: suspend () -> Unit,
+    val showOtherItinerary: suspend () -> Unit
 )
+
+/**
+ * The index of the action that establishes the app state step [index] describes — the last action at or
+ * before it — or null when nothing has run yet.
+ *
+ * This is what makes stepping *backwards* through a tour that drives the app forwards work. A caption is
+ * about whatever the most recent action put on screen, not necessarily about its own step: "live
+ * arrivals" and "what the colours mean" both describe the stop that an earlier step focused. So
+ * returning to a step means re-establishing that step's governing action, which for most back presses is
+ * the one already in effect — and then nothing needs to happen at all.
+ *
+ * Pure, so the tour's navigation is JVM-unit-testable without composing anything.
+ */
+internal fun governingActionIndex(steps: List<TutorialStep>, index: Int): Int? = (index.coerceAtMost(steps.size - 1) downTo 0)
+    .firstOrNull { steps[it].action != null }
 
 /**
  * Runs the scripted tour's side of the bargain: when a step of [ScriptedTutorial] opens, take the app to
@@ -57,9 +79,19 @@ data class ScriptedTutorialActions(
 fun ScriptedTutorialDirector(state: TutorialState, actions: ScriptedTutorialActions) {
     val current by rememberUpdatedState(actions)
     val step = state.current
+    val stepIndex = state.index
+    val steps = state.steps
+    // Which action is currently in effect. Re-running one costs a camera flight or a drawer animation,
+    // so a step whose governing action is already the applied one — every step without an action of its
+    // own, and most back presses — leaves the app alone.
+    var appliedActionIndex by remember(steps) { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(step?.id) {
-        val action = step?.action ?: return@LaunchedEffect
+        step ?: return@LaunchedEffect
+        val governing = governingActionIndex(steps, stepIndex) ?: return@LaunchedEffect
+        if (governing == appliedActionIndex) return@LaunchedEffect
+        val action = steps[governing].action ?: return@LaunchedEffect
+        appliedActionIndex = governing
         // The overlay opens each step with a ~300ms shrink-and-spring transition. Letting that start
         // first means the app's own change — a drawer sliding out, the camera flying to a stop — plays
         // *under* a spotlight that is already moving, instead of both competing on the first frame.

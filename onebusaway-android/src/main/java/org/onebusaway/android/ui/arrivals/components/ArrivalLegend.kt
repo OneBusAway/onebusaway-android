@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,12 +74,14 @@ fun ArrivalLegend(modifier: Modifier = Modifier, compact: Boolean = false) {
             )
         }
         // The two pill glyphs. Both mean "this arrival is real-time"; the pin additionally means the
-        // vehicle is drawn on the map right now, so tapping the pill flies the camera to it.
+        // vehicle is drawn on the map right now, so tapping the pill flies the camera to it. Tinted
+        // from the host's content colour, since this legend is drawn both in a plain dialog and on the
+        // tutorial's branded card.
         GlyphRow(R.string.main_help_legend_on_map, rowPadding) {
-            OnMapIndicator(color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxSize())
+            OnMapIndicator(color = LocalContentColor.current, modifier = Modifier.fillMaxSize())
         }
         GlyphRow(R.string.main_help_legend_realtime, rowPadding) {
-            RealtimeIndicator(color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxSize())
+            RealtimeIndicator(color = LocalContentColor.current, modifier = Modifier.fillMaxSize())
         }
     }
 }

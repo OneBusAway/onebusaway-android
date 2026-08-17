@@ -90,6 +90,57 @@ class TutorialStateTest {
     }
 
     @Test
+    fun `back returns to the previous step`() {
+        val state = TutorialState()
+        state.start(listOf(step("a"), step("b"), step("c")))
+        state.advance()
+        state.advance()
+        assertEquals("c", state.current?.id)
+
+        state.back()
+
+        assertEquals("b", state.current?.id)
+        assertFalse(state.isLast)
+    }
+
+    @Test
+    fun `back is a no-op on the first step`() {
+        val state = TutorialState()
+        state.start(listOf(step("a"), step("b")))
+        assertFalse(state.canGoBack)
+
+        state.back()
+
+        assertEquals("a", state.current?.id)
+        assertTrue(state.active)
+    }
+
+    @Test
+    fun `back is offered from the second step onward`() {
+        val state = TutorialState()
+        state.start(listOf(step("a"), step("b")))
+        assertFalse(state.canGoBack)
+
+        state.advance()
+
+        assertTrue(state.canGoBack)
+    }
+
+    @Test
+    fun `back is refused once the finish flourish has started`() {
+        val state = TutorialState()
+        state.start(listOf(step("a"), step("b")))
+        state.advance() // -> b (last)
+        state.advance() // -> finishing
+        assertFalse(state.canGoBack)
+
+        state.back()
+
+        assertTrue(state.finishing)
+        assertEquals("b", state.current?.id)
+    }
+
+    @Test
     fun `dismiss ends the tutorial without playing the flourish`() {
         val state = TutorialState()
         state.start(listOf(step("a"), step("b")))

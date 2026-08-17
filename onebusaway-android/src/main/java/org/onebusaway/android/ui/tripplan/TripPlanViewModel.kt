@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
@@ -198,7 +199,7 @@ class TripPlanViewModel @Inject constructor(
         replanOrClearResult()
     }
 
-    /** Sets one endpoint (from a suggestion, current location, contacts, or map) and re-plans if ready. */
+    /** Sets one endpoint (from a suggestion, the current location, or the map) and re-plans if ready. */
     fun setEndpoint(slot: TripEndpointSlot, endpoint: TripEndpoint) {
         _formState.update { it.withEndpoint(slot, endpoint) }
         replanOrClearResult()
@@ -207,7 +208,7 @@ class TripPlanViewModel @Inject constructor(
     /**
      * Sets [slot] to the device's current location, returning false when there's no fix to set it to.
      * Saying *why* there's none is left to the caller, whose business it is: the field's own button
-     * explains itself with a toast, while the long-press path below pairs silently.
+     * explains itself with a toast, while the trip-end paths below pair silently.
      */
     fun setEndpointToCurrentLocation(slot: TripEndpointSlot): Boolean {
         val here = currentLocation() ?: return false
@@ -216,17 +217,55 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Sets the endpoint a map long-press named ("directions from/to here"), pairing the trip's other
-     * end with the device's current location — [TripPlanFormState.withEndpointPaired] owns the rule
-     * (#2092). Both ends land in one form update, so the pair submits as a single plan.
+     * Sets an endpoint that arrived as *one end of a trip* rather than as an edit to a form — a map
+     * long-press ("directions from/to here"), or a place another app handed us (#1936) — pairing the
+     * trip's other end with the device's current location. [TripPlanFormState.withEndpointPaired] owns
+     * the rule (#2092); both ends land in one form update, so the pair submits as a single plan.
      *
      * Distinct from [setEndpoint], which the crosshair pick-on-map path uses: that one is an edit
      * within a form the rider is already filling, so it pairs nothing.
      */
-    fun setEndpointFromLongPress(slot: TripEndpointSlot, endpoint: TripEndpoint) {
+    fun setEndpointPaired(slot: TripEndpointSlot, endpoint: TripEndpoint) {
         val here = currentLocation()
         _formState.update { it.withEndpointPaired(slot, endpoint, here) }
         replanOrClearResult()
+    }
+
+    /**
+     * Fills [slot] from a place another app named only as *text* — a shared postal address, or the place
+     * name that came alongside a maps link it gave us (#1936) — by resolving it through the same geocoder
+     * the form's own autocomplete uses, and pairing it as [setEndpointPaired] does so the trip plans on
+     * the spot.
+     *
+     * The top-ranked match is taken. Geocoding is a ranked search with no exact source to consult
+     * instead, and this is the same answer the field's suggestion list puts first; what keeps it honest is
+     * that the result lands as an ordinary cancellable pill *showing the name it resolved to*, so a wrong
+     * match is visible and one tap from being corrected.
+     *
+     * A query that resolves to nothing is left in the field as typed text with its suggestion list live,
+     * rather than being silently dropped — the rider picks. The text is shown immediately either way,
+     * since the resolve is a network round trip and an empty form would say nothing about what the app was
+     * opened for; a rider who types over it in the meantime wins.
+     */
+    fun setEndpointFromQuery(slot: TripEndpointSlot, query: String) {
+        if (query.isBlank()) return
+        val typed = TripEndpoint.FreeText(query)
+        setEndpoint(slot, typed)
+        viewModelScope.launch {
+            // Called instead of [suggestionsFor] because that folds a failed lookup into an empty one,
+            // and the two want different things below.
+            val suggestions = geocode.suggest(query)
+            // The rider may have typed over the field while the lookup was out — theirs wins.
+            if (_formState.value.endpointAt(slot) != typed) return@launch
+            val match = suggestions.getOrNull()?.firstOrNull()
+            when {
+                match != null -> setEndpointPaired(slot, match)
+                // A lookup that *failed* is worth asking again, so arm the field's own debounced pipeline.
+                // One that succeeded with nothing is not — re-asking would only repeat the same answer,
+                // and [setEndpoint] has already left the field showing the text with no suggestions.
+                suggestions.isFailure -> queries.getValue(slot).value = query
+            }
+        }
     }
 
     /** The device's last known fix as a plan endpoint, or null when there is none (or no permission). */

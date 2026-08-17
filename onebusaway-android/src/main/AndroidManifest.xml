@@ -152,6 +152,33 @@
                 <data android:host="add-region" />
                 <data android:host="view-stop" />
             </intent-filter>
+            <!-- Place intents from other apps (#1936): `geo:` (the platform's "open this location", what
+                 the address book emits for a postal address) and shared `text/plain` (a maps link or a
+                 bare address). Both are read by org.onebusaway.android.ui.nav.PlaceIntents — which owns
+                 this vocabulary and the reasoning behind these two filters, including why https maps
+                 links are deliberately not claimed here — and consumed by
+                 HomeActivity.maybePlanToPlaceFromIntent, which opens the directions focus with the place
+                 as the trip's destination. -->
+            <!-- BROWSABLE as well as DEFAULT, matching what Google Maps declares for `geo:`: without it a
+                 `<a href="geo:…">` on a web page can't reach us, which would make this app the one map
+                 app on the device a geo link can't open. Unlike the BROWSABLE `add-region` filter above,
+                 a hostile page gains nothing worth having here — the worst it can do is open the trip
+                 planner with a destination filled in. Nothing is written and nothing is sent. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="geo" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable"/>

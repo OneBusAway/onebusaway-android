@@ -55,6 +55,7 @@ import org.onebusaway.android.api.contract.TripDetailsEntry
 import org.onebusaway.android.api.contract.TripReference
 import org.onebusaway.android.api.contract.TripSchedule
 import org.onebusaway.android.api.contract.TripStatus
+import org.onebusaway.android.util.haversineDistance
 
 /**
  * A complete, offline OneBusAway deployment for the scripted tutorial (#2164) — the "fake transit
@@ -117,7 +118,7 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     }
 
     override suspend fun currentTime(): ObaEnvelope<EntryWithReferences<CurrentTime>> {
-        val now = nowMs()
+        val now = DemoClock.nowMs()
         return ok(EntryWithReferences(CurrentTime(now, isoTime(now))), now)
     }
 
@@ -161,13 +162,14 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
         lon: Double,
         radius: Int?
     ): ObaEnvelope<ListWithReferences<TripDetailsEntry>> {
-        val now = nowMs()
+        val now = DemoClock.nowMs()
+        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
         val runs = fixture.routeStops.keys
             .flatMap { DemoScenario.activeRuns(fixture, it, now) }
             .filter { run ->
                 run.positionAt(now)?.let { within(it.latitude, it.longitude, lat, lon, radius, null, null) } == true
             }
-        return ok(ListWithReferences(runs.map { detailsEntry(it, now, includeSchedule = false) }, referencesFor(runs)), now)
+        return ok(ListWithReferences(runs.map { detailsEntry(it, now, serviceDate, includeSchedule = false) }, referencesFor(runs)), now)
     }
 
     // ---------------------------------------------------------------- routes and trips
@@ -204,27 +206,42 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
         includeSchedule: Boolean
     ): ObaEnvelope<ListWithReferences<TripDetailsEntry>> {
         if (routeId !in fixture.routeStops) return notFound()
-        val now = nowMs()
+        val now = DemoClock.nowMs()
+        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
         val runs = DemoScenario.activeRuns(fixture, routeId, now)
-        val entries = runs.map { detailsEntry(it, now, includeSchedule, includeStatus) }
+        val entries = runs.map { detailsEntry(it, now, serviceDate, includeSchedule, includeStatus) }
         return ok(ListWithReferences(entries, referencesFor(runs)), now)
     }
 
     override suspend fun tripDetails(tripId: String): ObaEnvelope<EntryWithReferences<TripDetailsEntry>> {
         val run = DemoScenario.runById(fixture, tripId) ?: return notFound()
-        val now = nowMs()
-        return ok(EntryWithReferences(detailsEntry(run, now, includeSchedule = true), referencesFor(listOf(run))), now)
+        val now = DemoClock.nowMs()
+        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
+        return ok(
+            EntryWithReferences(
+                detailsEntry(run, now, serviceDate, includeSchedule = true),
+                referencesFor(listOf(run))
+            ),
+            now
+        )
     }
 
     override suspend fun tripForVehicle(
         vehicleId: String,
         includeTrip: Boolean
     ): ObaEnvelope<EntryWithReferences<TripDetailsEntry>> {
-        val now = nowMs()
+        val now = DemoClock.nowMs()
         // A vehicle that isn't running a trip is a 404 on the real API, which is how callers tell that
         // case apart from a lookup that failed — so an unknown demo coach answers the same way.
         val run = DemoScenario.runByVehicle(fixture, vehicleId, now) ?: return notFound()
-        return ok(EntryWithReferences(detailsEntry(run, now, includeSchedule = true), referencesFor(listOf(run))), now)
+        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
+        return ok(
+            EntryWithReferences(
+                detailsEntry(run, now, serviceDate, includeSchedule = true),
+                referencesFor(listOf(run))
+            ),
+            now
+        )
     }
 
     // ---------------------------------------------------------------- arrivals
@@ -234,11 +251,12 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
         minutesAfter: Int?
     ): ObaEnvelope<EntryWithReferences<ArrivalsForStop>> {
         val stop = fixture.stopById[stopId] ?: return notFound()
-        val now = nowMs()
+        val now = DemoClock.nowMs()
+        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
         val calls = DemoScenario.arrivalsAt(fixture, stopId, now).withinWindow(now, minutesAfter)
         val entry = ArrivalsForStop(
             stopId = stopId,
-            arrivalsAndDepartures = calls.map { arrival(it, now) },
+            arrivalsAndDepartures = calls.map { arrival(it, now, serviceDate) },
             nearbyStopIds = nearbyStopIds(stop),
             situationIds = emptyList()
         )
@@ -252,7 +270,8 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
         lonSpan: Double,
         minutesAfter: Int?
     ): ObaEnvelope<ArrivalsForLocationData> {
-        val now = nowMs()
+        val now = DemoClock.nowMs()
+        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
         val stops = fixture.stops.filter { within(it.lat, it.lon, lat, lon, null, latSpan, lonSpan) }
         val calls = stops
             .flatMap { DemoScenario.arrivalsAt(fixture, it.id, now).withinWindow(now, minutesAfter) }
@@ -263,8 +282,8 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             null
         } else {
             ArrivalsForLocation(
-                arrivalsAndDepartures = calls.map { arrival(it, now) },
-                nearbyStopIds = stops.map { NearbyStop(it.id, distanceMeters(it.lat, it.lon, lat, lon)) },
+                arrivalsAndDepartures = calls.map { arrival(it, now, serviceDate) },
+                nearbyStopIds = stops.map { NearbyStop(it.id, haversineDistance(it.lat, it.lon, lat, lon)) },
                 stopIds = calls.map { it.stopId }
             )
         }
@@ -276,7 +295,7 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
         date: String?
     ): ObaEnvelope<EntryWithReferences<StopSchedule>> {
         val stop = fixture.stopById[stopId] ?: return notFound()
-        val now = nowMs()
+        val now = DemoClock.nowMs()
         val byRoute = DemoScenario.arrivalsAt(fixture, stopId, now).groupBy { it.run.routeId }
         val entry = StopSchedule(
             stopId = stop.id,
@@ -336,7 +355,7 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     // ---------------------------------------------------------------- payload builders
 
     /** One arrival row: the run's real time at the stop, and the schedule it's being measured against. */
-    private fun arrival(call: DemoStopCall, now: Long): ArrivalDeparture {
+    private fun arrival(call: DemoStopCall, now: Long, serviceDate: Long): ArrivalDeparture {
         val run = call.run
         val predicted = run.hasPrediction(now)
         val onRoad = run.isOnRoad(now)
@@ -348,7 +367,7 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             routeShortName = fixture.routeById[run.routeId]?.shortName,
             routeLongName = fixture.routeById[run.routeId]?.longName,
             stopSequence = run.geometry.indexOf(call.stopId) ?: 0,
-            serviceDate = DemoScenario.serviceDateMs(fixture, now),
+            serviceDate = serviceDate,
             // Only a bus actually out on this trip has a coach number to name.
             vehicleId = run.vehicleId.takeIf { onRoad },
             predicted = predicted,
@@ -363,8 +382,8 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             // reports deviation with no position (the pill draws its broadcast glyph instead); anything
             // further out has no status at all.
             tripStatus = when {
-                onRoad -> status(run, now)
-                predicted -> pendingStatus(run, now)
+                onRoad -> status(run, now, serviceDate)
+                predicted -> pendingStatus(run, now, serviceDate)
                 else -> null
             },
             situationIds = situationIdsFor(run.routeId)
@@ -372,34 +391,38 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     }
 
     /** A run's real-time status: where the bus is, how late it is, and what it reaches next. */
-    private fun status(run: DemoRun, now: Long): TripStatus {
+    private fun status(run: DemoRun, now: Long, serviceDate: Long): TripStatus {
         val position = run.positionAt(now)?.let { Position(it.latitude, it.longitude) }
         val nextIndex = run.nextStopIndexAt(now)
+        // Each of these walks the route's shape or its stop list, and the field list below wants them
+        // two or three times over; resolved once so it reads as assignment rather than re-derivation.
+        val progress = run.progressAlongShapeAt(now)
+        val bearing = run.bearingAt(now).toDouble()
+        val nextStopId = nextIndex?.let(run.geometry.stopIds::get)
+        val nextStopOffset = nextIndex?.let { secondsUntilStop(run, it, now) }
         return TripStatus(
             activeTripId = run.tripId,
             predicted = true,
             scheduleDeviation = run.deviationSeconds,
-            serviceDate = DemoScenario.serviceDateMs(fixture, now),
+            serviceDate = serviceDate,
             status = "default",
             phase = "in_progress",
             vehicleId = run.vehicleId,
-            closestStop = nextIndex?.let(run.geometry.stopIds::get),
-            closestStopTimeOffset = nextIndex?.let { secondsUntilStop(run, it, now) } ?: 0L,
-            nextStop = nextIndex?.let(run.geometry.stopIds::get),
-            nextStopTimeOffset = nextIndex?.let { secondsUntilStop(run, it, now) },
+            closestStop = nextStopId,
+            closestStopTimeOffset = nextStopOffset ?: 0L,
+            nextStop = nextStopId,
+            nextStopTimeOffset = nextStopOffset,
             position = position,
-            orientation = run.bearingAt(now).toDouble(),
-            distanceAlongTrip = run.progressAlongShapeAt(now),
-            scheduledDistanceAlongTrip = run.progressAlongShapeAt(now) +
-                run.deviationSeconds *
-                run.service.speedMetersPerSecond,
+            orientation = bearing,
+            distanceAlongTrip = progress,
+            scheduledDistanceAlongTrip = progress + run.deviationSeconds * run.service.speedMetersPerSecond,
             totalDistanceAlongTrip = run.geometry.totalDistance,
             // The demo feed is always fresh: a live AVL system had just reported when we were asked.
             lastUpdateTime = now - DEMO_AVL_AGE_MS,
             lastLocationUpdateTime = now - DEMO_AVL_AGE_MS,
             lastKnownLocation = position,
-            lastKnownDistanceAlongTrip = run.progressAlongShapeAt(now),
-            lastKnownOrientation = run.bearingAt(now).toDouble(),
+            lastKnownDistanceAlongTrip = progress,
+            lastKnownOrientation = bearing,
             blockTripSequence = 0
         )
     }
@@ -412,11 +435,11 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
      * unplottable is the absence of a position, which is the honest reason: no bus has reported one for
      * this trip yet.
      */
-    private fun pendingStatus(run: DemoRun, now: Long) = TripStatus(
+    private fun pendingStatus(run: DemoRun, now: Long, serviceDate: Long) = TripStatus(
         activeTripId = run.tripId,
         predicted = true,
         scheduleDeviation = run.deviationSeconds,
-        serviceDate = DemoScenario.serviceDateMs(fixture, now),
+        serviceDate = serviceDate,
         status = "default",
         phase = "layover_during",
         lastUpdateTime = now - DEMO_AVL_AGE_MS
@@ -427,12 +450,13 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     private fun detailsEntry(
         run: DemoRun,
         now: Long,
+        serviceDate: Long,
         includeSchedule: Boolean,
         includeStatus: Boolean = true
     ) = TripDetailsEntry(
         tripId = run.tripId,
-        status = if (includeStatus && run.isOnRoad(now)) status(run, now) else null,
-        schedule = if (includeSchedule) schedule(run, now) else null
+        status = if (includeStatus && run.isOnRoad(now)) status(run, now, serviceDate) else null,
+        schedule = if (includeSchedule) schedule(run, serviceDate) else null
     )
 
     /**
@@ -440,27 +464,24 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
      * (unlike the epoch-millis `ScheduleStopTime` above), so each stop's scheduled moment is expressed
      * relative to the day the run belongs to.
      */
-    private fun schedule(run: DemoRun, now: Long): TripSchedule {
-        val serviceDate = DemoScenario.serviceDateMs(fixture, now)
-        return TripSchedule(
-            stopTimes = run.geometry.stopIds.mapIndexed { index, stopId ->
-                val distance = run.geometry.stopDistances[index]
-                val secondsIntoDay = (run.scheduledTimeAtDistance(distance) - serviceDate) / 1000L
-                StopTime(
-                    stopId = stopId,
-                    stopHeadsign = run.headsign,
-                    arrivalTime = secondsIntoDay,
-                    departureTime = secondsIntoDay,
-                    distanceAlongTrip = distance
-                )
-            },
-            timeZone = fixture.agency.timezone,
-            // The demo system's runs stand alone rather than chaining into a block, and OBA sends an
-            // empty string (not null) at a block's ends — see the wire-boundary blank→null rule (#2003).
-            previousTripId = "",
-            nextTripId = ""
-        )
-    }
+    private fun schedule(run: DemoRun, serviceDate: Long): TripSchedule = TripSchedule(
+        stopTimes = run.geometry.stopIds.mapIndexed { index, stopId ->
+            val distance = run.geometry.stopDistances[index]
+            val secondsIntoDay = (run.scheduledTimeAtDistance(distance) - serviceDate) / 1000L
+            StopTime(
+                stopId = stopId,
+                stopHeadsign = run.headsign,
+                arrivalTime = secondsIntoDay,
+                departureTime = secondsIntoDay,
+                distanceAlongTrip = distance
+            )
+        },
+        timeZone = fixture.agency.timezone,
+        // The demo system's runs stand alone rather than chaining into a block, and OBA sends an
+        // empty string (not null) at a block's ends — see the wire-boundary blank→null rule (#2003).
+        previousTripId = "",
+        nextTripId = ""
+    )
 
     private fun tripReference(run: DemoRun) = TripReference(
         id = run.tripId,
@@ -521,21 +542,18 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
 
     /** The other demo stops within [NEARBY_STOP_METERS] — the "across the street" set. */
     private fun nearbyStopIds(stop: StopReference): List<String> = fixture.stops
-        .filter { it.id != stop.id && distanceMeters(it.lat, it.lon, stop.lat, stop.lon) <= NEARBY_STOP_METERS }
+        .filter { it.id != stop.id && haversineDistance(it.lat, it.lon, stop.lat, stop.lon) <= NEARBY_STOP_METERS }
         .map { it.id }
 
     // ---------------------------------------------------------------- helpers
 
-    /** The demo deployment's clock — see [DemoClock] for why demo mode reads the device's. */
-    private fun nowMs(): Long = DemoClock.nowMs()
-
-    private fun <T> ok(data: T, now: Long = nowMs()) = ObaEnvelope(version = 2, code = HttpURLConnection.HTTP_OK, currentTime = now, text = "OK", data = data)
+    private fun <T> ok(data: T, now: Long = DemoClock.nowMs()) = ObaEnvelope(version = 2, code = HttpURLConnection.HTTP_OK, currentTime = now, text = "OK", data = data)
 
     /** The demo system's "no such thing" — the same coded envelope a real deployment answers with. */
     private fun <T> notFound() = ObaEnvelope<T>(
         version = 2,
         code = HttpURLConnection.HTTP_NOT_FOUND,
-        currentTime = nowMs(),
+        currentTime = DemoClock.nowMs(),
         text = "not found",
         data = null
     )
@@ -562,14 +580,12 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     ): Boolean = if (latSpan != null && lonSpan != null) {
         abs(pointLat - lat) <= latSpan / 2 && abs(pointLon - lon) <= lonSpan / 2
     } else {
-        distanceMeters(pointLat, pointLon, lat, lon) <= (radius?.toDouble() ?: DEFAULT_RADIUS_METERS)
+        haversineDistance(pointLat, pointLon, lat, lon) <= (radius?.toDouble() ?: DEFAULT_RADIUS_METERS)
     }
 
     private fun matches(stop: StopReference, query: String?): Boolean = query.isNullOrBlank() ||
         stop.name?.contains(query, ignoreCase = true) == true ||
         stop.code?.equals(query, ignoreCase = true) == true
-
-    private fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double = org.onebusaway.android.util.haversineDistance(lat1, lon1, lat2, lon2)
 
     private fun isoTime(epochMs: Long): String = ISO_FORMAT.format(Instant.ofEpochMilli(epochMs))
 

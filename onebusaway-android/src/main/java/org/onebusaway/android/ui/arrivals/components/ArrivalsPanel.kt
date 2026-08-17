@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This panel threads a bundle of per-element anchor modifiers (ArrivalRowAnchors) a host attaches to specific
-// sub-element for the onboarding spotlight — not the root `modifier` — so ModifierParameter's "name it
-// modifier" rule doesn't apply here.
-@file:Suppress("ModifierParameter")
 
 package org.onebusaway.android.ui.arrivals.components
 

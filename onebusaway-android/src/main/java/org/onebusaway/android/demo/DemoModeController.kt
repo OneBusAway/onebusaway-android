@@ -63,7 +63,11 @@ interface DemoModeState {
  */
 @Singleton
 class DemoModeController @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    // The app's own decoder, not a private one: the fixture decodes the *same* `api/contract` wire
+    // types a real response does, so it has to be as forgiving — a second config drifts into rejecting
+    // payloads the network path accepts.
+    private val json: Json
 ) : DemoModeState {
     private val _active = MutableStateFlow(false)
 
@@ -126,7 +130,7 @@ class DemoModeController @Inject constructor(
         val body = context.resources.openRawResource(R.raw.demo_transit)
             .bufferedReader()
             .use { it.readText() }
-        JSON.decodeFromString<DemoTransitFixture>(body)
+        json.decodeFromString<DemoTransitFixture>(body)
     }.getOrElse {
         // An unreadable fixture leaves an empty demo system: the tour still runs its captions, it just
         // has nothing to point at. Better than taking the app down over onboarding content.
@@ -136,8 +140,6 @@ class DemoModeController @Inject constructor(
 
     companion object {
         private const val TAG = "DemoModeController"
-
-        private val JSON = Json { ignoreUnknownKeys = true }
 
         /**
          * Where the map opens the tour: the demo anchor stop, E Pine St & Summit Ave on Capitol Hill.

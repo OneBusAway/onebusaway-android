@@ -120,16 +120,14 @@ object ScriptedTutorial {
         // *back* to it from the focused stop has something to return the app to — every step the rider
         // can land on names the state it wants (see `governingActionIndex`).
         TutorialStep(
-            id = "tutorial_scripted_map",
-            anchorId = KEY_MAP,
+            id = KEY_MAP,
             title = R.string.tutorial_scripted_map_title,
             body = R.string.tutorial_scripted_map_text,
             action = TutorialAction.RESET_MAP
         ),
         // 2. A stop, with three routes to talk about.
         TutorialStep(
-            id = "tutorial_scripted_stop",
-            anchorId = KEY_STOP,
+            id = KEY_STOP,
             title = R.string.tutorial_scripted_stop_title,
             body = R.string.tutorial_scripted_stop_text,
             action = TutorialAction.FOCUS_DEMO_STOP

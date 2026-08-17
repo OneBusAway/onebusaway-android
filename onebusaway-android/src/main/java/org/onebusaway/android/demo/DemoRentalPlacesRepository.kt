@@ -52,9 +52,10 @@ class DemoRentalPlacesRepository @Inject constructor(
     }
 
     private companion object {
-        /** The demo anchor — E Pine St & Summit Ave, the stop the tour is standing at. */
-        const val ANCHOR_LAT = 47.615158
-        const val ANCHOR_LON = -122.324638
+        /** The demo anchor — E Pine St & Summit Ave, the stop the tour is standing at. Derived from
+         *  [DemoModeController.CAMERA_TARGET] so moving the demo neighbourhood moves the rentals with it. */
+        val ANCHOR_LAT = DemoModeController.CAMERA_TARGET.latitude
+        val ANCHOR_LON = DemoModeController.CAMERA_TARGET.longitude
 
         val DEMO_RENTALS: List<RentalPlace> = listOf(
             RentalPlace(

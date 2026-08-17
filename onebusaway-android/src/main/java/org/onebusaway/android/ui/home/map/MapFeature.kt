@@ -87,6 +87,7 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
@@ -544,7 +545,8 @@ fun MapFeature(
     val mapStopProjector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
     MapStopSpotlight(
         projector = mapStopProjector,
-        currentStops = { mapViewModel.renderState.snapshot.value.stops }
+        currentStops = { mapViewModel.renderState.snapshot.value.stops },
+        targetStopId = DemoModeController.ANCHOR_STOP_ID
     )
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a

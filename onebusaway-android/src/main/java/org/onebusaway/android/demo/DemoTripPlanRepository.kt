@@ -59,23 +59,28 @@ class DemoTripPlanRepository @Inject constructor(
     override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> = if (demoMode.isActive) demoItineraries() else real.planBlocking(builder)
 
     /**
-     * The bundled plan, re-dated so it departs from now.
+     * The bundled plan as captured, parsed once for the process.
      *
-     * Parsed fresh per call rather than cached: the rebase below is relative to the current clock, so a
-     * cached list would go stale exactly as fast as a captured one — which is the whole failure this
-     * demo dataset exists to avoid.
+     * Only the *dating* is clock-relative, so only [rebase] has to run per call — re-reading and
+     * re-decoding 27 KB of JSON each time bought nothing, and the trip-plan monitor re-plans on a timer.
+     *
+     * An unreadable fixture leaves the tour's planner step with an empty result rather than taking the
+     * screen down; the caption still explains what the rider is looking at.
      */
-    private fun demoItineraries(): List<TripItinerary> = runCatching {
-        val response = context.resources.openRawResource(R.raw.demo_trip_plan)
-            .use(OtpPlanParser::parse)
-        val itineraries = response.plan?.itineraries?.map { it.toTripItinerary() }.orEmpty()
-        rebase(itineraries)
-    }.getOrElse {
-        // An unreadable fixture leaves the tour's planner step with an empty result rather than taking
-        // the screen down; the caption still explains what the user is looking at.
-        Log.e(TAG, "Failed to parse the bundled demo trip plan", it)
-        emptyList()
+    private val captured: List<TripItinerary> by lazy {
+        runCatching {
+            context.resources.openRawResource(R.raw.demo_trip_plan)
+                .use(OtpPlanParser::parse)
+                .plan?.itineraries?.map { it.toTripItinerary() }
+                .orEmpty()
+        }.getOrElse {
+            Log.e(TAG, "Failed to parse the bundled demo trip plan", it)
+            emptyList()
+        }
     }
+
+    /** The bundled plan, re-dated so it departs from now. */
+    private fun demoItineraries(): List<TripItinerary> = rebase(captured)
 
     /**
      * Shifts a captured plan onto the current clock so its departures read as "in a few minutes"

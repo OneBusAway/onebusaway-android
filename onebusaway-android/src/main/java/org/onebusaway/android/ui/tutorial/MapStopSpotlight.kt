@@ -19,20 +19,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.render.MapProjector
-import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
-import org.onebusaway.android.util.GeoPoint
 
 /**
  * Puts the scripted tour's "tap a stop" spotlight over a real stop marker on the map (#2164), in a
- * map-SDK-agnostic way: while that step is up it finds the demo system's anchor stop among the drawn
- * markers, projects it to screen coordinates through the neutral [projector], and reports those bounds
- * to the spotlight overlay.
+ * map-SDK-agnostic way: while that step is up it finds [targetStopId] among the drawn markers, projects
+ * it to screen coordinates through the neutral [projector], and reports those bounds to the spotlight
+ * overlay. The caller names the stop, so this composable knows nothing of the demo system.
  *
  * Pinning to a *named* stop is the whole point. The tour's caption promises a stop served by three
  * routes, and the step after it opens that stop's arrivals — so the spotlight has to land on the stop
@@ -55,23 +51,21 @@ import org.onebusaway.android.util.GeoPoint
 @Composable
 fun MapStopSpotlight(
     projector: MapProjector?,
-    currentStops: () -> List<StopMarker>
+    currentStops: () -> List<StopMarker>,
+    targetStopId: String
 ) {
     val tutorialState = LocalTutorialState.current ?: return
     val active = tutorialState.current?.anchorId == ScriptedTutorial.KEY_STOP
-    val windowSize = LocalWindowInfo.current.containerSize
     val markerRadiusPx = with(LocalDensity.current) { 20.dp.toPx() }
 
-    LaunchedEffect(active, projector) {
+    LaunchedEffect(active, projector, targetStopId) {
         val proj = projector ?: return@LaunchedEffect
         if (!active) return@LaunchedEffect
-        val centerX = windowSize.width / 2f
-        val centerY = windowSize.height / 2f
         while (true) {
-            val anchorStops = currentStops().filter { it.id == DemoModeController.ANCHOR_STOP_ID }
-            val nearest = nearestProjected(anchorStops, { it.point }, centerX, centerY) { proj.toScreen(it) }
-            if (nearest != null) {
-                val offset = nearest.second
+            val offset = currentStops()
+                .firstOrNull { it.id == targetStopId }
+                ?.let { proj.toScreen(it.point) }
+            if (offset != null) {
                 tutorialState.reportBounds(
                     ScriptedTutorial.KEY_STOP,
                     Rect(
@@ -85,31 +79,4 @@ fun MapStopSpotlight(
             delay(120)
         }
     }
-}
-
-/**
- * The item whose geographic point ([pointOf]) projects nearest to [centerX], [centerY], paired with that
- * projected position — or null if [items] is empty or none of them project on screen ([project] returns
- * null). Pure, so the spotlight's target selection is JVM-unit-testable independently of the map SDK.
- */
-internal fun <T> nearestProjected(
-    items: List<T>,
-    pointOf: (T) -> GeoPoint,
-    centerX: Float,
-    centerY: Float,
-    project: (GeoPoint) -> ScreenOffset?
-): Pair<T, ScreenOffset>? {
-    var best: Pair<T, ScreenOffset>? = null
-    var bestDistance = Float.MAX_VALUE
-    items.forEach { item ->
-        val offset = project(pointOf(item)) ?: return@forEach
-        val dx = offset.x - centerX
-        val dy = offset.y - centerY
-        val distance = dx * dx + dy * dy
-        if (distance < bestDistance) {
-            bestDistance = distance
-            best = item to offset
-        }
-    }
-    return best
 }

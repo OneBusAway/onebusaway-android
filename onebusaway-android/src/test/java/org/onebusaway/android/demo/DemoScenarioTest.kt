@@ -264,7 +264,6 @@ class DemoScenarioTest {
      */
     @Test
     fun `no run on the road is missing from the active list`() {
-        val geometry = fixture.routeStops.getValue(routeId)
         for (offsetSeconds in 0 until 600 step 5) {
             val at = now + offsetSeconds * 1000L
             val listed = DemoScenario.activeRuns(fixture, routeId, at).map { it.index }.toSet()

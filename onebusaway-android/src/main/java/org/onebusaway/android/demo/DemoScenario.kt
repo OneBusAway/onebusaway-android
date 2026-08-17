@@ -18,10 +18,9 @@ package org.onebusaway.android.demo
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.math.abs
 import kotlin.math.floor
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.Polyline
-import org.onebusaway.android.util.PolylineDecoder
 
 /**
  * The **time-varying** half of the demo transit system (#2164): a tiny timetable simulator that turns
@@ -95,8 +94,7 @@ object DemoScenario {
      * a headway and then isn't. The tests are the guard: every active run must be on its shape, and no
      * pending arrival may be missing from a stop's list.
      */
-    private val DEVIATION_SLACK_SECONDS: Long
-        get() = DEVIATION_CYCLE_SECONDS.maxOf { kotlin.math.abs(it) }
+    private val DEVIATION_SLACK_SECONDS: Long = DEVIATION_CYCLE_SECONDS.maxOf { abs(it) }
 
     /**
      * Every run of [routeId] that is somewhere on its shape at [nowMs] — the buses the map draws when
@@ -287,16 +285,11 @@ data class DemoRun(
      */
     fun hasPrediction(nowMs: Long): Boolean = isOnRoad(nowMs) || (actualDepartureMs - nowMs) in 0..PREDICTION_LEAD_MS
 
-    /** The decoded shape, computed once per run instance and shared by position and bearing lookups. */
-    private val polyline: Polyline by lazy {
-        Polyline(PolylineDecoder.decode(geometry.polyline.points, geometry.polyline.length))
-    }
-
     /** Where this bus is at [nowMs], or null when it isn't on its shape. */
-    fun positionAt(nowMs: Long): GeoPoint? = if (isOnRoad(nowMs)) polyline.interpolate(progressAlongShapeAt(nowMs)) else null
+    fun positionAt(nowMs: Long): GeoPoint? = if (isOnRoad(nowMs)) geometry.line.interpolate(progressAlongShapeAt(nowMs)) else null
 
     /** Which way this bus is pointing at [nowMs], in compass degrees. */
-    fun bearingAt(nowMs: Long): Float = polyline.bearingAt(progressAlongShapeAt(nowMs))
+    fun bearingAt(nowMs: Long): Float = geometry.line.bearingAt(progressAlongShapeAt(nowMs))
 
     /** The index into [DemoRouteStops.stopIds] of the next stop this run reaches after [nowMs]. */
     fun nextStopIndexAt(nowMs: Long): Int? {

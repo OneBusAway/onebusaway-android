@@ -71,14 +71,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.DemoEntryPoint
-import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
-import org.onebusaway.android.map.rental.RentalLayer
-import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
@@ -146,8 +141,6 @@ import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
-import org.onebusaway.android.ui.tutorial.ScriptedTutorial
-import org.onebusaway.android.ui.tutorial.ScriptedTutorialDirector
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
@@ -611,90 +604,18 @@ fun HomeScreen(
                     }
                 }
 
-                // Onboarding: the host stages a request (help "Show tutorials" / what's-new opt-out /
-                // first-run launch extra) on the VM latch; start the scripted guided tour here, then clear
-                // the latch.
-                //
-                // The tour runs on the bundled demo transit system (#2164) rather than on the rider's own
-                // region, so starting it switches the app's data over and aims the camera at that system's
-                // city — otherwise none of its steps would have anything to point at. Everything the tour
-                // changes is captured here and put back when it ends, whether it was finished or skipped.
-                val demoMode = remember(app) { DemoEntryPoint.get(app) }
-                val prefsRepo = remember(app) { PreferencesEntryPoint.get(app) }
-                var tourRunning by remember { mutableStateOf(false) }
-                var tourUndo by remember { mutableStateOf<ScriptedTourUndo?>(null) }
-
-                LaunchedEffect(Unit) {
-                    homeViewModel.showWelcomeTutorial.collect { requested ->
-                        if (requested) {
-                            tourUndo = ScriptedTourUndo(
-                                viewport = mapViewModel.viewport,
-                                rentalsVisible = prefsRepo.getBoolean(
-                                    R.string.preference_key_layer_bikeshare_visible,
-                                    false
-                                ),
-                                bikesVisible = prefsRepo.getBoolean(
-                                    R.string.preference_key_layer_bikes_visible,
-                                    RentalLayer.BIKES.defaultVisible
-                                ),
-                                scootersVisible = prefsRepo.getBoolean(
-                                    R.string.preference_key_layer_scooters_visible,
-                                    RentalLayer.SCOOTERS.defaultVisible
-                                )
-                            )
-                            demoMode.enter()
-                            mapViewModel.clearAllFocus()
-                            mapViewModel.aimAt(
-                                DemoModeController.CAMERA_TARGET,
-                                DemoModeController.CAMERA_ZOOM
-                            )
-                            tourRunning = true
-                            tutorialState.start(ScriptedTutorial.steps)
-                            homeViewModel.onWelcomeTutorialConsumed()
-                        }
-                    }
-                }
-
-                // Teardown. `active` goes false on the last step's finish flourish and on the corner "X"
-                // alike, so both exits land here and neither can leave the rider stranded in a city they
-                // have never been to.
-                LaunchedEffect(tourRunning, tutorialState.active) {
-                    if (!tourRunning || tutorialState.active) return@LaunchedEffect
-                    tourRunning = false
-                    // The tour drove the app into directions and through a stop focus; unwind both before
-                    // the real region's data comes back, so nothing is left focused on a demo id.
-                    homeViewModel.clearMapFocus()
-                    mapViewModel.clearAllFocus()
-                    tourUndo?.let { undo ->
-                        // The rental layer's switches are persisted preferences, so showing it during
-                        // the tour is the one change that would otherwise outlive it.
-                        mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, undo.bikesVisible)
-                        mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, undo.scootersVisible)
-                        mapViewModel.setRentalsVisible(undo.rentalsVisible)
-                        // On a first launch the tour can start before the camera has ever settled, so
-                        // there is no viewport to put back; fall back to the region fit the map would
-                        // have opened on, rather than leaving the rider parked in the demo's city.
-                        undo.viewport?.let(mapViewModel::restoreViewport) ?: mapViewModel.zoomToRegion()
-                    }
-                    tourUndo = null
-                    demoMode.exit()
-                    // The tour has already covered what the opportunistic arrivals spotlight teaches, so
-                    // don't ambush the rider with it again the first time they open a real stop.
-                    ArrivalTutorial.markShown(prefsRepo, ArrivalTutorial.steps)
-                }
-
-                // The scripted tour's stage directions: each step takes the app to the place its caption
-                // is about, so the rider only ever presses Next.
-                ScriptedTutorialDirector(
-                    state = tutorialState,
-                    actions = rememberScriptedTutorialActions(
-                        demoMode = demoMode,
-                        homeViewModel = homeViewModel,
-                        mapViewModel = mapViewModel,
-                        tripPlanViewModel = tripPlanViewModel,
-                        tripResultsViewModel = tripResultsViewModel,
-                        drawerState = drawerState
-                    )
+                // Onboarding: the scripted guided tour (#2164), which runs on the bundled demo transit
+                // system rather than the rider's own region. Enter, teardown and the per-step stage
+                // directions all live in [ScriptedTourHost] — the enter/exit pair has to stay symmetric
+                // or a rider is stranded in a city they've never been to, so it is one unit rather than
+                // three effects spread through this composable.
+                ScriptedTourHost(
+                    tutorialState = tutorialState,
+                    homeViewModel = homeViewModel,
+                    mapViewModel = mapViewModel,
+                    tripPlanViewModel = tripPlanViewModel,
+                    tripResultsViewModel = tripResultsViewModel,
+                    drawerState = drawerState
                 )
 
                 // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still

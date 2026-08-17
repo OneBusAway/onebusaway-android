@@ -61,7 +61,6 @@ import org.onebusaway.android.map.DefaultFocusedTripRepository
 import org.onebusaway.android.map.DefaultRouteMapRepository
 import org.onebusaway.android.map.FocusedTripRepository
 import org.onebusaway.android.map.RouteMapRepository
-import org.onebusaway.android.map.rental.DefaultRentalPlacesRepository
 import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.nav.AndroidNavigationFeedbackRepository
 import org.onebusaway.android.nav.AndroidReminderNotificationPresenter
@@ -110,7 +109,6 @@ import org.onebusaway.android.ui.tripinfo.TripInfoRepository
 import org.onebusaway.android.ui.tripplan.AdvancedSettingsRepository
 import org.onebusaway.android.ui.tripplan.DefaultAdvancedSettingsRepository
 import org.onebusaway.android.ui.tripplan.DefaultGeocodeRepository
-import org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository
 import org.onebusaway.android.ui.tripplan.GeocodeRepository
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripStore

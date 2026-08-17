@@ -66,12 +66,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -83,7 +80,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import kotlin.math.hypot
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.ArrivalLegend
 import org.onebusaway.android.ui.icons.AppIcons
@@ -537,15 +533,15 @@ private fun TutorialCaption(
             val advanceLabel = if (isLast) R.string.tutorial_button_finish else R.string.pager_button_next
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, end = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                // Back sits at the far left when it's there; with only the advance button, it holds the
+                // right edge on its own rather than being pushed there by an empty spacer.
+                horizontalArrangement = if (canGoBack) Arrangement.SpaceBetween else Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (canGoBack) {
                     TextButton(onClick = onBack, colors = captionButtonColors()) {
                         Text(stringResource(R.string.tutorial_button_back))
                     }
-                } else {
-                    Spacer(Modifier.width(0.dp))
                 }
                 TextButton(onClick = onNext, colors = captionButtonColors()) {
                     Text(stringResource(advanceLabel))

@@ -20,6 +20,8 @@ import org.onebusaway.android.api.contract.AgencyReference
 import org.onebusaway.android.api.contract.RouteReference
 import org.onebusaway.android.api.contract.ShapeEntry
 import org.onebusaway.android.api.contract.StopReference
+import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.util.PolylineDecoder
 
 /**
  * The **static** half of the scripted tutorial's demo transit system (#2164): the agency, routes,
@@ -79,6 +81,17 @@ data class DemoRouteStops(
     /** The full length of [polyline] in metres. */
     val totalDistance: Double = 0.0
 ) {
+    /**
+     * The decoded shape, built once and shared by every run of this route.
+     *
+     * It lives here, on the fixture, rather than on a [DemoRun]: runs are rebuilt from scratch on every
+     * query — that is what keeps the simulation a pure function of the clock — so a per-run cache decodes
+     * the same 100-plus point polyline again for each bus, on each call. A whole-viewport arrivals
+     * request touches every stop and so every active run, which turned three decodes per process into
+     * hundreds per poll.
+     */
+    val line: Polyline by lazy { Polyline(PolylineDecoder.decode(polyline.points, polyline.length)) }
+
     /** The index of [stopId] along this direction, or null when the route doesn't serve it. */
     fun indexOf(stopId: String): Int? = stopIds.indexOf(stopId).takeIf { it >= 0 }
 

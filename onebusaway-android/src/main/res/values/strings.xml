@@ -900,15 +900,6 @@
         where the bus is, the scheduled time is shown (gray background). Gray with strikethrough text
         (a line through it) means the trip is canceled.
     </string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Slide up to show more arrivals
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Drag the panel up
-        to see more arrivals for this stop.
-    </string>
-    <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
-    <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you’ve recently
-        looked at in the menu.
-    </string>
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>
     <string name="tutorial_button_finish">Finish</string>

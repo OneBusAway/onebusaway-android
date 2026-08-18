@@ -374,12 +374,16 @@ fun TutorialOverlay(state: TutorialState) {
         Modifier
             .fillMaxSize()
             .onGloballyPositioned { overlayOrigin = it.positionInRoot() }
-            // The overlay swallows every touch that isn't one of the caption's own buttons, so the app
-            // underneath can't be operated out from under the script — but it no longer *advances* on
-            // one. Tap-anywhere-to-continue was inherited from the legacy ShowcaseView, and it stopped
-            // being safe the moment there was a Back button to miss: a tap a few pixels off it moved
-            // the tour the other way, which is precisely the mistake Back exists to undo.
-            .pointerInput(step.id) { detectTapGestures { } }
+            // A tap anywhere out here advances the tour, and the app underneath never sees it — the
+            // overlay swallows every touch so the script can't be operated out from under itself.
+            //
+            // "Out here" is the point. The legacy ShowcaseView advanced on a tap *anywhere*, including
+            // on the caption, which stopped being safe once the caption grew a Back button: a press a
+            // few pixels wide of it moved the tour the other way, which is the exact mistake Back
+            // exists to undo. The caption now consumes its own taps (see [TutorialCaption]), so the
+            // two gestures can't be confused — the card is for going back and closing, everywhere else
+            // is for going on.
+            .pointerInput(step.id) { detectTapGestures { state.advance() } }
     ) {
         // The ring: a crisp brand-color outline hugging the target, backed by a softer, wider halo so it
         // reads against a busy map as well as against a flat panel. Both pulse together.
@@ -485,7 +489,12 @@ private fun TutorialCaption(
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(24.dp)
-            .widthIn(max = 360.dp),
+            .widthIn(max = 360.dp)
+            // Swallow taps that land on the card. The overlay behind it advances on a tap, and this is
+            // the one region where that would be wrong: the card holds Back and the close "X", so a
+            // near-miss on either must do nothing rather than move the tour forward. Children (the
+            // buttons) are hit first, so this only catches the gaps between them.
+            .pointerInput(Unit) { detectTapGestures { } },
         shape = RoundedCornerShape(16.dp),
         // The brand green, not the theme surface. With the scrim gone (see [TutorialOverlay]) a card
         // painted the ordinary surface colour is the same near-black as the dark-mode map behind it, so

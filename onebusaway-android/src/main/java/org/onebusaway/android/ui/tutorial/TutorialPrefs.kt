@@ -21,9 +21,15 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 
 /**
  * Tutorial preference-flag constants and reset, kept after the ShowcaseView-based tutorials were
- * replaced by Compose onboarding. The constants are still referenced by the launch flow
- * ([TUTORIAL_WELCOME]) and the help dialog ([TUTORIAL_OPT_OUT_DIALOG]); [resetAllTutorials] re-arms
- * onboarding from Settings.
+ * replaced by Compose onboarding: [TUTORIAL_WELCOME] gates the launch flow's "show the tutorial?"
+ * prompt and [TUTORIAL_OPT_OUT_DIALOG] the help dialog. [resetAllTutorials] re-arms onboarding from
+ * Settings.
+ *
+ * Five further flags used to live here — the arrival sort, Recent stops/routes, the two starred-stops
+ * hints and the Open311 categories. Each was declared and dutifully reset, and none had been *read*
+ * since the ShowcaseView tutorials they belonged to were deleted, so resetting them re-armed nothing.
+ * A flag nobody asks about is not a feature that is off; it is a line that makes the reset below look
+ * more thorough than it is.
  */
 object TutorialPrefs {
 
@@ -31,27 +37,12 @@ object TutorialPrefs {
 
     const val TUTORIAL_OPT_OUT_DIALOG = ".tutorial_opt_out_dialog"
 
-    const val TUTORIAL_ARRIVAL_SORT = ".tutorial_arrival_sort"
-
-    const val TUTORIAL_RECENT_STOPS_ROUTES = ".tutorial_recent_stops_routes"
-
-    const val TUTORIAL_STARRED_STOPS_SORT = ".tutorial_starred_stops_sort"
-
-    const val TUTORIAL_STARRED_STOPS_SHORTCUT = ".tutorial_starred stops_shortcut"
-
-    const val TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES = ".tutorial_send_feedback_open311_categories"
-
     /** Resets all tutorials so they are shown to the user again. */
     fun resetAllTutorials(context: Context) {
         val prefs = PreferencesEntryPoint.get(context)
         prefs.setBoolean(R.string.preference_key_show_tutorial_screens, true)
 
         prefs.setBoolean(TUTORIAL_WELCOME, false)
-        prefs.setBoolean(TUTORIAL_ARRIVAL_SORT, false)
-        prefs.setBoolean(TUTORIAL_RECENT_STOPS_ROUTES, false)
-        prefs.setBoolean(TUTORIAL_STARRED_STOPS_SORT, false)
-        prefs.setBoolean(TUTORIAL_STARRED_STOPS_SHORTCUT, false)
-        prefs.setBoolean(TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES, false)
 
         // Re-arm the Compose arrivals-panel onboarding spotlight (its keys live with the sequence).
         for (key in ArrivalTutorial.resetKeys()) {

@@ -764,15 +764,6 @@
         si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
     </string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Desliza hacia arriba para ver más llegadas
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o desliza el panel hacia arriba
-        para ver mas llegadas de buses en esta parada.
-    </string>
-    <string name="tutorial_recent_stops_routes_title">Paradas y rutas recientes</string>
-    <string name="tutorial_recent_stops_routes_text">Encuentra las paradas y rutas que recientemente has mirado
-        en el menú.
-    </string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">La ubicación en tiempo real necesita permisos</string>

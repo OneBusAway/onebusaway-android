@@ -25,51 +25,37 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
- * The arrivals-panel onboarding sequence — the Compose successor to the legacy ShowcaseView
- * "arrival header" tutorial chain (which spotlighted XML views removed in the Compose migration).
- * Spotlights, in order, the ETA pill, the slide-up chevron, and the hamburger menu — which now holds
- * "Recent stops/routes" (see the [Modifier.tutorialAnchor] call sites in `ArrivalsPanel` / the sheet
- * host). Shown once the first
- * time a stop's arrivals load, gated by [pendingSteps]; "show tutorials again" re-arms it by clearing
- * the [resetKeys] (see `TutorialPrefs.resetAllTutorials`).
+ * The arrivals-panel onboarding spotlight — what a rider is told about the panel the first time a
+ * stop's arrivals load, gated by [pendingSteps]; "show tutorials again" re-arms it by clearing the
+ * [resetKeys] (see `TutorialPrefs.resetAllTutorials`).
  *
- * Each step's [TutorialStep.id] is both its spotlight anchor key and its persisted "already shown"
- * preference key. These are fresh `.tutorial_compose_arrival_*` keys (not the legacy ShowcaseView
- * chain's): the old chain was removed in the Compose migration, so the restored series should show in
- * full for everyone rather than be silently truncated by a user's stale legacy shown-flags.
+ * **One step, deliberately.** This began as the Compose successor to the legacy ShowcaseView "arrival
+ * header" chain and carried that chain's three: the ETA pill, the slide-up chevron, and the drawer's
+ * Recent stops/routes. The scripted tour (#2164) then took over onboarding and made the last two
+ * redundant — it drives the arrivals sheet for half its length and opens the drawer outright, so a
+ * rider who had just finished it was met with two spotlights re-explaining what they had been shown
+ * minutes before. Those steps are gone rather than merely suppressed after a tour: the tour is the
+ * app's onboarding now, and a second sequence teaching the same controls has nobody left to serve.
+ *
+ * What survives is the one lesson the tour cannot leave behind, because it is about *reading a value*
+ * rather than finding a control: what the ETA pill's colours mean.
+ *
+ * The step's [TutorialStep.id] is both its spotlight anchor key and its persisted "already shown"
+ * preference key. It is a fresh `.tutorial_compose_arrival_*` key (not the legacy ShowcaseView
+ * chain's): the old chain was removed in the Compose migration, so this should show for everyone
+ * rather than be silently skipped by a user's stale legacy shown-flag.
  */
 object ArrivalTutorial {
 
     /** ETA pill — "how long until your bus arrives" + the deviation-color legend. */
     const val KEY_ETA = ".tutorial_compose_arrival_eta"
 
-    /** Slide-up chevron — pull the panel up for the full arrivals list. */
-    const val KEY_PANEL = ".tutorial_compose_arrival_panel"
-
-    /**
-     * Hamburger menu (☰) — "Recent stops/routes" moved out of the retired overflow into the drawer, so
-     * this now spotlights the nav icon that opens it. The persisted pref value stays the legacy
-     * `.tutorial_compose_more_menu` so users who already saw the step aren't re-shown it.
-     */
-    const val KEY_MORE_MENU = ".tutorial_compose_more_menu"
-
-    /** The sequence, in display order. */
+    /** The sequence — see the note on this object about why it is one step. */
     val steps: List<TutorialStep> = listOf(
         TutorialStep(
             id = KEY_ETA,
             title = R.string.tutorial_arrival_header_arrival_info_title,
             body = R.string.tutorial_arrival_header_arrival_info_text
-        ),
-        TutorialStep(
-            id = KEY_PANEL,
-            title = R.string.tutorial_arrival_header_sliding_panel_title,
-            body = R.string.tutorial_arrival_header_sliding_panel_text
-        ),
-        TutorialStep(
-            id = KEY_MORE_MENU,
-            title = R.string.tutorial_recent_stops_routes_title,
-            body = R.string.tutorial_recent_stops_routes_text,
-            bodyIcon = R.drawable.history_24
         )
     )
 
@@ -102,11 +88,11 @@ object ArrivalTutorial {
  * Records each arrivals spotlight as shown the moment it is actually on screen, for whichever tutorial
  * is running. Renders nothing; host it once, alongside the [TutorialState] it watches.
  *
- * A step is recorded *as it is displayed* rather than the whole sequence being marked when one starts,
- * because either tutorial can end early — the corner "X", or system Back, which the overlay treats the
- * same way. Marking up front meant a rider who pressed Back meaning to collapse the arrivals sheet
- * silently retired all three spotlights before seeing two of them, with no scrim to hint that anything
- * had been dismissed; what is left unmarked simply stays owed, and comes back at the next stop.
+ * A step is recorded *as it is displayed* rather than when a sequence starts, because either tutorial
+ * can end early — the corner "X", or system Back, which the overlay treats the same way, or now a
+ * stray tap outside the caption. Marking up front retired spotlights the rider never saw, with no
+ * scrim to hint that anything had been dismissed; what is left unmarked simply stays owed, and comes
+ * back at the next stop.
  *
  * Keyed on [TutorialStep.anchorId], so the scripted tour (#2164) counts too: its ETA-pill steps ring
  * [ArrivalTutorial.KEY_ETA] to teach the same control, and re-ambushing the rider with the opportunistic

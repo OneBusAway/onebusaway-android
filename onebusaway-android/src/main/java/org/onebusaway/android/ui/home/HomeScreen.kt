@@ -141,8 +141,8 @@ import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.RecordArrivalSpotlightsShown
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
-import org.onebusaway.android.ui.tutorial.WelcomeTutorial
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.ExternalIntents
@@ -312,6 +312,9 @@ fun HomeScreen(
                 // Drives the arrivals-panel onboarding spotlight; provided to the sheet content (so the panel's
                 // anchors can register) and read by [TutorialOverlay] below, which draws over the whole screen.
                 val tutorialState = rememberTutorialState()
+                // Persist each arrivals spotlight as it is actually shown — by whichever tutorial is
+                // running, the opportunistic sequence or the scripted tour, which reuses its anchors.
+                RecordArrivalSpotlightsShown(tutorialState)
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 // The sheet has NO reachable `Hidden` anchor (`skipHiddenState = true`), so peek is the hard
                 // floor of the drag: the user can expand from peek or collapse back to it, but can never drag it
@@ -605,17 +608,19 @@ fun HomeScreen(
                     }
                 }
 
-                // Welcome onboarding: the host stages a request (help "Show tutorials" / what's-new opt-out /
-                // first-run launch extra) on the VM latch; start the green welcome + map-stop spotlight sequence
-                // here (replacing the legacy ShowcaseView welcome), then clear the latch.
-                LaunchedEffect(Unit) {
-                    homeViewModel.showWelcomeTutorial.collect { requested ->
-                        if (requested) {
-                            tutorialState.start(WelcomeTutorial.steps)
-                            homeViewModel.onWelcomeTutorialConsumed()
-                        }
-                    }
-                }
+                // Onboarding: the scripted guided tour (#2164), which runs on the bundled demo transit
+                // system rather than the rider's own region. Enter, teardown and the per-step stage
+                // directions all live in [ScriptedTourHost] — the enter/exit pair has to stay symmetric
+                // or a rider is stranded in a city they've never been to, so it is one unit rather than
+                // three effects spread through this composable.
+                ScriptedTourHost(
+                    tutorialState = tutorialState,
+                    homeViewModel = homeViewModel,
+                    mapViewModel = mapViewModel,
+                    tripPlanViewModel = tripPlanViewModel,
+                    tripResultsViewModel = tripResultsViewModel,
+                    drawerState = drawerState
+                )
 
                 // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
                 // collapses first; every other back gesture restores the preceding focus and viewport.
@@ -639,22 +644,23 @@ fun HomeScreen(
                     }
                 }
 
-                HomeDrawer(
-                    drawerState = drawerState,
-                    onStarredStops = onStarredStops,
-                    onStarredRoutes = onStarredRoutes,
-                    onRecentStopsRoutes = onRecentStopsRoutes,
-                    onReminders = onReminders,
-                    onPlanTrip = onPlanTrip,
-                    onPayFare = onPayFare,
-                    onSettings = onSettings,
-                    onHelp = onHelp,
-                    onSendFeedback = onSendFeedback,
-                    onOpenSource = onOpenSource
-                ) {
-                    // Provide the tutorial state to the whole screen (top chrome, map, and sheet) so their
-                    // spotlight anchors register; [TutorialOverlay] below draws from the same state.
-                    CompositionLocalProvider(LocalTutorialState provides tutorialState) {
+                // Provide the tutorial state to the whole screen — the drawer sheet included, since the
+                // scripted tour spotlights its starred rows (#2164) — so every anchor registers;
+                // [TutorialOverlay] below draws from the same state.
+                CompositionLocalProvider(LocalTutorialState provides tutorialState) {
+                    HomeDrawer(
+                        drawerState = drawerState,
+                        onStarredStops = onStarredStops,
+                        onStarredRoutes = onStarredRoutes,
+                        onRecentStopsRoutes = onRecentStopsRoutes,
+                        onReminders = onReminders,
+                        onPlanTrip = onPlanTrip,
+                        onPayFare = onPayFare,
+                        onSettings = onSettings,
+                        onHelp = onHelp,
+                        onSendFeedback = onSendFeedback,
+                        onOpenSource = onOpenSource
+                    ) {
                         // The map runs edge-to-edge (under the status bar): the scaffold fills the whole screen and
                         // the menu/search controls float over its top corners (see MapTopChrome below), replacing the
                         // old solid TopAppBar. The status-bar inset is applied to the floating chrome + overlays
@@ -1152,36 +1158,36 @@ fun HomeScreen(
                             }
                         }
                     }
-                }
 
-                if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {
-                    ServiceAlertsDialog(
-                        content = arrivalsContent,
-                        onShowAlert = arrivalsSession.handler::onShowAlert,
-                        onHideAlert = arrivalsSession.handler::onHideAlert,
-                        onShowHiddenAlerts = arrivalsSession.viewModel::showHiddenAlerts,
-                        onDismiss = { serviceAlertsVisible = false }
+                    if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {
+                        ServiceAlertsDialog(
+                            content = arrivalsContent,
+                            onShowAlert = arrivalsSession.handler::onShowAlert,
+                            onHideAlert = arrivalsSession.handler::onHideAlert,
+                            onShowHiddenAlerts = arrivalsSession.viewModel::showHiddenAlerts,
+                            onDismiss = { serviceAlertsVisible = false }
+                        )
+                    }
+
+                    // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
+                    // current region's alerts), replacing the activity's GtfsAlertsHelper.showWideAlertDialog path.
+                    val wideAlertViewModel = hiltViewModel<WideAlertViewModel>()
+                    val wideAlert by wideAlertViewModel.wideAlert.collectAsStateWithLifecycle()
+                    wideAlert?.let { WideAlertDialog(it) { wideAlertViewModel.dismiss() } }
+
+                    // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
+                    // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
+                    // opt-out are forwarded to the host).
+                    HelpFeature(
+                        viewModel = helpViewModel,
+                        onHelpAction = onHelpAction,
+                        onShowWelcomeTutorial = onShowWelcomeTutorial
                     )
+
+                    // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
+                    // as the last sibling so it sits on top; renders nothing while no tutorial is active.
+                    TutorialOverlay(tutorialState)
                 }
-
-                // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
-                // current region's alerts), replacing the activity's GtfsAlertsHelper.showWideAlertDialog path.
-                val wideAlertViewModel = hiltViewModel<WideAlertViewModel>()
-                val wideAlert by wideAlertViewModel.wideAlert.collectAsStateWithLifecycle()
-                wideAlert?.let { WideAlertDialog(it) { wideAlertViewModel.dismiss() } }
-
-                // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
-                // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
-                // opt-out are forwarded to the host).
-                HelpFeature(
-                    viewModel = helpViewModel,
-                    onHelpAction = onHelpAction,
-                    onShowWelcomeTutorial = onShowWelcomeTutorial
-                )
-
-                // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
-                // as the last sibling so it sits on top; renders nothing while no tutorial is active.
-                TutorialOverlay(tutorialState)
             }
         }
     }

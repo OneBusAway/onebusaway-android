@@ -40,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -329,9 +330,29 @@ internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
  *   "Show route schedule" when the route has a schedule URL.
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
- * trip's actions drive the badge color and the route menu. [etaAnchor] is attached to the first pill
- * (the onboarding spotlight target).
+ * trip's actions drive the badge color and the route menu. [anchors] carries the onboarding spotlight
+ * targets a host may attach to the row's pill, badge and star.
  */
+
+/**
+ * Onboarding spotlight targets a host may attach inside an arrivals row — each an opaque [Modifier] the
+ * row simply hangs on the element named, without knowing what it is for.
+ *
+ * A bundle rather than a parameter each, because the scripted tour (#2164) spotlights three separate
+ * parts of the same row (the countdown, the route badge, the favourite star) and threading three
+ * modifiers through the panel/list/row chain one at a time is how a signature grows without bound. Every
+ * field defaults to an inert [Modifier], so a host that wants none passes nothing.
+ */
+@Immutable
+data class ArrivalRowAnchors(
+    /** The row's first ETA pill — "how long until your bus arrives". */
+    val eta: Modifier = Modifier,
+    /** The route badge that opens the route on the map. */
+    val badge: Modifier = Modifier,
+    /** The corner star that saves the route. */
+    val star: Modifier = Modifier
+)
+
 @Composable
 fun RouteArrivalRow(
     group: RouteRowGroup,
@@ -349,7 +370,7 @@ fun RouteArrivalRow(
     // The uncertainty band's tint for [selectedTripId] on the map, or null when no vehicle is selected.
     // The focused pill's rim wears it (#1990) — see [pillFocus] below.
     selectedTripBandColor: Int? = null,
-    etaAnchor: Modifier = Modifier,
+    anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
     // Whether a live countdown is running for this row (#2166) — the row's menu picks its verb and
     // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
     // membership is the list's business, and this row is also drawn by hosts (directions, the
@@ -418,7 +439,7 @@ fun RouteArrivalRow(
                         ),
                         // The trailing padding is the gap to the divider — part of the badge section,
                         // so the TopEnd-aligned alert glyph sits flush against the divider.
-                        modifier = Modifier.align(Alignment.Center).padding(end = 10.dp),
+                        modifier = Modifier.align(Alignment.Center).padding(end = 10.dp).then(anchors.badge),
                         maxFontSize = 32.sp,
                         width = if (compoundBadge) 96.dp else 64.dp,
                         maxLines = if (compoundBadge) 1 else 2,
@@ -468,7 +489,7 @@ fun RouteArrivalRow(
                         trips = group.trips,
                         actionsFor = actionsFor,
                         callbacks = callbacks,
-                        firstPillModifier = etaAnchor,
+                        firstPillModifier = anchors.eta,
                         focus = pillFocus
                     )
                 }
@@ -485,7 +506,7 @@ fun RouteArrivalRow(
                         // Tighten the button's touch box to the icon + a small margin, like the corner
                         // overflow icon below, instead of Material's 48dp default — keeps the star flush
                         // in the corner with no compensating offset.
-                        modifier = Modifier.size(CORNER_TOUCH_SIZE)
+                        modifier = Modifier.size(CORNER_TOUCH_SIZE).then(anchors.star)
                     )
                 }
             }

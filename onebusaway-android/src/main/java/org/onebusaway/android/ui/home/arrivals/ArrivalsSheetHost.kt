@@ -41,6 +41,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
@@ -52,6 +53,7 @@ import org.onebusaway.android.ui.home.StopRouteSelection
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.TutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
@@ -173,7 +175,14 @@ internal fun ArrivalsSheetHost(
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
             selectedTripId = selectedRoute?.selectedTripId,
             onContentHeight = onContentHeight,
-            etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA)
+            // The onboarding spotlight targets inside the first arrivals row. The ETA pill is shared
+            // with the older opportunistic arrivals tutorial; the badge and star are the scripted
+            // tour's own (#2164).
+            anchors = ArrivalRowAnchors(
+                eta = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
+                badge = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ROUTE_BADGE),
+                star = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ROUTE_STAR)
+            )
         )
     }
 }
@@ -192,8 +201,13 @@ internal fun StopRouteSelection.selectedArrivalRowKey(): String = originLeg.let 
  * state lags the focus by a few hundred ms and the (often cached) arrivals response beats it. The old
  * code checked sheet visibility *instantaneously* and dropped the start when it lost that race, which
  * skipped the tour almost every time (the next retry was a 60s-away poll). Waiting instead anchors the
- * spotlight to the panel once it's actually on screen. The pending steps are marked shown only once we
- * commit to starting, so a lost-then-retried response can't double-show.
+ * spotlight to the panel once it's actually on screen.
+ *
+ * Starting is all this does: each step is recorded as shown when it is actually displayed, by
+ * [RecordArrivalSpotlightsShown]. Marking the whole pending list here instead meant a sequence ended
+ * early — the "X", or a Back press aimed at the sheet — retired steps the rider never saw. A step that
+ * stays unmarked is still owed, so it comes back at the next stop; the [tutorialState.active] guards
+ * above are what stop one from double-showing within a run.
  */
 private suspend fun maybeStartArrivalTutorial(
     prefs: PreferencesRepository,
@@ -208,6 +222,5 @@ private suspend fun maybeStartArrivalTutorial(
     awaitSheetVisible()
     // Re-check after the wait: a stop change or another tutorial may have intervened.
     if (tutorialState.active) return
-    ArrivalTutorial.markShown(prefs, pending)
     tutorialState.start(pending)
 }

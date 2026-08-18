@@ -67,6 +67,9 @@ import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.ui.compose.unitsAreMetric
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
 /**
  * The map's Compose overlay chrome, replacing the XML my-location FAB, zoom buttons, and the
@@ -150,6 +153,8 @@ fun MapChrome(
                             RENTAL_SURFACE_PADDING +
                             fabBottomInset
                     )
+                    // The scripted tour's micromobility step spotlights this control (#2164).
+                    .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_RENTALS)
             )
         }
         // The my-location FAB always shows on the map (this chrome only composes on HOME, the map screen).

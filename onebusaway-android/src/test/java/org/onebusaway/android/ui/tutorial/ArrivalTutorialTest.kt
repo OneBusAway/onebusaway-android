@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tutorial
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.R
@@ -74,5 +75,28 @@ class ArrivalTutorialTest {
     @Test
     fun resetKeys_coverEveryStep() {
         assertEquals(ArrivalTutorial.steps.map { it.id }, ArrivalTutorial.resetKeys())
+    }
+
+    @Test
+    fun isSpotlightAnchor_matchesThisSequencesOwnAnchorsOnly() {
+        ArrivalTutorial.steps.forEach { assertTrue(it.id, ArrivalTutorial.isSpotlightAnchor(it.id)) }
+        assertFalse(ArrivalTutorial.isSpotlightAnchor(ScriptedTutorial.KEY_ROUTE_BADGE))
+        assertFalse(ArrivalTutorial.isSpotlightAnchor("nothing_at_all"))
+    }
+
+    /**
+     * The scripted tour teaches the ETA pill and nothing else of this sequence, so exactly one of these
+     * spotlights is retired by taking the tour — the recorder keys on the shared anchor. If a tour step
+     * ever picks up the panel or menu anchor, this is the assertion that says so: the two sequences
+     * would then be teaching the same control, and the tour would be silently retiring more of the
+     * opportunistic one than it appears to.
+     */
+    @Test
+    fun theScriptedTourReusesOnlyTheEtaSpotlight() {
+        val reused = ArrivalTutorial.steps
+            .map { it.id }
+            .filter { anchor -> ScriptedTutorial.steps.any { it.anchorId == anchor } }
+
+        assertEquals(listOf(ArrivalTutorial.KEY_ETA), reused)
     }
 }

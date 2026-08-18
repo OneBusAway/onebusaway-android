@@ -45,7 +45,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.DemoEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.components.AlertSeverity
@@ -63,6 +65,20 @@ internal fun isSafetyNoticePending(prefs: PreferencesRepository): Boolean = !pre
 internal fun markSafetyNoticeAcknowledged(prefs: PreferencesRepository) {
     prefs.setBoolean(R.string.preference_key_directions_safety_acknowledged, true)
 }
+
+/**
+ * Whether to put the notice on screen right now: it is still owed ([pending], from
+ * [isSafetyNoticePending]) *and* the app isn't showing the demo transit system ([demoActive], #2164).
+ *
+ * **Suppressed is not acknowledged, and that distinction is the whole point of this function.** The
+ * scripted tutorial walks the rider into directions to demonstrate the planner, and the itinerary it
+ * shows there is a bundled fixture — so a full-screen warning about the walking directions OTP builds
+ * from open map data is both inapplicable and, worse, *spent*: dismissing it to get past the tutorial
+ * would burn the one time the rider is made to read it, and their first real set of directions would
+ * arrive with no disclosure at all. Holding the notice back leaves it owed, so it fires on the first
+ * genuine trip plan instead.
+ */
+internal fun shouldShowSafetyNotice(pending: Boolean, demoActive: Boolean): Boolean = pending && !demoActive
 
 /**
  * The one-time notice that stands between a rider and their first set of directions (#2218).
@@ -88,6 +104,9 @@ internal fun markSafetyNoticeAcknowledged(prefs: PreferencesRepository) {
  * **Back is not an acknowledgement.** It leaves directions instead ([onDecline]) and writes nothing,
  * so the notice returns on the next entry. There is no way through to the planner except the button,
  * but the rider is never trapped behind it either.
+ *
+ * Nor is the scripted tutorial: it is held back there rather than shown-and-dismissed, so it is still
+ * owed afterwards — see [shouldShowSafetyNotice].
  */
 @Composable
 internal fun DirectionsSafetyNotice(onDecline: () -> Unit) {
@@ -100,7 +119,12 @@ internal fun DirectionsSafetyNotice(onDecline: () -> Unit) {
     // the durable record of this exact bit, and it reads its own writes synchronously, so re-seeding
     // from it — on a config change, or on the next entry into directions — is always right.
     var pending by remember { mutableStateOf(isSafetyNoticePending(prefs)) }
-    if (!pending) return
+    // Collected rather than read once: the tutorial ends while the rider may still be in directions, and
+    // the notice they are still owed has to appear the moment the demo plan stops standing in for a real
+    // one.
+    val demoMode = remember { DemoEntryPoint.get(context) }
+    val demoActive by demoMode.active.collectAsStateWithLifecycle()
+    if (!shouldShowSafetyNotice(pending, demoActive)) return
 
     Dialog(
         onDismissRequest = onDecline,

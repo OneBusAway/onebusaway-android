@@ -119,6 +119,25 @@
     <string name="main_help_legend_canceled">Gray with strikethrough means the trip has been
         canceled - this bus is NOT coming
     </string>
+    <!-- The two glyphs an ETA pill can carry; both mean the arrival is real-time -->
+    <string name="main_help_legend_on_map">A pin means the vehicle is on the map right now — tap the
+        arrival to jump to it.
+    </string>
+    <string name="main_help_legend_realtime">A broadcast icon means the arrival is tracked live, but
+        the vehicle isn’t drawn on the map.
+    </string>
+    <!-- The tutorial's inline legend: bare labels beside each swatch, since the caption above them
+         already says what the colours are for. The fuller main_help_legend_* wording above stays with
+         the Help dialog, which has the room and no surrounding explanation. -->
+    <string name="tutorial_legend_ontime">On time</string>
+    <string name="tutorial_legend_early">Running early</string>
+    <string name="tutorial_legend_late">Running late</string>
+    <string name="tutorial_legend_scheduled">No live data; scheduled departure</string>
+    <string name="tutorial_legend_on_map">The vehicle is on the map</string>
+    <string name="tutorial_legend_tracked">The vehicle for this trip is being tracked, but it’s not
+        yet on this route
+    </string>
+
     <string name="main_nolocation_title">Location not enabled</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="main_nolocation">%1$s would like your location, do you want to enable it now?</string>
@@ -871,10 +890,6 @@
 
     <!-- Tutorials -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="tutorial_welcome_title">Welcome to %1$s!</string>
-    <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
-        times.
-    </string>
     <string name="tutorial_opt_out_dialog_title">Show tutorial?</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="tutorial_opt_out_dialog_text">Would you like to see popup descriptions for how to use %1$s? You can always turn the popups on or off in Settings, or show the tutorial later via Help.</string>
@@ -897,11 +912,65 @@
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>
     <string name="tutorial_button_finish">Finish</string>
-    <!-- The welcome onboarding step that spotlights a real stop on the map -->
-    <string name="tutorial_welcome_map_stop_title">Here’s a stop</string>
-    <string name="tutorial_welcome_map_stop_text">Tap a green dot like this one on the map to see its
-        arrival times.
+    <string name="tutorial_button_back">Back</string>
+
+    <!-- The scripted guided tour. It runs on a built-in demo transit system, so every step has
+         something to point at no matter where the rider is or whether they are online. -->
+    <!-- Note: %1$s is replaced with app_name for white-label support -->
+    <string name="tutorial_scripted_map_title">Welcome to %1$s</string>
+    <string name="tutorial_scripted_map_text">This is the map. It shows the transit stops around you,
+        and the vehicles running between them.
     </string>
+    <string name="tutorial_scripted_stop_title">Tap a stop</string>
+    <string name="tutorial_scripted_stop_text">Tapping a stop opens its arrivals and shows its routes
+        on the map.
+    </string>
+    <string name="tutorial_scripted_arrivals_title">Live arrivals</string>
+    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, with the soonest
+        departure on the left.
+    </string>
+    <string name="tutorial_scripted_route_title">Tap a route</string>
+    <string name="tutorial_scripted_route_text">Tap a route badge to draw the whole route and show
+        every vehicle running on it right now.
+    </string>
+    <string name="tutorial_scripted_vehicle_title">Tap an arrival</string>
+    <string name="tutorial_scripted_vehicle_text">Tap an arrival pill to highlight the associated
+        vehicle on the map.
+    </string>
+    <string name="tutorial_scripted_legend_title">What the colors mean</string>
+    <string name="tutorial_scripted_legend_text">A pill’s color shows if it’s running on schedule.</string>
+    <string name="tutorial_scripted_star_title">Save it for later</string>
+    <string name="tutorial_scripted_star_text">Stops and routes can be starred to save for later.</string>
+    <string name="tutorial_scripted_starred_list_title">Your starred items</string>
+    <string name="tutorial_scripted_starred_list_text">Everything you star ends up in this menu.</string>
+    <string name="tutorial_scripted_back_title">Backing out</string>
+    <string name="tutorial_scripted_back_text">Swipe back, or press Back, to unwind one step at a time
+        — vehicle, then route, then stop — until you’re looking at the plain map again.
+    </string>
+    <string name="tutorial_scripted_rentals_title">Bikes and scooters</string>
+    <string name="tutorial_scripted_rentals_text">Micromobility has its own layer. Switch it on here to
+        see the bikes, scooters and docks nearby.
+    </string>
+    <string name="tutorial_scripted_plan_press_title">Planning a trip</string>
+    <string name="tutorial_scripted_plan_press_text">Long-press anywhere on the map to route to it.</string>
+    <string name="tutorial_scripted_plan_title">Here’s the trip</string>
+    <string name="tutorial_scripted_plan_text">Here are some routes to the chosen destination.</string>
+    <string name="tutorial_scripted_trip_options_title">Narrow it down</string>
+    <string name="tutorial_scripted_trip_options_text">Choose which kinds of transit you’ll take, how
+        far you’ll walk, and when you want to leave or arrive.
+    </string>
+    <string name="tutorial_scripted_itineraries_title">Several ways to go</string>
+    <string name="tutorial_scripted_itineraries_text">Each row is a different way to make the trip.</string>
+    <string name="tutorial_scripted_itinerary_detail_title">See it on the map</string>
+    <string name="tutorial_scripted_itinerary_detail_text">Tap a row to open it up — the map draws that
+        trip, and you can step through each leg of it.
+    </string>
+    <string name="tutorial_scripted_leg_title">Focus route stage</string>
+    <string name="tutorial_scripted_leg_text">Tap on a route stage to show it on the map, along with
+        upcoming vehicles for that route segment.
+    </string>
+    <string name="tutorial_scripted_pin_title">Keep a trip</string>
+    <string name="tutorial_scripted_pin_text">Long-press a trip to easily return to it from the map.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Location permissions</string>

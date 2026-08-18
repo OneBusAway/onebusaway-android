@@ -25,6 +25,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.models.ObaStop
@@ -48,6 +49,7 @@ class StopsMapViewModel @Inject constructor(
     regionRepo: RegionRepository,
     locationRepository: LocationRepository,
     prefsRepository: PreferencesRepository,
+    demoMode: DemoModeState,
     @ApplicationContext context: Context
 ) : ViewModel() {
 
@@ -57,6 +59,7 @@ class StopsMapViewModel @Inject constructor(
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         prefsRepository = prefsRepository,
+        demoMode = demoMode,
         context = context
     )
 

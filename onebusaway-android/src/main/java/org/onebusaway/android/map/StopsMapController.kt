@@ -83,6 +83,11 @@ class StopsMapController(
     // with the network. Null disables read-through (the slim report/picker maps, which are transient
     // and would only add write churn), mirroring the favoriteStopIds no-op default.
     private val stopCache: StopCacheRepository? = null,
+    // Whether the scripted tutorial's demo transit system is answering (#2164). While it is, the cache
+    // is bypassed in both directions: the stops coming back are the demo deployment's, and saving them
+    // under the rider's real region would leave a stranger's city in the cache the next pan reads —
+    // while reading from it would mix their own cached stops into the tour's map.
+    private val demoActive: () -> Boolean = { false },
     // The device wall clock for the cache TTL (a purely local timer). Read once per load; injectable so
     // tests pin it. The default is the sanctioned WallTime.now() mint (inert for the slim maps, whose
     // cache is disabled so it's never read).
@@ -193,15 +198,20 @@ class StopsMapController(
                     // request, and the cache save all share the same viewport's values.
                     val maxStops = cacheSize()
                     val loadTime = now()
+                    // The cache this load may use, read once so the read below and the save further
+                    // down can't disagree about it. Null while the demo transit system is answering:
+                    // its stops belong to no region the rider has, so they are neither served from nor
+                    // written to a store that is keyed by one.
+                    val cache = stopCache?.takeUnless { demoActive() }
 
                     // 1. Serve the cache first so stops render before (or without) the network. Skipped
                     // when there's no cache (slim maps) or no region resolved yet (cold start); never a
                     // region-less query, which would mix feeds. Best-effort: a cache read failure must
                     // fall through to the network, not kill the loader (guardCache below).
                     var servedCache = false
-                    if (stopCache != null && regionId != null) {
+                    if (cache != null && regionId != null) {
                         val cached = guardCache("read") {
-                            stopCache.stopsFor(
+                            cache.stopsFor(
                                 snapshot.center.latitude,
                                 snapshot.center.longitude,
                                 snapshot.latSpan,
@@ -234,10 +244,10 @@ class StopsMapController(
 
                     // 3. Persist a usable, in-range, non-empty result (upsert + evict) for next time.
                     // Best-effort: a save failure must not abort the flow (leaving the spinner stuck).
-                    if (stopCache != null && regionId != null) {
+                    if (cache != null && regionId != null) {
                         result.getOrNull()?.let { nearby ->
                             if (!nearby.outOfRange && nearby.stops.isNotEmpty()) {
-                                guardCache("save") { stopCache.save(nearby, regionId, loadTime) }
+                                guardCache("save") { cache.save(nearby, regionId, loadTime) }
                             }
                         }
                     }

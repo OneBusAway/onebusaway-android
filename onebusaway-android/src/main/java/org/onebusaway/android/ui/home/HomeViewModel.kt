@@ -737,6 +737,22 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Clears the focus hierarchy *and* the undo history behind it, so nothing is left to go back to.
+     *
+     * For the scripted tour's teardown (#2164). Every step the tour drives — the demo stop, its route,
+     * the vehicle, the demo trip plan — goes through the same [pushFocus] a real tap does, and so leaves
+     * the same undo trail. [clearMapFocus] only pushes one more entry onto that trail, so the first Back
+     * press after the tour walked the rider back into a demo stop and a demo route, now resolved against
+     * their own region's server: a 404, an empty arrivals sheet, and a camera flying to Seattle. There
+     * is no rider-authored history to preserve here — the tour drove all of it.
+     */
+    fun clearMapFocusAndUndoHistory() {
+        clearMapFocus()
+        mapUndoHistory.clear()
+        _canUndoMapAction.value = false
+    }
+
+    /**
      * Enter trip-plan directions focus. The chrome swaps to the trip-plan form; the map draws whatever
      * itinerary the results VM selects (via [showItineraryOnMap]). A no-op if already in directions.
      */

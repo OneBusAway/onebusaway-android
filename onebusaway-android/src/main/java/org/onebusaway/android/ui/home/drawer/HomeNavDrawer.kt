@@ -38,6 +38,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
 /**
  * Compose `ModalNavigationDrawer` content replacing `NavigationDrawerFragment` + the navdrawer_* XML.
@@ -66,8 +69,12 @@ fun HomeNavDrawerSheet(
     ModalDrawerSheet(Modifier.width(dimensionResource(R.dimen.navigation_drawer_width))) {
         Spacer(Modifier.height(12.dp))
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            DrawerRow(R.string.navdrawer_item_starred_stops, R.drawable.stop_flag, onStarredStops)
-            DrawerRow(R.string.navdrawer_item_starred_routes, R.drawable.ic_route, onStarredRoutes)
+            // The two starred rows are spotlighted together by the scripted tour's "starred items end
+            // up here" step (#2164), so the anchor wraps the pair rather than either one.
+            Column(Modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_DRAWER_STARRED)) {
+                DrawerRow(R.string.navdrawer_item_starred_stops, R.drawable.stop_flag, onStarredStops)
+                DrawerRow(R.string.navdrawer_item_starred_routes, R.drawable.ic_route, onStarredRoutes)
+            }
             DrawerRow(R.string.my_recent_menu_title, R.drawable.history_24, onRecentStopsRoutes)
             if (showReminders) {
                 DrawerRow(R.string.navdrawer_item_my_reminders, R.drawable.ic_drawer_alarm, onReminders)

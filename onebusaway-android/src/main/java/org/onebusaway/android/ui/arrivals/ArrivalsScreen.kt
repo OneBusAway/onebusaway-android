@@ -79,6 +79,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
@@ -381,9 +382,10 @@ internal fun ArrivalsList(
      *  the head of the list. Hosts that own a collapse toggle pass its state so alerts stay hidden
      *  until expanded; the default keeps them visible. Changes animate (see the "alerts" item). */
     showAlerts: Boolean = true,
-    /** An opaque anchor modifier applied to the first route row's ETA pill (e.g. the home sheet's
-     *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
-    etaAnchor: Modifier = Modifier
+    /** Spotlight anchors for the first route row — its ETA pill, its route badge and its favourite
+     *  star, each addressable on its own so a tutorial can point at one without the others (e.g. the
+     *  home sheet's onboarding spotlight). The defaults are no-ops for hosts that don't spotlight. */
+    anchors: ArrivalRowAnchors = ArrivalRowAnchors()
 ) {
     val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {
         resolveSelectedRouteGroupKey(content.routeGroups, selectedRowKey, selectedRouteId)
@@ -447,7 +449,7 @@ internal fun ArrivalsList(
                     selectedRouteNames = if (isSelectedRow) selectedRouteNames else emptyList(),
                     selectedTripId = selectedTripId.takeIf { isSelectedRow },
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
-                    etaAnchor = if (index == 0) etaAnchor else Modifier,
+                    anchors = if (index == 0) anchors else ArrivalRowAnchors(),
                     tracked = group.representative.trackedRouteKey() in content.trackedRows,
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()

@@ -23,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.demo.FakeDemoModeState
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
@@ -53,7 +54,7 @@ class MapChromeViewModelTest {
     @Test
     fun `the zoom-controls preference flips the gate reactively`() = runTest {
         val prefs = rentalButtonShown() // start gates off
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository())
+        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState())
         advanceUntilIdle()
         assertFalse(vm.state.value.zoomControls)
 
@@ -68,7 +69,7 @@ class MapChromeViewModelTest {
         // A custom OTP URL makes rentals enabled (the layers FAB shows); the visible pref drives active.
         prefs.setString(R.string.preference_key_otp_api_url, "https://otp.example.org")
         prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, true)
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository())
+        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState())
         advanceUntilIdle()
         assertTrue(vm.state.value.layersFab)
         assertTrue(vm.state.value.rentalsActive)
@@ -82,7 +83,7 @@ class MapChromeViewModelTest {
     @Test
     fun `the layers FAB follows bikeshare-enabled derived from the OTP URL`() = runTest {
         val prefs = rentalButtonShown()
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository())
+        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState())
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab) // no region, no custom OTP URL
 
@@ -92,9 +93,27 @@ class MapChromeViewModelTest {
     }
 
     @Test
+    fun `demo mode enables the layers FAB with no region at all`() = runTest {
+        // The scripted tutorial's micromobility step has to have a button to point at, wherever the
+        // rider actually is and whether or not their region publishes bikeshare (#2164).
+        val demo = FakeDemoModeState()
+        val vm = MapChromeViewModel(rentalButtonShown(), FakeRegionRepository(), demo)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.layersFab)
+
+        demo.set(true)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.layersFab)
+
+        demo.set(false)
+        advanceUntilIdle()
+        assertFalse("leaving the tour must take the button away again", vm.state.value.layersFab)
+    }
+
+    @Test
     fun `a region supporting OTP bikeshare enables the layers FAB`() = runTest {
         val regions = FakeRegionRepository()
-        val vm = MapChromeViewModel(rentalButtonShown(), regions)
+        val vm = MapChromeViewModel(rentalButtonShown(), regions, FakeDemoModeState())
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab)
 

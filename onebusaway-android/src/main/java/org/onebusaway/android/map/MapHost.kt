@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.CameraCommand
@@ -103,6 +104,7 @@ class MapHost(
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
+    private val demoMode: DemoModeState,
     private val context: Context
 ) {
 
@@ -120,7 +122,12 @@ class MapHost(
         scope.launch {
             regionRepo.region.collect { region ->
                 val id = region?.id
-                if (region != null && id != lastRegionId) rezoomForRegion()
+                // Not while the scripted tour is running (#2164). The tour aims the camera at the demo
+                // transit system's city, and region discovery finishing mid-tour — which is exactly what
+                // happens on a first launch, the case the tour most needs to survive — would otherwise
+                // yank the camera to the rider's own region and leave every remaining step describing an
+                // empty map. The region is still recorded, so leaving demo mode reframes normally.
+                if (region != null && id != lastRegionId && !demoMode.isActive) rezoomForRegion()
                 lastRegionId = id
             }
         }

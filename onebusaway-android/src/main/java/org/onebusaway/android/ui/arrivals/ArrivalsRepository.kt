@@ -35,6 +35,7 @@ import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.markStopUsed
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
@@ -252,7 +253,8 @@ class DefaultArrivalsRepository @Inject constructor(
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
     private val display: ArrivalsDisplay,
-    private val elapsedClock: ElapsedClock
+    private val elapsedClock: ElapsedClock,
+    private val demoMode: DemoModeState
 ) : ArrivalsRepository {
 
     /**
@@ -306,10 +308,9 @@ class DefaultArrivalsRepository @Inject constructor(
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
-                    snapshot.stop?.let {
-                        recordStop(it, System.currentTimeMillis())
-                        stopRecorded = true
-                    }
+                    // Latched on the write, not on the attempt: a load answered by the demo transit
+                    // system records nothing, and must not consume the one recording this session owes.
+                    snapshot.stop?.let { stopRecorded = recordStop(it, System.currentTimeMillis()) }
                 }
                 val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
                 lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
@@ -404,9 +405,20 @@ class DefaultArrivalsRepository @Inject constructor(
     /**
      * Records the viewed stop in the stops table (the legacy DBUtil.addToDB): creates the row so the
      * favorite UPDATE persists and marks it used so it appears in Recent stops. Done once per session.
+     *
+     * Returns whether the row was actually written, so the caller's once-per-session latch tracks the
+     * write rather than the attempt.
      */
-    private suspend fun recordStop(stop: ObaStop, now: Long) {
+    private suspend fun recordStop(stop: ObaStop, now: Long): Boolean {
+        // Never while the scripted tutorial's demo transit system is answering (#2164). The tour focuses
+        // its own anchor stop through the ordinary reveal path, which lands here — and this row is
+        // written against whatever region the *rider* is in (or a null one, on a first launch, which the
+        // Recent query then matches for every region). A rider in Atlanta would finish the tour to find
+        // a Seattle stop at the top of Recent stops, and tapping it would ask Atlanta's server for an id
+        // it has never heard of. The tour is a demonstration; it leaves no trace in the rider's data.
+        if (demoMode.isActive) return false
         stopDao.markStopUsed(stop, regionRepository.region.value?.id, now)
+        return true
     }
 
     /** The operating agency's display name for a route, or null when either the route or its agency

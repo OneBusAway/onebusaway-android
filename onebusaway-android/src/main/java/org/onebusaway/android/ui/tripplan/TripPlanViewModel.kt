@@ -279,6 +279,27 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
+     * Clears the whole trip — both endpoints and any planned result — back to an empty form.
+     *
+     * Not a rider-facing control (the pills clear one end at a time, [clearEndpoint]): this is for the
+     * scripted tour's teardown (#2164). The tour fills the planner in with the demo transit system's
+     * Seattle endpoints and plans them, and this ViewModel is activity-scoped, so without this the
+     * rider's next visit to Plan Trip opens on a trip they never asked for, drawn on the map, that only
+     * the demo deployment could have produced — and re-planning it against the real OTP just errors.
+     *
+     * Both ends are emptied in one form write, so the submit below sees an unsubmittable form and drops
+     * the result to [PlanResult.Idle] rather than putting a plan on the wire.
+     */
+    fun clearTrip() {
+        queries.values.forEach { it.value = "" }
+        _formState.update {
+            it.withEndpoint(TripEndpointSlot.FROM, TripEndpoint.FreeText())
+                .withEndpoint(TripEndpointSlot.TO, TripEndpoint.FreeText())
+        }
+        replanOrClearResult()
+    }
+
+    /**
      * The instant the date/time picker should open on: the pinned one when the trip is already pinned,
      * and the live clock while it is anchored to "now". Under that anchor
      * [TripPlanFormState.dateTimeMillis] still holds the instant this ViewModel was built, so a form

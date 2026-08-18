@@ -87,6 +87,7 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
@@ -114,7 +115,11 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.MapPointSpotlight
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
@@ -474,7 +479,9 @@ fun MapFeature(
     ObaMap(
         host = mapViewModel.host,
         callbacks = callbacks,
-        modifier = modifier,
+        // The scripted tour's opening step rings the whole map ("this is the map"), and its
+        // long-press step draws its gesture hint at this surface's centre (#2164).
+        modifier = modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_MAP),
         initialLatitude = seed.point.latitude,
         initialLongitude = seed.point.longitude,
         initialZoom = seed.zoom
@@ -534,14 +541,20 @@ fun MapFeature(
         }
     }
 
-    // The welcome tutorial's map-stop spotlight, wired from the flavor-neutral map seam (the published
-    // projector + the shared stop list) so this host knows nothing of the underlying map SDK. A tap
-    // focuses the chosen stop exactly like a marker tap, continuing into the arrivals tutorial.
+    // The scripted tour's map-stop spotlight, wired from the flavor-neutral map seam (the published
+    // projector + the shared stop list) so this host knows nothing of the underlying map SDK.
     val mapStopProjector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
     MapStopSpotlight(
         projector = mapStopProjector,
         currentStops = { mapViewModel.renderState.snapshot.value.stops },
-        onFocusStop = { callbacks.onStopClick(it) }
+        targetStopId = DemoModeController.ANCHOR_STOP_ID
+    )
+    // The tour's long-press step rings the place the rider would press — the demo trip's destination —
+    // which has no marker of its own until the trip is planned.
+    MapPointSpotlight(
+        projector = mapStopProjector,
+        point = DemoModeController.TRIP_PLAN_DESTINATION,
+        anchorId = ScriptedTutorial.KEY_TRIP_DESTINATION
     )
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a

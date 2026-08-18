@@ -54,7 +54,7 @@ fun rentalLayersFromPreferences(prefs: PreferencesRepository): Set<RentalLayer> 
  * `RentalLayerController.syncFromPreferences` — this default is now a product choice, and flipping it
  * back on would work.
  */
-private const val RENTALS_VISIBLE_BY_DEFAULT = false
+internal const val RENTALS_VISIBLE_BY_DEFAULT = false
 
 /** Where each mode's own toggle is persisted. */
 @get:StringRes

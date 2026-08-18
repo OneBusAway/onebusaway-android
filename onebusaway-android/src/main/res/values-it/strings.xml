@@ -613,8 +613,6 @@
     <string name="night_light_cancel">Annulla</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">%1$s ti dà il benvenuto!</string>
-    <string name="tutorial_welcome_text">Tocca una fermata (punto verde sulla mappa) per vedere gli orari di arrivo.</string>
     <string name="tutorial_opt_out_dialog_title">Mostrare tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">Desideri che vengano mostrati popup informativi per l’utilizzo di %1$s? Puoi sempre attivare e disattivare i popup nelle impostazioni, o mostrare il tutorial in seguito premendo su Aiuto.</string>
     <string name="tutorial_arrival_header_arrival_info_title">Quanto manca all’arrivo dell’autobus?</string>

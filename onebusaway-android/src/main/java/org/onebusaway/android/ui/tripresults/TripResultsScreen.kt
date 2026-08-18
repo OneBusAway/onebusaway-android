@@ -49,6 +49,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,6 +70,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -96,6 +98,8 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -120,6 +124,7 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -153,6 +158,9 @@ import org.onebusaway.android.ui.compose.theme.isDarkTheme
 import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
@@ -200,10 +208,29 @@ fun TripResultsHeader(
     // card: [CenteredLongPressMenu] is a Dialog, so it draws in the same place whichever card raised it,
     // and the strip has no business composing three of them to show at most one.
     var menuForIndex by remember(success.options) { mutableStateOf<Int?>(null) }
+    // Where each card sits inside the scrolling row, so the selected one can be brought into view.
+    val cardSpans = remember(success.options) { mutableStateMapOf<Int, ClosedFloatingPointRange<Float>>() }
+    // Selecting an option should never leave it hanging off an edge — the rider can't compare a card
+    // they can only see a sliver of. It matters most when the selection was *not* made by tapping a
+    // visible card: the scripted tour opens one further along the strip (#2164), and a restored pinned
+    // trip can be any option at all.
+    LaunchedEffect(success.selectedIndex, cardSpans[success.selectedIndex], scrollState.viewportSize) {
+        val span = cardSpans[success.selectedIndex] ?: return@LaunchedEffect
+        val viewport = scrollState.viewportSize.takeIf { it > 0 } ?: return@LaunchedEffect
+        val target = when {
+            span.start < scrollState.value -> span.start
+            span.endInclusive > scrollState.value + viewport -> span.endInclusive - viewport
+            else -> return@LaunchedEffect
+        }
+        scrollState.animateScrollTo(target.roundToInt().coerceAtLeast(0))
+    }
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            // The scripted tour rings this strip for three consecutive steps (#2164): comparing the
+            // options, opening a different one, and pinning one.
+            .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ITINERARIES),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ScrollChevronGutter(
@@ -219,15 +246,31 @@ fun TripResultsHeader(
                 .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val tutorialState = LocalTutorialState.current
             success.options.forEachIndexed { index, option ->
+                val selected = index == success.selectedIndex
                 OptionCard(
                     option = option,
                     winners = winners[index],
-                    selected = index == success.selectedIndex,
+                    selected = selected,
                     pinned = index == pinnedOptionIndex,
                     summaryHeights = summaryHeights,
                     onClick = { onSelectOption(index) },
-                    onLongClick = onTogglePin?.let { { menuForIndex = index } }
+                    onLongClick = onTogglePin?.let { { menuForIndex = index } },
+                    // The scripted tour's later trip steps are about one option — opening it, and
+                    // pinning it — so they ring the selected card rather than the whole strip (#2164).
+                    // Anchored on selection, so the outline follows when a step picks a different one.
+                    modifier = Modifier
+                        .onGloballyPositioned {
+                            cardSpans[index] = it.positionInParent().x..(it.positionInParent().x + it.size.width)
+                        }
+                        .then(
+                            if (selected) {
+                                Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ITINERARY_CARD)
+                            } else {
+                                Modifier
+                            }
+                        )
                 )
             }
         }
@@ -405,7 +448,8 @@ private fun OptionCard(
     pinned: Boolean,
     summaryHeights: SummaryHeights,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     val background = colorResource(
         if (selected) R.color.trip_plan_card_background_selected else R.color.trip_plan_card_background
@@ -430,7 +474,7 @@ private fun OptionCard(
         // Wrap to the content width (a sensible floor so short options aren't tiny); the row scrolls.
         // The ceiling is the summary line's own — it wraps at [OPTION_CARD_MAX_WIDTH] rather than the
         // card being cut to it (see [SymbolFlow]).
-        modifier = Modifier
+        modifier = modifier
             .widthIn(min = 104.dp)
             // Tap selects; the card's secondary action (pin) is a long press, as it is on an arrivals
             // row — the picker has no width for an overflow button and one here would crowd it.
@@ -962,6 +1006,10 @@ fun TripResultsList(
     CompositionLocalProvider(LocalUnitsAreMetric provides unitsAreMetric()) {
         Box(
             modifier
+                // The scripted tour rings the whole drawer when it shows what a trip plan came back
+                // with (#2164); the option strip has its own, tighter anchor for the steps that are
+                // about choosing between them.
+                .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_DRAWER)
                 .fillMaxSize()
                 .background(colorResource(R.color.md_theme_surfaceContainer))
         ) {
@@ -1227,10 +1275,34 @@ private fun TripLogList(
     // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
     // what makes a toggle recompose this list.
     val rows = rememberLogRows(entries, expanded.toSet())
+    val listState = rememberLazyListState()
+
+    // The scripted tour rings parts of this drawer, and the thing it rings has to be on screen (#2164).
+    // Resolved here, where the rows are already flattened, so the row composable stays unaware of it.
+    // The header is item 0, so the rows below it are offset by one.
+    val firstRideRow = rows.indexOfFirst { it.content is RowContent.BoardHeader }.takeIf { it >= 0 }
+    val ringing = LocalTutorialState.current?.current?.anchorId
+    LaunchedEffect(ringing, firstRideRow) {
+        when (ringing) {
+            // Bring the ride up off the bottom of the drawer, where the picker and the caution banner
+            // above it tend to leave it. Offset by a third of the viewport rather than scrolled flush
+            // to the top, so the row lands around the middle with its neighbours still in view — the
+            // step is about picking *one of* the stages.
+            ScriptedTutorial.KEY_ROUTE_LEG -> firstRideRow?.let {
+                listState.animateScrollToItem(it + 1, -listState.layoutInfo.viewportSize.height / 3)
+            }
+            // Back to the picker. The step before this one scrolled the drawer down to a ride, which
+            // left the option cards — the thing these steps ring, and the thing the last one asks the
+            // rider to long-press — off the top of the drawer.
+            ScriptedTutorial.KEY_ITINERARY_CARD -> listState.animateScrollToItem(0)
+            else -> Unit
+        }
+    }
 
     // The surface reaches the bottom edge; a bottom content padding lets the final leg row be scrolled
     // clear of the nav chrome without an empty strip below the list.
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = bottomInset + LOG_EDGE_GAP)
     ) {
@@ -1257,8 +1329,16 @@ private fun TripLogList(
         }
         // Keyed by row identity, not position, so opening a leg doesn't discard the subcompositions of
         // every row below it — a board row's live ETA session survives the insert.
+        val firstRideKey = firstRideRow?.let { rows[it].key }
         items(rows, key = { it.key }) { row ->
-            LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+            val anchored = if (row.key == firstRideKey) {
+                Modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ROUTE_LEG)
+            } else {
+                Modifier
+            }
+            Box(anchored) {
+                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+            }
         }
     }
 }

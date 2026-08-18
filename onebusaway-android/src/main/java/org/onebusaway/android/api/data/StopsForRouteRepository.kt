@@ -89,27 +89,64 @@ interface StopsForRouteRepository {
  */
 private const val MAX_CACHED_ROUTE_STOPS = 32
 
+/**
+ * A cached route topology, identified by the route *and the deployment that answered for it*.
+ *
+ * A route id is only unique within one OBA server. Keyed on the id alone, this process-wide, TTL-less
+ * cache served whichever answer arrived first to every later asker: a region switch could hand the
+ * previous server's topology to the new one, and the scripted tutorial's demo system (#2164) — a
+ * capture of a real deployment, so its featured route *is* King County Metro's 49, under that agency's
+ * own id — collided with the real 49 outright. A rider who opened the 49 after the tour got the demo's
+ * single-direction stop list and no direction picker; a tour taken after viewing the real 49 narrated
+ * the real topology while its vehicles came from the demo timetable.
+ *
+ * A data class rather than a concatenated string, so no separator has to be assumed absent from a URL
+ * or a route id.
+ */
+private data class RouteTopologyKey(val deployment: String, val routeId: String)
+
+/**
+ * A fetched topology together with the deployment that actually answered for it.
+ *
+ * The answering deployment is reported by the fetch rather than read alongside it, because those are
+ * not the same fact: demo mode can be toggled between choosing a cache key and the request being made,
+ * and a topology filed under the deployment that *was* current is exactly the corruption the key exists
+ * to prevent. `ObaApiProvider.callOrNullFromDeployment` decides once and hands the identity back.
+ */
+internal data class FetchedTopology(
+    val deployment: String,
+    val entry: EntryWithReferences<StopsForRoute>
+)
+
 @Singleton
 class DefaultStopsForRouteRepository internal constructor(
     fetchScope: CoroutineScope,
     cacheSize: Int = MAX_CACHED_ROUTE_STOPS,
     // The one wire call, injected so the JVM tests can exercise caching/coalescing without a live
     // ObaApiProvider. `success(null)` = no endpoint; `failure` = IO / HTTP / non-OK code.
-    private val fetch: suspend (routeId: String) -> Result<EntryWithReferences<StopsForRoute>?>
+    private val fetch: suspend (routeId: String) -> Result<FetchedTopology?>,
+    // Which deployment to *look under*, for the cache probe and the coalescing key. Read per lookup
+    // rather than captured, because it changes under this repository: a region switch, or the scripted
+    // tutorial (#2164) entering and leaving demo mode. What a fetched entry is *stored* under is the
+    // deployment the fetch reports, which is the only one known to have answered.
+    private val deployment: () -> String = { "" }
 ) : StopsForRouteRepository {
 
     @Inject
     constructor(api: ObaApiProvider) : this(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         fetch = { routeId ->
-            api.callOrNull { it.stopsForRoute(routeId, includePolylines = true).requireData() }
-        }
+            api.callOrNullFromDeployment { service, deployment ->
+                FetchedTopology(deployment, service.stopsForRoute(routeId, includePolylines = true).requireData())
+            }
+        },
+        deployment = { api.deploymentKey }
     )
 
     // Only successful entries are cached; failures/no-endpoint aren't, so they re-fetch. The
     // SingleFlight coalesces concurrent first-misses for one route into a single wire call.
-    private val cache = BoundedLruCache<String, EntryWithReferences<StopsForRoute>>(cacheSize)
-    private val fetches = SingleFlight<String, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
+    private val cache = BoundedLruCache<RouteTopologyKey, EntryWithReferences<StopsForRoute>>(cacheSize)
+    private val fetches = SingleFlight<RouteTopologyKey, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
 
     override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = entry(routeId).mapCatching { it?.toRouteStopGroups() ?: throw noEndpoint() }
 
@@ -135,10 +172,18 @@ class DefaultStopsForRouteRepository internal constructor(
      * block itself crashed unexpectedly, which is surfaced as a failure (not masked as no-endpoint).
      */
     private suspend fun entry(routeId: String): Result<EntryWithReferences<StopsForRoute>?> {
-        cache.get(routeId)?.let { return Result.success(it) }
-        return fetches.run(routeId) {
-            cache.get(routeId)?.let { return@run Result.success(it) }
-            fetch(routeId).onSuccess { fetched -> fetched?.let { cache.put(routeId, it) } }
+        val key = RouteTopologyKey(deployment(), routeId)
+        cache.get(key)?.let { return Result.success(it) }
+        return fetches.run(key) {
+            cache.get(key)?.let { return@run Result.success(it) }
+            // Stored under the deployment that answered, which the fetch reports — not under `key`,
+            // whose deployment was merely the current one when this lookup began. Returning that answer
+            // to a caller who probed under the other key is still right: the request they would have
+            // made goes to the same place. Only the filing has to be honest, so the next lookup for
+            // either deployment gets its own answer.
+            fetch(routeId).map { fetched ->
+                fetched?.also { cache.put(RouteTopologyKey(it.deployment, routeId), it.entry) }?.entry
+            }
         } ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
     }
 

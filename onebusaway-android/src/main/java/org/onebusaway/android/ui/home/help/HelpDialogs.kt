@@ -15,15 +15,11 @@
  */
 package org.onebusaway.android.ui.home.help
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -33,17 +29,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.arrivals.components.EtaPill
-import org.onebusaway.android.util.ScheduleDeviation
-import org.onebusaway.android.util.ScheduleDeviation.Status
+import org.onebusaway.android.ui.arrivals.components.ArrivalLegend
 
 /**
  * The help-menu options, in the order of the `main_help_options` string-array. Dialog-opening actions
@@ -172,55 +164,18 @@ private fun TutorialOptOutDialog(onYes: () -> Unit, onNo: () -> Unit, onDismiss:
 }
 
 /**
- * The arrival-color legend. Each row reuses the drawer peek's [EtaPill] (white text on the deviation
- * color, with the pulsing real-time dot) so the sample matches a stop's ETA. Order mirrors the legacy
- * legend: on-time / early / late / scheduled / canceled.
- *
- * The swatches come from [ScheduleDeviation.Status] rather than being spelled out as color resources,
- * so the legend cannot document a palette the app no longer paints (#2043). It takes the pill's
- * on-fill tier for the same reason [EtaPill] does — white text sits on these. The row *labels* still
- * have to be kept truthful by hand: they name both the hue and the ±1.5 minute on-time band.
+ * The arrival-colour legend dialog — a thin shell around the shared [ArrivalLegend], which is the one
+ * definition of what a pill's colour and glyphs mean (the scripted tutorial shows the same content
+ * inline in its "what the colours mean" step).
  */
 @Composable
 private fun LegendDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.main_help_legend_title)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                LegendRow(Status.ON_TIME, predicted = true, label = R.string.main_help_legend_ontime)
-                LegendRow(Status.EARLY, predicted = true, label = R.string.main_help_legend_early)
-                LegendRow(Status.DELAYED, predicted = true, label = R.string.main_help_legend_late)
-                LegendRow(Status.SCHEDULED, predicted = false, label = R.string.main_help_legend_scheduled)
-                LegendRow(
-                    Status.SCHEDULED,
-                    predicted = false,
-                    canceled = true,
-                    label = R.string.main_help_legend_canceled
-                )
-            }
-        },
+        text = { ArrivalLegend(Modifier.verticalScroll(rememberScrollState())) },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.main_help_close)) }
         }
     )
-}
-
-/** One legend swatch. Takes the [Status] rather than a color so the tier choice lives in one place. */
-@Composable
-private fun LegendRow(
-    status: Status,
-    predicted: Boolean,
-    @StringRes label: Int,
-    canceled: Boolean = false
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // The pill paints white text on this, so it takes the on-fill tier — as [EtaPill] always does.
-        EtaPill(eta = 5L, color = colorResource(status.fillColorRes), predicted = predicted, canceled = canceled)
-        Spacer(Modifier.width(16.dp))
-        Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
-    }
 }

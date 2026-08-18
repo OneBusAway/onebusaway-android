@@ -675,9 +675,6 @@
     <string name="night_light_cancel">Anuluj</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">Witamy w %1$s!</string>
-    <string name="tutorial_welcome_text">Dotknij na przystanek (zielona kropka na mapie) by zobaczyć czasy przyjazdu.
-    </string>
     <string name="tutorial_arrival_header_arrival_info_title">Jak długo pozostało do przyjazdu Twojego autobusu?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">Kolor tła powie Ci

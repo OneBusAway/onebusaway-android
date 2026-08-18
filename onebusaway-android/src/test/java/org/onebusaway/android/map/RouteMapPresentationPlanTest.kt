@@ -170,7 +170,9 @@ class RouteMapPresentationPlanTest {
             )
         )
 
-        // Underlay + exact trip, in that order; the trip carries the GTFS fallback colour.
+        // Underlay + exact trip, in that order; the trip carries the GTFS fallback colour. Two lines and
+        // no more is also what says the base is gone: outside a ride focus the base is one route's own
+        // corridor, which the exact trip replaces and the thinned underlay stands in for (#2239).
         assertEquals(2, plan.polylines.size)
         assertSame(underlay.single(), plan.polylines.first())
         val trip = plan.polylines.last()
@@ -231,6 +233,36 @@ class RouteMapPresentationPlanTest {
         assertEquals(0xFF00FF00.toInt(), plan.polylines.single().color)
     }
 
+    // --- Mode 1 in a directions ride focus: the base is the ride's lead-ins, not a corridor (#2239) ---
+
+    @Test
+    fun `a drilled-into vehicle in a ride focus keeps every boardable route's lead-in beneath it`() {
+        // The ride's approach set: the planned route's lead-in and an interchangeable route's (#2010).
+        val leadIns = listOf(
+            line(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0)),
+            line(GeoPoint(2.0, 0.0), GeoPoint(2.0, 1.0))
+        )
+        val plan = assemble(
+            base = leadIns,
+            baseIsRideApproach = true,
+            focusTrips = null,
+            selected = SelectedTripRenderInput(
+                presentation = selectedTrip("45", 0),
+                routeColorFallback = 0xFF00FF00.toInt(),
+                // The ride draws its own route context, so the corridor underlay must not be built.
+                directionUnderlay = { fail("a ride focus must not put the route's corridor back") },
+                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) }
+            )
+        )
+
+        // Both lead-ins still drawn — tapping one route's pill must not erase the other's — with the
+        // tapped vehicle's own trip over them.
+        assertEquals(leadIns, plan.polylines.dropLast(1))
+        assertEquals(selectedTrip("45", 0).points, plan.polylines.last().points)
+        // The trip alone is still what the selection frames.
+        assertEquals(listOf(plan.polylines.last()), plan.framingPolylines)
+    }
+
     @Test
     fun `a degenerate selected trip falls through to the base route`() {
         val plan = assemble(
@@ -280,6 +312,8 @@ class RouteMapPresentationPlanTest {
     private fun assemble(
         isActive: Boolean = true,
         emphasizedRoute: RouteDirectionKey? = RouteDirectionKey("45", 0),
+        base: List<RoutePolyline> = basePolylines,
+        baseIsRideApproach: Boolean = false,
         focusTrips: Set<FocusedTrip>?,
         focusedGeometry: FocusedTripGeometry = FocusedTripGeometry(emptyList()),
         focusedStops: FocusedTripStops = FocusedTripStops(emptyMap(), emptyMap()),
@@ -290,7 +324,8 @@ class RouteMapPresentationPlanTest {
     ) = assembleRouteMapPresentation(
         isActive = isActive,
         emphasizedRoute = emphasizedRoute,
-        basePolylines = basePolylines,
+        basePolylines = base,
+        baseIsRideApproach = baseIsRideApproach,
         baseStopPresentation = baseStops,
         focusTrips = focusTrips,
         focusedGeometry = focusedGeometry,

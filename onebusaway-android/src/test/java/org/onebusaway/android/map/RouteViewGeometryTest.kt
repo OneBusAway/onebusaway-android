@@ -193,26 +193,43 @@ class RouteViewGeometryTest {
         // adjacency map to begin with.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), routeColorFallback = 99)
+            style(stopFocusActive = false, direction = direction, routeColors = emptyMap())
         )
         // Stop focus, no adjacency entry for this exact direction (e.g. an opposite-direction vehicle
         // whose direction isn't among the focused stop's own trips, #1902): underlay still drops, but
         // the color falls back to GTFS since there's no adjacency color to carry instead.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), routeColorFallback = 99)
+            style(stopFocusActive = true, direction = direction, routeColors = emptyMap())
         )
         // Whole-route mode with a stray adjacency entry (shouldn't occur in practice, since routeColors
         // is only ever populated during stop focus) still keeps the underlay — it is not proxied off
         // the color lookup.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, routeColorFallback = 99)
+            style(stopFocusActive = false, direction = direction, routeColors = withColor)
         )
         // Stop focus with a matching adjacency entry: the ordinary case — adjacency color, no underlay.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, routeColorFallback = 99)
+            style(stopFocusActive = true, direction = direction, routeColors = withColor)
+        )
+    }
+
+    @Test
+    fun `a ride focus drops the corridor underlay, whatever colour the trip takes`() {
+        val direction = RouteDirectionKey("45", 0)
+
+        // A directions ride already draws its own route context — each boardable route's lead-in — so
+        // the corridor underlay would put the whole route back over it (#2239). The colour is untouched
+        // by the gate: it still falls back to the GTFS one with no adjacency entry to carry.
+        assertEquals(
+            SelectedTripStyle(color = 99, includeUnderlay = false),
+            style(rideApproachActive = true, direction = direction, routeColors = emptyMap())
+        )
+        assertEquals(
+            SelectedTripStyle(color = 10, includeUnderlay = false),
+            style(rideApproachActive = true, direction = direction, routeColors = mapOf(direction to 10))
         )
     }
 
@@ -336,4 +353,17 @@ class RouteViewGeometryTest {
         override val textColor: Int? = null
         override val agencyId = "agency"
     }
+
+    private fun style(
+        stopFocusActive: Boolean = false,
+        rideApproachActive: Boolean = false,
+        direction: RouteDirectionKey,
+        routeColors: Map<RouteDirectionKey, Int>
+    ) = selectedTripStyle(
+        stopFocusActive = stopFocusActive,
+        rideApproachActive = rideApproachActive,
+        selectedRouteDirection = direction,
+        routeColors = routeColors,
+        routeColorFallback = 99
+    )
 }

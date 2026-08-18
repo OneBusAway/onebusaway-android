@@ -266,7 +266,7 @@ class RouteMapController(
 
     // The single-route presentation is retained even while a focused stop temporarily owns the
     // geometry/stop layer, so closing the stop or changing directions restores it without a reload.
-    private var basePolylines: List<RoutePolyline> = emptyList()
+    private var base: RouteBase = RouteBase.None
     private var baseStopPresentation: RouteStopPresentation? = null
 
     // Which live vehicles belong to the focused ride (#2124): the boarding stop's arrivals select
@@ -278,6 +278,27 @@ class RouteMapController(
         scope = scope,
         onSelectionChanged = ::publishVehicleSet
     )
+
+    /**
+     * The route geometry drawn beneath everything else, carried together with **what it is**.
+     *
+     * The same field holds two different things: a route's own corridor in an ordinary session, and a
+     * focused ride's approach set — one upstream lead-in per boardable route (#2010) — when a trip-plan
+     * leg is drilled into. The difference decides whether a drilled-into vehicle may replace it, which is
+     * the whole of #2239, so it travels with the lines rather than being asked of the ride again at the
+     * publish: [showDirectionPolylines] and [refreshApproachLines] are the only two places that build a
+     * base, each already knows which kind it built, and a third derivation would be free to disagree the
+     * moment either of their own rules moved.
+     */
+    private data class RouteBase(
+        val polylines: List<RoutePolyline>,
+        val isRideApproach: Boolean
+    ) {
+        companion object {
+            /** No route drawn — the state [stop] returns to. */
+            val None = RouteBase(emptyList(), isRideApproach = false)
+        }
+    }
 
     private data class FocusedRouteLines(
         val routeId: String,
@@ -856,9 +877,10 @@ class RouteMapController(
         val leaderRouteId = routeId ?: return
         // Only a focused ride has an approach; a plain route draws its whole shape and never re-derives.
         if (!riddenSpans.isDrawableRide()) return
-        val next = approachLines(focusedRouteLines(leaderRouteId), riddenPath)
-        if (next != basePolylines) {
-            basePolylines = next
+        // Guarded above on the ride being drawn, so what this builds is by construction an approach set.
+        val next = RouteBase(approachLines(focusedRouteLines(leaderRouteId), riddenPath), isRideApproach = true)
+        if (next != base) {
+            base = next
             publishMapPresentation()
         }
     }
@@ -890,7 +912,7 @@ class RouteMapController(
         routeStopRoutes = emptyList()
         directions = emptyList()
         routeShape = null
-        basePolylines = emptyList()
+        base = RouteBase.None
         baseStopPresentation = null
         directionState = DirectionState.Resolved(null)
         pendingFocus = null
@@ -937,7 +959,8 @@ class RouteMapController(
         val plan = assembleRouteMapPresentation(
             isActive = isActive,
             emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) },
-            basePolylines = basePolylines,
+            basePolylines = base.polylines,
+            baseIsRideApproach = base.isRideApproach,
             baseStopPresentation = baseStopPresentation,
             focusTrips = focus.trips,
             focusedGeometry = focus.geometry,
@@ -1019,7 +1042,7 @@ class RouteMapController(
 
     /**
      * The selected trip's own direction shape, thinned to sit beneath its exact trip line. In
-     * whole-route mode [basePolylines] is the merged both-directions geometry, so drawing that as
+     * whole-route mode the [base] geometry is the merged both-directions shape, so drawing that as
      * the underlay would surface the opposite direction; resolve the direction shape instead.
      */
     private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> = directionPolylines(directionId).asDeemphasizedRouteUnderlay()
@@ -1278,7 +1301,7 @@ class RouteMapController(
         val approaches = approachLines(focusedRouteLines, ridePath)
         // In leg focus, only the approaches to the boarding point remain as route context. Stay-aboard
         // continuations happen after boarding and are already represented by the selected leg overlay.
-        basePolylines = approaches
+        base = RouteBase(approaches, isRideApproach = isLegFocus)
         publishMapPresentation()
         publishVehicleSet()
     }

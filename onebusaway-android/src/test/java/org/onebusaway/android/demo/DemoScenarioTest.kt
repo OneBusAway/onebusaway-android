@@ -22,10 +22,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.api.contract.AgencyReference
-import org.onebusaway.android.api.contract.RouteReference
-import org.onebusaway.android.api.contract.ShapeEntry
-import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
@@ -40,37 +36,11 @@ import org.onebusaway.android.util.ScheduleDeviation
  */
 class DemoScenarioTest {
 
-    // The route ids are the real King County Metro ones the bundled fixture carries; DemoScenario keys
-    // its service table on them, so a synthetic fixture has to reuse them.
-    private val routeId = "1_100447"
-    private val anchorStopId = "1_11140"
+    private val routeId = DEMO_TEST_ROUTE_ID
+    private val anchorStopId = DEMO_TEST_ANCHOR_STOP_ID
 
-    /**
-     * A straight 5 km line of six evenly spaced stops. Real geometry isn't needed to exercise the
-     * timetable — only monotonic distances along a shape — and a synthetic one keeps the test
-     * independent of whether the bundled fixture is re-cut.
-     */
-    private val fixture = DemoTransitFixture(
-        agency = AgencyReference(id = "1", name = "Demo Transit", timezone = "America/Los_Angeles"),
-        anchorStopId = anchorStopId,
-        routes = listOf(RouteReference(id = routeId, shortName = "49", agencyId = "1")),
-        stops = (0..5).map {
-            StopReference(id = "stop_$it", name = "Stop $it", lat = 47.6 + it * 0.001, lon = -122.32)
-        } +
-            StopReference(id = anchorStopId, name = "Anchor", lat = 47.615, lon = -122.3246),
-        routeStops = mapOf(
-            routeId to DemoRouteStops(
-                directionId = "0",
-                name = "U-District Station",
-                // The anchor sits fourth along the line, far enough in that a bus can be short of it.
-                stopIds = listOf("stop_0", "stop_1", "stop_2", anchorStopId, "stop_4", "stop_5"),
-                stopDistances = listOf(0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0),
-                // A two-point encoded polyline; only its decoded length matters to these assertions.
-                polyline = ShapeEntry(points = "_p~iF~ps|U_ulLnnqC", length = 2),
-                totalDistance = 5000.0
-            )
-        )
-    )
+    /** The shared synthetic deployment — see [demoTestFixture]. */
+    private val fixture = demoTestFixture()
 
     /** An arbitrary but fixed instant, so nothing here depends on when the suite runs. */
     private val now = 1_780_000_000_000L

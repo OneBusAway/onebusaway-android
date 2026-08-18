@@ -307,37 +307,19 @@ internal fun rememberScriptedTutorialActions(
                 demoMode.featuredTripId()?.let(homeViewModel::selectFocusedRouteTrip)
             },
             setDrawerOpen = { open -> if (open) drawerState.open() else drawerState.close() },
+            // The step mimes a long press on a map whose caption says nothing has been asked of it yet,
+            // so the demo plan the *next* step draws has to come off first — see [unwindAndAim].
             showTripDestination = {
-                // This step mimes a long press on a map its caption says hasn't been asked for anything
-                // yet. Reached *backwards* from the trip-planning step that follows it, the app is still
-                // in directions with the demo plan drawn, and re-aiming the camera alone left the form
-                // and the results drawer sitting under that caption — so unwind the focus first, exactly
-                // as the rentals step does. Forward this costs nothing: there is no focus to clear, so
-                // it returns without even emitting a directive.
-                homeViewModel.clearMapFocus()
-                // Clearing a focus travels through a map directive the host consumes a frame or two
-                // later, and that drops any retained framing on its way, so the aim has to follow it
-                // rather than race it (see the same wait in `showRentals`).
-                delay(FOCUS_SETTLE_MILLIS)
-                mapViewModel.aimAt(DemoModeController.TRIP_PLAN_DESTINATION, DemoModeController.CAMERA_ZOOM)
+                unwindAndAim(homeViewModel, mapViewModel, DemoModeController.TRIP_PLAN_DESTINATION)
             },
             // Just the focus unwind, which is what backing out of a route actually does — the camera
             // stays where the rider left it rather than springing somewhere new.
             resetMap = homeViewModel::clearMapFocus,
             showRentals = {
-                // Reached backwards from the trip-planning step, the app is still in directions, which
-                // has to be unwound before a map layer means anything. Forward this costs nothing:
-                // there is no focus to clear, so it returns without even emitting a directive.
-                homeViewModel.clearMapFocus()
-                // Clearing a focus travels through a map *directive* that the host consumes a frame or
-                // two later, and that drops any retained framing on its way — so the aim below has to
-                // follow it rather than race it. Settling first is why these actions suspend. Worst
-                // case if the wait is short, the camera simply isn't re-aimed.
-                delay(FOCUS_SETTLE_MILLIS)
-                // Bring the neighbourhood back into view. Unwinding the focus left the camera wherever
-                // the last route framing flew it (for the demo 49, the whole city), where the rentals
-                // would be a few overlapping pixels.
-                mapViewModel.aimAt(DemoModeController.CAMERA_TARGET, DemoModeController.CAMERA_ZOOM)
+                // Back to the neighbourhood: unwinding the focus alone leaves the camera wherever the
+                // last route framing flew it (for the demo 49, the whole city), where the rentals would
+                // be a few overlapping pixels.
+                unwindAndAim(homeViewModel, mapViewModel, DemoModeController.CAMERA_TARGET)
                 // The master switch alone can leave nothing drawn: it deliberately preserves whichever
                 // modes the rider had, and both default off. The demo set has bikes, docks *and*
                 // scooters, so the tour asks for both modes. All three are preferences, and all three
@@ -401,6 +383,26 @@ internal fun rememberScriptedTutorialActions(
             }
         )
     }
+}
+
+/**
+ * Take whatever the tour has open off the map, then aim the camera at [target].
+ *
+ * Both of the tour's "now look at the map itself" steps need this pair, because both can be reached
+ * *backwards* from the trip-planning step that follows them — at which point the app is still in
+ * directions with the demo plan drawn, and a step that only re-aimed the camera left the plan form and
+ * its results drawer sitting under a caption about an empty map. Forwards it costs nothing: there is no
+ * focus to clear, so the unwind returns without even emitting a directive.
+ *
+ * The wait is the reason these actions suspend. Clearing a focus travels through a map *directive* that
+ * the host consumes a frame or two later, and that drops any retained framing on its way — so the aim
+ * has to follow it rather than race it. Worst case if [FOCUS_SETTLE_MILLIS] is short, the camera simply
+ * isn't re-aimed.
+ */
+private suspend fun unwindAndAim(homeViewModel: HomeViewModel, mapViewModel: MapViewModel, target: GeoPoint) {
+    homeViewModel.clearMapFocus()
+    delay(FOCUS_SETTLE_MILLIS)
+    mapViewModel.aimAt(target, DemoModeController.CAMERA_ZOOM)
 }
 
 /**

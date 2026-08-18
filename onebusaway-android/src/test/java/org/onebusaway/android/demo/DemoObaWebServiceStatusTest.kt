@@ -20,10 +20,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.api.contract.AgencyReference
-import org.onebusaway.android.api.contract.RouteReference
-import org.onebusaway.android.api.contract.ShapeEntry
-import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.TripStatus
 
 /**
@@ -42,29 +38,10 @@ import org.onebusaway.android.api.contract.TripStatus
  */
 class DemoObaWebServiceStatusTest {
 
-    private val routeId = "1_100447"
-    private val anchorStopId = "1_11140"
+    private val routeId = DEMO_TEST_ROUTE_ID
 
-    /** The same synthetic straight-line fixture `DemoScenarioTest` uses: six stops over 5 km. */
-    private val fixture = DemoTransitFixture(
-        agency = AgencyReference(id = "1", name = "Demo Transit", timezone = "America/Los_Angeles"),
-        anchorStopId = anchorStopId,
-        routes = listOf(RouteReference(id = routeId, shortName = "49", agencyId = "1")),
-        stops = (0..5).map {
-            StopReference(id = "stop_$it", name = "Stop $it", lat = 47.6 + it * 0.001, lon = -122.32)
-        } +
-            StopReference(id = anchorStopId, name = "Anchor", lat = 47.615, lon = -122.3246),
-        routeStops = mapOf(
-            routeId to DemoRouteStops(
-                directionId = "0",
-                name = "U-District Station",
-                stopIds = listOf("stop_0", "stop_1", "stop_2", anchorStopId, "stop_4", "stop_5"),
-                stopDistances = listOf(0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0),
-                polyline = ShapeEntry(points = "_p~iF~ps|U_ulLnnqC", length = 2),
-                totalDistance = 5000.0
-            )
-        )
-    )
+    /** The shared synthetic deployment — see [demoTestFixture]. */
+    private val fixture = demoTestFixture()
 
     private val service = DemoObaWebService(fixture)
 

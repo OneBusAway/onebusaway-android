@@ -40,13 +40,21 @@ import org.onebusaway.android.api.contract.StopsForRoute
 @OptIn(ExperimentalCoroutinesApi::class)
 class StopsForRouteRepositoryTest {
 
+    /**
+     * The wire fetch. [answeringDeployment] stands in for the provider deciding, at request time, which
+     * deployment serves the call — so a test can make it differ from whatever the repository probed the
+     * cache with, which is the race the real seam closes.
+     */
     private class FakeFetch {
         val calls = mutableListOf<String>()
         val results = mutableMapOf<String, Result<EntryWithReferences<StopsForRoute>?>>()
         var default: Result<EntryWithReferences<StopsForRoute>?> = Result.success(null)
-        suspend fun get(routeId: String): Result<EntryWithReferences<StopsForRoute>?> {
+        var answeringDeployment: () -> String = { "" }
+        suspend fun get(routeId: String): Result<FetchedTopology?> {
             calls += routeId
-            return results[routeId] ?: default
+            return (results[routeId] ?: default).map { entry ->
+                entry?.let { FetchedTopology(answeringDeployment(), it) }
+            }
         }
     }
 
@@ -83,6 +91,7 @@ class StopsForRouteRepositoryTest {
         // live here at once, or whichever was fetched first is served to the other for the session.
         val fake = FakeFetch()
         var deployment = "https://api.pugetsound.onebusaway.org/"
+        fake.answeringDeployment = { deployment }
         val repository = DefaultStopsForRouteRepository(
             backgroundScope,
             fetch = fake::get,
@@ -113,6 +122,7 @@ class StopsForRouteRepositoryTest {
         // leave the rider's own region's topology exactly where it was.
         val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("a"))) }
         var deployment = "https://api.pugetsound.onebusaway.org/"
+        fake.answeringDeployment = { deployment }
         val repository = DefaultStopsForRouteRepository(
             backgroundScope,
             fetch = fake::get,
@@ -128,6 +138,36 @@ class StopsForRouteRepositoryTest {
 
         // Once for the region, once for the demo — the return visit and the second projection are hits.
         assertEquals(listOf("r", "r"), fake.calls)
+    }
+
+    @Test
+    fun `an answer is filed under the deployment that served it, not the one probed for`() = runTest {
+        // Demo mode can flip between the repository choosing a cache key and the request being made —
+        // the tour toggles it during teardown, which is exactly when a stops-for-route fetch is likely
+        // in flight. The entry has to land under whoever answered, or the probe's deployment is left
+        // holding another server's topology, which is the corruption the key exists to prevent.
+        val live = "https://api.pugetsound.onebusaway.org/"
+        val fake = FakeFetch().apply {
+            results["1_100447"] = Result.success(entryWith(listOf("demo-stop")))
+            answeringDeployment = { "demo" } // the tour entered while this lookup was on its way out
+        }
+        val repository = DefaultStopsForRouteRepository(
+            backgroundScope,
+            fetch = fake::get,
+            deployment = { live }
+        )
+
+        // The caller still gets the answer — the request they made went to the demo system too.
+        val served = repository.routeStopGroups("1_100447").getOrThrow()
+        assertEquals(listOf("demo-stop"), served.single().stops.map { it.id })
+
+        // …but the live deployment was not left holding it: its own lookup refetches.
+        fake.results["1_100447"] = Result.success(entryWith(listOf("real-a")))
+        fake.answeringDeployment = { live }
+        val afterwards = repository.routeStopGroups("1_100447").getOrThrow()
+
+        assertEquals(listOf("real-a"), afterwards.single().stops.map { it.id })
+        assertEquals(listOf("1_100447", "1_100447"), fake.calls)
     }
 
     @Test

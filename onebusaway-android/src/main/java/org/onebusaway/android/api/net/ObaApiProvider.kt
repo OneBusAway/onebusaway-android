@@ -83,6 +83,27 @@ class ObaApiProvider @Inject constructor(
     }
 
     /**
+     * Like [callOrNull], but hands [block] the [deploymentKey] of the deployment it is running
+     * against — for the callers that cache a response by id.
+     *
+     * Reading [deploymentKey] separately and then calling [callOrNull] is *not* equivalent, and that is
+     * the whole reason this exists. Those are two independent reads of demo mode, and the tour toggles
+     * it while requests are in flight (its teardown unwinds the map focus, which is exactly when a
+     * stops-for-route fetch is likely to be running). A toggle landing between them files one server's
+     * answer under another server's key — precisely the corruption [deploymentKey] was introduced to
+     * prevent. Here the decision is made once and the identity travels with the request.
+     */
+    suspend fun <T> callOrNullFromDeployment(block: suspend (ObaWebService, String) -> T): Result<T?> {
+        if (demoMode.isActive) return attempt { onDemoDeployment { block(it, DEMO_DEPLOYMENT) } }
+        // One read of the base URL, shared by the service and the identity reported for it.
+        val base = resolver.baseUrl() ?: run {
+            forgetService()
+            return Result.success(null)
+        }
+        return attempt { block(serviceFor(base), base.toString()) }
+    }
+
+    /**
      * Runs [block] against the demo deployment, off whatever thread asked for it.
      *
      * Reached ahead of [service] rather than from inside it, so the demo tour needs no endpoint at all:
@@ -138,21 +159,27 @@ class ObaApiProvider @Inject constructor(
      * contact yet. Rebuilds when the base URL has changed. Private: callers go through [call] /
      * [callOrNull] so the no-endpoint policy lives in one place.
      */
+    private fun service(): ObaWebService? = resolver.baseUrl()?.let(::serviceFor) ?: run {
+        forgetService()
+        null
+    }
+
+    /** The service for an already-resolved [base], rebuilt only when that URL has changed. */
     @Synchronized
-    private fun service(): ObaWebService? {
-        val base = resolver.baseUrl()
-        if (base == null) {
-            cachedBase = null
-            cachedService = null
-            return null
-        }
+    private fun serviceFor(base: Uri): ObaWebService {
         // cachedBase and cachedService are only ever set or cleared together, so comparing the base
         // alone is enough — a real base never equals a null cachedBase.
         if (base != cachedBase) {
             cachedService = build(base)
             cachedBase = base
         }
-        return cachedService
+        return requireNotNull(cachedService)
+    }
+
+    @Synchronized
+    private fun forgetService() {
+        cachedBase = null
+        cachedService = null
     }
 
     private fun noEndpoint() = IOException("No OBA API endpoint: no current region and no custom API URL set")

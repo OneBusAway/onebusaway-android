@@ -105,16 +105,30 @@ private const val MAX_CACHED_ROUTE_STOPS = 32
  */
 private data class RouteTopologyKey(val deployment: String, val routeId: String)
 
+/**
+ * A fetched topology together with the deployment that actually answered for it.
+ *
+ * The answering deployment is reported by the fetch rather than read alongside it, because those are
+ * not the same fact: demo mode can be toggled between choosing a cache key and the request being made,
+ * and a topology filed under the deployment that *was* current is exactly the corruption the key exists
+ * to prevent. `ObaApiProvider.callOrNullFromDeployment` decides once and hands the identity back.
+ */
+internal data class FetchedTopology(
+    val deployment: String,
+    val entry: EntryWithReferences<StopsForRoute>
+)
+
 @Singleton
 class DefaultStopsForRouteRepository internal constructor(
     fetchScope: CoroutineScope,
     cacheSize: Int = MAX_CACHED_ROUTE_STOPS,
     // The one wire call, injected so the JVM tests can exercise caching/coalescing without a live
     // ObaApiProvider. `success(null)` = no endpoint; `failure` = IO / HTTP / non-OK code.
-    private val fetch: suspend (routeId: String) -> Result<EntryWithReferences<StopsForRoute>?>,
-    // Which deployment is answering — half of the cache key, see [RouteTopologyKey]. Read per lookup
+    private val fetch: suspend (routeId: String) -> Result<FetchedTopology?>,
+    // Which deployment to *look under*, for the cache probe and the coalescing key. Read per lookup
     // rather than captured, because it changes under this repository: a region switch, or the scripted
-    // tutorial (#2164) entering and leaving demo mode.
+    // tutorial (#2164) entering and leaving demo mode. What a fetched entry is *stored* under is the
+    // deployment the fetch reports, which is the only one known to have answered.
     private val deployment: () -> String = { "" }
 ) : StopsForRouteRepository {
 
@@ -122,7 +136,9 @@ class DefaultStopsForRouteRepository internal constructor(
     constructor(api: ObaApiProvider) : this(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         fetch = { routeId ->
-            api.callOrNull { it.stopsForRoute(routeId, includePolylines = true).requireData() }
+            api.callOrNullFromDeployment { service, deployment ->
+                FetchedTopology(deployment, service.stopsForRoute(routeId, includePolylines = true).requireData())
+            }
         },
         deployment = { api.deploymentKey }
     )
@@ -160,7 +176,14 @@ class DefaultStopsForRouteRepository internal constructor(
         cache.get(key)?.let { return Result.success(it) }
         return fetches.run(key) {
             cache.get(key)?.let { return@run Result.success(it) }
-            fetch(routeId).onSuccess { fetched -> fetched?.let { cache.put(key, it) } }
+            // Stored under the deployment that answered, which the fetch reports — not under `key`,
+            // whose deployment was merely the current one when this lookup began. Returning that answer
+            // to a caller who probed under the other key is still right: the request they would have
+            // made goes to the same place. Only the filing has to be honest, so the next lookup for
+            // either deployment gets its own answer.
+            fetch(routeId).map { fetched ->
+                fetched?.also { cache.put(RouteTopologyKey(it.deployment, routeId), it.entry) }?.entry
+            }
         } ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
     }
 

@@ -148,21 +148,24 @@ internal fun List<RiddenSpan>.isDrawableRide(): Boolean = sumOf { it.points.size
  * than losing the one thing that said the route changes mid-ride.
  *
  * [stripeColorsOf] is a lambda for the same reason [colorOf] is: this file picks which colours a ride is
- * drawn *from*, and the rendering of them stays with the caller's palette (see the file header).
+ * drawn *from*, and the rendering of them stays with the caller's palette (see the file header). It is
+ * handed the colour the span was *already* resolved to, so the stripes are deduplicated against the colour
+ * the line is actually stroked in rather than against a second, independently resolved answer.
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
     spans: List<RiddenSpan>,
     colorOf: (RiddenSpan) -> Int?,
     itineraryContext: List<RoutePolyline> = emptyList(),
-    stripeColorsOf: (RiddenSpan) -> List<Int> = { emptyList() }
+    stripeColorsOf: (RiddenSpan, Int?) -> List<Int> = { _, _ -> emptyList() }
 ): List<RoutePolyline> {
     val ridden = spans.filter { it.points.isDrawableSegment() }
     val overlay = ridden.mapIndexed { index, span ->
+        val color = colorOf(span)
         RoutePolyline(
-            color = colorOf(span),
+            color = color,
             points = span.points,
-            stripeColors = stripeColorsOf(span),
+            stripeColors = stripeColorsOf(span, color),
             widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
             case = RouteLineCase.SELECTION,
             startMark = when {

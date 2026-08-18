@@ -988,7 +988,7 @@ class RouteMapController(
                 // The ride keeps the stripes it had as a leg (#2100/#2241), rendered by this session's own
                 // palette — the directions one when the rider drilled in from a trip plan, so the stripes
                 // are the colours the badge on that leg named.
-                stripeColorsOf = { span -> rideStripeColors(span.interchangeableColors, spanColor(span), palette) }
+                stripeColorsOf = { span, color -> rideStripeColors(span.interchangeableColors, color, palette) }
             ),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom

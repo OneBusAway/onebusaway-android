@@ -180,7 +180,7 @@ class RouteSegmentHighlightTest {
             base = emptyList(),
             spans = listOf(span),
             colorOf = { 0xFF0072BC.toInt() },
-            stripeColorsOf = { it.interchangeableColors.filterNotNull() }
+            stripeColorsOf = { span, _ -> span.interchangeableColors.filterNotNull() }
         )
 
         assertEquals(listOf(0xFF00A94F.toInt()), result.single().stripeColors)

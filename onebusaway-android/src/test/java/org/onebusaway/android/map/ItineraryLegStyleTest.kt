@@ -2,8 +2,8 @@
 package org.onebusaway.android.map
 
 import android.annotation.SuppressLint
-import kotlin.time.Duration.Companion.minutes
 import com.google.android.material.color.utilities.Hct
+import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

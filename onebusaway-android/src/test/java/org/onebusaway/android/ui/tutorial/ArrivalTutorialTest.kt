@@ -34,14 +34,18 @@ class ArrivalTutorialTest {
 
         val pending = ArrivalTutorial.pendingSteps(prefs)
 
-        assertEquals(
-            listOf(
-                ArrivalTutorial.KEY_ETA,
-                ArrivalTutorial.KEY_PANEL,
-                ArrivalTutorial.KEY_MORE_MENU
-            ),
-            pending.map { it.id }
-        )
+        assertEquals(listOf(ArrivalTutorial.KEY_ETA), pending.map { it.id })
+    }
+
+    /**
+     * The panel and Recent-stops spotlights were dropped once the scripted tour took over onboarding:
+     * it drives the arrivals sheet and opens the drawer itself, so those two fired straight after a
+     * finished tour to re-explain what it had just shown. Pinned as a count rather than left implicit,
+     * because re-adding a step here is re-adding a popup a tour-taker sees for the second time.
+     */
+    @Test
+    fun theSequenceIsJustTheEtaSpotlight() {
+        assertEquals(listOf(ArrivalTutorial.KEY_ETA), ArrivalTutorial.steps.map { it.id })
     }
 
     @Test
@@ -57,10 +61,7 @@ class ArrivalTutorialTest {
         val prefs = FakePreferencesRepository()
         prefs.setBoolean(ArrivalTutorial.KEY_ETA, true)
 
-        assertEquals(
-            listOf(ArrivalTutorial.KEY_PANEL, ArrivalTutorial.KEY_MORE_MENU),
-            ArrivalTutorial.pendingSteps(prefs).map { it.id }
-        )
+        assertTrue(ArrivalTutorial.pendingSteps(prefs).isEmpty())
     }
 
     @Test
@@ -85,18 +86,16 @@ class ArrivalTutorialTest {
     }
 
     /**
-     * The scripted tour teaches the ETA pill and nothing else of this sequence, so exactly one of these
-     * spotlights is retired by taking the tour — the recorder keys on the shared anchor. If a tour step
-     * ever picks up the panel or menu anchor, this is the assertion that says so: the two sequences
-     * would then be teaching the same control, and the tour would be silently retiring more of the
-     * opportunistic one than it appears to.
+     * The tour covers this sequence completely — it rings [ArrivalTutorial.KEY_ETA] itself — so taking
+     * the tour retires the whole thing via the shared anchor, and nothing is left to pop up afterwards.
+     * That is the property that broke when the tour only covered part of the sequence.
      */
     @Test
-    fun theScriptedTourReusesOnlyTheEtaSpotlight() {
+    fun theScriptedTourReusesEverySpotlightInTheSequence() {
         val reused = ArrivalTutorial.steps
             .map { it.id }
             .filter { anchor -> ScriptedTutorial.steps.any { it.anchorId == anchor } }
 
-        assertEquals(listOf(ArrivalTutorial.KEY_ETA), reused)
+        assertEquals(ArrivalTutorial.steps.map { it.id }, reused)
     }
 }

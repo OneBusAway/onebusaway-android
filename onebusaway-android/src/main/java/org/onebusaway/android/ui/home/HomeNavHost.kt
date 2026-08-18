@@ -193,11 +193,7 @@ fun HomeNavHost(
                     },
                     onSettings = { menuNav(NavRoutes.SETTINGS, R.string.analytics_label_button_press_settings) },
                     onSearch = { query -> navController.navigateFromHome(NavRoutes.search(query)) },
-                    onRecentStopsRoutes = {
-                        // The user found the drawer item on their own — don't later spotlight it in onboarding.
-                        PreferencesEntryPoint.get(context).setBoolean(ArrivalTutorial.KEY_MORE_MENU, true)
-                        navController.navigateFromHome(NavRoutes.myRecent())
-                    },
+                    onRecentStopsRoutes = { navController.navigateFromHome(NavRoutes.myRecent()) },
                     // Recents dropdown taps reveal the stop / route on the map (the same stop-focus the
                     // search results and map markers use).
                     onRecentStop = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },

@@ -617,10 +617,6 @@
     <string name="tutorial_opt_out_dialog_text">Desideri che vengano mostrati popup informativi per l’utilizzo di %1$s? Puoi sempre attivare e disattivare i popup nelle impostazioni, o mostrare il tutorial in seguito premendo su Aiuto.</string>
     <string name="tutorial_arrival_header_arrival_info_title">Quanto manca all’arrivo dell’autobus?</string>
     <string name="tutorial_arrival_header_arrival_info_text">Tanto così! Lo sfondo colorato ti dice se l’autobus è in anticipo (rosso) o in ritardo (blu). In orario = sfondo verde. Se non sappiamo dove sia l’autobus, ti mostriamo l’orario previsto (sfondo grigio). Grigio con testo barrato significa che il tragitto è stato cancellato.</string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Scorri in su per mostrare più arrivi</string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Tocca la freccia o trascina il pannello in su per vedere altri arrivi a questa fermata.</string>
-    <string name="tutorial_recent_stops_routes_title">Fermate e linee recenti</string>
-    <string name="tutorial_recent_stops_routes_text">Per ritrovare le fermate e le linee cercate di recente, apri il menu.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Autorizzazioni per la posizione</string>

@@ -676,10 +676,7 @@ fun HomeScreen(
                             // than sitting on a separate default-colored strip.
                             sheetContainerColor = MaterialTheme.colorScheme.surface,
                             sheetDragHandle = {
-                                ArrivalsDragHandle(
-                                    onToggle = toggleSheet,
-                                    modifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL)
-                                )
+                                ArrivalsDragHandle(onToggle = toggleSheet)
                             },
                             sheetContent = {
                                 // Bounded so a long list can't grow the sheet past maxSheetContentDp — that
@@ -1000,9 +997,6 @@ fun HomeScreen(
                                             recents = recents,
                                             onRecentStop = onRecentStop,
                                             onRecentRoute = onRecentRoute,
-                                            // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
-                                            // the menu FAB that opens it (was the retired overflow ⋮).
-                                            menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
                                             modifier = Modifier.statusBarsPadding()
                                         )
                                     }

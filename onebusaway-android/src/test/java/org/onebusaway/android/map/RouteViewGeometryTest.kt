@@ -2,6 +2,7 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,7 +14,9 @@ import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
@@ -42,6 +45,65 @@ class RouteViewGeometryTest {
         assertEquals(line.dash, context.dash)
         assertEquals(line.transforms, context.transforms)
         assertEquals(false, context.directional)
+    }
+
+    @Test
+    fun `every reduction states its whole line, so a new feature reaches none of them`() {
+        // #2241/#2246: these used to be `copy()`-minus-a-few-fields, which made "keep it" the default for
+        // every field RoutePolyline gained — stripes (#2100) and end marks (#2084) both rode into views
+        // that had decided against them, and were noticed one incident at a time. Constructed lines make
+        // "drop it" the default instead. Asserted over a line carrying *everything*, so a field added to
+        // RoutePolyline and quietly passed through shows up here rather than on a rider's map.
+        val loaded = RoutePolyline(
+            color = 0xFF123456.toInt(),
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            stripeColors = listOf(0xFF654321.toInt()),
+            widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+            directional = true,
+            dash = RouteLineDash.TRAIL,
+            case = RouteLineCase.SELECTION,
+            startMark = RouteLineMark.INTERLINE_CUT,
+            endMark = RouteLineMark.BULB,
+            transforms = setOf(RoutePolylineTransform.ZOOM_SIMPLIFY)
+        )
+        val lines = listOf(loaded)
+
+        for ((name, reduced) in listOf(
+            "itinerary context" to lines.asItineraryContext().single(),
+            "pinned trip ghost" to lines.asPinnedTripGhost().single(),
+            "selected route approach" to lines.asSelectedRouteApproach().single(),
+            "deemphasized underlay" to lines.asDeemphasizedRouteUnderlay().single()
+        )) {
+            // Chevrons, stripes and end marks belong to the line being read at full weight. Every one of
+            // these says less than that, and none of them says any of the three.
+            assertEquals("$name kept its chevrons", false, reduced.directional)
+            assertEquals("$name kept its stripes", emptyList<Int>(), reduced.stripeColors)
+            assertEquals("$name kept a start mark", RouteLineMark.NONE, reduced.startMark)
+            assertEquals("$name kept an end mark", RouteLineMark.NONE, reduced.endMark)
+            // What every reduction is *for* is saying which line this is, so all of them keep the colour
+            // and the geometry, and none may keep the weight — that is the thing each one restates.
+            assertEquals("$name lost its colour", loaded.color, reduced.color)
+            assertEquals("$name lost its geometry", loaded.points, reduced.points)
+            assertNotEquals("$name kept its weight", loaded.widthProfile, reduced.widthProfile)
+        }
+    }
+
+    @Test
+    fun `only the itinerary context keeps the case that says what kind of line it is`() {
+        // The context is the rider's own journey, so a ride there still wears the hairline case every ride
+        // wears (#2041). The ghost drops it (a halo is exactly what a parked trip must not have, #2053),
+        // and the two route-view reductions state their own.
+        val ride = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            case = RouteLineCase.OUTLINE
+        )
+        val lines = listOf(ride)
+
+        assertEquals(RouteLineCase.OUTLINE, lines.asItineraryContext().single().case)
+        assertEquals(RouteLineCase.NONE, lines.asPinnedTripGhost().single().case)
+        assertEquals(RouteLineCase.APPROACH, lines.asSelectedRouteApproach().single().case)
+        assertEquals(RouteLineCase.NONE, lines.asDeemphasizedRouteUnderlay().single().case)
     }
 
     @Test

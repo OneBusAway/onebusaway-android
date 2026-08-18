@@ -64,12 +64,19 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
  * [plannedColor] is the GTFS colour the *plan* published for that route, already parsed — the same source
  * the itinerary's own line for this leg was styled from — carried along so the span can be drawn before
  * [routeId]'s route has loaded (see [riddenSpanColorSource]). Null when the plan published none.
+ *
+ * [interchangeableColors] are the parsed GTFS colours of the routes the rider may board *in place of* this
+ * one (#2010), in the order the ride's badge names them, and they are what keeps the ride striped once the
+ * rider drills into it (#2100/#2241). Carried on the span for the same reason [plannedColor] is: the fact
+ * belongs to the plan, and the route session the ride is drawn in has no other way to learn it. Empty for a
+ * ride with no alternative — and so for every leg of a stay-aboard interline, which admits none.
  */
 data class RiddenSpan(
     val points: List<GeoPoint>,
     val routeId: String? = null,
     val plannedColor: Int? = null,
-    val startsCutover: Boolean = false
+    val startsCutover: Boolean = false,
+    val interchangeableColors: List<Int?> = emptyList()
 )
 
 /**
@@ -119,34 +126,51 @@ internal fun List<RiddenSpan>.isDrawableRide(): Boolean = sumOf { it.points.size
 /**
  * Compose the route's polylines when [spans] are highlighted: the route [base] upstream of the boarding
  * point drawn as the selected line's approach, then the rider's [itineraryContext], then the ridden span(s),
- * each in the colour [colorOf] gives it. This order makes the visual hierarchy match the semantics: where
- * the vehicle comes from, the committed journey, the current leg. Without a drawable span, retains the
- * ordinary plain-route ordering: itinerary context beneath [base], with no approach restyle or selected
- * overlay.
+ * each in the colour [colorOf] gives it and striped with the colours [stripeColorsOf] gives it. This order
+ * makes the visual hierarchy match the semantics: where the vehicle comes from, the committed journey, the
+ * current leg. Without a drawable span, retains the ordinary plain-route ordering: itinerary context beneath
+ * [base], with no approach restyle or selected overlay.
  *
- * The ride keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it was
- * tapped from — and says it is the selected one with a case rather than by out-widening its surroundings
+ * **The ride is the leg the rider tapped, drawn again — not a route line that happens to share its shape.**
+ * It keeps [ITINERARY_RIDE_WIDTH_PROFILE], the very weight it had as a leg of the itinerary; it keeps the
+ * stripes of a ride the rider may board either route for (#2100), which drilling in used to erase, so that
+ * looking closer at a shared ride stopped saying it was shared (#2241); and it keeps the marks its ends
+ * carried there. It says it is the *selected* one with a case rather than by out-widening its surroundings
  * (#2082). Its approach carries the same case, so the two read as one route line stepping down where the
  * rider boards. Neither carries direction chevrons (#2129): like every other itinerary line, the ride is
  * marked selected by its case and weight alone.
  *
- * A span the vehicle changed route onto is cut at its start ([RiddenSpan.startsCutover]), the same mark the
- * itinerary map rules across that join — so drilling into an interlined ride shows the rider *more* about it,
- * rather than losing the one thing that said the route changes mid-ride.
+ * The end marks follow the same rule the itinerary map's own caps do ([itineraryLegCaps]), stated here over
+ * span position because a ride's spans *are* its legs: a bulb where the rider gets on and off, an
+ * [RouteLineMark.INTERLINE_CUT] where the vehicle changed route under them ([RiddenSpan.startsCutover]), and
+ * nothing at a seam they sit through. The bulbs are why the ride reads as a ride here rather than as a piece
+ * of corridor, and the cut is why drilling into an interlined ride shows the rider *more* about it rather
+ * than losing the one thing that said the route changes mid-ride.
+ *
+ * [stripeColorsOf] is a lambda for the same reason [colorOf] is: this file picks which colours a ride is
+ * drawn *from*, and the rendering of them stays with the caller's palette (see the file header).
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
     spans: List<RiddenSpan>,
     colorOf: (RiddenSpan) -> Int?,
-    itineraryContext: List<RoutePolyline> = emptyList()
+    itineraryContext: List<RoutePolyline> = emptyList(),
+    stripeColorsOf: (RiddenSpan) -> List<Int> = { emptyList() }
 ): List<RoutePolyline> {
-    val overlay = spans.filter { it.points.isDrawableSegment() }.map { span ->
+    val ridden = spans.filter { it.points.isDrawableSegment() }
+    val overlay = ridden.mapIndexed { index, span ->
         RoutePolyline(
             color = colorOf(span),
             points = span.points,
+            stripeColors = stripeColorsOf(span),
             widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
             case = RouteLineCase.SELECTION,
-            startMark = if (span.startsCutover) RouteLineMark.INTERLINE_CUT else RouteLineMark.NONE
+            startMark = when {
+                span.startsCutover -> RouteLineMark.INTERLINE_CUT
+                index == 0 -> RouteLineMark.BULB
+                else -> RouteLineMark.NONE
+            },
+            endMark = if (index == ridden.lastIndex) RouteLineMark.BULB else RouteLineMark.NONE
         )
     }
     if (overlay.isEmpty()) return itineraryContext + base

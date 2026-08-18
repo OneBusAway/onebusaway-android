@@ -156,16 +156,44 @@ class RouteSegmentHighlightTest {
         )
 
         assertEquals(listOf(45, 75), result.map { it.color })
-        // The cut goes on the span the vehicle *changed route onto*, and only there: the ride's own start
-        // is a boarding, which this view marks with the stop the rider gets on at.
-        assertEquals(listOf(RouteLineMark.NONE, RouteLineMark.INTERLINE_CUT), result.map { it.startMark })
-        // Both spans are still the selected ride: same weight, same case, no bulb between them — the
-        // rider does not get off here.
+        // The cut goes on the span the vehicle *changed route onto*, and only there. The ride's own ends
+        // are a boarding and an alighting, and take the bulbs the itinerary map gives them ([itineraryLegCaps]);
+        // the seam between the spans takes neither, because the rider sits through it.
+        assertEquals(listOf(RouteLineMark.BULB, RouteLineMark.INTERLINE_CUT), result.map { it.startMark })
+        assertEquals(listOf(RouteLineMark.NONE, RouteLineMark.BULB), result.map { it.endMark })
+        // Both spans are still the selected ride: same weight, same case.
         result.forEach {
             assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, it.widthProfile)
             assertEquals(RouteLineCase.SELECTION, it.case)
-            assertEquals(RouteLineMark.NONE, it.endMark)
         }
+    }
+
+    @Test
+    fun routePolylinesWithSegment_drawsTheRideWithTheStripesItHadAsALeg() {
+        // #2241: a ride the rider may board either route for is striped on the itinerary map (#2100), and
+        // drilling in used to draw it as a plain line — so tapping a shared ride to look at it closer was
+        // exactly when the map stopped saying it was shared. The stripes are the ride's, not the route
+        // session's, so they travel on the span and are rendered by the caller's palette.
+        val span = RiddenSpan(segment, routeId = "1_100479", interchangeableColors = listOf(0xFF00A94F.toInt()))
+
+        val result = routePolylinesWithSegment(
+            base = emptyList(),
+            spans = listOf(span),
+            colorOf = { 0xFF0072BC.toInt() },
+            stripeColorsOf = { it.interchangeableColors.filterNotNull() }
+        )
+
+        assertEquals(listOf(0xFF00A94F.toInt()), result.single().stripeColors)
+    }
+
+    @Test
+    fun routePolylinesWithSegment_marksTheRidesOwnEndsWhereverItStartsAndStops() {
+        // A plain single-route ride: the rider gets on at one end and off at the other, which is what a
+        // bulb pair says (#2084) — the same thing it said on the itinerary map they tapped it from.
+        val result = routePolylinesWithSegment(emptyList(), ride(segment), colorOf = { 1 })
+
+        assertEquals(RouteLineMark.BULB, result.single().startMark)
+        assertEquals(RouteLineMark.BULB, result.single().endMark)
     }
 
     @Test
@@ -179,7 +207,11 @@ class RouteSegmentHighlightTest {
 
         val result = routePolylinesWithSegment(emptyList(), spans, colorOf = { 12 })
 
-        assertTrue(result.all { it.startMark == RouteLineMark.NONE })
+        assertTrue(result.none { it.startMark == RouteLineMark.INTERLINE_CUT })
+        // The seam itself is unmarked at both of its sides — it is interior to one ride, so neither a cut
+        // nor the bulb pair that would read as getting off and back on.
+        assertEquals(RouteLineMark.NONE, result.first().endMark)
+        assertEquals(RouteLineMark.NONE, result.last().startMark)
     }
 
     @Test
@@ -190,6 +222,10 @@ class RouteSegmentHighlightTest {
         val result = routePolylinesWithSegment(emptyList(), spans, colorOf = { 7 })
 
         assertEquals(listOf(segment), result.map { it.points })
+        // And the ride's ends are the ends of what is actually drawn: the dropped span must not take the
+        // boarding bulb down with it, leaving the drawn remainder looking like the middle of a ride.
+        assertEquals(RouteLineMark.BULB, result.single().startMark)
+        assertEquals(RouteLineMark.BULB, result.single().endMark)
     }
 
     @Test

@@ -20,7 +20,6 @@ import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
-import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.models.FocusedTrip
@@ -47,11 +46,22 @@ internal fun focusedRoutePolyline(
     transforms = ROUTE_VIEW_TRANSFORMS
 )
 
+// The reductions: a line built for one view, restated for another that says less. Every one of them
+// **constructs** its line rather than `copy()`-ing the original minus a few fields, for the reason
+// `RoutePolyline.asCase` gives for doing the same — a feature added to [RoutePolyline] is then absent
+// from a reduced line unless someone puts it here, which is the safe default. Copy-minus is the opposite
+// default, and it is what let a drilled-into leg keep bulbs this view had decided not to draw (#2241):
+// every new feature rode along until someone noticed, one incident per feature. A reduction that needs a
+// new field will fail to compile into existence; one that quietly gains a feature will not.
+
 /** The active route's broader geometry retained beneath an exact selected-trip line. */
 internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
-        directional = false
+        dash = line.dash,
+        transforms = line.transforms
     )
 }
 
@@ -71,29 +81,38 @@ internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyli
  * stay off: the approach is where the vehicle comes from, not a span the rider travels.
  */
 internal fun List<RoutePolyline>.asSelectedRouteApproach(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = ITINERARY_APPROACH_WIDTH_PROFILE,
-        directional = false,
         dash = RouteLineDash.NONE,
-        case = RouteLineCase.APPROACH
+        case = RouteLineCase.APPROACH,
+        transforms = line.transforms
     )
 }
 
 /**
  * The rider's committed journey retained around a focused transit leg. It keeps each leg's mode/route
- * colour and dash, but drops chevrons and takes a middle weight: stronger than unused route geometry,
- * weaker than the selected ridden segment.
+ * colour, dash and case, and takes a middle weight: stronger than unused route geometry, weaker than the
+ * selected ridden segment.
  *
- * It also drops a shared ride's stripes (#2100). Striping answers "which of these routes may I board?", a
+ * It drops a shared ride's stripes (#2100). Striping answers "which of these routes may I board?", a
  * question about a ride the rider is choosing; a context leg is here to say where the leg being read sits
  * in the journey, and is drawn at half the width the stripes were cut against — so the same rhythm arrives
- * as a fleck of noise beside the leg that is actually being read.
+ * as a fleck of noise beside the leg that is actually being read. It drops the end marks with them: a bulb
+ * pair means "alight here, board there" and a cut means "the route changes under you", which are readings
+ * of a trip being *followed* at full weight, not of the trace saying where one leg of it sits — the same
+ * call [asPinnedTripGhost] makes. The ride the rider is actually reading keeps both, drawn over this at
+ * full weight by [routePolylinesWithSegment].
  */
 internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = ITINERARY_CONTEXT_WIDTH_PROFILE,
-        directional = false,
-        stripeColors = emptyList()
+        dash = line.dash,
+        case = line.case,
+        transforms = line.transforms
     )
 }
 
@@ -102,16 +121,16 @@ internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map
  *
  * Keeps each leg's colour — the one thing the ghost is *for* is saying which trip is waiting — and drops
  * everything that competes for attention: the case that would halo it above the basemap, the terminus
- * bulbs and interline cuts that are details of a trip being read, and any chevrons. What is left is a
- * thin coloured trace of the journey.
+ * bulbs and interline cuts that are details of a trip being read, a shared ride's stripes, and any
+ * chevrons. What is left is a thin coloured trace of the journey.
  */
 internal fun List<RoutePolyline>.asPinnedTripGhost(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = PINNED_TRIP_GHOST_WIDTH_PROFILE,
-        directional = false,
-        case = RouteLineCase.NONE,
-        startMark = RouteLineMark.NONE,
-        endMark = RouteLineMark.NONE
+        dash = line.dash,
+        transforms = line.transforms
     )
 }
 

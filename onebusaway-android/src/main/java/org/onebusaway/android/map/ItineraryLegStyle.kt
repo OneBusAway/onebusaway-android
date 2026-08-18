@@ -22,6 +22,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayLabel
+import org.onebusaway.android.directions.model.substitutableRoutes
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.RouteBadgeRequest
 import org.onebusaway.android.map.layout.placeRouteBadges
@@ -138,33 +139,98 @@ internal fun itineraryLegStyle(
 }
 
 /**
- * Every leg of [itinerary] that has geometry, as plain styled lines — the shared half of what
- * [org.onebusaway.android.map.DirectionsMapController] does when it draws a trip, without the labels,
- * pins, caps or focus the drawn view adds around them.
+ * How one itinerary is drawn: every leg that has geometry, decoded and styled once, and the line that
+ * strokes each of them.
  *
- * Exists because a *pinned* trip has to be drawn by something that is not a directions session (#2053):
- * the ghost outlives every mode the rider explores through, so it cannot be owned by the controller
- * whose whole lifetime is one directions view.
+ * The legs come back beside the lines because the route labels are anchored on them
+ * ([itineraryRouteBadges]), so a label cannot end up a different colour from the line it names.
  */
-internal fun itineraryLegLines(
+internal data class DrawnItinerary(
+    val legs: List<ItineraryDrawableLeg>,
+    val lines: List<ItineraryLegLine>
+)
+
+/**
+ * Draw [itinerary] — **at full fidelity**: every leg's colour, weight, dash and case, a shared ride's
+ * stripes (#2100), and the mark each end is finished with (#2084, #2127).
+ *
+ * The single answer to "how is this trip drawn", and deliberately the only one. Every view of a trip is
+ * a *reduction* of what this returns — the parked trip's ghost ([asPinnedTripGhost], #2053), the journey
+ * kept around a leg a rider drilled into ([asItineraryContext], #2048) — so each of them states what it
+ * takes away from a line the rider has already seen. There used to be two builders instead: this one,
+ * which left out marks and stripes, and the same walk again inside
+ * [org.onebusaway.android.map.DirectionsMapController], which put them in. A builder that merely leaves
+ * a feature out cannot be reduced *from* — it can only quietly differ, which is what let the ghost draw
+ * a trip that could never carry what the drawn one did, and made "does this view drop stripes?" a
+ * question with two answers.
+ *
+ * [parseRouteColor] turns a wire hex into an ARGB int. It is injected because that is the one part that
+ * needs `android.graphics`, which keeps everything here JVM-pure (see the file header) — and it is
+ * spent on the leg's own route and on every route offered in its place alike.
+ */
+internal fun drawnItinerary(
     itinerary: TripItinerary,
     palette: RouteLinePalette,
-    routeColorOf: (TripLeg) -> Int?
-): List<RoutePolyline> = itinerary.legs.mapNotNull { leg ->
-    val geometry = leg.legGeometry ?: return@mapNotNull null
-    val points = geometry.decodedPoints()
-    if (points.size < 2) return@mapNotNull null
-    val style = itineraryLegStyle(leg.legKind(), routeColorOf(leg), palette)
-    // No caps, cuts or focus: those are readings of a trip being *followed*, and this builds the shape
-    // of one merely being remembered. The caller restyles what it gets (see `asPinnedTripGhost`).
-    RoutePolyline(
-        style.color,
-        points,
-        widthProfile = style.widthProfile,
-        dash = style.dash,
-        case = style.case
+    parseRouteColor: (String?) -> Int?
+): DrawnItinerary {
+    val legs = itinerary.legs
+    // The routes the *drawer* offers for each leg, not the raw interchangeable set: `substitutableRoutes`
+    // is already narrowed by what the rest of the plan needs of this leg (a leg of a stay-aboard
+    // interline admits no substitute at all, #2000 x #2010), so the label on a line and the badge in the
+    // drawer beside it name one ride the same way.
+    //
+    // Its alignment to the legs is stated rather than defended against, in the same terms
+    // [org.onebusaway.android.ui.tripresults.ModeSymbols.forLegs] states it for the same list: a short
+    // list read defensively would quietly label a ride with fewer routes than it can be taken on — the
+    // rider is told to wait for the 1 Line when the 2 Line would also do — and nothing downstream could
+    // tell that from a leg that genuinely has no alternatives. Misalignment is a bug in the analysis, so
+    // say so where it is read.
+    val substitutes = itinerary.substitutableRoutes()
+    require(substitutes.size == legs.size) {
+        "substitutable routes must be index-aligned to legs (${substitutes.size} vs ${legs.size})"
+    }
+    // A leg with fewer than two points draws nothing, which is the whole of what "has geometry" means
+    // here — `decodedPoints` already answers empty for a geometry the wire declared no length for.
+    val drawable = legs.mapIndexedNotNull { legIndex, leg ->
+        val points = leg.legGeometry?.decodedPoints().orEmpty()
+        if (points.size < 2) return@mapIndexedNotNull null
+        ItineraryDrawableLeg(
+            legIndex,
+            leg,
+            points,
+            itineraryLegStyle(leg.legKind(), parseRouteColor(leg.routeColor), palette),
+            substitutes[legIndex].map { route -> ItinerarySubstitute(route, parseRouteColor(route.routeColor)) }
+        )
+    }
+    // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
+    // [itineraryLegStyle], which also decides the hairline case a ride wears.
+    val caps = itineraryLegCaps(legs)
+    return DrawnItinerary(
+        legs = drawable,
+        lines = drawable.map { ItineraryLegLine(it.index, it.line(caps[it.index], palette)) }
     )
 }
+
+/** The line one drawable leg is stroked with, finished at each end by its own [caps]. */
+private fun ItineraryDrawableLeg.line(caps: ItineraryLegCaps, palette: RouteLinePalette) = RoutePolyline(
+    style.color,
+    points,
+    // The other routes this ride may be taken on, striped through it (#2100) so the line says what its
+    // badge does; empty for every ride offering no alternative.
+    stripeColors = stripeColors(palette),
+    widthProfile = style.widthProfile,
+    dash = style.dash,
+    case = style.case,
+    // A cutover (#2127) and a bulb are alternatives, not additions — the cut goes precisely where the
+    // ride runs on and the bulb is therefore withheld, which is what this `when` says and what a pair of
+    // booleans left each renderer to decide for itself.
+    startMark = when {
+        caps.startSeam -> RouteLineMark.INTERLINE_CUT
+        style.roundCaps && caps.start -> RouteLineMark.BULB
+        else -> RouteLineMark.NONE
+    },
+    endMark = if (style.roundCaps && caps.end) RouteLineMark.BULB else RouteLineMark.NONE
+)
 
 /**
  * One drawn itinerary leg, paired with its index in the itinerary. The pairing is what lets a focus be
@@ -325,14 +391,33 @@ internal fun itineraryRouteBadges(
  * rather than two the rider can't tell apart. That is also why a substitute matching the planned route's
  * colour drops out entirely: it would stripe the line with the colour it already is.
  */
-internal fun ItineraryDrawableLeg.stripeColors(palette: RouteLinePalette): List<Int> = interchangeable
-    .inInterchangeableOrder { it.route.displayName }
-    .map { it.lineColor(palette) }
-    .distinct()
-    .filterNot { it == style.color }
+internal fun ItineraryDrawableLeg.stripeColors(palette: RouteLinePalette): List<Int> = rideStripeColors(
+    interchangeable.inInterchangeableOrder { it.route.displayName }.map { it.routeColor },
+    lineColor = style.color,
+    palette = palette
+)
 
-/** The colour this map draws [ItinerarySubstitute]'s own line in, were the rider to drill into it (#2063). */
-private fun ItinerarySubstitute.lineColor(palette: RouteLinePalette): Int = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor, palette).color
+/**
+ * The stripe rule itself, over already-ordered [alternatives] — each an agency's raw published colour, or
+ * null where it publishes none — and the [lineColor] the ride is already stroked in.
+ *
+ * Split out from [stripeColors] so the *drilled-into* ride can stripe by the same rule (#2241). That ride
+ * is drawn by a route session, from [org.onebusaway.android.map.RiddenSpan]s rather than from the drawable
+ * legs here, and it used to be drawn as a plain line: tapping a shared ride to look at it closer was
+ * exactly when the map stopped saying it was two routes. One rule, spent from both places, is what makes
+ * the line the rider taps and the line they get back the same line.
+ */
+internal fun rideStripeColors(
+    alternatives: List<Int?>,
+    lineColor: Int?,
+    palette: RouteLinePalette
+): List<Int> = alternatives
+    .map { riddenLineColor(it, palette) }
+    .distinct()
+    .filterNot { it == lineColor }
+
+/** The colour this map draws a ride on [routeColor]'s route in, were the rider to drill into it (#2063). */
+internal fun riddenLineColor(routeColor: Int?, palette: RouteLinePalette): Int = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor, palette).color
 
 private data class RideIdentity(val route: String, val interchangeableRouteIds: Set<String>)
 
@@ -346,7 +431,7 @@ private data class Ride(val identity: RideIdentity, val name: String, val drawab
     fun badgedRoutes(palette: RouteLinePalette): List<BadgedRoute> = (
         listOf(BadgedRoute(name, drawable.style.color)) +
             drawable.interchangeable.map { substitute ->
-                BadgedRoute(substitute.route.displayName, substitute.lineColor(palette))
+                BadgedRoute(substitute.route.displayName, riddenLineColor(substitute.routeColor, palette))
             }
         ).inInterchangeableOrder(BadgedRoute::routeShortName)
 }

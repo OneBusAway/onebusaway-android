@@ -26,6 +26,9 @@ const val DEMO_TEST_ROUTE_ID = "1_100447"
 /** The stop the tour focuses, and the one these tests measure arrivals at. */
 const val DEMO_TEST_ANCHOR_STOP_ID = "1_11140"
 
+/** A stop the fixture contains but the route does not call at — see [demoTestFixture]. */
+const val DEMO_TEST_UNSERVED_STOP_ID = "stop_3"
+
 /**
  * A synthetic demo deployment for the JVM tests: a straight 5 km line of six evenly spaced stops.
  *
@@ -37,6 +40,11 @@ const val DEMO_TEST_ANCHOR_STOP_ID = "1_11140"
  * Shared rather than copied per test class: it is the input to every assertion about the demo system,
  * so two divergent copies would let a test pass against geometry no other test sees. The anchor sits
  * fourth along the line, far enough in that a bus can be short of it.
+ *
+ * Note the stop set is deliberately one larger than the route: the anchor takes the fourth position, so
+ * [DEMO_TEST_UNSERVED_STOP_ID] exists as a stop but is not on the route. That is a case worth having —
+ * "a stop this deployment knows, that this route does not call at" is different from an id nobody has
+ * heard of, and both are asserted.
  */
 fun demoTestFixture(): DemoTransitFixture = DemoTransitFixture(
     agency = AgencyReference(id = "1", name = "Demo Transit", timezone = "America/Los_Angeles"),

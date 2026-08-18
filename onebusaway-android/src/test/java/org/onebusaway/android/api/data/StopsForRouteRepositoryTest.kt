@@ -29,7 +29,6 @@ import org.onebusaway.android.api.contract.StopGroupName
 import org.onebusaway.android.api.contract.StopGrouping
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.StopsForRoute
-import org.onebusaway.android.demo.FakeDemoModeState
 
 /**
  * Caching/coalescing + projection routing for [DefaultStopsForRouteRepository] — the single stops-for-route
@@ -77,42 +76,58 @@ class StopsForRouteRepositoryTest {
     }
 
     @Test
-    fun `the demo system's answer for a route id does not become the real one`() = runTest {
-        // The demo transit system the scripted tour runs on (#2164) is a capture of a real deployment,
-        // so its featured route carries a real agency's route id. Both answers have to be able to live
-        // in this process-wide, TTL-less cache at once, or whichever was fetched first is served to the
-        // other for the rest of the session.
-        val demo = FakeDemoModeState()
+    fun `one deployment's answer for a route id does not become another's`() = runTest {
+        // A route id is only unique within one OBA server, and two deployments reach this cache: the
+        // rider switching regions, and the scripted tour's demo system (#2164), which is a capture of a
+        // real deployment and so carries that agency's real route ids. Both answers have to be able to
+        // live here at once, or whichever was fetched first is served to the other for the session.
         val fake = FakeFetch()
+        var deployment = "https://api.pugetsound.onebusaway.org/"
         val repository = DefaultStopsForRouteRepository(
             backgroundScope,
             fetch = fake::get,
-            demoActive = { demo.isActive }
+            deployment = { deployment }
         )
 
-        demo.set(true)
+        fake.results["1_100447"] = Result.success(entryWith(listOf("real-a", "real-b")))
+        val live = repository.routeStopGroups("1_100447").getOrThrow()
+
+        deployment = "demo"
         fake.results["1_100447"] = Result.success(entryWith(listOf("demo-stop")))
         val onTour = repository.routeStopGroups("1_100447").getOrThrow()
 
-        demo.set(false)
-        fake.results["1_100447"] = Result.success(entryWith(listOf("real-a", "real-b")))
-        val afterwards = repository.routeStopGroups("1_100447").getOrThrow()
+        deployment = "https://api.tampa.onebusaway.org/"
+        fake.results["1_100447"] = Result.success(entryWith(listOf("other-region")))
+        val elsewhere = repository.routeStopGroups("1_100447").getOrThrow()
 
+        assertEquals(listOf("real-a", "real-b"), live.single().stops.map { it.id })
         assertEquals(listOf("demo-stop"), onTour.single().stops.map { it.id })
-        assertEquals(listOf("real-a", "real-b"), afterwards.single().stops.map { it.id })
-        // Two fetches, not one served twice from a shared entry.
-        assertEquals(listOf("1_100447", "1_100447"), fake.calls)
+        assertEquals(listOf("other-region"), elsewhere.single().stops.map { it.id })
+        // Three fetches, not one entry served three times.
+        assertEquals(List(3) { "1_100447" }, fake.calls)
     }
 
     @Test
-    fun `a demo answer is still cached for the length of the tour`() = runTest {
+    fun `returning to a deployment serves its cached answer rather than refetching`() = runTest {
+        // The key separates deployments; it does not defeat the cache. A tour taken and left has to
+        // leave the rider's own region's topology exactly where it was.
         val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("a"))) }
-        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get, demoActive = { true })
+        var deployment = "https://api.pugetsound.onebusaway.org/"
+        val repository = DefaultStopsForRouteRepository(
+            backgroundScope,
+            fetch = fake::get,
+            deployment = { deployment }
+        )
 
+        repository.routeStopGroups("r")
+        deployment = "demo"
+        repository.routeStopGroups("r")
+        deployment = "https://api.pugetsound.onebusaway.org/"
         repository.routeStopGroups("r")
         repository.routeMap("r")
 
-        assertEquals(listOf("r"), fake.calls)
+        // Once for the region, once for the demo — the return visit and the second projection are hits.
+        assertEquals(listOf("r", "r"), fake.calls)
     }
 
     @Test

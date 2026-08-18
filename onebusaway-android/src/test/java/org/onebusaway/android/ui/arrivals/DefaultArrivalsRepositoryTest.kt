@@ -206,7 +206,7 @@ class DefaultArrivalsRepositoryTest {
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
         clock: FakeElapsedClock = FakeElapsedClock(),
-        demoActive: Boolean = false
+        demoMode: FakeDemoModeState = FakeDemoModeState()
     ) = DefaultArrivalsRepository(
         regionRepository = FakeRegionRepository(),
         stopArrivals = dataSource,
@@ -220,7 +220,7 @@ class DefaultArrivalsRepositoryTest {
         preferences = FakePreferencesRepository(),
         display = FakeArrivalsDisplay(),
         elapsedClock = clock,
-        demoMode = FakeDemoModeState(demoActive)
+        demoMode = demoMode
     )
 
     // --- Fixtures ---------------------------------------------------------------------------------
@@ -329,11 +329,28 @@ class DefaultArrivalsRepositoryTest {
         val dataSource = FakeStopArrivalsDataSource()
         dataSource.respond = { Result.success(snapshot()) }
         val stopDao = FakeStopDao()
-        val repository = repository(dataSource, stopDao = stopDao, demoActive = true)
+        val repository = repository(dataSource, stopDao = stopDao, demoMode = FakeDemoModeState(true))
 
         repository.getArrivals(STOP_ID, 65).getOrThrow()
 
         assertEquals(emptyList<String>(), stopDao.markStopUsedCalls)
+    }
+
+    @Test
+    fun `a demo load does not consume the session's one recording`() = runTest {
+        // The once-per-session latch has to track the write, not the attempt: a load the demo system
+        // answered records nothing, so the first real load afterwards still owes a Recent-stops entry.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot()) }
+        val stopDao = FakeStopDao()
+        val demoMode = FakeDemoModeState(true)
+        val repository = repository(dataSource, stopDao = stopDao, demoMode = demoMode)
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+        demoMode.set(false)
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(listOf(STOP_ID), stopDao.markStopUsedCalls)
     }
 
     // --- Stop favoriting --------------------------------------------------------------------------

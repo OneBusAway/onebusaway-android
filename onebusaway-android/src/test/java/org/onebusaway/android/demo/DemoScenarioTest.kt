@@ -106,7 +106,10 @@ class DemoScenarioTest {
 
     @Test
     fun `a stop the route does not serve has no arrivals`() {
+        // Both shapes of "not served": an id the fixture has never heard of, and a stop it does carry
+        // that this route simply doesn't call at. The second is the one a real feed produces.
         assertTrue(DemoScenario.arrivalsAt(fixture, "stop_not_on_route", now).isEmpty())
+        assertTrue(DemoScenario.arrivalsAt(fixture, DEMO_TEST_UNSERVED_STOP_ID, now).isEmpty())
     }
 
     /**

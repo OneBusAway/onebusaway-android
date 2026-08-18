@@ -30,7 +30,6 @@ import org.onebusaway.android.api.contract.StopGrouping
 import org.onebusaway.android.api.contract.StopsForRoute
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
-import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.extrapolation.data.BoundedLruCache
 import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteMapDirection
@@ -90,8 +89,21 @@ interface StopsForRouteRepository {
  */
 private const val MAX_CACHED_ROUTE_STOPS = 32
 
-/** Marks a cache entry as the demo transit system's answer rather than the live region's. */
-private const val DEMO_KEY_PREFIX = "demo:"
+/**
+ * A cached route topology, identified by the route *and the deployment that answered for it*.
+ *
+ * A route id is only unique within one OBA server. Keyed on the id alone, this process-wide, TTL-less
+ * cache served whichever answer arrived first to every later asker: a region switch could hand the
+ * previous server's topology to the new one, and the scripted tutorial's demo system (#2164) — a
+ * capture of a real deployment, so its featured route *is* King County Metro's 49, under that agency's
+ * own id — collided with the real 49 outright. A rider who opened the 49 after the tour got the demo's
+ * single-direction stop list and no direction picker; a tour taken after viewing the real 49 narrated
+ * the real topology while its vehicles came from the demo timetable.
+ *
+ * A data class rather than a concatenated string, so no separator has to be assumed absent from a URL
+ * or a route id.
+ */
+private data class RouteTopologyKey(val deployment: String, val routeId: String)
 
 @Singleton
 class DefaultStopsForRouteRepository internal constructor(
@@ -100,24 +112,25 @@ class DefaultStopsForRouteRepository internal constructor(
     // The one wire call, injected so the JVM tests can exercise caching/coalescing without a live
     // ObaApiProvider. `success(null)` = no endpoint; `failure` = IO / HTTP / non-OK code.
     private val fetch: suspend (routeId: String) -> Result<EntryWithReferences<StopsForRoute>?>,
-    // Whether the scripted tutorial's demo transit system is answering (#2164) — part of the cache key,
-    // see [cacheKey].
-    private val demoActive: () -> Boolean = { false }
+    // Which deployment is answering — half of the cache key, see [RouteTopologyKey]. Read per lookup
+    // rather than captured, because it changes under this repository: a region switch, or the scripted
+    // tutorial (#2164) entering and leaving demo mode.
+    private val deployment: () -> String = { "" }
 ) : StopsForRouteRepository {
 
     @Inject
-    constructor(api: ObaApiProvider, demoMode: DemoModeState) : this(
+    constructor(api: ObaApiProvider) : this(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         fetch = { routeId ->
             api.callOrNull { it.stopsForRoute(routeId, includePolylines = true).requireData() }
         },
-        demoActive = { demoMode.isActive }
+        deployment = { api.deploymentKey }
     )
 
     // Only successful entries are cached; failures/no-endpoint aren't, so they re-fetch. The
     // SingleFlight coalesces concurrent first-misses for one route into a single wire call.
-    private val cache = BoundedLruCache<String, EntryWithReferences<StopsForRoute>>(cacheSize)
-    private val fetches = SingleFlight<String, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
+    private val cache = BoundedLruCache<RouteTopologyKey, EntryWithReferences<StopsForRoute>>(cacheSize)
+    private val fetches = SingleFlight<RouteTopologyKey, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
 
     override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = entry(routeId).mapCatching { it?.toRouteStopGroups() ?: throw noEndpoint() }
 
@@ -143,26 +156,13 @@ class DefaultStopsForRouteRepository internal constructor(
      * block itself crashed unexpectedly, which is surfaced as a failure (not masked as no-endpoint).
      */
     private suspend fun entry(routeId: String): Result<EntryWithReferences<StopsForRoute>?> {
-        val key = cacheKey(routeId)
+        val key = RouteTopologyKey(deployment(), routeId)
         cache.get(key)?.let { return Result.success(it) }
         return fetches.run(key) {
             cache.get(key)?.let { return@run Result.success(it) }
             fetch(routeId).onSuccess { fetched -> fetched?.let { cache.put(key, it) } }
         } ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
     }
-
-    /**
-     * The cache (and coalescing) key: the route id, qualified by *which deployment answered for it*.
-     *
-     * A route id is only unique within a deployment, and the demo transit system the scripted tour runs
-     * on (#2164) is a capture of a real one — its featured route is King County Metro's 49, under that
-     * agency's own id. Keyed on the id alone, the tour's single-direction demo topology and the real
-     * route's two-direction one shared an entry in this process-wide, TTL-less cache, and whichever was
-     * fetched first was then served to the other: a Puget Sound rider opening the 49 after the tour got
-     * the demo's stop list and no direction picker, and a tour taken after viewing the real 49 narrated
-     * the real topology while its vehicles came from the demo timetable.
-     */
-    private fun cacheKey(routeId: String) = if (demoActive()) "$DEMO_KEY_PREFIX$routeId" else routeId
 
     private fun noEndpoint() = IOException("No OBA API endpoint: no current region and no custom API URL set")
 }

@@ -173,7 +173,10 @@ class MapViewModel @Inject constructor(
         favoriteStopIds = stopDao.favoriteStopIds().map { it.toSet() },
         // The home map reads through the persistent stop cache (#1754) so stops appear instantly on a
         // slow/cold-start load.
-        stopCache = stopCache
+        stopCache = stopCache,
+        // ...except while the scripted tour is on the demo transit system, whose stops are nobody's
+        // region (#2164).
+        demoActive = { demoMode.isActive }
     )
 
     // ----- Map-host surface (delegated) -----

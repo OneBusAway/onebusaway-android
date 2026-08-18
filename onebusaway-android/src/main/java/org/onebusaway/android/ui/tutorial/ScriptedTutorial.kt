@@ -132,9 +132,12 @@ object ScriptedTutorial {
     /**
      * The tour, in order. Step numbering follows the issue's script.
      *
-     * A few steps deliberately reuse an existing anchor rather than introducing one of their own —
-     * [ArrivalTutorial.KEY_ETA] for the ETA pill and [ArrivalTutorial.KEY_MORE_MENU] for the menu —
-     * so the arrivals panel keeps a single set of spotlight targets whichever tutorial is running.
+     * Three steps deliberately reuse an existing anchor rather than introducing one of their own —
+     * [ArrivalTutorial.KEY_ETA] for the ETA pill — so the arrivals panel keeps a single set of
+     * spotlight targets whichever tutorial is running. That shared anchor is also how the two
+     * tutorials avoid teaching the same control twice: `RecordArrivalSpotlightsShown` records an
+     * arrivals spotlight by anchor, so the tour retires the opportunistic ETA step by *showing* it.
+     * The rest of that sequence stays owed, because the tour never covers it.
      */
     val steps: List<TutorialStep> = listOf(
         // 1. The map. It carries an action even though nothing has happened yet, so that stepping

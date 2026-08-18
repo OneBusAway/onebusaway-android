@@ -392,14 +392,22 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
 
     /** A run's real-time status: where the bus is, how late it is, and what it reaches next. */
     private fun status(run: DemoRun, now: Long, serviceDate: Long): TripStatus {
-        val position = run.positionAt(now)?.let { Position(it.latitude, it.longitude) }
-        val nextIndex = run.nextStopIndexAt(now)
+        // Everything below describes the bus at the moment the AVL reported, which is what
+        // [lastUpdateTime] stamps this status with — not at the moment we were asked. The two have to
+        // be the same instant: the app anchors its extrapolation at lastUpdateTime and advances the
+        // reported distance from there, so reporting *now* under a timestamp 12 s old put the marker
+        // ~60 m past where the same status's ETA math said the bus was — the pill reading NOW while the
+        // marker had already cleared the stop. A run that only came on the road within the last report
+        // interval has nothing older to report, so it reports the present instead.
+        val reportedAt = (now - DEMO_AVL_AGE_MS).takeIf(run::isOnRoad) ?: now
+        val position = run.positionAt(reportedAt)?.let { Position(it.latitude, it.longitude) }
+        val nextIndex = run.nextStopIndexAt(reportedAt)
         // Each of these walks the route's shape or its stop list, and the field list below wants them
         // two or three times over; resolved once so it reads as assignment rather than re-derivation.
-        val progress = run.progressAlongShapeAt(now)
-        val bearing = run.bearingAt(now).toDouble()
+        val progress = run.progressAlongShapeAt(reportedAt)
+        val bearing = run.bearingAt(reportedAt).toDouble()
         val nextStopId = nextIndex?.let(run.geometry.stopIds::get)
-        val nextStopOffset = nextIndex?.let { secondsUntilStop(run, it, now) }
+        val nextStopOffset = nextIndex?.let { secondsUntilStop(run, it, reportedAt) }
         return TripStatus(
             activeTripId = run.tripId,
             predicted = true,
@@ -418,8 +426,9 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
             scheduledDistanceAlongTrip = progress + run.deviationSeconds * run.service.speedMetersPerSecond,
             totalDistanceAlongTrip = run.geometry.totalDistance,
             // The demo feed is always fresh: a live AVL system had just reported when we were asked.
-            lastUpdateTime = now - DEMO_AVL_AGE_MS,
-            lastLocationUpdateTime = now - DEMO_AVL_AGE_MS,
+            // This is the instant every field above describes — see [reportedAt].
+            lastUpdateTime = reportedAt,
+            lastLocationUpdateTime = reportedAt,
             lastKnownLocation = position,
             lastKnownDistanceAlongTrip = progress,
             lastKnownOrientation = bearing,

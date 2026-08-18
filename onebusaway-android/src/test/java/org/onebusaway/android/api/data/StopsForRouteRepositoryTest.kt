@@ -29,6 +29,7 @@ import org.onebusaway.android.api.contract.StopGroupName
 import org.onebusaway.android.api.contract.StopGrouping
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.StopsForRoute
+import org.onebusaway.android.demo.FakeDemoModeState
 
 /**
  * Caching/coalescing + projection routing for [DefaultStopsForRouteRepository] — the single stops-for-route
@@ -71,6 +72,45 @@ class StopsForRouteRepositoryTest {
 
         repository.routeStopGroups("r")
         repository.routeStopGroups("r")
+
+        assertEquals(listOf("r"), fake.calls)
+    }
+
+    @Test
+    fun `the demo system's answer for a route id does not become the real one`() = runTest {
+        // The demo transit system the scripted tour runs on (#2164) is a capture of a real deployment,
+        // so its featured route carries a real agency's route id. Both answers have to be able to live
+        // in this process-wide, TTL-less cache at once, or whichever was fetched first is served to the
+        // other for the rest of the session.
+        val demo = FakeDemoModeState()
+        val fake = FakeFetch()
+        val repository = DefaultStopsForRouteRepository(
+            backgroundScope,
+            fetch = fake::get,
+            demoActive = { demo.isActive }
+        )
+
+        demo.set(true)
+        fake.results["1_100447"] = Result.success(entryWith(listOf("demo-stop")))
+        val onTour = repository.routeStopGroups("1_100447").getOrThrow()
+
+        demo.set(false)
+        fake.results["1_100447"] = Result.success(entryWith(listOf("real-a", "real-b")))
+        val afterwards = repository.routeStopGroups("1_100447").getOrThrow()
+
+        assertEquals(listOf("demo-stop"), onTour.single().stops.map { it.id })
+        assertEquals(listOf("real-a", "real-b"), afterwards.single().stops.map { it.id })
+        // Two fetches, not one served twice from a shared entry.
+        assertEquals(listOf("1_100447", "1_100447"), fake.calls)
+    }
+
+    @Test
+    fun `a demo answer is still cached for the length of the tour`() = runTest {
+        val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("a"))) }
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get, demoActive = { true })
+
+        repository.routeStopGroups("r")
+        repository.routeMap("r")
 
         assertEquals(listOf("r"), fake.calls)
     }

@@ -19,6 +19,8 @@ import android.net.Uri
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -65,7 +67,7 @@ class ObaApiProvider @Inject constructor(
      * classify app-level codes on one type.
      */
     suspend fun <T> call(block: suspend (ObaWebService) -> T): Result<T> {
-        demoService()?.let { return attempt { block(it) } }
+        demoService()?.let { demo -> return attempt { offMainThread { block(demo) } } }
         val service = service() ?: return Result.failure(noEndpoint())
         return attempt { block(service) }
     }
@@ -75,7 +77,7 @@ class ObaApiProvider @Inject constructor(
      * that treat "no region" as nothing-to-show rather than an error.
      */
     suspend fun <T> callOrNull(block: suspend (ObaWebService) -> T): Result<T?> {
-        demoService()?.let { return attempt { block(it) } }
+        demoService()?.let { demo -> return attempt { offMainThread { block(demo) } } }
         val service = service() ?: return Result.success(null)
         return attempt { block(service) }
     }
@@ -88,6 +90,27 @@ class ObaApiProvider @Inject constructor(
      * live-data tutorial that #2164 set out to remove.
      */
     private fun demoService(): ObaWebService? = if (demoMode.isActive) demoMode.obaService else null
+
+    /**
+     * Runs a demo answer off whatever thread asked for it.
+     *
+     * The live path is main-safe for free — Retrofit dispatches its own IO, which is why the data
+     * sources above here deliberately carry no `withContext` of their own. The demo deployment is a
+     * plain in-process simulation, so it runs on its caller's dispatcher instead, and several of those
+     * callers poll from `viewModelScope` on Main: a whole viewport's worth of arrivals — every stop,
+     * every route, a vehicle status per arrival — would be simulated on the main thread on each tick,
+     * while the tour's spotlight ring is animating over it. It is CPU work over an in-memory fixture
+     * rather than IO, so [Dispatchers.Default] is its home.
+     *
+     * NEEDS AN ON-DEVICE PASS: an earlier attempt at this reportedly stalled, and nothing in the code
+     * explains why — the demo service is a pure function of the fixture and the clock, and takes no
+     * locks. The one mechanism that would fit is pool contention: the map's own stop pipeline runs
+     * `flowOn(Dispatchers.Default)` and route-shape decoding shares that same small pool, so several
+     * long simulated responses can queue the map behind them. If it recurs, [Dispatchers.IO] is the
+     * escape hatch — a worse fit for CPU work, but elastic, and the demo service is standing in for
+     * calls its callers believe are network-bound anyway.
+     */
+    private suspend fun <T> offMainThread(block: suspend () -> T): T = withContext(Dispatchers.Default) { block() }
 
     /** Runs [block], mapping an OBA-stated failure to [ObaApiException] and keeping cancellation out. */
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = runCatchingCancellable { block() }

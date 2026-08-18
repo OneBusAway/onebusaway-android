@@ -15,7 +15,13 @@
  */
 package org.onebusaway.android.ui.tutorial
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.platform.LocalContext
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
@@ -81,6 +87,39 @@ object ArrivalTutorial {
         shown.forEach { prefs.setBoolean(it.id, true) }
     }
 
+    /**
+     * True when [key] is one of this sequence's spotlight anchors — which the scripted tour (#2164)
+     * reuses for the arrivals controls it teaches, so a step is matched by *anchor* rather than by its
+     * own id. Pure, so the gating stays JVM-unit-testable.
+     */
+    fun isSpotlightAnchor(key: String): Boolean = steps.any { it.id == key }
+
     /** The preference keys "show tutorials again" clears to re-arm the sequence. */
     fun resetKeys(): List<String> = steps.map { it.id }
+}
+
+/**
+ * Records each arrivals spotlight as shown the moment it is actually on screen, for whichever tutorial
+ * is running. Renders nothing; host it once, alongside the [TutorialState] it watches.
+ *
+ * A step is recorded *as it is displayed* rather than the whole sequence being marked when one starts,
+ * because either tutorial can end early — the corner "X", or system Back, which the overlay treats the
+ * same way. Marking up front meant a rider who pressed Back meaning to collapse the arrivals sheet
+ * silently retired all three spotlights before seeing two of them, with no scrim to hint that anything
+ * had been dismissed; what is left unmarked simply stays owed, and comes back at the next stop.
+ *
+ * Keyed on [TutorialStep.anchorId], so the scripted tour (#2164) counts too: its ETA-pill steps ring
+ * [ArrivalTutorial.KEY_ETA] to teach the same control, and re-ambushing the rider with the opportunistic
+ * version of a lesson they just had would be a worse answer than either tutorial acting alone. Steps
+ * anchored anywhere else are ignored, so nothing here fires for the rest of the tour.
+ */
+@Composable
+fun RecordArrivalSpotlightsShown(state: TutorialState) {
+    val app = LocalContext.current.applicationContext
+    val prefs = remember(app) { PreferencesEntryPoint.get(app) }
+    LaunchedEffect(state, prefs) {
+        snapshotFlow { state.current?.anchorId }.collect { anchor ->
+            if (anchor != null && ArrivalTutorial.isSpotlightAnchor(anchor)) prefs.setBoolean(anchor, true)
+        }
+    }
 }

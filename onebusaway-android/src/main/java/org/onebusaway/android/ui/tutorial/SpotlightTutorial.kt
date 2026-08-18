@@ -362,6 +362,12 @@ fun TutorialOverlay(state: TutorialState) {
     // underneath is still fully wired: without it, Back would unwind the map or the directions view out
     // from under a script that is narrating them, and for the scripted tour (#2164) it would dispose the
     // host without ever running the teardown that takes the app off the demo transit system.
+    //
+    // It ends the sequence rather than stepping back through it (the caption's own Back button does
+    // that) so there is always one press that gets out, however deep into a seventeen-step tour the
+    // rider is. That makes it easy to trip over — a press meant for the arrivals sheet ends the tutorial
+    // instead — so no persisted tutorial marks a step shown before showing it; see
+    // [RecordArrivalSpotlightsShown], which is what keeps an accidental dismissal from being permanent.
     BackHandler { state.dismiss() }
 
     BoxWithConstraints(

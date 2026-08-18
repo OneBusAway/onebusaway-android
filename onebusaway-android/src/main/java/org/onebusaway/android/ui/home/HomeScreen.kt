@@ -141,6 +141,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.RecordArrivalSpotlightsShown
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
@@ -311,6 +312,9 @@ fun HomeScreen(
                 // Drives the arrivals-panel onboarding spotlight; provided to the sheet content (so the panel's
                 // anchors can register) and read by [TutorialOverlay] below, which draws over the whole screen.
                 val tutorialState = rememberTutorialState()
+                // Persist each arrivals spotlight as it is actually shown — by whichever tutorial is
+                // running, the opportunistic sequence or the scripted tour, which reuses its anchors.
+                RecordArrivalSpotlightsShown(tutorialState)
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 // The sheet has NO reachable `Hidden` anchor (`skipHiddenState = true`), so peek is the hard
                 // floor of the drag: the user can expand from peek or collapse back to it, but can never drag it

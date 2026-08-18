@@ -51,6 +51,7 @@ import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
 import org.onebusaway.android.database.oba.StopUserInfoRow
+import org.onebusaway.android.demo.FakeDemoModeState
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.region.FakeRegionRepository
@@ -204,7 +205,8 @@ class DefaultArrivalsRepositoryTest {
     private fun repository(
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
-        clock: FakeElapsedClock = FakeElapsedClock()
+        clock: FakeElapsedClock = FakeElapsedClock(),
+        demoActive: Boolean = false
     ) = DefaultArrivalsRepository(
         regionRepository = FakeRegionRepository(),
         stopArrivals = dataSource,
@@ -217,7 +219,8 @@ class DefaultArrivalsRepositoryTest {
         importGate = NoopImportGate,
         preferences = FakePreferencesRepository(),
         display = FakeArrivalsDisplay(),
-        elapsedClock = clock
+        elapsedClock = clock,
+        demoMode = FakeDemoModeState(demoActive)
     )
 
     // --- Fixtures ---------------------------------------------------------------------------------
@@ -316,6 +319,21 @@ class DefaultArrivalsRepositoryTest {
         repository.getArrivals(STOP_ID, 65).getOrThrow()
 
         assertEquals(listOf(STOP_ID), stopDao.markStopUsedCalls)
+    }
+
+    @Test
+    fun `a stop viewed on the demo transit system is not recorded in the rider's recents`() = runTest {
+        // The scripted tour (#2164) focuses the demo system's anchor stop through the ordinary reveal
+        // path, which lands in recordStop. Recording it would file a Seattle stop under whatever region
+        // the rider is actually in — top of their Recent stops, and a 404 when they tap it.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot()) }
+        val stopDao = FakeStopDao()
+        val repository = repository(dataSource, stopDao = stopDao, demoActive = true)
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(emptyList<String>(), stopDao.markStopUsedCalls)
     }
 
     // --- Stop favoriting --------------------------------------------------------------------------

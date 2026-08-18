@@ -22,8 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DemoEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
@@ -43,7 +46,6 @@ import org.onebusaway.android.ui.tripresults.TripLogEntry
 import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
-import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.ScriptedTutorialActions
 import org.onebusaway.android.ui.tutorial.ScriptedTutorialDirector
@@ -145,10 +147,17 @@ internal fun ScriptedTourHost(
     // Putting the app back, wherever the tour stopped. Shared by the ordinary teardown below and by the
     // interrupted-tour cleanup, so there is exactly one definition of what "leaving the tour" undoes.
     val restore: (ScriptedTourUndo) -> Unit = { pending ->
-        // The tour drove the app into directions and through a stop focus; unwind both before the real
-        // region's data comes back, so nothing is left focused on a demo id.
-        homeViewModel.clearMapFocus()
+        // The tour drove the app into directions and through a stop focus; unwind both — and the undo
+        // history behind them — before the real region's data comes back, so nothing is left focused on
+        // a demo id and the rider's next Back press can't walk back into one. Every scripted action
+        // pushes onto that history, so clearing the focus alone would only add one more entry to it.
+        homeViewModel.clearMapFocusAndUndoHistory()
         mapViewModel.clearAllFocus()
+        // The trip planner is activity-scoped, and the tour filled its form in with the demo system's
+        // endpoints and planned them. Leaving that behind means the rider's next visit to Plan Trip
+        // opens on a stranger's trip in a city they aren't in, which only the demo deployment could
+        // re-plan — so the form goes back to empty along with everything else.
+        tripPlanViewModel.clearTrip()
         // The rental layer's switches are persisted preferences, so showing it during the tour is the
         // one change that would otherwise outlive it.
         mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, pending.bikesVisible)
@@ -160,9 +169,11 @@ internal fun ScriptedTourHost(
         pending.viewport?.let(mapViewModel::restoreViewport) ?: mapViewModel.zoomToRegion()
         demoMode.exit()
         prefsRepo.clearTourUndo()
-        // The tour has already covered what the opportunistic arrivals spotlight teaches, so don't
-        // ambush the rider with it again the first time they open a real stop.
-        ArrivalTutorial.markShown(prefsRepo, ArrivalTutorial.steps)
+        // Deliberately *not* marking the opportunistic arrivals spotlights shown here. That is recorded
+        // per step, as each one is actually on screen (see `RecordArrivalSpotlightsShown`), which is the
+        // only thing that can be true of a tour the rider may have left on step one — and the tour only
+        // ever teaches the ETA pill, so blanket-marking the sequence retired two spotlights it never
+        // showed and made "Help ▸ Show tutorials" unable to re-arm them.
     }
 
     LaunchedEffect(Unit) {
@@ -207,9 +218,15 @@ internal fun ScriptedTourHost(
     // Teardown. `active` goes false on the last step's finish flourish, on the corner "X" and on system
     // Back alike (see TutorialOverlay's BackHandler), so every exit lands here and none of them can
     // leave the rider stranded in a city they have never been to.
-    LaunchedEffect(undo, tutorialState.active) {
+    LaunchedEffect(undo) {
         val pending = undo ?: return@LaunchedEffect
-        if (tutorialState.active) return@LaunchedEffect
+        // Wait for the tour to come *up* before watching for it to go away. Arming `undo` is the first
+        // thing the start sequence above does and starting the tutorial is the last, and in between it
+        // suspends to decode the fixture — so at this point `active` is routinely still false. Reading
+        // that as "the tour has ended" tore it down before it began: demo mode was switched back off
+        // (and the in-flight record cleared) while the tour ran on, and the real exit then found
+        // nothing left to put back.
+        snapshotFlow { tutorialState.active }.dropWhile { !it }.first { !it }
         restore(pending)
         undo = null
     }
@@ -239,6 +256,14 @@ internal fun ScriptedTourHost(
  *
  * **Nothing here writes to the rider's data.** The steps about starring and pinning spotlight those
  * controls and explain them; they do not press them.
+ *
+ * Going through the real entry points does mean going through the writes they trigger on the way,
+ * though, and those are not the tour's to make: a stop focus records the stop in Recent stops, and a
+ * viewport load saves its stops into the per-region cache — both of which would file the demo system's
+ * Seattle ids under whatever region the rider is actually in. Each of those writers asks
+ * [org.onebusaway.android.demo.DemoModeState] first, so the guarantee above holds at the writer rather
+ * than depending on this list of actions never growing (see `DefaultArrivalsRepository.recordStop` and
+ * `StopsMapController`).
  */
 @Composable
 internal fun rememberScriptedTutorialActions(
@@ -282,11 +307,22 @@ internal fun rememberScriptedTutorialActions(
                 demoMode.featuredTripId()?.let(homeViewModel::selectFocusedRouteTrip)
             },
             setDrawerOpen = { open -> if (open) drawerState.open() else drawerState.close() },
-            // Just the focus unwind, which is what backing out of a route actually does — the camera
-            // stays where the rider left it rather than springing somewhere new.
             showTripDestination = {
+                // This step mimes a long press on a map its caption says hasn't been asked for anything
+                // yet. Reached *backwards* from the trip-planning step that follows it, the app is still
+                // in directions with the demo plan drawn, and re-aiming the camera alone left the form
+                // and the results drawer sitting under that caption — so unwind the focus first, exactly
+                // as the rentals step does. Forward this costs nothing: there is no focus to clear, so
+                // it returns without even emitting a directive.
+                homeViewModel.clearMapFocus()
+                // Clearing a focus travels through a map directive the host consumes a frame or two
+                // later, and that drops any retained framing on its way, so the aim has to follow it
+                // rather than race it (see the same wait in `showRentals`).
+                delay(FOCUS_SETTLE_MILLIS)
                 mapViewModel.aimAt(DemoModeController.TRIP_PLAN_DESTINATION, DemoModeController.CAMERA_ZOOM)
             },
+            // Just the focus unwind, which is what backing out of a route actually does — the camera
+            // stays where the rider left it rather than springing somewhere new.
             resetMap = homeViewModel::clearMapFocus,
             showRentals = {
                 // Reached backwards from the trip-planning step, the app is still in directions, which

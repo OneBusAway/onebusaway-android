@@ -35,6 +35,7 @@ import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.markStopUsed
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
@@ -252,7 +253,8 @@ class DefaultArrivalsRepository @Inject constructor(
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
     private val display: ArrivalsDisplay,
-    private val elapsedClock: ElapsedClock
+    private val elapsedClock: ElapsedClock,
+    private val demoMode: DemoModeState
 ) : ArrivalsRepository {
 
     /**
@@ -406,6 +408,13 @@ class DefaultArrivalsRepository @Inject constructor(
      * favorite UPDATE persists and marks it used so it appears in Recent stops. Done once per session.
      */
     private suspend fun recordStop(stop: ObaStop, now: Long) {
+        // Never while the scripted tutorial's demo transit system is answering (#2164). The tour focuses
+        // its own anchor stop through the ordinary reveal path, which lands here — and this row is
+        // written against whatever region the *rider* is in (or a null one, on a first launch, which the
+        // Recent query then matches for every region). A rider in Atlanta would finish the tour to find
+        // a Seattle stop at the top of Recent stops, and tapping it would ask Atlanta's server for an id
+        // it has never heard of. The tour is a demonstration; it leaves no trace in the rider's data.
+        if (demoMode.isActive) return
         stopDao.markStopUsed(stop, regionRepository.region.value?.id, now)
     }
 

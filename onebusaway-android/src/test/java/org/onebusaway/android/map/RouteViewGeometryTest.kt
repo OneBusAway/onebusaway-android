@@ -14,6 +14,7 @@ import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
@@ -42,6 +43,26 @@ class RouteViewGeometryTest {
         assertEquals(line.dash, context.dash)
         assertEquals(line.transforms, context.transforms)
         assertEquals(false, context.directional)
+    }
+
+    @Test
+    fun `itinerary context carries no end marks`() {
+        // #2241: a bulb pair ("alight here, board there") and an interline cut are readings of a trip
+        // being followed at full weight. The leg they could still be read on is the one the rider
+        // drilled into, which this view redraws over its context copy and marks with the boarding stop
+        // instead — so a mark surviving here is one the view already decided not to draw, and it showed.
+        val ride = RoutePolyline(
+            color = 0xFF123456.toInt(),
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+            startMark = RouteLineMark.INTERLINE_CUT,
+            endMark = RouteLineMark.BULB
+        )
+
+        val context = listOf(ride).asItineraryContext().single()
+
+        assertEquals(RouteLineMark.NONE, context.startMark)
+        assertEquals(RouteLineMark.NONE, context.endMark)
     }
 
     @Test

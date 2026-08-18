@@ -88,12 +88,25 @@ internal fun List<RoutePolyline>.asSelectedRouteApproach(): List<RoutePolyline> 
  * question about a ride the rider is choosing; a context leg is here to say where the leg being read sits
  * in the journey, and is drawn at half the width the stripes were cut against — so the same rhythm arrives
  * as a fleck of noise beside the leg that is actually being read.
+ *
+ * And it drops both end marks (#2241), for the same reason and with the same force as
+ * [asPinnedTripGhost]: a bulb pair means "alight here, board there" and a cut means "the route changes
+ * under you", which are readings of a trip being *followed*, not of the faint trace saying where one leg
+ * of it sits. The leg they could still be read on is the ride the rider drilled into — and this view
+ * redraws that ride at full weight over its context copy, deliberately marking where the rider boards
+ * with the boarding *stop* rather than a bulb (see [routePolylinesWithSegment]). A mark surviving into
+ * the context is therefore one this view has already decided not to draw, held under the redraw only by
+ * the redraw happening to cover it: a mark is drawn about the line's endpoint, not inside its stroke, so
+ * whether it showed came down to what else landed on top of that point — and on an interchangeable ride
+ * it showed.
  */
 internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map { line ->
     line.copy(
         widthProfile = ITINERARY_CONTEXT_WIDTH_PROFILE,
         directional = false,
-        stripeColors = emptyList()
+        stripeColors = emptyList(),
+        startMark = RouteLineMark.NONE,
+        endMark = RouteLineMark.NONE
     )
 }
 

@@ -138,6 +138,35 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
+    fun routePolylinesWithSegment_drawsNoLegEndBulbs_whateverTheRideIsSharedWith() {
+        // #2241: the drilled-into ride is marked with the stop the rider boards at, not with a bulb, and
+        // nothing else in this view draws one either. The rider's own journey arrives as context around
+        // it, and an itinerary leg carries the bulbs the overview drew — including the leg being drilled
+        // into, whose context copy this view redraws over. Asserted over the whole drawn set, because
+        // "no bulbs here" is a property of the view and not of the one line that happens to be selected:
+        // a mark left on a context leg is held out of sight only by the redraw landing on top of it,
+        // which is what an interchangeable ride's did not do.
+        val interchangeableRide = RoutePolyline(
+            color = 2,
+            points = segment,
+            stripeColors = listOf(3),
+            widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
+            case = RouteLineCase.OUTLINE,
+            startMark = RouteLineMark.BULB,
+            endMark = RouteLineMark.BULB
+        )
+
+        val result = routePolylinesWithSegment(
+            base = listOf(RoutePolyline(color = 1, points = segment)),
+            spans = ride(segment),
+            colorOf = { 4 },
+            itineraryContext = listOf(interchangeableRide).asItineraryContext()
+        )
+
+        assertTrue(result.none { it.startMark == RouteLineMark.BULB || it.endMark == RouteLineMark.BULB })
+    }
+
+    @Test
     fun routePolylinesWithSegment_drawsAnInterlinedRideAsOneSpanPerRoute_cutAtEachCutover() {
         // #2127: one ride, two routes. Drawn as a single line it had to pick one route's colour for the
         // whole thing and had no interior to mark, so the cutover the itinerary map shows disappeared the

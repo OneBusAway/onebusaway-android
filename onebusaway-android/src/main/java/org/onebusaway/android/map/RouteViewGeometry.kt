@@ -219,7 +219,10 @@ private data class RouteBadgeSpec(
 internal data class SelectedTripStyle(val color: Int, val includeUnderlay: Boolean)
 
 /**
- * [stopFocusActive] alone gates the underlay: inside stop focus the focused-stop's own siblings
+ * The underlay is the route context a selected trip is read against, so it is dropped wherever the view
+ * already draws one of its own — and each such view is asked about directly, never proxied.
+ *
+ * [stopFocusActive] alone gates the stop-focus case: inside stop focus the focused-stop's own siblings
  * already carry the route's other geometry, so the underlay is dropped even when [selectedRouteDirection]
  * isn't among the focused stop's own trips and [routeColors] carries no adjacency entry for it — that
  * combination used to fall back to a whole-route-style underlay (the #1899 regression fixed by #1902),
@@ -227,15 +230,20 @@ internal data class SelectedTripStyle(val color: Int, val includeUnderlay: Boole
  * A color miss still falls back to [routeColorFallback]; only the underlay must not follow it. Both
  * inputs are already in the map's route-line colour policy ([mapRouteLineColor]) — this picks between
  * them, it doesn't render either.
+ *
+ * [rideApproachActive] is the directions-ride case (#2239): a focused ride draws each boardable route's
+ * upstream lead-in as its route context and deliberately nothing else, so putting the whole corridor
+ * back under a tapped vehicle would undo the very restriction the ride focus is drawn with.
  */
 internal fun selectedTripStyle(
     stopFocusActive: Boolean,
+    rideApproachActive: Boolean,
     selectedRouteDirection: RouteDirectionKey,
     routeColors: Map<RouteDirectionKey, Int>,
     routeColorFallback: Int
 ): SelectedTripStyle = SelectedTripStyle(
     color = routeColors[selectedRouteDirection] ?: routeColorFallback,
-    includeUnderlay = !stopFocusActive
+    includeUnderlay = !stopFocusActive && !rideApproachActive
 )
 
 /** Presented route-direction identities at each scheduled stop, optionally narrowed to [route]. */

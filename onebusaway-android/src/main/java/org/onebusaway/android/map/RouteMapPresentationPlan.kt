@@ -78,7 +78,8 @@ internal data class SelectedTripRenderInput(
  *    otherwise, but the thinned direction underlay is gated on stop-focus being active at all, not on
  *    whether an adjacency colour happened to be found for this exact direction. (The #1899 regression
  *    was exactly that: the underlay decision proxied off the colour lookup instead of the real
- *    stop-focus state, see #1902.)
+ *    stop-focus state, see #1902.) What it replaces is a *route's* geometry — see [baseIsRideApproach]
+ *    for the ride focus, whose base is not that and stays (#2239).
  * 2. **No stop-focus session** ([focusTrips] null): the plain base route (or ordinary nearby stops).
  * 3. **Stop-focus session**: adjacency geometry for the focused stop's trips, drawn over the emphasized
  *    base route only when that route isn't itself one of the focused trips ([showBaseRoute]).
@@ -87,11 +88,19 @@ internal data class SelectedTripRenderInput(
  * work enters lazily so the merge policy itself stays plain data, JVM-testable across every branch: the
  * focused-stop projection as the [projectedFocusStops] thunk, the selected-trip underlay/stop projection
  * as thunks on [SelectedTripRenderInput]. That projection geometry is covered by instrumented tests.
+ *
+ * @param baseIsRideApproach what [basePolylines] *is*, which decides what a drilled-into vehicle does to
+ * it (#2239). False for an ordinary route session, where it is the shown route's own corridor — one
+ * route's geometry, which the exact trip line is a better answer for, and which the trip's own thinned
+ * underlay stands in for. True in a directions ride focus, where it is the ride's approach set: the
+ * upstream lead-in of every route the rider may board (#2010), only one of which the selected vehicle
+ * runs — so it stays drawn, and brings its own route context, leaving the corridor underlay off.
  */
 internal fun assembleRouteMapPresentation(
     isActive: Boolean,
     emphasizedRoute: RouteDirectionKey?,
     basePolylines: List<RoutePolyline>,
+    baseIsRideApproach: Boolean,
     baseStopPresentation: RouteStopPresentation?,
     focusTrips: Set<FocusedTrip>?,
     focusedGeometry: FocusedTripGeometry,
@@ -109,26 +118,31 @@ internal fun assembleRouteMapPresentation(
     }
 
     // 1. Selected vehicle: draw its exact trip in place of the direction geometry. Stop focus alone
-    // gates the underlay, not whether an adjacency color happened to be found for this exact
-    // direction — see selectedTripStyle (#1902).
+    // gates the underlay's stop-focus case, not whether an adjacency color happened to be found for
+    // this exact direction — see selectedTripStyle (#1902).
     if (selected != null) {
         val style = selectedTripStyle(
-            focusTrips != null,
-            selected.presentation.routeDirection,
-            routeColors,
-            selected.routeColorFallback
+            stopFocusActive = focusTrips != null,
+            rideApproachActive = baseIsRideApproach,
+            selectedRouteDirection = selected.presentation.routeDirection,
+            routeColors = routeColors,
+            routeColorFallback = selected.routeColorFallback
         )
         val selectedTrip = selected.presentation.points
             .takeIf { it.size >= 2 }
             ?.let { points -> focusedRoutePolyline(style.color, points, directional = true) }
         if (selectedTrip != null) {
+            // A ride's approach set survives the vehicle drawn over it (see [baseIsRideApproach]); a
+            // route's own corridor is what the exact trip replaces. Kept first, so the trip reads over it.
+            val keptBase = if (baseIsRideApproach) basePolylines else emptyList()
             return RouteMapPresentation(
-                polylines = focusedGeometry.toTripFocusedRoutePolylines(
-                    selected.presentation.routeDirection,
-                    routeColors,
-                    if (style.includeUnderlay) selected.directionUnderlay() else emptyList(),
-                    selectedTrip
-                ),
+                polylines = keptBase +
+                    focusedGeometry.toTripFocusedRoutePolylines(
+                        selected.presentation.routeDirection,
+                        routeColors,
+                        if (style.includeUnderlay) selected.directionUnderlay() else emptyList(),
+                        selectedTrip
+                    ),
                 framingPolylines = listOf(selectedTrip),
                 routeModeScalesStopsWithZoom = isActive,
                 badges = badges,

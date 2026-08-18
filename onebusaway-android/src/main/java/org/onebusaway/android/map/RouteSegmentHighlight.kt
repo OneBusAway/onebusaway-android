@@ -140,17 +140,29 @@ internal fun List<RiddenSpan>.isDrawableRide(): Boolean = sumOf { it.points.size
  * rider boards. Neither carries direction chevrons (#2129): like every other itinerary line, the ride is
  * marked selected by its case and weight alone.
  *
- * The end marks follow the same rule the itinerary map's own caps do ([itineraryLegCaps]), stated here over
- * span position because a ride's spans *are* its legs: a bulb where the rider gets on and off, an
- * [RouteLineMark.INTERLINE_CUT] where the vehicle changed route under them ([RiddenSpan.startsCutover]), and
- * nothing at a seam they sit through. The bulbs are why the ride reads as a ride here rather than as a piece
- * of corridor, and the cut is why drilling into an interlined ride shows the rider *more* about it rather
- * than losing the one thing that said the route changes mid-ride.
+ * The end marks follow the same rule the itinerary map's own caps do ([itineraryLegCaps]): a bulb where the
+ * rider gets on and off, an [RouteLineMark.INTERLINE_CUT] where the vehicle changed route under them
+ * ([RiddenSpan.startsCutover]), and nothing at a seam they sit through. The bulbs are why the ride reads as
+ * a ride here rather than as a piece of corridor, and the cut is why drilling into an interlined ride shows
+ * the rider *more* about it rather than losing the one thing that said the route changes mid-ride.
+ *
+ * The two halves of that rule reach here differently, deliberately. The **cut** is carried as data: it is a
+ * fact about the ride ("the vehicle changed route onto this span"), read off the same `Interlines.chains`
+ * transitions [itineraryLegCaps] folds into its seams, so both maps cut in the same places by construction.
+ * The **bulbs** are decided here, from position in the *drawn* list — because which end is an end is a fact
+ * about what this view is actually drawing, not about the plan: a span whose geometry is undrawable is
+ * dropped above, and the boarding bulb has to land on the first point the rider can actually see rather
+ * than disappear with it. Carrying `start`/`end` across instead would need that same "first one drawn"
+ * reasoning anyway, one layer further from where the dropping happens.
  *
  * [stripeColorsOf] is a lambda for the same reason [colorOf] is: this file picks which colours a ride is
  * drawn *from*, and the rendering of them stays with the caller's palette (see the file header). It is
  * handed the colour the span was *already* resolved to, so the stripes are deduplicated against the colour
- * the line is actually stroked in rather than against a second, independently resolved answer.
+ * the line is actually stroked in rather than against a second, independently resolved answer — and that
+ * colour moves: it upgrades from the plan's to the route's own once that route loads (#2186), through
+ * whichever palette this session draws with. Which is why the ride's stripes are re-derived here from the
+ * colours the plan carried rather than handed over as a finished line: a line baked by the itinerary would
+ * freeze its stripes against the colour and palette it had *there*.
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,

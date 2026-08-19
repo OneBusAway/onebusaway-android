@@ -34,13 +34,6 @@ val DRAG_HANDLE_BAR_HEIGHT = 4.dp
 val DRAG_HANDLE_VERTICAL_PADDING = 9.dp
 val DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_VERTICAL_PADDING * 2
 
-// The same bar in a full 48dp band — Android's minimum touch-target size, which is also the geometry
-// Material 3 gives `BottomSheetDefaults.DragHandle`. Used by [SheetDragHandle] for a sheet that collapses
-// to a handle-only peek, where the band is all that separates a tap from the system gesture area; the
-// tighter band above is for handles sitting atop content that is already on screen.
-val DRAG_HANDLE_TOUCH_TARGET_PADDING = 22.dp
-val DRAG_HANDLE_TOUCH_TARGET_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_TOUCH_TARGET_PADDING * 2
-
 /**
  * The short tinted grab-bar pill drawn inside a bottom-sheet drag handle — a muted grey matching the
  * panel chrome, so it reads as part of the sheet. Callers wrap it in their own padded, gesture-bearing
@@ -58,16 +51,18 @@ fun DragHandleBar(modifier: Modifier = Modifier) {
 }
 
 /**
- * [DragHandleBar] centred in a full 48dp touch-target band ([DRAG_HANDLE_TOUCH_TARGET_HEIGHT]) — the
- * handle to hand a Material `BottomSheetScaffold` as its `sheetDragHandle`. The scaffold wraps whatever
- * it's given with the sheet's tap-to-toggle and expand/collapse accessibility actions, so this only has
- * to supply the geometry; sizing the band here (rather than using `BottomSheetDefaults.DragHandle`) keeps
- * a handle-only peek height computable from an app-owned constant instead of one of M3's private ones.
+ * [DragHandleBar] centred in the shared [DRAG_HANDLE_HEIGHT] band — the handle to hand a Material
+ * `BottomSheetScaffold` as its `sheetDragHandle`. The scaffold wraps whatever it's given with the sheet's
+ * tap-to-toggle and expand/collapse accessibility actions, so this only has to supply the geometry;
+ * sizing the band here (rather than using `BottomSheetDefaults.DragHandle`, whose 48dp band read as an
+ * oversized grab strip next to the arrivals sheet — #2240) keeps a handle-only peek height computable
+ * from an app-owned constant instead of one of M3's private ones, and keeps the two sheets' handles the
+ * same size.
  */
 @Composable
 fun SheetDragHandle(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.padding(vertical = DRAG_HANDLE_TOUCH_TARGET_PADDING),
+        modifier = modifier.padding(vertical = DRAG_HANDLE_VERTICAL_PADDING),
         contentAlignment = Alignment.Center
     ) {
         DragHandleBar()

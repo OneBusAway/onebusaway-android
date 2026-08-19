@@ -97,7 +97,7 @@ import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
 import org.onebusaway.android.ui.arrivals.components.countBefore
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
-import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
@@ -304,7 +304,7 @@ fun DirectionsResultsSheet(
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
     // stranded under the gesture pill / 3-button bar. The peek includes it so the handle clears it.
     val navBottom = navigationBarBottomPadding()
-    val peekHeight = DRAG_HANDLE_TOUCH_TARGET_HEIGHT + navBottom
+    val peekHeight = DRAG_HANDLE_HEIGHT + navBottom
     // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
     //
     // Floored at the peek, because a sheet shorter than its own peek inverts the two states: M3 anchors
@@ -359,8 +359,8 @@ fun DirectionsResultsSheet(
         sheetTonalElevation = 2.dp,
         sheetShadowElevation = 8.dp,
         // The scaffold supplies the drag gesture and the tap/accessibility actions around whatever handle
-        // it's given, so this is the app's own bar — the same one the arrivals sheet shows — in the 48dp
-        // band [DRAG_HANDLE_TOUCH_TARGET_HEIGHT] measures for the peek above.
+        // it's given, so this is the app's own bar — the same one the arrivals sheet shows, in the same
+        // [DRAG_HANDLE_HEIGHT] band the peek above measures for (#2240).
         sheetDragHandle = { SheetDragHandle() },
         sheetContent = {
             // Sized so handle + content == fullHeight, which is what sets the sheet's expanded anchor.
@@ -383,7 +383,7 @@ fun DirectionsResultsSheet(
                 onOptionsSeeded = onOptionsSeeded,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(fullHeight - DRAG_HANDLE_TOUCH_TARGET_HEIGHT)
+                    .height(fullHeight - DRAG_HANDLE_HEIGHT)
                     .navigationBarsPadding()
             )
         },

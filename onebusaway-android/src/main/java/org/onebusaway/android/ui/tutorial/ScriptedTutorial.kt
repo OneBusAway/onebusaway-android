@@ -110,6 +110,14 @@ object ScriptedTutorial {
     /** The point on the map the demo trip runs to — what the long-press step rings and mimes on. */
     const val KEY_TRIP_DESTINATION = "tutorial_scripted_trip_destination"
 
+    /**
+     * The long-press step itself, named because the *screen* reads it: while it is current the map
+     * shows the "navigate here" bubble the mimed press would raise (#2243), so the caption's "then tap
+     * Navigate here" points at something that is really there. A step id rather than an anchor key —
+     * that step rings [KEY_TRIP_DESTINATION], which is where the bubble hangs.
+     */
+    const val STEP_PLAN_PRESS = "tutorial_scripted_plan_press"
+
     /** The whole trip-results drawer: the options, the caution notice and the step-by-step directions. */
     const val KEY_TRIP_DRAWER = "tutorial_scripted_trip_drawer"
 
@@ -224,11 +232,12 @@ object ScriptedTutorial {
             body = R.string.tutorial_scripted_rentals_text,
             action = TutorialAction.SHOW_RENTALS
         ),
-        // 12a. The gesture itself, on a map that hasn't been asked for anything yet. A long press
-        // leaves nothing on screen to ring, so the overlay mimes it rather than only describing it —
-        // and it gets its own step so the rider watches the press before the answer appears.
+        // 12a. The gesture itself, on a map that hasn't been asked for anything yet. The press has
+        // nothing of its own to ring, so the overlay mimes it rather than only describing it — and it
+        // gets its own step so the rider watches the press, and the offer it raises, before the trip
+        // itself arrives. The map draws that offer for the length of this step (see HomeScreen).
         TutorialStep(
-            id = "tutorial_scripted_plan_press",
+            id = STEP_PLAN_PRESS,
             // The destination itself, not the whole map: the press has a *place*, and ringing the
             // screen would say the gesture works anywhere without showing where this one landed.
             anchorId = KEY_TRIP_DESTINATION,

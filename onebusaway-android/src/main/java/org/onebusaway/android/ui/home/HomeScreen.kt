@@ -47,6 +47,7 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -71,6 +72,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
@@ -96,10 +98,10 @@ import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
-import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
 import org.onebusaway.android.ui.home.directions.DirectionsSafetyNotice
+import org.onebusaway.android.ui.home.directions.NavigateHereBubble
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -142,6 +144,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
 import org.onebusaway.android.ui.tutorial.RecordArrivalSpotlightsShown
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
@@ -804,8 +807,27 @@ fun HomeScreen(
                                 }
                             }
 
-                            // A long-pressed map point awaiting the "directions from/to here" choice.
+                            // A long-pressed map point, offering to navigate there until it is taken or
+                            // dismissed (#2243).
                             var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
+                            // The map's own lat/lng -> screen projector, which is how the offer stays on
+                            // the point it names. Flavor-neutral, so this reads the same on both maps.
+                            val mapProjector by mapViewModel.renderState.projector
+                                .collectAsStateWithLifecycle()
+                            // The tour's long-press step mimes a press on the demo trip's destination, so
+                            // the map shows what that press produces — the tour never narrates something
+                            // that isn't on screen (see ScriptedTutorial). It is drawn, not pressable: the
+                            // spotlight overlay swallows taps, and the step after it plans the trip.
+                            //
+                            // Derived rather than read straight, so this screen recomposes as the offer
+                            // comes and goes rather than on every one of the tour's seventeen steps.
+                            val tourPressPoint by remember(tutorialState) {
+                                derivedStateOf {
+                                    DemoModeController.TRIP_PLAN_DESTINATION.takeIf {
+                                        tutorialState.current?.id == ScriptedTutorial.STEP_PLAN_PRESS
+                                    }
+                                }
+                            }
                             // Leaving directions ends any in-progress map pick.
                             LaunchedEffect(directionsActive) { if (!directionsActive) pickTarget = null }
                             // While planning but not yet submittable (no results), clear any stale drawn itinerary.
@@ -1104,14 +1126,19 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                // Long-press → "directions from/to here": enters directions and fills the
-                                // chosen endpoint with the pressed point (see setEndpointPaired).
-                                longPressPoint?.let { point ->
-                                    val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
-                                    DirectionsLongPressMenu(
-                                        onChooseSlot = { slot ->
+                                // Long-press → "navigate here": enters directions with the trip's far end
+                                // filled in with the pressed point, and its near end paired with where the
+                                // rider is (see setEndpointPaired).
+                                (longPressPoint ?: tourPressPoint)?.let { point ->
+                                    NavigateHereBubble(
+                                        point = point,
+                                        projector = mapProjector,
+                                        onNavigate = {
                                             homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointPaired(slot, mapPoint)
+                                            tripPlanViewModel.setEndpointPaired(
+                                                TripEndpointSlot.TO,
+                                                TripEndpoint.MapPoint(point.latitude, point.longitude)
+                                            )
                                             longPressPoint = null
                                         },
                                         onDismiss = { longPressPoint = null }

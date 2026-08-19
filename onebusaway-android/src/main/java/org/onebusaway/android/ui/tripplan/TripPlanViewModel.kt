@@ -218,7 +218,7 @@ class TripPlanViewModel @Inject constructor(
 
     /**
      * Sets an endpoint that arrived as *one end of a trip* rather than as an edit to a form — a map
-     * long-press ("directions from/to here"), or a place another app handed us (#1936) — pairing the
+     * long-press ("navigate here"), or a place another app handed us (#1936) — pairing the
      * trip's other end with the device's current location. [TripPlanFormState.withEndpointPaired] owns
      * the rule (#2092); both ends land in one form update, so the pair submits as a single plan.
      *

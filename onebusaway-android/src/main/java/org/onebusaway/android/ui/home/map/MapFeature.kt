@@ -152,7 +152,7 @@ fun MapFeature(
     // when HOME is the destination, so this lives with the sheet rather than round-tripping the VM).
     fabBottomInset: Dp,
     modifier: Modifier = Modifier,
-    // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
+    // A long-press on the map raises the "navigate here" bubble; HomeScreen owns that state.
     onMapLongPress: (GeoPoint) -> Unit = {},
     // How tall the stops notice currently is, or 0 with none showing (#2229). Reported because the
     // parked-trip button sits in the *host's* overlay layer and has to clear this one, which lives here —

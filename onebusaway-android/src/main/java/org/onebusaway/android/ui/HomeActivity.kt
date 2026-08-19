@@ -498,20 +498,21 @@ fun Context.startHomeActivity(route: String) {
 
 /**
  * The [FocusedStop] a launch intent deep-links into (makeIntent's STOP_ID + optional CENTER_LAT/LON),
- * or null when it names no stop — a plain launch carries no id, so focus stays null. A zero coordinate
- * is `getDouble`'s default *and* null island, so the pair is read as "no location carried" and the
- * focus goes without one until its arrivals resolve it (see `HomeViewModel.onArrivalsLoaded`). Parsing
- * lives here with the intent contract, off HomeModels.
+ * or null when it names no stop — a plain launch carries no id, so focus stays null. The location is
+ * read by *key presence*, not by value: `putStopRouteReveal` omits both coordinate extras when the
+ * stop's location is unknown, so `containsKey` answers "was one carried?" exactly, where
+ * `getDouble`'s 0.0 default cannot tell an absent extra from a stop on the equator or the prime
+ * meridian. Without one the focus goes unlocated until its arrivals resolve it (see
+ * `HomeViewModel.onArrivalsLoaded`). Parsing lives here with the intent contract, off HomeModels.
  */
 internal fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val extras = intent.extras ?: return null
     val id = extras.getString(MapParams.STOP_ID) ?: return null
-    val lat = extras.getDouble(MapParams.CENTER_LAT)
-    val lon = extras.getDouble(MapParams.CENTER_LON)
+    val hasPoint = extras.containsKey(MapParams.CENTER_LAT) && extras.containsKey(MapParams.CENTER_LON)
     return FocusedStop(
         id = id,
         name = extras.getString(MapParams.STOP_NAME),
         code = extras.getString(MapParams.STOP_CODE),
-        point = if (lat == 0.0 || lon == 0.0) null else GeoPoint(lat, lon)
+        point = if (hasPoint) GeoPoint(extras.getDouble(MapParams.CENTER_LAT), extras.getDouble(MapParams.CENTER_LON)) else null
     )
 }

@@ -190,8 +190,9 @@ fun Intent.putStopRouteReveal(stop: FocusedStop, route: RouteRevealExtras): Inte
     putExtra(MapParams.STOP_ID, stop.id)
     putExtra(MapParams.STOP_NAME, stop.name)
     putExtra(MapParams.STOP_CODE, stop.code)
-    // Only when the stop's location is known: `FocusedStop.fromIntent` reads their absence as "not
-    // resolved yet" and lets the arrivals load supply it, which is exactly what a zero pair would mean.
+    // Only when the stop's location is known: `FocusedStop.fromIntent` reads the absence of these two
+    // keys as "not resolved yet" and lets the arrivals load supply it. Omitting them is what makes that
+    // readable — a written 0.0 pair is a real location (null island) and must not stand in for "none".
     stop.point?.let {
         putExtra(MapParams.CENTER_LAT, it.latitude)
         putExtra(MapParams.CENTER_LON, it.longitude)

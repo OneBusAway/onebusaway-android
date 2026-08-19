@@ -439,6 +439,10 @@ class HomeViewModel @Inject constructor(
      * Only the still-missing fields are filled: the loaded stop is not made the authority over a focus
      * that already knows its own values (a rider-renamed stop keeps its name), and after the first such
      * load nothing is missing, so the polls that follow amend nothing.
+     *
+     * The loaded stop's coordinates are taken as given rather than screened for a 0 pair: OBA carries a
+     * stop's `lat`/`lon` as primitive doubles, so there is no absent state on the wire to detect and a
+     * zero test would only be a guess about a stop at null island (see [ObaStop.location]).
      */
     private fun resolveFocusedStopDetails(focus: CurrentFocus.Stop, loaded: ObaStop) {
         val resolved = focus.stop.copy(

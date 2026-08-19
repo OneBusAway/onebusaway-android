@@ -948,10 +948,10 @@
         far you’ll walk, and when you want to leave or arrive.
     </string>
     <string name="tutorial_scripted_itineraries_title">Several ways to go</string>
-    <string name="tutorial_scripted_itineraries_text">Each row is a different way to make the trip.</string>
+    <string name="tutorial_scripted_itineraries_text">Each column is a different way to make the trip.</string>
     <string name="tutorial_scripted_itinerary_detail_title">See it on the map</string>
-    <string name="tutorial_scripted_itinerary_detail_text">Tap a row to open it up — the map draws that
-        trip, and you can step through each leg of it.
+    <string name="tutorial_scripted_itinerary_detail_text">Tap a column to show trip details on the
+        map and in the directions drawer.
     </string>
     <string name="tutorial_scripted_leg_title">Focus route stage</string>
     <string name="tutorial_scripted_leg_text">Tap on a route stage to show it on the map, along with

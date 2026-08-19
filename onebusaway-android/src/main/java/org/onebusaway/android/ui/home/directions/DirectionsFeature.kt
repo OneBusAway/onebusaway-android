@@ -542,11 +542,14 @@ private fun DirectionStopEtaStripContent(
  * The strip's "you get here at …" rule for [reachStop].
  *
  * The rule is handed to [EtaStrip] as a *resolver* against the strip's own live clock rather than as
- * an instant: a [ReachStop.OnFoot] is now plus the walk (#2227), so it has to move with the clock, and
- * the strip is the one place already ticking one (#1781) — its pills and this rule then read the same
- * now. That reads as the rule holding still at the rider's walking distance while the pills flow past
- * it, which is exactly what it means: everything left of the rule is a departure they can no longer
- * walk to in time. A [ReachStop.OnArrival] is an absolute moment and ignores the clock it is handed.
+ * an instant: a [ReachStop.OnFoot] is the walk added to when the rider sets off (#2227), so it has to
+ * move with the clock, and the strip is the one place already ticking one (#1781) — its pills and this
+ * rule then read the same now. That reads as the rule holding still at the rider's walking distance
+ * while the pills flow past it, which is exactly what it means: everything left of the rule is a
+ * departure they can no longer walk to in time. A walk a depart-at plan hasn't started yet holds at the
+ * planned departure plus the walk instead, until the clock reaches it (#2248) — a plan hours out rules
+ * where the plan put it, not where the rider happened to open it. A [ReachStop.OnArrival] is an absolute
+ * moment and ignores the clock it is handed.
  *
  * Remembered so the marker is one stable object per plan: the strip keys its per-minute spoken text on
  * it, and the strip's own callers are already stable between polls.

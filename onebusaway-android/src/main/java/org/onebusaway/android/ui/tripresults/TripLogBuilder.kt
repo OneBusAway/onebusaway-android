@@ -144,11 +144,21 @@ object TripLogBuilder {
      * that absence is carried as null rather than substituted for with the ride's own departure — see
      * [TripLogEntry.Transit.reachStop] for what that would tell the rider. The empty-run guard is what
      * says so: an empty run would otherwise pass the all-street test and fabricate a zero-length walk.
+     *
+     * [plannedStart] rules the walk too, as the floor on when that run begins ([ReachStop.OnFoot.notBefore],
+     * #2248) — the same fact, spent on both shapes of the itinerary's first entry, so the two agree about
+     * whether a plan hours out has started. The walk keeps the duration shape rather than being resolved
+     * here into `OnArrival(plannedStart + walk)`, because the floor has to be re-taken against the live
+     * clock: past the planned departure the rider is setting out *now*, and an instant fixed at build time
+     * would sit in the past and rule nothing.
      */
     private fun List<TripLeg>.reachStopFor(legIndex: Int, plannedStart: ServerTime?): ReachStop? {
         val precedingLegs = take(legIndex).ifEmpty { return plannedStart?.let(ReachStop::OnArrival) }
         return if (precedingLegs.all { it.isStreet }) {
-            ReachStop.OnFoot(precedingLegs.last().endTime - precedingLegs.first().startTime)
+            ReachStop.OnFoot(
+                duration = precedingLegs.last().endTime - precedingLegs.first().startTime,
+                notBefore = plannedStart
+            )
         } else {
             ReachStop.OnArrival(precedingLegs.last().endTime)
         }

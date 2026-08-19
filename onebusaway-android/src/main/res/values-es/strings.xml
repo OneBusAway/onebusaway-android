@@ -29,7 +29,7 @@
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_open_source">Visitanos en GitHub</string>
-    <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
+    <string name="navdrawer_item_plan_trip">Planea un Viaje</string>
     <string name="navdrawer_item_pay_fare">Pagar mi pasaje</string>
 
     <!-- Permissions -->

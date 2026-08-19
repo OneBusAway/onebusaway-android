@@ -10,7 +10,7 @@
     <string name="navdrawer_item_send_feedback">Wyślij opinię</string>
     <string name="navdrawer_item_starred_routes">Ulubione linie</string>
     <string name="navdrawer_item_open_source">Odwiedź nas na GitHubie</string>
-    <string name="navdrawer_item_plan_trip">Zaplanuj podróż (beta)</string>
+    <string name="navdrawer_item_plan_trip">Zaplanuj podróż</string>
     <string name="navdrawer_item_pay_fare">Zapłać za bilet</string>
 
     <!-- Permissions -->

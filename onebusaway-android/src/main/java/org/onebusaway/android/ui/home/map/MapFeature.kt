@@ -215,7 +215,11 @@ fun MapFeature(
                 // left directions altogether and discarded the trip being entered.
                 if (imeVisible) {
                     // Clearing focus is what closes the editor and its suggestion list; hide() covers
-                    // a keyboard raised by something that isn't a focused Compose field.
+                    // a keyboard raised by something that isn't a focused Compose field. A standing
+                    // "navigate here" offer deliberately survives this tap for the same reason the
+                    // focus does — the tap was aimed at the keyboard, and answering the offer with it
+                    // would be the second unasked-for effect this branch exists to prevent. The next
+                    // tap, aimed at the map the rider can now see, retires it below.
                     focusManager.clearFocus()
                     keyboard?.hide()
                     return

@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
@@ -56,13 +57,6 @@ object NavigateHereBubbleTestTags {
  * the bubble's edge, and that is also the gap the bubble keeps from what it points at.
  */
 private val TAIL_SIZE = 14.dp
-
-/**
- * How far above its point the bubble is lifted, so it clears the pin standing there rather than
- * covering it. The map SDKs' default pins are drawn from a bitmap this tall-ish, anchored at the tip;
- * taking the taller of the two means the tail stops at the pin's head on both flavors.
- */
-private val PIN_CLEARANCE = 40.dp
 
 /** How close to the edge of the map the bubble may be pushed before it is held off. */
 private val EDGE_MARGIN = 12.dp
@@ -145,6 +139,13 @@ internal fun NavigateHereOffer(
     BackHandler(onBack = onDismiss)
 
     val tailColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    // How much room to leave around the point: the height of the pin this map's SDK drew there, which
+    // only the flavor can say — maplibre's default marker is nearly twice the height of Google's. Kept
+    // clear on *both* sides rather than only above, because the two SDKs also differ on where a marker
+    // is anchored (at its tip, or centred on the point), and this way the bubble clears the pin under
+    // either convention. The cost is some air below a bubble that had to flip under its point, which is
+    // the rarer placement anyway.
+    val pinHeight = dimensionResource(R.dimen.map_pin_height)
     // A bare layout: it carries no pointer input of its own, so every gesture it doesn't cover goes
     // straight through to the map — which is what lets the rider pan and zoom around the pinned place.
     Layout(
@@ -170,7 +171,7 @@ internal fun NavigateHereOffer(
                 containerWidth = constraints.maxWidth,
                 containerHeight = constraints.maxHeight,
                 tailSizePx = TAIL_SIZE.toPx(),
-                pinClearancePx = PIN_CLEARANCE.toPx(),
+                pinClearancePx = pinHeight.toPx(),
                 marginPx = EDGE_MARGIN.toPx()
             )
         }
@@ -249,14 +250,14 @@ internal data class NavigateHerePlacement(
 )
 
 /**
- * Places the bubble against the pinned point: above the pin standing there by preference, below the
- * point when there is no room for that, and never past the edges of the map.
+ * Places the bubble against the pinned point: above the pin standing there by preference, below it when
+ * there is no room for that, and never past the edges of the map.
  *
- * Above by preference because that is where the pin's head is — a bubble below would sit on the map the
- * pin is planted in, and near the bottom of the screen it would land under the arrivals drawer's peek.
- * Below the point needs no clearance: the pin is anchored at its tip and stands *upward* from it, so
- * everything under the point is clear. The tail follows the point, not the bubble's centre, so a bubble
- * that had to be pushed along an edge still says which pin it belongs to.
+ * Above by preference because that is where a pin's head usually is, and because a bubble below a press
+ * near the bottom of the screen would land under the arrivals drawer's peek. [pinClearancePx] is kept
+ * on whichever side the bubble lands, so the pin is cleared whether its map anchors it at the tip or
+ * centres it on the point. The tail follows the point, not the bubble's centre, so a bubble that had to
+ * be pushed along an edge still says which pin it belongs to.
  *
  * Pure, so the placement is unit-testable without composing anything — see NavigateHereBubbleTest.
  */
@@ -271,11 +272,11 @@ internal fun navigateHereBubblePlacement(
     pinClearancePx: Float,
     marginPx: Float
 ): NavigateHerePlacement {
-    // Only half the tail's box shows past the bubble, so that half is the gap it keeps from what it
-    // points at — the pin's head above the point, or the point itself below it.
-    val gap = tailSizePx / 2f
-    val above = anchorY - pinClearancePx - gap - bubbleHeight >= marginPx
-    val y = if (above) anchorY - pinClearancePx - gap - bubbleHeight else anchorY + gap
+    // Only half the tail's box shows past the bubble, so that half is the gap it keeps from the pin it
+    // points at, on top of the room the pin itself takes.
+    val gap = pinClearancePx + tailSizePx / 2f
+    val above = anchorY - gap - bubbleHeight >= marginPx
+    val y = if (above) anchorY - gap - bubbleHeight else anchorY + gap
     val x = anchorX - bubbleWidth / 2f
     // Each clamp holds the far edge first and the near edge second, so a bubble with less room than it
     // needs is pinned against the near margin rather than pushed off the other side of the screen.

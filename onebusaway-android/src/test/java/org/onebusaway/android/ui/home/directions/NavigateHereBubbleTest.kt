@@ -33,6 +33,8 @@ class NavigateHereBubbleTest {
     private val bubbleWidth = 400
     private val bubbleHeight = 120
     private val tail = 42f
+
+    // The pin the flavor says its map draws (R.dimen.map_pin_height), in pixels.
     private val pin = 120f
     private val margin = 36f
 
@@ -61,15 +63,16 @@ class NavigateHereBubbleTest {
     }
 
     /**
-     * Too near the top for the bubble *and* the pin it has to clear: it flips below the point, where no
-     * clearance is owed — the pin stands upward from its tip, so the map below the point is empty.
+     * Too near the top for the bubble *and* the pin it has to clear: it flips below the point, keeping
+     * the same clearance on that side — which is what makes the placement right on a map that centres
+     * its pin on the point as well as one that stands it on the point.
      */
     @Test
     fun `a press near the top of the map flips the bubble below it`() {
         val placement = placeAt(x = 540f, y = 150f)
 
         assertFalse("there is no room above a press this high", placement.above)
-        assertEquals((150f + tail / 2f).toInt(), placement.y)
+        assertEquals((150f + pin + tail / 2f).toInt(), placement.y)
         assertEquals(540, placement.tailCenterX)
     }
 

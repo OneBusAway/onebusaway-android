@@ -200,13 +200,15 @@ sealed interface TripLogEntry {
      * [reachStop] and [boardTime] are different things and both matter: the rider gets to the stop by
      * the first and the vehicle leaves at the second. The gap between them is the planned wait, and it's
      * what the Board node's live ETA strip marks (#2125) — without it the strip reads as if the rider
-     * were standing at the stop already. When nothing precedes the ride, the plan's own start stands in
-     * (#2228): a "leave at 5pm" plan puts the rider at the stop at 5pm, so read at 3pm every departure
-     * before then is genuinely out of reach — the strip says so instead of offering them. [reachStop] is
-     * **null** only when the plan doesn't say when the rider sets out (an arrive-by plan that opens on
-     * transit). Substituting [boardTime] there would dim every departure earlier than the one the plan
-     * happened to pick — including the ones a rider already at the stop could catch — which is the
-     * opposite of the truth.
+     * were standing at the stop already. A depart-at plan's own start is spent on the itinerary's first
+     * ride either way it can be reached: it stands in whole when nothing precedes the ride (#2228), and
+     * is when the leading walk sets off when one does (#2248). So a "leave at 5pm" plan read at 3pm puts
+     * the rider at that stop at 5pm (plus the walk, if any) and every departure before then is genuinely
+     * out of reach — the strip says so instead of offering them, as the later rides' own strips already
+     * did. [reachStop] is **null** only when the plan doesn't say when the rider sets out (an arrive-by
+     * plan that opens on transit). Substituting [boardTime] there would dim every departure earlier than
+     * the one the plan happened to pick — including the ones a rider already at the stop could catch —
+     * which is the opposite of the truth.
      */
     data class Transit(
         val routeShortName: String?,
@@ -243,13 +245,17 @@ sealed interface TripLogEntry {
  *    walk they make across that transfer. When the ride opens the itinerary nothing delivers them and
  *    the plan's own start is that moment instead (#2228) — a "leave at 5pm" plan has them at the stop
  *    at 5pm.
- *  - [OnFoot] — the rider makes their own way here from the itinerary's origin, and all the plan really
- *    knows is [OnFoot.duration]: how long that takes, not when they set off. Resolved against the live
- *    clock at the point of use (the ETA strip's own), so the rule means "if you set off now".
+ *  - [OnFoot] — the rider makes their own way here from the itinerary's origin, and the plan commits to
+ *    no moment they arrive: [OnFoot.duration] is how long the way there takes, and [OnFoot.notBefore]
+ *    the soonest they set off along it. So the rule is *re-taken* at the point of use against the live
+ *    clock (the ETA strip's own) and means "if you set off now" — or at the plan's own departure while
+ *    that is still ahead of the clock (#2248), which is the same sentence with a later "now".
  *
- * The distinction is a type rather than a nullable "…or use the duration" flag so the two can't be
- * confused at a call site: an absolute instant and an amount of time are not interchangeable, and the
- * bug this replaces was precisely one being read as the other.
+ * The distinction is a type rather than one shape with a nullable "…and this is a duration" flag so the
+ * two can't be confused at a call site — the bug this replaces was precisely one being read as the
+ * other. What separates them is not instant-vs-duration (an [OnFoot] names an instant too) but whether
+ * the clock moves the answer: an [OnArrival] is a moment the plan has committed to and stands wherever
+ * it is read from, and an [OnFoot] is a rule resolved afresh every time it is asked.
  */
 sealed interface ReachStop {
 
@@ -257,7 +263,8 @@ sealed interface ReachStop {
     data class OnArrival(val at: ServerTime) : ReachStop
 
     /**
-     * The rider walks (or bikes) here from the trip's origin, and it takes [duration].
+     * The rider walks (or bikes) here from the trip's origin, it takes [duration], and they set off no
+     * earlier than [notBefore].
      *
      * Deliberately a duration and not the access leg's own end time. OTP time-shifts the *leading*
      * street run of an itinerary as late as it can — it ends on the departure it was planned for, so
@@ -280,18 +287,37 @@ sealed interface ReachStop {
      * "now plus the walk" is the right rule regardless of where the plan put the walk — so the shape
      * degrades benignly; the only thing lost would be the option of trusting that server's end time,
      * which nothing depends on.
+     *
+     * [notBefore] is when the rider sets off, when the plan says: the requested departure of a depart-at
+     * plan ([TripPlanParams.plannedStart][org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart],
+     * #2248), and null for an arrive-by one, which fixes when the trip ends and says nothing about when
+     * the rider sets out. It is a *floor* on the walk's start rather than its start outright — [resolvedAt]
+     * takes the later of it and now — because the rider who opens a "leave at 8:45pm" plan at 8:50pm is
+     * setting out now, exactly like a leave-now rider, and the two are one case. (A leave-now plan does
+     * name a start, the instant it was submitted; the floor is already behind the clock there, so the max
+     * leaves it behind and the case falls out rather than being special-cased.) Without it the walk would
+     * resolve at the live clock unconditionally, so a plan hours out would rule its first ride at "if you
+     * left this second" while every ride after it ruled at the plan's own times — the two ends of one
+     * itinerary disagreeing about whether it has started yet. Stated at every construction, with no
+     * default: a site that forgot to say would take "no floor" silently, which is #2248 itself back
+     * again — and null is a real answer here (an arrive-by plan), not an unset one.
      */
-    data class OnFoot(val duration: Duration) : ReachStop
+    data class OnFoot(val duration: Duration, val notBefore: ServerTime?) : ReachStop
 }
 
 /**
- * The moment the rider reaches the stop, as of [now] — an [ReachStop.OnArrival]'s own instant, or
- * [now] plus the walk for a [ReachStop.OnFoot]. The one place the two shapes collapse to a comparable
- * instant, so the ETA strip's rule and anything else that wants one can't disagree about how.
+ * The moment the rider reaches the stop, as of [now] — an [ReachStop.OnArrival]'s own instant, or the
+ * walk added to when the rider sets off for a [ReachStop.OnFoot]. The one place the two shapes collapse
+ * to a comparable instant, so the ETA strip's rule and anything else that wants one can't disagree
+ * about how.
+ *
+ * Setting off is the later of [now] and [ReachStop.OnFoot.notBefore], for the reason given there. Taking
+ * the later of the two also keeps the walk rule monotonic in [now] — it only ever moves later as the
+ * clock runs — which is what lets the strip re-resolve it every poll and never see it retreat.
  */
 fun ReachStop.resolvedAt(now: ServerTime): ServerTime = when (this) {
     is ReachStop.OnArrival -> at
-    is ReachStop.OnFoot -> now + duration
+    is ReachStop.OnFoot -> maxOf(now, notBefore ?: now) + duration
 }
 
 /**

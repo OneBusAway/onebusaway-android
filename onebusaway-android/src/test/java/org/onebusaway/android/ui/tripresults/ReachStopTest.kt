@@ -28,12 +28,35 @@ class ReachStopTest {
 
     @Test
     fun aWalkKeepsItsDistanceAsTheClockRuns() {
-        // Measured *from now*, so the rule holds still at the rider's walking distance while the strip's
-        // pills flow past it — which is what "if you set off now" means (#2227).
-        val onFoot = ReachStop.OnFoot(4.minutes)
+        // Measured *from now* when the plan names no departure to wait for, so the rule holds still at the
+        // rider's walking distance while the strip's pills flow past it — "if you set off now" (#2227).
+        val onFoot = ReachStop.OnFoot(4.minutes, notBefore = null)
 
         assertEquals(ServerTime(14 * 60_000L), onFoot.resolvedAt(ServerTime(10 * 60_000L)))
         assertEquals(ServerTime(24 * 60_000L), onFoot.resolvedAt(ServerTime(20 * 60_000L)))
+    }
+
+    @Test
+    fun aWalkAPlanHasNotStartedYet_waitsForThePlansOwnDeparture() {
+        // A depart-at plan read hours early: the rider sets off at the departure they asked for, not the
+        // moment they opened the itinerary, so the rule stands at that departure plus the walk however
+        // early the strip polls (#2248). Otherwise this leg would offer live departures while every later
+        // leg of the same plan reported nothing boardable.
+        val onFoot = ReachStop.OnFoot(4.minutes, notBefore = ServerTime(60 * 60_000L))
+
+        assertEquals(ServerTime(64 * 60_000L), onFoot.resolvedAt(ServerTime(10 * 60_000L)))
+        assertEquals(ServerTime(64 * 60_000L), onFoot.resolvedAt(ServerTime(59 * 60_000L)))
+    }
+
+    @Test
+    fun aWalkPastThePlansDeparture_setsOffNow() {
+        // Once the planned departure is behind us the floor stops binding and the rule resumes trailing
+        // the clock — the rider is setting out now, like any other. The boundary is the first assertion:
+        // the two cases meet at the planned departure rather than jumping at it.
+        val onFoot = ReachStop.OnFoot(4.minutes, notBefore = ServerTime(60 * 60_000L))
+
+        assertEquals(ServerTime(64 * 60_000L), onFoot.resolvedAt(ServerTime(60 * 60_000L)))
+        assertEquals(ServerTime(74 * 60_000L), onFoot.resolvedAt(ServerTime(70 * 60_000L)))
     }
 
     @Test

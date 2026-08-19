@@ -290,7 +290,9 @@ class TripLogBuilderTest {
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(ReachStop.OnFoot(4.minutes), transit.reachStop)
+        // No plannedStart — an arrive-by plan says nothing about when the rider sets out — so the walk
+        // carries no floor and goes on resolving at the live clock (#2248).
+        assertEquals(ReachStop.OnFoot(4.minutes, notBefore = null), transit.reachStop)
         assertEquals(ServerTime(9 * 60_000L), transit.boardTime)
     }
 
@@ -317,7 +319,7 @@ class TripLogBuilderTest {
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(ReachStop.OnFoot(10.minutes), transit.reachStop)
+        assertEquals(ReachStop.OnFoot(10.minutes, notBefore = null), transit.reachStop)
     }
 
     @Test
@@ -368,20 +370,23 @@ class TripLogBuilderTest {
     }
 
     @Test
-    fun thePlansStart_standsInOnlyForARideNothingPrecedes() {
-        // With a walk ahead of the ride, the walk is how the rider gets to the stop; the plan's start is
-        // when they left home, and must not displace it.
+    fun thePlansStart_doesNotDisplaceTheWalkButSaysWhenItBegins() {
+        // With a walk ahead of the ride, the walk is still how the rider gets to the stop — the plan's
+        // start is when they leave home, not when they arrive, so it must not stand in for the walk. It
+        // does say when they set off, which the walk carries as its floor (#2248): a plan hours out is
+        // read as starting then, the same way the ride-first shape above is.
+        val start = ServerTime(2 * 60_000L)
         val transit = TripLogBuilder
             .build(
                 legs = listOf(walkLeg, transitLeg),
                 flatDirections = listOf(walkDir, boardDir, alightDir),
                 routeLegRefs = listOf(null, transitRef),
-                plannedStart = ServerTime(0L)
+                plannedStart = start
             )
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(ReachStop.OnFoot(walkLeg.duration), transit.reachStop)
+        assertEquals(ReachStop.OnFoot(walkLeg.duration, notBefore = start), transit.reachStop)
     }
 
     @Test

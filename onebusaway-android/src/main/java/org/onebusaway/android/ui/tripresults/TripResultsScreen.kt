@@ -2367,7 +2367,7 @@ private fun previewTransitLeg(
     mode = mode,
     routeColorHex = routeColorHex,
     headsign = headsign,
-    reachStop = ReachStop.OnFoot(3.minutes),
+    reachStop = ReachStop.OnFoot(3.minutes, notBefore = null),
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
     durationMinutes = 16,
@@ -2396,7 +2396,7 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     rideEvents = emptyList(),
     alerts = alerts
 ).copy(
-    reachStop = ReachStop.OnFoot(20.minutes),
+    reachStop = ReachStop.OnFoot(20.minutes, notBefore = null),
     boardTime = ServerTime(24 * 60_000L),
     exitTime = ServerTime(84 * 60_000L),
     durationMinutes = 60,

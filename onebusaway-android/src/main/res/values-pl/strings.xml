@@ -67,14 +67,7 @@
     <string name="cancel">Anuluj</string>
     <string name="main_help_title">Pomoc</string>
     <string name="main_help_whatsnew_title">Co nowego?</string>
-    <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Odświeżający nowy wygląd</b>
-        - Yay material design!\n&#8226;\u0020
-        <b>Autobusy w trasie zaznaczone na mapie</b>
-        - Stuknij na czas przyjazdu i wybierz “Pokaż trasę na mapie”!\n&#8226;\u0020
-        <b>Status podróży</b>
-        - Stuknij na czas przyjazdu i wybierz “Pokaż status podróży”!
-    </string>
+    <string name="main_help_whatsnew">&#8226;\u0020Odważny nowy wygląd na odważne nowe czasy\n&#8226;\u0020Przyjazdy są teraz pogrupowane według tras\n&#8226;\u0020Mikromobilność dodana do warstwy rowerowej\n&#8226;\u0020Stuknij przystanek, aby zobaczyć jego trasy\n&#8226;\u0020Przybliż, aby zobaczyć pobliskie trasy\n&#8226;\u0020Pozycje pojazdów są ekstrapolowane i animowane\n&#8226;\u0020Znaczące ulepszenia w planerze podróży\n&#8226;\u0020Kilka drobnych poprawek błędów\n\nZobacz https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Zamknij</string>
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Zielony oznacza „Na czas”</string>

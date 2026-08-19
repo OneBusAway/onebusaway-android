@@ -15,10 +15,8 @@
  */
 package org.onebusaway.android.ui.compose.components
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,13 +79,11 @@ fun BetaPill(modifier: Modifier = Modifier) {
 private fun BetaPillPreview() {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.padding(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Plan a trip", style = MaterialTheme.typography.labelLarge)
-                    Spacer(Modifier.width(8.dp))
-                    BetaPill()
-                }
-                Spacer(Modifier.height(12.dp))
+            // In context, which is the only way the pill is used — its whole job is to sit next to a
+            // feature's name, and it takes no parameters, so a bare instance would show nothing more.
+            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Plan a trip", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.width(8.dp))
                 BetaPill()
             }
         }

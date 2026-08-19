@@ -90,7 +90,7 @@ fun HomeNavDrawerSheet(
                     R.string.navdrawer_item_plan_trip,
                     R.drawable.ic_maps_directions,
                     onPlanTrip,
-                    beta = true
+                    tag = { BetaPill() }
                 )
             }
             if (payFareAvailable) {
@@ -106,29 +106,35 @@ fun HomeNavDrawerSheet(
     }
 }
 
-/** The gap between a row's name and its [BetaPill] — a word's worth, so the pill reads as a tag on the
- *  name rather than as part of it. */
-private val BETA_PILL_GAP = 8.dp
+/** The gap between a row's name and its [tag][DrawerRow] — a word's worth, so the tag reads as pinned
+ *  to the name rather than as part of it. */
+private val DRAWER_ROW_TAG_GAP = 8.dp
 
+/**
+ * One drawer row. [tag] optionally puts a small marker right after the name — a [BetaPill] today — as a
+ * slot rather than a per-marker flag, so a second kind of tag is another caller passing a composable
+ * instead of another boolean here.
+ *
+ * The tag sits against the name rather than in `NavigationDrawerItem`'s own `badge` slot, which would
+ * push it to the row's trailing edge: it qualifies the name ("Plan a trip, in beta"), so it belongs
+ * where the name ends, not across the drawer from it. The name yields the room the tag needs and wraps
+ * into what is left, so a longer translation can't shoulder the tag out of the row.
+ */
 @Composable
 private fun DrawerRow(
     @StringRes title: Int,
     @DrawableRes icon: Int?,
     onClick: () -> Unit,
-    beta: Boolean = false
+    tag: (@Composable () -> Unit)? = null
 ) {
     NavigationDrawerItem(
         label = {
-            if (beta) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(BETA_PILL_GAP),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(title))
-                    BetaPill()
-                }
-            } else {
-                Text(stringResource(title))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(DRAWER_ROW_TAG_GAP),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(title), modifier = Modifier.weight(1f, fill = false))
+                tag?.invoke()
             }
         },
         selected = false,

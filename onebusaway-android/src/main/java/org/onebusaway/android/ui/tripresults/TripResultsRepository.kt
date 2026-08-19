@@ -35,6 +35,7 @@ import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.geoPointOrNull
+import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -156,12 +157,20 @@ class DefaultTripResultsRepository @Inject constructor(
             // *published* colour until that route can state it, and the map's own route lines have never had
             // that substitution either (#2041's remaining work), so a colourless ride resolves the same way
             // before and after the load instead of changing colour on landing.
+            // The routes the rider may board in this one's place, in the order the ride's badge names them
+            // (#2010) — so the ride keeps its stripes when the rider drills into it (#2100/#2241), and keeps
+            // them in the badge's own order. Read off the chain leader, which is where `substitutableRoutes`
+            // puts them, and empty for an interlined chain by construction.
+            val interchangeableColors = substitutable[chain.leaderIndex]
+                .inInterchangeableOrder { it.displayName }
+                .map { parseObaHexColor(it.routeColor) }
             val riddenSpans = (chain.leaderIndex..chain.alightIndex).map { j ->
                 RiddenSpan(
                     points = legs[j].legGeometry?.decodedPoints().orEmpty(),
                     routeId = ids[j].routeId,
                     plannedColor = parseObaHexColor(legs[j].routeColor),
-                    startsCutover = j in chain.transitionLegIndices
+                    startsCutover = j in chain.transitionLegIndices,
+                    interchangeableColors = interchangeableColors
                 )
             }
             refs[chain.leaderIndex] = RouteLegRef(

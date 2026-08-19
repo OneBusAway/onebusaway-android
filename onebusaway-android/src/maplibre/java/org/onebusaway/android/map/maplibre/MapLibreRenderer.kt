@@ -168,7 +168,11 @@ class MapLibreRenderer(
     // operations below are supplied here.
     private val routePolylineReconciler = RoutePolylineReconciler<Polyline>(
         widthOf = ::routeWidth,
-        createLine = { polyline, width ->
+        // The mark inset the reconciler offers is ignored here: the classic annotation draws no caps, and
+        // the bulbs are their own circle layer drawn from the canonical lines rather than from these
+        // strokes (see [MapLibreRouteEndpointBulbLayer]) — so nothing on a maplibre line is sized from a
+        // stroke it would have to be restated against.
+        createLine = { polyline, width, _ ->
             map.addPolyline(
                 PolylineOptions()
                     .color(polyline.resolvedColor)
@@ -177,7 +181,7 @@ class MapLibreRenderer(
             )
         },
         removeLines = { lines -> map.removeAnnotations(lines) },
-        setWidth = { line, width -> line.width = width },
+        setWidth = { line, _, width, _ -> line.width = width },
         caseColorOf = caseColorOf,
         // maplibre annotation widths are already in dp, so no density conversion is involved.
         caseExtraWidth = { it.case.extraWidthDp }

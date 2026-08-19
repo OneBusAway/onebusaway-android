@@ -42,6 +42,8 @@ class PinnedTripGhostTest {
         val cased = RoutePolyline(
             0xFF0A5B3E.toInt(),
             points,
+            // A ride the rider may board either route for (#2100): striped on the trip they were reading.
+            stripeColors = listOf(0xFF0072BC.toInt()),
             directional = true,
             case = RouteLineCase.OUTLINE,
             startMark = RouteLineMark.BULB,
@@ -54,6 +56,9 @@ class PinnedTripGhostTest {
         assertEquals(RouteLineMark.NONE, ghost.startMark)
         assertEquals(RouteLineMark.NONE, ghost.endMark)
         assertEquals(false, ghost.directional)
+        // The stripes go too. A parked trip is a reminder of where the rider is going, and the rhythm of a
+        // shared ride at a trace's weight reads as noise rather than as a choice of routes.
+        assertEquals(emptyList<Int>(), ghost.stripeColors)
     }
 
     @Test

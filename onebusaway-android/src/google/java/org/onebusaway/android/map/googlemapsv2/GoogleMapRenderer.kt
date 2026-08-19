@@ -25,6 +25,7 @@ import androidx.core.graphics.createBitmap
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.ButtCap
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.CustomCap
@@ -158,7 +159,15 @@ class GoogleMapRenderer(
         widthOf = ::routeWidthPx,
         createLine = ::addRoutePolyline,
         removeLines = { lines -> lines.forEach { it.remove() } },
-        setWidth = { line, width -> line.width = width },
+        // A width patch re-stamps the end caps with it. Maps scales a custom cap by the stroke it was
+        // stamped against, so a mark drawn inset by a constant weight (a case's bulb halo) would have that
+        // weight scale with the line and stop matching the case beside it; re-stamping is what holds it.
+        // A line whose marks are simply proportional restates the same cap, which costs nothing.
+        setWidth = { line, polyline, width, markInset ->
+            line.width = width
+            line.startCap = endCapFor(polyline, polyline.startMark, width, markInset) ?: DEFAULT_LINE_CAP
+            line.endCap = endCapFor(polyline, polyline.endMark, width, markInset) ?: DEFAULT_LINE_CAP
+        },
         caseColorOf = caseColorOf,
         caseExtraWidth = { it.case.extraWidthDp * density }
     )
@@ -356,13 +365,13 @@ class GoogleMapRenderer(
         routePolylineReconciler.reconcile(next, map.cameraPosition.zoom)
     }
 
-    private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float): Polyline {
+    private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float, markInsetPx: Float): Polyline {
         val options = PolylineOptions()
             .width(widthPx)
             .addPoints(polyline.points)
             .applyDashPattern(polyline)
-        endCapFor(polyline, polyline.startMark)?.let { options.startCap(it) }
-        endCapFor(polyline, polyline.endMark)?.let { options.endCap(it) }
+        endCapFor(polyline, polyline.startMark, widthPx, markInsetPx)?.let { options.startCap(it) }
+        endCapFor(polyline, polyline.endMark, widthPx, markInsetPx)?.let { options.endCap(it) }
         if (polyline.directional) {
             // Advanced spans are substantially more expensive for Maps to retessellate while
             // zooming. Reserve that path for the lines that actually need repeated chevrons.
@@ -379,19 +388,36 @@ class GoogleMapRenderer(
     }
 
     /**
-     * The cap [mark] asks for on [polyline], or null for a flat end. Both marks are [CustomCap]s, which is
-     * what lets them be requested per end and stay right at every zoom: Maps scales a custom cap with the
-     * line's stroke and orients it along the line itself, so neither needs the camera-settle re-stamp a
-     * marker-based mark (the route labels) does.
+     * The cap [mark] asks for on [polyline], drawn against a stroke of [widthPx] and inset by [markInsetPx],
+     * or null for a flat end. Both marks are [CustomCap]s, which is what lets them be requested per end and
+     * orients them along the line itself.
+     *
+     * [markInsetPx] is the one thing a cap cannot express on its own: Maps sizes a custom cap *from the
+     * stroke*, so anything drawn at a constant weight rather than a fraction of the line has to be restated
+     * whenever that stroke changes, which is why a width patch re-stamps these.
      */
-    private fun endCapFor(polyline: RoutePolyline, mark: RouteLineMark): CustomCap? = when (mark) {
+    private fun endCapFor(
+        polyline: RoutePolyline,
+        mark: RouteLineMark,
+        widthPx: Float,
+        markInsetPx: Float
+    ): CustomCap? = when (mark) {
         RouteLineMark.NONE -> null
-        RouteLineMark.BULB -> endpointBulbCap(polyline.resolvedColor)
+        RouteLineMark.BULB -> endpointBulbCap(polyline.resolvedColor, widthPx, markInsetPx)
         RouteLineMark.INTERLINE_CUT -> interlineSeamCap(polyline)
     }
 
-    /** A circle 2x the stroke width, scaled by Maps together with the line at every zoom. */
-    private fun endpointBulbCap(color: Int): CustomCap {
+    /**
+     * A circle 2x the stroke width, less [markInsetPx] of radius.
+     *
+     * The inset is spent on the reference width rather than on the bitmap, so every bulb of one colour
+     * shares one descriptor however it is sized: Maps draws the disc at `bitmapRadius / referenceWidth` of
+     * the stroke, so naming a wider reference than the line really is draws the same disc smaller by
+     * exactly that much. A line's own bulb asks for no inset and comes out at the stroke width, as it
+     * always has; a case's bulb asks for the weight the case shows along the line, so its halo is that
+     * weight too instead of the doubled one a full-width copy of the bulb gave it (#2241).
+     */
+    private fun endpointBulbCap(color: Int, widthPx: Float, markInsetPx: Float): CustomCap {
         val descriptor = descriptorCache.get("route-endpoint-bulb:$color") {
             val bitmap = createBitmap(ENDPOINT_BULB_BITMAP_PX, ENDPOINT_BULB_BITMAP_PX)
             Canvas(bitmap).drawCircle(
@@ -402,7 +428,7 @@ class GoogleMapRenderer(
             )
             bitmap
         }
-        return CustomCap(descriptor, ENDPOINT_BULB_REFERENCE_WIDTH_PX)
+        return CustomCap(descriptor, ENDPOINT_BULB_REFERENCE_WIDTH_PX * bulbReferenceScale(widthPx, markInsetPx))
     }
 
     /**
@@ -893,6 +919,9 @@ class GoogleMapRenderer(
         private const val ENDPOINT_BULB_BITMAP_PX = 40
         private const val ENDPOINT_BULB_REFERENCE_WIDTH_PX = 20f
 
+        /** What an un-marked end draws as, and so what re-stamping a mark that has gone away restores. */
+        private val DEFAULT_LINE_CAP = ButtCap()
+
         // gms polyline/marker dimensions are in screen pixels.
         private const val DEFAULT_ROUTE_WIDTH_PX = 10f
         private const val TRIP_BAND_WIDTH_PX = 44f
@@ -965,3 +994,23 @@ class GoogleMapRenderer(
 // Internal (not private) so the inner marker/overlay classes call it without a synthetic accessor
 // (lint SyntheticAccessor); it's a trivial converter used only within this file.
 internal fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+
+/**
+ * The factor a bulb's [CustomCap] reference width is stretched by to inset the drawn disc by [markInsetPx]
+ * of radius on a stroke of [widthPx].
+ *
+ * Maps draws a custom cap at `bitmapRadius / referenceWidth` of the stroke, so a disc that fills its bitmap
+ * comes out at exactly the stroke width — which is what a bulb is. Naming a reference *wider* than the line
+ * really is shrinks that disc by the same proportion, so the radius wanted, `widthPx - markInsetPx`, is
+ * asked for as the ratio between the two. Pure, and separated from the drawing so
+ * `GoogleEndpointBulbCapTest` can pin the geometry on the JVM.
+ *
+ * The inset is a constant weight while the stroke follows the zoom ramp, so this is not a fixed factor: it
+ * has to be recomputed whenever the width is patched, which is what the reconciler's width callback does.
+ * Degenerate insets (a line thinner than the inset it asks for) fall back to the full-width disc rather
+ * than inverting the cap.
+ */
+internal fun bulbReferenceScale(widthPx: Float, markInsetPx: Float): Float {
+    val radius = widthPx - markInsetPx
+    return if (radius <= 0f || widthPx <= 0f) 1f else widthPx / radius
+}

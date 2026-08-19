@@ -17,14 +17,9 @@ package org.onebusaway.android.map
 
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
-import org.onebusaway.android.directions.model.decodedPoints
-import org.onebusaway.android.directions.model.substitutableRoutes
-import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
-import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
@@ -102,65 +97,11 @@ class DirectionsMapController(private val host: MapHost) {
         val endLat = endPlace.lat
         val endLon = endPlace.lon
 
-        // The routes the *drawer* offers for each leg, not the raw interchangeable set: `substitutableRoutes`
-        // is already narrowed by what the rest of the plan needs of this leg (a leg of a stay-aboard
-        // interline admits no substitute at all, #2000 × #2010), so the label on a line and the badge in the
-        // drawer beside it name one ride the same way.
-        //
-        // Its alignment to the legs is stated rather than defended against, in the same terms
-        // [ModeSymbols.forLegs] states it for the same list: a short list read defensively would quietly
-        // label a ride with fewer routes than it can be taken on — the rider is told to wait for the 1 Line
-        // when the 2 Line would also do — and nothing downstream could tell that from a leg that genuinely
-        // has no alternatives. Misalignment is a bug in the analysis, so say so where it is read.
-        val substitutes = itinerary.substitutableRoutes()
-        require(substitutes.size == legs.size) {
-            "substitutable routes must be index-aligned to legs (${substitutes.size} vs ${legs.size})"
-        }
-
-        // Every leg that has geometry to draw, decoded and styled once: the polylines below stroke it and
-        // the route labels are anchored on it, so a label cannot end up a different colour from its own
-        // line (a leg without geometry draws neither).
-        val drawableLegs = legs.mapIndexedNotNull { legIndex, leg ->
-            val geometry = leg.legGeometry ?: return@mapIndexedNotNull null
-            val shape = LegShape(geometry)
-            if (shape.length <= 0) return@mapIndexedNotNull null
-            val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor), palette)
-            // The wire hex is parsed here, on the leg and on every route offered in its place, so the
-            // styling itself stays free of `android.graphics` (see the [ItineraryLegStyle] file header).
-            val interchangeable = substitutes[legIndex].map { route ->
-                ItinerarySubstitute(route, parseObaHexColor(route.routeColor))
-            }
-            ItineraryDrawableLeg(legIndex, leg, shape.points, style, interchangeable)
-        }
-        // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
-        // [itineraryLegStyle], which also decides the hairline case a ride wears.
-        val caps = itineraryLegCaps(legs)
-        legLines = drawableLegs.map { drawable ->
-            val (legIndex, _, points, style) = drawable
-            val legCaps = caps[legIndex]
-            ItineraryLegLine(
-                legIndex,
-                RoutePolyline(
-                    style.color,
-                    points,
-                    // The other routes this ride may be taken on, striped through it (#2100) so the line
-                    // says what its badge does; empty for every ride offering no alternative.
-                    stripeColors = drawable.stripeColors(palette),
-                    widthProfile = style.widthProfile,
-                    dash = style.dash,
-                    case = style.case,
-                    // A cutover (#2127) and a bulb are alternatives, not additions — the cut goes precisely
-                    // where the ride runs on and the bulb is therefore withheld, which is what this `when`
-                    // says and what a pair of booleans left each renderer to decide for itself.
-                    startMark = when {
-                        legCaps.startSeam -> RouteLineMark.INTERLINE_CUT
-                        style.roundCaps && legCaps.start -> RouteLineMark.BULB
-                        else -> RouteLineMark.NONE
-                    },
-                    endMark = if (style.roundCaps && legCaps.end) RouteLineMark.BULB else RouteLineMark.NONE
-                )
-            )
-        }
+        // How this trip is drawn, from the one builder that answers that (#2246): the lines at full
+        // fidelity — stripes and end marks included — and the legs the route labels are anchored on.
+        val drawn = drawnItinerary(itinerary, palette, ::parseObaHexColor)
+        val drawableLegs = drawn.legs
+        legLines = drawn.lines
         // A freshly drawn itinerary is the overview: every leg at full weight until one is focused.
         focusedLegIndices = emptySet()
         publishLegs()
@@ -249,13 +190,6 @@ class DirectionsMapController(private val host: MapHost) {
         if (current?.point == point) return current
         current?.let { host.removeMarker(it.id) }
         return point?.let { EndpointMarker(it, host.addMarker(it.latitude, it.longitude, hue)) }
-    }
-
-    /** An [ObaShape] over a [TripLegGeometry] (ported from the legacy DirectionsMapController). */
-    private class LegShape(private val geometry: TripLegGeometry) : ObaShape {
-        override val length: Int get() = geometry.length
-        override val points: List<GeoPoint> get() = geometry.decodedPoints()
-        override val rawPoints: String get() = geometry.points.orEmpty()
     }
 
     companion object {

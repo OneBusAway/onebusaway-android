@@ -3,25 +3,32 @@ package org.onebusaway.android.map
 
 import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
+import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripLegAlternative
+import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.encodePolyline
 import org.onebusaway.android.util.riddenRouteHue
 import org.onebusaway.android.util.routeBadgeChipColor
 
@@ -497,6 +504,27 @@ class ItineraryLegStyleTest {
     }
 
     @Test
+    fun `a colourless route stripes in whatever colour the view draws a colourless route in`() {
+        // The rule compares an alternative against the colour its line already is, so both have to be
+        // stated in the same space or the comparison is between two spellings of one colour. The two views
+        // spell it differently: the itinerary puts a colourless ride on the shared anchor, while a route
+        // session draws it the way the corridor beneath it is drawn — the renderer's own default. Each
+        // resolves its own, and in both a colourless alternative drops out of a colourless ride's stripes
+        // rather than striping it with itself.
+        val itineraryColour = riddenLineColor(null, DIRECTIONS)
+        assertEquals(
+            emptyList<Int>(),
+            rideStripeColors(listOf(null), lineColor = itineraryColour, colorOf = { riddenLineColor(it, DIRECTIONS) })
+        )
+
+        val routeViewColour = DEFAULT_ROUTE_LINE_COLOR
+        assertEquals(
+            emptyList<Int>(),
+            rideStripeColors(listOf(null), lineColor = routeViewColour, colorOf = { DIRECTIONS.lineColor(it) ?: DEFAULT_ROUTE_LINE_COLOR })
+        )
+    }
+
+    @Test
     fun `a ride with no alternative is not striped at all`() {
         assertEquals(emptyList<Int>(), drawableRide(routeColor = 0xFF008000.toInt()).stripeColors(DIRECTIONS))
     }
@@ -517,6 +545,87 @@ class ItineraryLegStyleTest {
 
         assertEquals(listOf(rideColor(0xFF0000FF.toInt())), ride.stripeColors(DIRECTIONS))
     }
+
+    @Test
+    fun `one builder draws the trip, and the views of it are reductions of what it draws`() {
+        // #2246: there were two builders — this one without marks or stripes, and the directions
+        // controller's own walk with both — so the parked trip could never draw what the read trip did,
+        // and "does this view drop stripes?" had two answers. One builder now draws at full fidelity and
+        // every view states what it takes away, which is the only shape in which they can be compared.
+        val drawn = drawnItinerary(interchangeableRideItinerary(), DIRECTIONS, parseRouteColor = ::testHexColor)
+
+        val ride = drawn.lines.single().line
+        // Full fidelity: the ride the rider may board either route for is striped, and bulbed at the ends
+        // where they get on and off.
+        assertEquals(listOf(rideColor(testHexColor(ALTERNATIVE_ROUTE_COLOR)!!)), ride.stripeColors)
+        assertEquals(RouteLineMark.BULB, ride.startMark)
+        assertEquals(RouteLineMark.BULB, ride.endMark)
+        // The legs come back beside the lines because the route labels are anchored on them.
+        assertEquals(listOf(ride.color), drawn.legs.map { it.style.color })
+
+        // And the ghost is that same line, reduced — not a second, quieter idea of the trip.
+        val ghost = drawn.lines.map { it.line }.asPinnedTripGhost().single()
+        assertEquals(ride.color, ghost.color)
+        assertEquals(ride.points, ghost.points)
+        assertEquals(emptyList<Int>(), ghost.stripeColors)
+        assertEquals(RouteLineMark.NONE, ghost.startMark)
+        assertEquals(RouteLineMark.NONE, ghost.endMark)
+    }
+
+    @Test
+    fun `a leg with nothing drawable is left out, and does not shift the ones that are`() {
+        // A leg that carried no shape draws no line, so a position in the drawn list is not a leg index —
+        // which is the whole reason a line is paired with the index it came from.
+        val itinerary = TripItinerary(
+            legs = listOf(
+                TripLeg(mode = TripMode.WALK),
+                transitLeg(PLANNED_ROUTE_COLOR, listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)))
+            )
+        )
+
+        val drawn = drawnItinerary(itinerary, DIRECTIONS, parseRouteColor = ::testHexColor)
+
+        assertEquals(listOf(1), drawn.lines.map { it.legIndex })
+    }
+
+    /** An itinerary of one ride, offered on a second route the rider may board in its place (#2010). */
+    private fun interchangeableRideItinerary() = TripItinerary(
+        startTime = ServerTime(0L),
+        legs = listOf(
+            transitLeg(
+                routeColor = PLANNED_ROUTE_COLOR,
+                points = listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)),
+                alternatives = listOf(
+                    TripLegAlternative(
+                        routeId = "route-2",
+                        routeShortName = "2 Line",
+                        routeColor = ALTERNATIVE_ROUTE_COLOR,
+                        duration = 20.minutes,
+                        fromStopId = "1_500",
+                        toStopId = "1_501"
+                    )
+                )
+            )
+        )
+    )
+
+    private fun transitLeg(
+        routeColor: String?,
+        points: List<GeoPoint>,
+        alternatives: List<TripLegAlternative> = emptyList()
+    ) = TripLeg(
+        mode = TripMode.RAIL,
+        routeId = "route-1",
+        routeShortName = "1 Line",
+        routeColor = routeColor,
+        duration = 20.minutes,
+        startTime = ServerTime(0L),
+        endTime = ServerTime(0L) + 20.minutes,
+        from = TripPlace(name = "Board", stopId = "1_500"),
+        to = TripPlace(name = "Alight", stopId = "1_501"),
+        legGeometry = TripLegGeometry(encodePolyline(points), points.size),
+        alternatives = alternatives
+    )
 
     /** The colour this map draws a ride whose agency publishes [routeColor] in. */
     private fun rideColor(routeColor: Int) = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor, DIRECTIONS).color
@@ -559,7 +668,15 @@ class ItineraryLegStyleTest {
         )
     }
 
+    /** Stands in for `parseObaHexColor`, which needs `android.graphics`: the builder takes it as a lambda. */
+    private fun testHexColor(hex: String?): Int? = hex?.removePrefix("#")?.toLongOrNull(16)?.toInt()?.let { 0xFF000000.toInt() or it }
+
     private companion object {
+        // Two published GTFS colours, as they arrive on the wire.
+        const val PLANNED_ROUTE_COLOR = "0072BC"
+
+        const val ALTERNATIVE_ROUTE_COLOR = "00A94F"
+
         // The palette the directions view actually draws with, and the one every other view does. Most cases
         // here are about a leg's *shape* rather than its colour, and take the directions palette because that
         // is the only palette an itinerary leg is ever stroked with.

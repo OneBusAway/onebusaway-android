@@ -605,7 +605,12 @@ class MapViewModel @Inject constructor(
     fun setPinnedTripTrace(itinerary: TripItinerary?) {
         renderState.setPinnedTripPolylines(
             itinerary?.let {
-                itineraryLegLines(it, directionsPalette()) { leg -> parseObaHexColor(leg.routeColor) }
+                // The same lines the drawn trip is stroked with (#2246), reduced to a trace: the ghost is
+                // a *view* of a trip, so it starts from how that trip is drawn rather than from a second,
+                // quieter idea of it.
+                drawnItinerary(it, directionsPalette(), ::parseObaHexColor)
+                    .lines
+                    .map(ItineraryLegLine::line)
                     .asPinnedTripGhost()
             }.orEmpty()
         )

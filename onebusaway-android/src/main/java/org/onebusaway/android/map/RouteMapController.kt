@@ -984,7 +984,22 @@ class RouteMapController(
                 plan.polylines,
                 riddenSpans,
                 colorOf = ::spanColor,
-                itineraryContext = itineraryContext
+                itineraryContext = itineraryContext,
+                // The ride keeps the stripes it had as a leg (#2100/#2241), rendered by this session's own
+                // palette — the directions one when the rider drilled in from a trip plan, so the stripes
+                // are the colours the badge on that leg named.
+                //
+                // An alternative is resolved exactly as this view resolves the ride itself ([spanColor]),
+                // the renderer's own fallback included, so the two are compared in one space: a route that
+                // publishes no colour is drawn in the default here, which is the colour the ride is already
+                // stroked in, so it drops out instead of striping the line with itself.
+                stripeColorsOf = { span, color ->
+                    rideStripeColors(
+                        span.interchangeableColors,
+                        lineColor = color ?: DEFAULT_ROUTE_LINE_COLOR,
+                        colorOf = { palette.lineColor(it) ?: DEFAULT_ROUTE_LINE_COLOR }
+                    )
+                }
             ),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom

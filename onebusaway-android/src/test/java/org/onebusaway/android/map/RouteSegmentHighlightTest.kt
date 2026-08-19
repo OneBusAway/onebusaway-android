@@ -156,16 +156,74 @@ class RouteSegmentHighlightTest {
         )
 
         assertEquals(listOf(45, 75), result.map { it.color })
-        // The cut goes on the span the vehicle *changed route onto*, and only there: the ride's own start
-        // is a boarding, which this view marks with the stop the rider gets on at.
-        assertEquals(listOf(RouteLineMark.NONE, RouteLineMark.INTERLINE_CUT), result.map { it.startMark })
-        // Both spans are still the selected ride: same weight, same case, no bulb between them — the
-        // rider does not get off here.
+        // The cut goes on the span the vehicle *changed route onto*, and only there. The ride's own ends
+        // are a boarding and an alighting, and take the bulbs the itinerary map gives them ([itineraryLegCaps]);
+        // the seam between the spans takes neither, because the rider sits through it.
+        assertEquals(listOf(RouteLineMark.BULB, RouteLineMark.INTERLINE_CUT), result.map { it.startMark })
+        assertEquals(listOf(RouteLineMark.NONE, RouteLineMark.BULB), result.map { it.endMark })
+        // Both spans are still the selected ride: same weight, same case.
         result.forEach {
             assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, it.widthProfile)
             assertEquals(RouteLineCase.SELECTION, it.case)
-            assertEquals(RouteLineMark.NONE, it.endMark)
         }
+    }
+
+    @Test
+    fun routePolylinesWithSegment_drawsTheRideWithTheStripesItHadAsALeg() {
+        // #2241: a ride the rider may board either route for is striped on the itinerary map (#2100), and
+        // drilling in used to draw it as a plain line — so tapping a shared ride to look at it closer was
+        // exactly when the map stopped saying it was shared. The stripes are the ride's, not the route
+        // session's, so they travel on the span and are rendered by the caller's palette.
+        val rideColor = 0xFF0072BC.toInt()
+        val otherColor = 0xFF00A94F.toInt()
+        // One alternative drawn in the ride's own colour, and one that is not.
+        val span = RiddenSpan(segment, routeId = "1_100479", interchangeableColors = listOf(rideColor, otherColor))
+        var stripedAgainst: Int? = null
+
+        val result = routePolylinesWithSegment(
+            base = emptyList(),
+            spans = listOf(span),
+            colorOf = { rideColor },
+            // The ride's resolved colour is handed to the stripe rule rather than resolved a second time,
+            // which is what lets an alternative drawn in that same colour drop out instead of striping the
+            // line with itself. Asserted through the callback, since this is the function's half of that —
+            // the filtering itself is [rideStripeColors], covered in ItineraryLegStyleTest.
+            stripeColorsOf = { striped, color ->
+                stripedAgainst = color
+                striped.interchangeableColors.filterNotNull().distinct().filterNot { it == color }
+            }
+        )
+
+        assertEquals(rideColor, stripedAgainst)
+        assertEquals(listOf(otherColor), result.single().stripeColors)
+    }
+
+    @Test
+    fun routePolylinesWithSegment_marksTheDrawnRidesStartAsABoarding_evenWhenThatSpanIsACutover() {
+        // A leader with no geometry to draw drops out, which can leave a *cutover* span first. The rider
+        // still gets on where the drawn ride begins, so that end is a boarding: a cut there would announce
+        // a change of route with nothing before it to have changed from. The itinerary map never has to
+        // decide this — a seam leg is never one the rider boards — so it is decided here.
+        val north = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33))
+        val spans = listOf(
+            RiddenSpan(emptyList(), routeId = "45"),
+            RiddenSpan(north, routeId = "75", startsCutover = true)
+        )
+
+        val result = routePolylinesWithSegment(emptyList(), spans, colorOf = { 75 })
+
+        assertEquals(RouteLineMark.BULB, result.single().startMark)
+        assertEquals(RouteLineMark.BULB, result.single().endMark)
+    }
+
+    @Test
+    fun routePolylinesWithSegment_marksTheRidesOwnEndsWhereverItStartsAndStops() {
+        // A plain single-route ride: the rider gets on at one end and off at the other, which is what a
+        // bulb pair says (#2084) — the same thing it said on the itinerary map they tapped it from.
+        val result = routePolylinesWithSegment(emptyList(), ride(segment), colorOf = { 1 })
+
+        assertEquals(RouteLineMark.BULB, result.single().startMark)
+        assertEquals(RouteLineMark.BULB, result.single().endMark)
     }
 
     @Test
@@ -179,7 +237,11 @@ class RouteSegmentHighlightTest {
 
         val result = routePolylinesWithSegment(emptyList(), spans, colorOf = { 12 })
 
-        assertTrue(result.all { it.startMark == RouteLineMark.NONE })
+        assertTrue(result.none { it.startMark == RouteLineMark.INTERLINE_CUT })
+        // The seam itself is unmarked at both of its sides — it is interior to one ride, so neither a cut
+        // nor the bulb pair that would read as getting off and back on.
+        assertEquals(RouteLineMark.NONE, result.first().endMark)
+        assertEquals(RouteLineMark.NONE, result.last().startMark)
     }
 
     @Test
@@ -190,6 +252,10 @@ class RouteSegmentHighlightTest {
         val result = routePolylinesWithSegment(emptyList(), spans, colorOf = { 7 })
 
         assertEquals(listOf(segment), result.map { it.points })
+        // And the ride's ends are the ends of what is actually drawn: the dropped span must not take the
+        // boarding bulb down with it, leaving the drawn remainder looking like the middle of a ride.
+        assertEquals(RouteLineMark.BULB, result.single().startMark)
+        assertEquals(RouteLineMark.BULB, result.single().endMark)
     }
 
     @Test

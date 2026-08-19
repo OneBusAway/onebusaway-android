@@ -33,6 +33,7 @@ class NavigateHereBubbleTest {
     private val bubbleWidth = 400
     private val bubbleHeight = 120
     private val tail = 42f
+    private val pin = 120f
     private val margin = 36f
 
     private fun placeAt(x: Float, y: Float) = navigateHereBubblePlacement(
@@ -43,28 +44,32 @@ class NavigateHereBubbleTest {
         containerWidth = screenWidth,
         containerHeight = screenHeight,
         tailSizePx = tail,
+        pinClearancePx = pin,
         marginPx = margin
     )
 
-    /** The ordinary press, mid-map: centred over the point and sitting just above it. */
+    /** The ordinary press, mid-map: centred over the pin and standing clear of it. */
     @Test
-    fun `a press in open space puts the bubble over the point`() {
+    fun `a press in open space puts the bubble over the pin`() {
         val placement = placeAt(x = 540f, y = 960f)
 
         assertTrue("the bubble should sit above the press", placement.above)
         assertEquals(540 - bubbleWidth / 2, placement.x)
-        // The bubble's bottom edge stops half a tail short of the point, which is what the tail spans.
-        assertEquals((960f - tail / 2f).toInt() - bubbleHeight, placement.y)
+        // Clear of the pin standing on the point, with the tail spanning the last half-tail to its head.
+        assertEquals((960f - pin - tail / 2f).toInt() - bubbleHeight, placement.y)
         assertEquals(540, placement.tailCenterX)
     }
 
-    /** Too near the top to fit above: it flips below the point rather than covering it. */
+    /**
+     * Too near the top for the bubble *and* the pin it has to clear: it flips below the point, where no
+     * clearance is owed — the pin stands upward from its tip, so the map below the point is empty.
+     */
     @Test
     fun `a press near the top of the map flips the bubble below it`() {
-        val placement = placeAt(x = 540f, y = 40f)
+        val placement = placeAt(x = 540f, y = 150f)
 
         assertFalse("there is no room above a press this high", placement.above)
-        assertEquals((40f + tail / 2f).toInt(), placement.y)
+        assertEquals((150f + tail / 2f).toInt(), placement.y)
         assertEquals(540, placement.tailCenterX)
     }
 
@@ -92,6 +97,21 @@ class NavigateHereBubbleTest {
             "the tail should stay within the bubble it hangs off",
             placement.tailCenterX <= placement.x + bubbleWidth
         )
+    }
+
+    /**
+     * The pin panned off the map: the offer stands, but there is nothing on screen for it to stand
+     * beside, so it reports itself as not drawable rather than sliding to the nearest edge. The map
+     * SDKs' projectors answer for an off-screen point as readily as an on-screen one, which is exactly
+     * why this is asked here rather than assumed of the projection.
+     */
+    @Test
+    fun `a point panned off the map is not drawn at all`() {
+        assertFalse("panned off the left", placeAt(x = -40f, y = 960f).onScreen)
+        assertFalse("panned off the top", placeAt(x = 540f, y = -10f).onScreen)
+        assertFalse("panned off the right", placeAt(x = screenWidth + 1f, y = 960f).onScreen)
+        assertFalse("panned off the bottom", placeAt(x = 540f, y = screenHeight + 1f).onScreen)
+        assertTrue("still on the map", placeAt(x = 540f, y = 960f).onScreen)
     }
 
     /**

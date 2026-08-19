@@ -46,6 +46,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -807,25 +808,37 @@ fun HomeScreen(
                                 }
                             }
 
-                            // A long-pressed map point, offering to navigate there until it is taken or
-                            // dismissed (#2243).
-                            var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
-                            // The map's own lat/lng -> screen projector, which is how the offer stays on
-                            // the point it names. Flavor-neutral, so this reads the same on both maps.
+                            // Where a long press has dropped its pin, if one is down: the map owns that
+                            // pin (it draws it, and its own taps put it away), and this screen draws the
+                            // "navigate here" bubble over it (#2243).
+                            val navigateHerePin by mapViewModel.navigateHerePin
+                                .collectAsStateWithLifecycle()
+                            // The map's own lat/lng -> screen projector, which is how the bubble stays on
+                            // the pin through a pan or a zoom. Flavor-neutral: both maps publish one.
                             val mapProjector by mapViewModel.renderState.projector
                                 .collectAsStateWithLifecycle()
                             // The tour's long-press step mimes a press on the demo trip's destination, so
                             // the map shows what that press produces — the tour never narrates something
-                            // that isn't on screen (see ScriptedTutorial). It is drawn, not pressable: the
+                            // that isn't on screen (see ScriptedTutorial). Drawn, not pressable: the
                             // spotlight overlay swallows taps, and the step after it plans the trip.
                             //
-                            // Derived rather than read straight, so this screen recomposes as the offer
+                            // Derived rather than read straight, so this screen recomposes as the step
                             // comes and goes rather than on every one of the tour's seventeen steps.
                             val tourPressPoint by remember(tutorialState) {
                                 derivedStateOf {
                                     DemoModeController.TRIP_PLAN_DESTINATION.takeIf {
                                         tutorialState.current?.id == ScriptedTutorial.STEP_PLAN_PRESS
                                     }
+                                }
+                            }
+                            // The mimed press drops the real pin, for the length of that step only. The
+                            // tour never long-presses the map itself (the overlay swallows every touch),
+                            // so this is the one writer that isn't a gesture — and it takes its own pin
+                            // away again, which is what keeps the tour from leaving one behind.
+                            DisposableEffect(tourPressPoint) {
+                                tourPressPoint?.let(mapViewModel::setNavigateHerePin)
+                                onDispose {
+                                    if (tourPressPoint != null) mapViewModel.setNavigateHerePin(null)
                                 }
                             }
                             // Leaving directions ends any in-progress map pick.
@@ -890,7 +903,6 @@ fun HomeScreen(
                                     homeViewModel = homeViewModel,
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
-                                    onMapLongPress = { longPressPoint = it },
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
                                     modifier = Modifier.fillMaxSize()
                                 )
@@ -1126,22 +1138,22 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                // Long-press → "navigate here": enters directions with the trip's far end
-                                // filled in with the pressed point, and its near end paired with where the
-                                // rider is (see setEndpointPaired).
-                                (longPressPoint ?: tourPressPoint)?.let { point ->
+                                // The bubble over the dropped pin: taking it enters directions with the
+                                // pinned point as the trip's far end and the rider's own position paired
+                                // into the near one (see setEndpointPaired).
+                                navigateHerePin?.let { point ->
                                     NavigateHereBubble(
                                         point = point,
                                         projector = mapProjector,
                                         onNavigate = {
+                                            mapViewModel.setNavigateHerePin(null)
                                             homeViewModel.enterDirections(mapViewModel.viewport)
                                             tripPlanViewModel.setEndpointPaired(
                                                 TripEndpointSlot.TO,
                                                 TripEndpoint.MapPoint(point.latitude, point.longitude)
                                             )
-                                            longPressPoint = null
                                         },
-                                        onDismiss = { longPressPoint = null }
+                                        onDismiss = { mapViewModel.setNavigateHerePin(null) }
                                     )
                                 }
                                 // Neither Back nor a tap on the map background leaves outright while a trip

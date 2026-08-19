@@ -197,6 +197,11 @@ class DirectionsMapController(private val host: MapHost) {
         // since the map package can't depend on the Google Maps classes.
         private const val HUE_GREEN = 120.0f
 
-        private const val HUE_RED = 0.0f
+        /**
+         * The destination's hue. Internal because the map long-press pin (#2243) carries it too: the pin
+         * a press drops *is* the pin the destination keeps once the trip is planned, and sharing the
+         * constant is what keeps that true rather than two literals that happen to agree today.
+         */
+        internal const val HUE_RED = 0.0f
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -41,10 +42,10 @@ import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
 /**
- * On-device checks on what a map long press now offers (#2243): one option, drawn at the point that was
- * pressed. Both claims are render-only — the placement arithmetic itself is unit-tested in
- * `NavigateHereBubbleTest`; what a render adds is that the bubble really lands where that arithmetic
- * puts it, rather than in the middle of the screen as the modal it replaces did.
+ * On-device checks on what a map long press now offers (#2243): one option, drawn over the pin the press
+ * drops, and leaving the map beneath it free. Render-only claims — the placement arithmetic itself is
+ * unit-tested in `NavigateHereBubbleTest`; what a render adds is that the bubble really lands where that
+ * arithmetic puts it, and that nothing here eats a touch the map should have had.
  */
 class NavigateHereBubbleRenderTest {
 
@@ -67,9 +68,9 @@ class NavigateHereBubbleRenderTest {
     }
 
     /**
-     * The point of the redesign: the bubble hangs off the press rather than being centred on the
-     * screen. Asserted against the anchor it was given — the bubble sits above it, and horizontally
-     * over it — which is what a card in the middle of the screen could never satisfy.
+     * The point of the redesign: the bubble hangs off the pin rather than being centred on the screen.
+     * Asserted against the anchor it was given — the bubble sits above it, and horizontally over it —
+     * which is what a card in the middle of the screen could never satisfy.
      */
     @Test
     fun theBubbleIsDrawnAtThePressRatherThanInTheMiddleOfTheScreen() {
@@ -107,19 +108,26 @@ class NavigateHereBubbleRenderTest {
     }
 
     /**
-     * A tap anywhere else answers the offer by ignoring it — and the map beneath never sees that tap,
-     * which is what keeps a dismissal from also focusing whatever it landed on.
+     * The offer is not modal: everything it doesn't cover belongs to the map, which is what lets the
+     * rider pan and zoom around the pinned place. So a tap beside the bubble reaches the map — where it
+     * is the map, not this overlay, that answers the offer by putting its pin away.
      */
     @Test
-    fun aTapAwayFromTheBubbleDismissesTheOffer() {
-        var dismissed = 0
+    fun aTapBesideTheBubbleReachesTheMapBeneath() {
         var throughToTheMap = 0
-        renderOffer(onDismiss = { dismissed++ }, onMapTap = { throughToTheMap++ })
+        renderOffer(onMapTap = { throughToTheMap++ })
 
         composeRule.onRoot().performTouchInput { click(percentOffset(0.5f, 0.1f)) }
 
-        assertEquals(1, dismissed)
-        assertEquals("the dismissing tap should not reach the map", 0, throughToTheMap)
+        assertEquals("a tap beside the offer belongs to the map", 1, throughToTheMap)
+    }
+
+    /** Panned off the map, the offer has nothing to stand beside, so it draws nothing at all. */
+    @Test
+    fun anOfferWhosePinIsOffTheMapDrawsNothing() {
+        renderOffer(anchor = ScreenOffset(x = -400f, y = -400f))
+
+        composeRule.onNodeWithTag(NavigateHereBubbleTestTags.BUBBLE).assertIsNotDisplayed()
     }
 
     private fun renderOffer(

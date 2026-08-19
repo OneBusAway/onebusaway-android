@@ -22,9 +22,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
@@ -690,6 +692,35 @@ class MapViewModel @Inject constructor(
 
     /** Leave a route selected within stop focus and restore the stop's full adjacency presentation. */
     fun clearSelectedRoute() = showNearbyStops()
+
+    // The pin a map long press drops, and with it the standing "navigate here" offer (#2243). It lives
+    // here because it is map *content*: the flavor renderer draws the pin off the render state, and every
+    // gesture that answers the offer — the long press that raises it, and the taps that move on from it —
+    // arrives at this view model already. The home screen draws the bubble over the pin and reads this
+    // for where.
+    private val _navigateHerePin = MutableStateFlow<GeoPoint?>(null)
+
+    /** Where the long-press offer currently stands, or null with none standing. */
+    val navigateHerePin: StateFlow<GeoPoint?> = _navigateHerePin.asStateFlow()
+
+    private var navigateHereMarkerId: Int? = null
+
+    /**
+     * Drop the "navigate here" pin at [point] — moving it if one is already down — or clear the offer
+     * with null.
+     *
+     * It carries the destination's own hue ([DirectionsMapController.HUE_RED]), so the pin a press drops
+     * is the pin the trip's destination keeps once the offer is taken, rather than a second mark for the
+     * same place.
+     */
+    fun setNavigateHerePin(point: GeoPoint?) {
+        if (_navigateHerePin.value == point) return
+        navigateHereMarkerId?.let { mapHost.removeMarker(it) }
+        navigateHereMarkerId = point?.let {
+            mapHost.addMarker(it.latitude, it.longitude, DirectionsMapController.HUE_RED)
+        }
+        _navigateHerePin.value = point
+    }
 
     /** Clear standalone/stop/bike focus and return to an ordinary nearby-stops map. */
     fun clearAllFocus() {

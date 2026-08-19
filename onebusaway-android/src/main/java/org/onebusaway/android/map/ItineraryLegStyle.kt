@@ -394,7 +394,9 @@ internal fun itineraryRouteBadges(
 internal fun ItineraryDrawableLeg.stripeColors(palette: RouteLinePalette): List<Int> = rideStripeColors(
     interchangeable.inInterchangeableOrder { it.route.displayName }.map { it.routeColor },
     lineColor = style.color,
-    palette = palette
+    // This view draws a ride through the ridden substitution, so it reads an alternative the same way —
+    // including a colourless one, which lands on the shared anchor here exactly as the ride itself would.
+    colorOf = { riddenLineColor(it, palette) }
 )
 
 /**
@@ -406,13 +408,20 @@ internal fun ItineraryDrawableLeg.stripeColors(palette: RouteLinePalette): List<
  * legs here, and it used to be drawn as a plain line: tapping a shared ride to look at it closer was
  * exactly when the map stopped saying it was two routes. One rule, spent from both places, is what makes
  * the line the rider taps and the line they get back the same line.
+ *
+ * [colorOf] renders one alternative, and is the caller's because the two views resolve a route's colour
+ * differently: this one puts a ride through the ridden substitution, while a route session draws it as the
+ * corridor beneath it is drawn, reaching the renderer's own default where nothing is published (#2186,
+ * #2041's remaining work). Both must answer in the space [lineColor] is stated in, or the comparison below
+ * is between two spellings of one colour rather than between two colours: a route publishing nothing would
+ * then stripe a line it is already the colour of.
  */
 internal fun rideStripeColors(
     alternatives: List<Int?>,
     lineColor: Int?,
-    palette: RouteLinePalette
+    colorOf: (Int?) -> Int
 ): List<Int> = alternatives
-    .map { riddenLineColor(it, palette) }
+    .map(colorOf)
     .distinct()
     .filterNot { it == lineColor }
 

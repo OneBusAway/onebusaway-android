@@ -142,7 +142,9 @@ internal fun List<RiddenSpan>.isDrawableRide(): Boolean = sumOf { it.points.size
  *
  * The end marks follow the same rule the itinerary map's own caps do ([itineraryLegCaps]): a bulb where the
  * rider gets on and off, an [RouteLineMark.INTERLINE_CUT] where the vehicle changed route under them
- * ([RiddenSpan.startsCutover]), and nothing at a seam they sit through. The bulbs are why the ride reads as
+ * ([RiddenSpan.startsCutover]), and nothing at a seam they sit through. The ride's own ends win over a cut,
+ * which the itinerary map gets for free (a seam leg is never a leg the rider boards) and this has to say,
+ * since a leader with no geometry to draw can leave a cutover span first. The bulbs are why the ride reads as
  * a ride here rather than as a piece of corridor, and the cut is why drilling into an interlined ride shows
  * the rider *more* about it rather than losing the one thing that said the route changes mid-ride.
  *
@@ -181,8 +183,12 @@ internal fun routePolylinesWithSegment(
             widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
             case = RouteLineCase.SELECTION,
             startMark = when {
-                span.startsCutover -> RouteLineMark.INTERLINE_CUT
+                // The ride's own start wins over the cut. A leader with no drawable geometry drops out
+                // above, which can leave a *cutover* span first: the rider still gets on where the drawn
+                // ride begins, and a cut there would announce a change of route with nothing before it to
+                // change from.
                 index == 0 -> RouteLineMark.BULB
+                span.startsCutover -> RouteLineMark.INTERLINE_CUT
                 else -> RouteLineMark.NONE
             },
             endMark = if (index == ridden.lastIndex) RouteLineMark.BULB else RouteLineMark.NONE

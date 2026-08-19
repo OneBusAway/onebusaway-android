@@ -18,6 +18,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineCase
@@ -499,6 +500,27 @@ class ItineraryLegStyleTest {
         assertEquals(
             badge.routes.map { it.color }.toSet(),
             (listOf(ride.style.color) + ride.stripeColors(DIRECTIONS)).toSet()
+        )
+    }
+
+    @Test
+    fun `a colourless route stripes in whatever colour the view draws a colourless route in`() {
+        // The rule compares an alternative against the colour its line already is, so both have to be
+        // stated in the same space or the comparison is between two spellings of one colour. The two views
+        // spell it differently: the itinerary puts a colourless ride on the shared anchor, while a route
+        // session draws it the way the corridor beneath it is drawn — the renderer's own default. Each
+        // resolves its own, and in both a colourless alternative drops out of a colourless ride's stripes
+        // rather than striping it with itself.
+        val itineraryColour = riddenLineColor(null, DIRECTIONS)
+        assertEquals(
+            emptyList<Int>(),
+            rideStripeColors(listOf(null), lineColor = itineraryColour, colorOf = { riddenLineColor(it, DIRECTIONS) })
+        )
+
+        val routeViewColour = DEFAULT_ROUTE_LINE_COLOR
+        assertEquals(
+            emptyList<Int>(),
+            rideStripeColors(listOf(null), lineColor = routeViewColour, colorOf = { DIRECTIONS.lineColor(it) ?: DEFAULT_ROUTE_LINE_COLOR })
         )
     }
 

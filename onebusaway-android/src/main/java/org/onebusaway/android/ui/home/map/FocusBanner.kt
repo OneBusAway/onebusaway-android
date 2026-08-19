@@ -119,6 +119,21 @@ private val SUBTITLE_ICON_OPTICAL_LIFT = 1.dp
 private const val MAX_TITLE_LINES = 2
 
 /**
+ * The focused stop's overflow actions. They act on the stop's arrivals session — which HOME owns, not
+ * the banner — so they arrive as one bundle rather than as two more lambdas on a banner that already
+ * carries eight. Null hides the menu: there is no session to act on until a stop's arrivals are up.
+ *
+ * These outlived the standalone arrivals screen whose top bar used to hold them (#1898); the banner is
+ * where a focused stop's actions live now. Its "show stop details" item did not: the banner itself
+ * already shows the stop's name, code and direction, and the drawer below it the routes that serve it,
+ * so the dialog only restated what was on screen.
+ */
+data class StopFocusMenu(
+    val onReportStopProblem: () -> Unit,
+    val onNightLight: () -> Unit
+)
+
+/**
  * Presentation state for the map's shared focus banner.
  */
 sealed interface FocusBannerState {
@@ -154,6 +169,7 @@ fun FocusBanner(
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
     onRecenterStop: () -> Unit,
+    stopMenu: StopFocusMenu? = null,
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
@@ -182,6 +198,7 @@ fun FocusBanner(
                         state = state,
                         onShowAlerts = onShowAlerts,
                         onRecenter = onRecenterStop,
+                        stopMenu = stopMenu,
                         onClose = onClose
                     )
                     is FocusBannerState.Route -> RouteFocusBanner(
@@ -237,6 +254,7 @@ private fun StopFocusBanner(
     state: FocusBannerState.Stop,
     onShowAlerts: () -> Unit,
     onRecenter: () -> Unit,
+    stopMenu: StopFocusMenu?,
     onClose: () -> Unit
 ) {
     Row(
@@ -284,6 +302,9 @@ private fun StopFocusBanner(
         }
         if (state.hasAlerts) {
             BannerAlertAction(onClick = onShowAlerts)
+        }
+        if (stopMenu != null) {
+            StopMenuAction(stopMenu)
         }
         HeaderIconButton(
             painter = painterResource(R.drawable.ic_navigation_close),
@@ -566,6 +587,33 @@ private fun HeaderIconButton(
             tint = colorResource(R.color.navdrawer_icon_tint),
             modifier = Modifier.size(HEADER_ICON_SIZE)
         )
+    }
+}
+
+/**
+ * The focused stop's overflow: the stop actions that are neither frequent enough for their own icon nor
+ * expressible on the map — a problem report against the stop, and the night-light flasher a rider holds
+ * up to a driver. Inherited from the retired standalone arrivals screen's top bar (#1898).
+ */
+@Composable
+private fun StopMenuAction(menu: StopFocusMenu) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        HeaderIconButton(
+            painter = painterResource(R.drawable.more_vert),
+            contentDescription = stringResource(R.string.stop_info_item_options_title),
+            onClick = { expanded = true }
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            MenuRow(R.string.stop_info_option_report_problem) {
+                expanded = false
+                menu.onReportStopProblem()
+            }
+            MenuRow(R.string.stop_info_option_night_light) {
+                expanded = false
+                menu.onNightLight()
+            }
+        }
     }
 }
 

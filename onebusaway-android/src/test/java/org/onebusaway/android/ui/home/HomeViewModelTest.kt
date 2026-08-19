@@ -38,6 +38,7 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
@@ -961,6 +962,66 @@ class HomeViewModelTest {
         vm.onSheetSettled(ArrivalsSheetState.Hidden, 80)
         assertEquals(0, vm.mapBottomPadding.value)
         assertEquals(ArrivalsSheetState.Hidden, vm.lastSettledSheet)
+    }
+
+    // --- resolving a focus revealed by id alone (deep link / FCM push / reminder row) ---
+
+    @Test
+    fun `an arrivals load completes a focus revealed by id alone`() = runTest {
+        val vm = viewModel()
+        vm.revealStop(FocusedStop("1"))
+        assertEquals(FocusedStop("1"), vm.currentFocus.value.focusedStop)
+
+        vm.onArrivalsLoaded(
+            ObaStopElement("1", 47.6, -122.3, "Main St", "100", wheelchairBoarding = WheelchairBoarding.ACCESSIBLE),
+            null,
+            emptySet()
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3), WheelchairBoarding.ACCESSIBLE),
+            vm.currentFocus.value.focusedStop
+        )
+    }
+
+    @Test
+    fun `an arrivals load leaves what the focus already knows alone`() = runTest {
+        val vm = viewModel()
+        val tapped = FocusedStop("1", "Rider's name for it", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(tapped)
+
+        vm.onArrivalsLoaded(ObaStopElement("1", 47.9, -122.9, "Server name", "999"), null, emptySet())
+        advanceUntilIdle()
+
+        assertEquals(tapped, vm.currentFocus.value.focusedStop)
+    }
+
+    @Test
+    fun `a resolved focus survives recreation from the saved handle`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        vm.revealStop(FocusedStop("1"))
+        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        advanceUntilIdle()
+
+        assertEquals(
+            FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)),
+            viewModel(savedState = handle).currentFocus.value.focusedStop
+        )
+    }
+
+    @Test
+    fun `a focus restored without a location stays without one`() = runTest {
+        // Process death between the reveal and its first arrivals load: the persisted focus has no
+        // lat/lon, which must read as "not resolved yet" rather than as a stop at 0,0.
+        val handle = SavedStateHandle()
+        viewModel(savedState = handle).revealStop(FocusedStop("1", "Main St"))
+
+        assertEquals(
+            FocusedStop("1", "Main St"),
+            viewModel(savedState = handle).currentFocus.value.focusedStop
+        )
     }
 
     // --- initial focus (restored vs intent deep-link) ---
@@ -2189,7 +2250,18 @@ class HomeViewModelTest {
         val stop = FocusedStop("1_123", "Main St & 1st", "123", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
 
-        assertEquals(ReportTarget.Stop(stop), vm.reportTarget())
+        assertEquals(ReportTarget.Stop(stop, GeoPoint(47.6, -122.3)), vm.reportTarget())
+    }
+
+    @Test
+    fun `reportTarget falls past a focused stop whose location has not resolved`() {
+        // A stop revealed by id alone (deep link / push / reminder row) has no location until its
+        // arrivals land, and a stop report needs one — so it is not a Stop target yet. With no device
+        // location either (see above), that leaves Generic.
+        val vm = viewModel(locationRepo = FakeLocationRepository(last = null))
+        vm.revealStop(FocusedStop("1_123"))
+
+        assertEquals(ReportTarget.Generic, vm.reportTarget())
     }
 
     @Test

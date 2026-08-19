@@ -33,7 +33,6 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.models.FocusedTrip
@@ -50,7 +49,6 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.SituationUtils
-import org.onebusaway.android.util.getRouteDisplayName
 
 /**
  * Folds a stop's situations into active-alert rows (see #1593). Filters to the active set FIRST, then
@@ -127,12 +125,9 @@ data class ArrivalsData(
      *  explicitly hidden or shown. Carried in the snapshot so the shown/hidden split is a pure
      *  function of the snapshot plus [ArrivalsRepository.alertHideState]. */
     val hideAlertsByDefault: Boolean,
-    /** Display names of every route serving the stop, for the stop-details dialog. */
-    val routeDisplayNames: List<String>,
     val stopCode: String?,
     val stopLat: Double,
-    val stopLon: Double,
-    val stopUserName: String?
+    val stopLon: Double
 )
 
 /** Loads real-time arrivals for a stop and persists the stop / route favorites. */
@@ -142,21 +137,6 @@ interface ArrivalsRepository {
         stopId: String,
         minutesAfter: Int
     ): Result<ArrivalsData>
-
-    /**
-     * Stars (or unstars) the stop. Funnels through [StopFavoritesRepository] — the single owner of
-     * stop-favorite membership — so this surface gets the same ensure-the-row-exists guarantee as the
-     * map focus banner (#1996). The caller passes the loaded stop identity (code/name/coords) so the
-     * ensure-row insert has something to write when the row is somehow absent.
-     */
-    suspend fun setStopFavorite(
-        stopId: String,
-        code: String?,
-        name: String?,
-        latitude: Double,
-        longitude: Double,
-        favorite: Boolean
-    )
 
     /**
      * Stars (or unstars) a route wholesale (#1751), then backfills the route's full details
@@ -248,7 +228,6 @@ class DefaultArrivalsRepository @Inject constructor(
     private val stopArrivals: StopArrivalsDataSource,
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
-    private val stopFavorites: StopFavoritesRepository,
     private val routeFavorites: RouteFavorites,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
@@ -368,7 +347,6 @@ class DefaultArrivalsRepository @Inject constructor(
             isFavorite = userInfo?.favorite == 1,
             wheelchairBoarding = stop?.wheelchairBoarding ?: WheelchairBoarding.UNKNOWN
         )
-        val routeDisplayNames = buildRouteDisplayNames(snapshot, stop)
         // Pure grouping; no store write. Hidden state is derived in the ViewModel from [alertHideState]
         // plus [ArrivalsData.hideAlertsByDefault], so nothing on the load path can race the snapshot.
         val situations = snapshot.situations()
@@ -394,11 +372,9 @@ class DefaultArrivalsRepository @Inject constructor(
             activeAlerts = activeAlerts,
             hideAlertsByDefault =
             preferences.getBoolean(R.string.preference_key_hide_alerts, false),
-            routeDisplayNames = routeDisplayNames,
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
-            stopLon = stop?.longitude ?: 0.0,
-            stopUserName = userInfo?.userName
+            stopLon = stop?.longitude ?: 0.0
         )
     }
 
@@ -443,36 +419,6 @@ class DefaultArrivalsRepository @Inject constructor(
             agencyName = agencyNameFor(snapshot, arrival.routeId),
             blockId = snapshot.trip(arrival.tripId)?.blockId,
             alertSituationId = activeAlertFor(arrival.situationIds, activeSituationIds)
-        )
-    }
-
-    /** Display names of every route serving the stop, for the stop-details dialog's "Routes:" line. */
-    private fun buildRouteDisplayNames(snapshot: StopArrivals, stop: ObaStop?): List<String> {
-        val routeIds = stop?.routeIds ?: return emptyList()
-        return routeIds.mapNotNull { snapshot.route(it) }
-            .map { getRouteDisplayName(it) }
-    }
-
-    override suspend fun setStopFavorite(
-        stopId: String,
-        code: String?,
-        name: String?,
-        latitude: Double,
-        longitude: Double,
-        favorite: Boolean
-    ) {
-        // Delegate to the shared owner (#1996): it gates on the import and ensures the `stops` row
-        // exists before flipping the flag — the same guarantee the map focus banner's star gets. On
-        // this path the on-load recordStop has already created the row, so the ensure is a no-op flag
-        // flip; the point is that the write no longer bypasses StopFavoritesRepository with a bare
-        // stopDao.setFavorite that silently no-ops when the row is missing.
-        stopFavorites.setFavorite(
-            id = stopId,
-            code = code,
-            name = name,
-            latitude = latitude,
-            longitude = longitude,
-            favorite = favorite
         )
     }
 

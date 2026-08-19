@@ -174,7 +174,6 @@
     <string name="stop_info_option_showonmap">Mostra sulla mappa</string>
     <string name="menu_option_sort_by">Ordina per</string>
     <string name="stop_info_option_refresh">Aggiorna</string>
-    <string name="stop_info_option_show_details">Mostra dettagli fermata</string>
     <string name="stop_info_option_report_problem">Segnala problema con fermata</string>
     <string name="stop_info_option_night_light">Luce notturna</string>
     <string name="stop_info_option_hide_alerts">Nascondi avvisi attivi</string>
@@ -215,8 +214,6 @@
     <string name="stop_info_item_options_title">Opzioni</string>
     <string name="stop_info_clear">Cancella</string>
     <string name="stop_info_favorite">La mia fermata</string>
-    <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>
-    <string name="stop_info_route_ids_label">Linee:</string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Promemoria di destinazione (beta)</string>
@@ -257,8 +254,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Mostra informazioni sull’arrivo</string>
-    <string name="route_info_context_showonmap">Mostra sulla mappa</string>
     <string name="route_info_no_shape_data">Non è possibile visualizzare questa linea sulla mappa.</string>
 
     <!-- My stops/routes -->

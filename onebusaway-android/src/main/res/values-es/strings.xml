@@ -250,7 +250,6 @@
     <string name="stop_info_option_showonmap">Mostrar sobre el Mapa</string>
     <string name="menu_option_sort_by">Ordenar por</string>
     <string name="stop_info_option_refresh">Refrescar</string>
-    <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
     <string name="stop_info_option_hide_alerts">Ocultar alertas</string>
@@ -308,8 +307,6 @@
     <string name="stop_info_item_options_title">Opciones de bus</string>
     <string name="stop_info_clear">Limpiar</string>
     <string name="stop_info_favorite">Parada Favorita</string>
-    <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
-    <string name="stop_info_route_ids_label">Rutas:</string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Parada # %1$s</string>
@@ -317,8 +314,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Mostrar información de llegadas</string>
-    <string name="route_info_context_showonmap">Mostrar sobre el mapa</string>
     <string name="route_info_no_shape_data">Lo sentimos, no esta disponible la información del mapa para esta ruta
     </string>
 

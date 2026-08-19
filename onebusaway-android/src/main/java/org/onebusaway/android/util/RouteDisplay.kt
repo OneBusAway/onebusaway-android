@@ -24,8 +24,8 @@ data class RouteDisplayNames(val shortName: String, val longName: String?)
 /**
  * The app's one route-name order: numeric-aware ("natural"), so "8" sorts before "40" before "550"
  * rather than lexicographically. Everywhere a list of route names is shown in name order — the
- * arrivals rows, [formatRouteDisplayNames], a trip leg's interchangeable routes (#2010) — sorts with
- * this, so the same set of routes reads the same way wherever it appears.
+ * arrivals rows, a trip leg's interchangeable routes (#2010) — sorts with this, so the same set of
+ * routes reads the same way wherever it appears.
  */
 val ROUTE_NAME_ORDER: Comparator<String> = AlphanumComparator()
 
@@ -91,29 +91,4 @@ fun getRouteDescription(shortName: String?, longName: String?, description: Stri
         resolvedLong = description
     }
     return MyTextUtils.formatDisplayText(resolvedLong)
-}
-
-/**
- * Returns a formatted and sorted list of route display names for presentation in a single line
- *
- * For example, the following list:
- *
- * 11,1,15, 8b
- *
- * ...would be formatted as:
- *
- * 4, 8b, 11, 15
- *
- * @param routeDisplayNames          list of route display names
- * @param nextArrivalRouteShortNames the short route names of the next X arrivals at the stop
- *                                   that are the same.  These will be highlighted in the
- *                                   results.
- * @return a formatted and sorted list of route display names for presentation in a single line
- */
-fun formatRouteDisplayNames(
-    routeDisplayNames: List<String>,
-    nextArrivalRouteShortNames: List<String>
-): String = routeDisplayNames.sortedWith(ROUTE_NAME_ORDER).joinToString(", ") { name ->
-    // Highlight (with "*") names that match one of the next X identical arrivals.
-    if (nextArrivalRouteShortNames.any { it.equals(name, ignoreCase = true) }) "$name*" else name
 }

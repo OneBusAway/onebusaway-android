@@ -44,6 +44,7 @@ import org.onebusaway.android.ui.mylists.openRoute
 import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.mylists.routeActions
 import org.onebusaway.android.ui.mylists.stopActions
+import org.onebusaway.android.ui.mylists.toStopReveal
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
@@ -80,13 +81,9 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             StopListDestination(
                 vm,
                 emptyText = R.string.my_no_starred_stops,
-                onClick = { navController.navigate(NavRoutes.arrivals(it.id, it.name)) },
+                onClick = { navController.revealStopOnMap(it.toStopReveal()) },
                 actions = {
-                    host.stopActions(
-                        it,
-                        R.string.my_context_remove_star,
-                        onShowOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) }
-                    ) { vm.remove(it.id) }
+                    host.stopActions(it, R.string.my_context_remove_star) { vm.remove(it.id) }
                 },
                 onToggleTracking = host.badgeTracking()
             )

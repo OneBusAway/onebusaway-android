@@ -82,7 +82,6 @@ sealed interface ArrivalsUiState {
      * @param actions per-arrival navigation/dialog data, keyed by trip id
      * @param alerts active, non-hidden service alerts for the stop
      * @param hiddenAlertCount how many alerts the user has hidden (for the "show hidden" affordance)
-     * @param routeDisplayNames display names of every route serving the stop (for the stop-details dialog)
      */
     data class Content(
         val header: StopHeader,
@@ -104,11 +103,9 @@ sealed interface ArrivalsUiState {
         val trackedRows: Set<TrackedRouteKey> = emptySet(),
         val alerts: List<AlertItem> = emptyList(),
         val hiddenAlertCount: Int = 0,
-        val routeDisplayNames: List<String> = emptyList(),
         val stopCode: String? = null,
         val stopLat: Double = 0.0,
-        val stopLon: Double = 0.0,
-        val stopUserName: String? = null
+        val stopLon: Double = 0.0
     ) : ArrivalsUiState {
         /** True when the stop has any service alert at all — shown *or* hidden — so the header keeps
          *  its alert icon even after the rider hides every alert. */

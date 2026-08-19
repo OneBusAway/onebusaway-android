@@ -97,10 +97,6 @@ class ArrivalsViewModel @AssistedInject constructor(
     private val _arrivalsLoaded = MutableSharedFlow<ArrivalsLoaded>(extraBufferCapacity = 1)
     val arrivalsLoaded: SharedFlow<ArrivalsLoaded> = _arrivalsLoaded.asSharedFlow()
 
-    /** Whether the stop-details dialog (the overflow "show stop details" action) is showing. */
-    private val _stopDetailsVisible = MutableStateFlow(false)
-    val stopDetailsVisible: StateFlow<Boolean> = _stopDetailsVisible.asStateFlow()
-
     private var minutesAfter = DefaultArrivalsRepository.MINUTES_AFTER_DEFAULT
 
     /** Wall-clock time of the last completed load, read by the screen's polling loop. */
@@ -175,33 +171,6 @@ class ArrivalsViewModel @AssistedInject constructor(
         }
     }
 
-    /** Toggles the stop favorite, updating the header optimistically and persisting. */
-    fun toggleFavorite() {
-        val content = state.value as? ArrivalsUiState.Content ?: return
-        val newValue = !content.header.isFavorite
-        loaded.value?.let { loaded.value = it.copy(header = content.header.copy(isFavorite = newValue)) }
-        viewModelScope.launch {
-            repository.setStopFavorite(
-                stopId = content.header.stopId,
-                code = content.stopCode,
-                name = content.header.name,
-                latitude = content.stopLat,
-                longitude = content.stopLon,
-                favorite = newValue
-            )
-        }
-    }
-
-    /** Opens the stop-details dialog (the overflow "show stop details" action). */
-    fun requestStopDetails() {
-        _stopDetailsVisible.value = true
-    }
-
-    /** Dismisses the stop-details dialog. */
-    fun dismissStopDetails() {
-        _stopDetailsVisible.value = false
-    }
-
     /**
      * Toggles the route star wholesale (#1751): stars the route if it isn't already (else unstars) and
      * backfills the route details. No reload — the star + drawer promotion re-flag reactively from the
@@ -220,8 +189,8 @@ class ArrivalsViewModel @AssistedInject constructor(
         }
     }
 
-    /** Hides every currently active alert (the toolbar "hide alerts" action). The reactive [state]
-     *  picks up the write with no refresh. */
+    /** Hides every currently active alert (the alerts dialog's "hide alerts" action). The reactive
+     *  [state] picks up the write with no refresh. */
     fun hideAllAlerts() {
         val ids = activeSituationIds()
         if (ids.isEmpty()) return
@@ -289,11 +258,9 @@ class ArrivalsViewModel @AssistedInject constructor(
             trackedRows = trackedRows,
             alerts = shown,
             hiddenAlertCount = hiddenCount,
-            routeDisplayNames = routeDisplayNames,
             stopCode = stopCode,
             stopLat = stopLat,
-            stopLon = stopLon,
-            stopUserName = stopUserName
+            stopLon = stopLon
         )
     }
 }

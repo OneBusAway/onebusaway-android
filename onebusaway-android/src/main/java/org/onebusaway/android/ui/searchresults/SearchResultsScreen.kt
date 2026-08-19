@@ -47,6 +47,8 @@ import org.onebusaway.android.ui.compose.components.ListScreenScaffold
 import org.onebusaway.android.ui.compose.components.RouteRowContent
 import org.onebusaway.android.ui.compose.components.StopRowContent
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Stateful entry point: collects the ViewModel's query (title) and results, and reveals each
@@ -57,7 +59,7 @@ fun SearchResultsRoute(
     viewModel: SearchResultsViewModel,
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
-    onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
+    onRevealStop: (StopReveal) -> Unit,
     onVehicleShowOnMap: (VehicleTrip) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -67,7 +69,7 @@ fun SearchResultsRoute(
         onRetry = viewModel::retry,
         onBack = onBack,
         onRouteShowOnMap = onRouteShowOnMap,
-        onStopShowOnMap = onStopShowOnMap,
+        onRevealStop = onRevealStop,
         onVehicleShowOnMap = onVehicleShowOnMap
     )
 }
@@ -80,7 +82,7 @@ fun SearchResultsScreen(
     onRetry: () -> Unit,
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
-    onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
+    onRevealStop: (StopReveal) -> Unit,
     onVehicleShowOnMap: (VehicleTrip) -> Unit
 ) {
     ListScreenScaffold(
@@ -109,7 +111,7 @@ fun SearchResultsScreen(
     ) { item ->
         when (item) {
             is SearchResultItem.Route -> RouteResultRow(item, onRouteShowOnMap)
-            is SearchResultItem.Stop -> StopResultRow(item, onStopShowOnMap)
+            is SearchResultItem.Stop -> StopResultRow(item, onRevealStop)
             is SearchResultItem.Vehicle -> VehicleResultRow(item, onVehicleShowOnMap)
         }
     }
@@ -138,12 +140,14 @@ private fun RouteResultRow(
 @Composable
 private fun StopResultRow(
     stop: SearchResultItem.Stop,
-    onShowOnMap: (SearchResultItem.Stop) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ) {
     ResultRow(
         painter = painterResource(R.drawable.stop_flag),
         contentDescription = stringResource(R.string.stop_shortcut),
-        onClick = { onShowOnMap(stop) }
+        onClick = {
+            onRevealStop(StopReveal(stop.id, stop.name, GeoPoint(stop.latitude, stop.longitude)))
+        }
     ) {
         StopRowContent(
             name = stop.name,
@@ -295,7 +299,7 @@ private fun SearchResultsScreenSuccessPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {},
+            onRevealStop = {},
             onVehicleShowOnMap = {}
         )
     }
@@ -311,7 +315,7 @@ private fun SearchResultsScreenEmptyPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {},
+            onRevealStop = {},
             onVehicleShowOnMap = {}
         )
     }
@@ -327,7 +331,7 @@ private fun SearchResultsScreenLoadingPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {},
+            onRevealStop = {},
             onVehicleShowOnMap = {}
         )
     }

@@ -96,8 +96,8 @@ import org.onebusaway.android.util.DisplayFormat
 // badge/divider/heading scaffold around it. Scrolling is a stock LazyRow / LazyListState the user
 // drives; the strip never scrolls itself (the only programmatic move is a chevron tap's one-shot
 // jump), so there is no glide to contend with a fling — the #1801/#1974 main-thread cancel-storm is
-// gone by construction. "Load more arrivals" is a footer button below the whole list (ArrivalsScreen),
-// not a gesture on this strip.
+// gone by construction. "Load more arrivals" is a footer button below the whole list
+// ([org.onebusaway.android.ui.arrivals.ArrivalsList]), not a gesture on this strip.
 
 /**
  * A moment ruled across the strip's timeline: a vertical rule standing where [at] falls among the

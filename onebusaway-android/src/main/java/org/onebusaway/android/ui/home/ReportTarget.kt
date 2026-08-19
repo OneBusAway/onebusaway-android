@@ -23,8 +23,12 @@ import org.onebusaway.android.util.GeoPoint
  * host just opens `ReportActivity` for whichever it gets.
  */
 sealed interface ReportTarget {
-    /** Report against the currently focused stop. */
-    data class Stop(val stop: FocusedStop) : ReportTarget
+    /**
+     * Report against the currently focused stop. [point] is the stop's location, resolved by the VM:
+     * the report flow opens a map on it, and a focus revealed by id alone has none until its arrivals
+     * land — so this variant exists only once the location is known, and the host needn't re-check.
+     */
+    data class Stop(val stop: FocusedStop, val point: GeoPoint) : ReportTarget
 
     /** No focused stop; report against the last-known device location. */
     data class Location(val point: GeoPoint) : ReportTarget

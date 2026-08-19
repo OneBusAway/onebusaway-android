@@ -44,6 +44,7 @@ import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
@@ -286,7 +287,11 @@ class HomeViewModel @Inject constructor(
      * opens `ReportActivity` for whichever [ReportTarget] it gets.
      */
     fun reportTarget(): ReportTarget {
-        _currentFocus.value.focusedStop?.let { return ReportTarget.Stop(it) }
+        // The stop report opens a map on the stop, so it needs the stop's location: a focus whose
+        // location hasn't resolved yet falls through to the device location rather than reporting a
+        // stop with no place. Carried on the target so the host needn't re-check it.
+        val stop = _currentFocus.value.focusedStop
+        stop?.point?.let { return ReportTarget.Stop(stop, it) }
         return locationRepository.lastKnownLocation()
             ?.let { ReportTarget.Location(it.toGeoPoint()) }
             ?: ReportTarget.Generic
@@ -388,6 +393,7 @@ class HomeViewModel @Inject constructor(
     ) {
         val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (focus.stop.id != stop.id) return
+        resolveFocusedStopDetails(focus, stop)
         loadedTrips = LoadedTrips(focus.stop.id, trips)
         presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
         val pending = pendingFocus
@@ -418,6 +424,35 @@ class HomeViewModel @Inject constructor(
             )
         )
         focus.selectedRoute?.let { showStopRoute(focus.stop.id, it, frameRoute = frameSelectedRoute) }
+    }
+
+    /**
+     * Complete a focus that was asked for by id alone from the stop this load resolved.
+     *
+     * A reveal only ever carries what its requester happened to know: a map tap mints a full
+     * [FocusedStop], but a deep link, an FCM arrival push, a pinned shortcut or a reminder row carry a
+     * stop id and nothing else (#1898). The load that answers the focus is the app's first sight of
+     * what that stop *is*, so it is also where the focus becomes whole — the banner star, the recenter
+     * control and "report a problem" all need a location, and none of them should have to know that
+     * some entry points arrive without one.
+     *
+     * Only the still-missing fields are filled: the loaded stop is not made the authority over a focus
+     * that already knows its own values (a rider-renamed stop keeps its name), and after the first such
+     * load nothing is missing, so the polls that follow amend nothing.
+     *
+     * The loaded stop's coordinates are taken as given rather than screened for a 0 pair: OBA carries a
+     * stop's `lat`/`lon` as primitive doubles, so there is no absent state on the wire to detect and a
+     * zero test would only be a guess about a stop at null island (see [ObaStop.location]).
+     */
+    private fun resolveFocusedStopDetails(focus: CurrentFocus.Stop, loaded: ObaStop) {
+        val resolved = focus.stop.copy(
+            name = focus.stop.name ?: loaded.name,
+            code = focus.stop.code ?: loaded.stopCode,
+            point = focus.stop.point ?: GeoPoint(loaded.latitude, loaded.longitude),
+            wheelchairBoarding = focus.stop.wheelchairBoarding
+                .takeIf { it != WheelchairBoarding.UNKNOWN } ?: loaded.wheelchairBoarding
+        )
+        if (resolved != focus.stop) replaceFocus(focus.copy(stop = resolved))
     }
 
     /**
@@ -461,11 +496,15 @@ class HomeViewModel @Inject constructor(
         frameRoute: Boolean = true
     ) = showRoute(request, selection.selectedTripId, stopScoped = true, frameRoute = frameRoute)
 
-    /** Animate the map's camera back onto the focused stop, if one is focused (else a no-op). */
+    /**
+     * Animate the map's camera back onto the focused stop, if one is focused and its location is known
+     * (else a no-op). A focus revealed by id alone has no location until its arrivals land, which is the
+     * same window in which the banner offering this leaves the recenter control unlabelled anyway.
+     */
     fun recenterOnFocusedStop(undoViewport: MapViewport? = null) {
-        _currentFocus.value.focusedStop?.let {
+        _currentFocus.value.focusedStop?.point?.let {
             recordViewportUndo(undoViewport)
-            emitMapDirective(MapDirective.RecenterOnFocusedStop(it.point))
+            emitMapDirective(MapDirective.RecenterOnFocusedStop(it))
         }
     }
 
@@ -636,8 +675,10 @@ class HomeViewModel @Inject constructor(
             // Row body only — the pill's vehicle+bay fit owns the camera and a recenter would fight it.
             // Emitted after the route so the recenter picks up route mode's header bias, landing the bay
             // where a stop focused in route mode always does. `CameraCommand.Recenter` keeps the current
-            // zoom/bearing/tilt, so this is a pan and nothing more.
-            emitMapDirective(MapDirective.RecenterOnFocusedStop(bay.point))
+            // zoom/bearing/tilt, so this is a pan and nothing more. Through the shared helper — the bay
+            // *is* the focus this pushed a moment ago — so "recenter on the focused stop", including what
+            // it does when that stop has no location yet, is defined in exactly one place.
+            recenterOnFocusedStop()
         }
     }
 

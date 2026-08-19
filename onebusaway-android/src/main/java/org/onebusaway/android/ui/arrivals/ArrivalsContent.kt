@@ -21,7 +21,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,19 +36,12 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,12 +74,8 @@ import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
-import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.compose.components.AlertSurface
-import org.onebusaway.android.ui.compose.components.LoadingContent
-import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.icons.AppIcons
-import org.onebusaway.android.ui.nightlight.NightLightLauncher
 import org.onebusaway.android.util.DisplayFormat
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
@@ -161,190 +149,7 @@ interface ArrivalActionHandler {
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)
     fun onHideAlert(alert: AlertItem)
-    fun onShowStopDetails()
     fun onReportStopProblem()
-}
-
-/**
- * Stateful entry point. The polling loop lives here so it follows the activity lifecycle:
- * polling runs only while RESUMED (cancelled on pause, like the legacy Handler), and refreshes
- * immediately on resume if the 60s window already elapsed.
- *
- * @param initialTitle stop name from the launching intent, shown until the first load lands
- */
-@Composable
-fun ArrivalsRoute(
-    viewModel: ArrivalsViewModel,
-    initialTitle: String,
-    handler: ArrivalActionHandler,
-    onBack: () -> Unit,
-    // Provided by the NavHost destination so its alert-hide undo Snackbar has a Compose host (the
-    // standalone activity anchors its own Snackbar to a View instead, leaving this null).
-    snackbarHostState: SnackbarHostState? = null,
-    // How the overflow "night light" item navigates — the in-NavHost destination supplies a
-    // NavController lambda; null falls back to the standalone launcher facade.
-    onNightLight: (() -> Unit)? = null
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    ArrivalsPolling(viewModel)
-    StopDetailsHost(viewModel)
-    val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
-    ArrivalsScreen(
-        state = state,
-        initialTitle = initialTitle,
-        onBack = onBack,
-        onRefresh = viewModel::manualRefresh,
-        onToggleFavorite = viewModel::toggleFavorite,
-        rowCallbacks = rowCallbacks,
-        handler = handler,
-        onHideAllAlerts = viewModel::hideAllAlerts,
-        onShowHiddenAlerts = viewModel::showHiddenAlerts,
-        onLoadMore = viewModel::loadMore,
-        // Collected inside the list's footer item, not here — a load-more toggle should only
-        // recompose that one item, not this whole screen (and everything ArrivalsList contains).
-        loadingMore = viewModel.loadingMore,
-        snackbarHostState = snackbarHostState,
-        onNightLight = onNightLight
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ArrivalsScreen(
-    state: ArrivalsUiState,
-    initialTitle: String,
-    onBack: () -> Unit,
-    onRefresh: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    rowCallbacks: ArrivalRowCallbacks,
-    handler: ArrivalActionHandler,
-    onHideAllAlerts: () -> Unit,
-    onShowHiddenAlerts: () -> Unit,
-    onLoadMore: () -> Unit,
-    // A StateFlow, not a collected Boolean: the list's footer item collects it itself, so a
-    // load-more toggle only recomposes that one item instead of this whole screen.
-    loadingMore: StateFlow<Boolean>,
-    snackbarHostState: SnackbarHostState? = null,
-    onNightLight: (() -> Unit)? = null
-) {
-    val content = state as? ArrivalsUiState.Content
-    Scaffold(
-        snackbarHost = { snackbarHostState?.let { SnackbarHost(it) } },
-        topBar = {
-            TopAppBar(
-                title = { Text(content?.header?.name?.takeIf { it.isNotEmpty() } ?: initialTitle) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = AppIcons.ArrowBack,
-                            contentDescription = stringResource(R.string.navigate_up)
-                        )
-                    }
-                },
-                actions = {
-                    if (content != null) {
-                        IconButton(onClick = onToggleFavorite) {
-                            Icon(
-                                painter = painterResource(
-                                    if (content.header.isFavorite) {
-                                        R.drawable.star
-                                    } else {
-                                        R.drawable.star_outline
-                                    }
-                                ),
-                                contentDescription = stringResource(R.string.stop_info_favorite),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                    IconButton(onClick = onRefresh) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_navigation_refresh),
-                            contentDescription = stringResource(R.string.region_option_refresh),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    if (content != null) {
-                        OverflowMenu(
-                            onStopDetails = handler::onShowStopDetails,
-                            onReportStopProblem = handler::onReportStopProblem,
-                            onHideAlerts = onHideAllAlerts,
-                            onNightLight = onNightLight
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when (state) {
-                ArrivalsUiState.Loading -> LoadingContent(Modifier.align(Alignment.Center))
-
-                // The full screen isn't height-constrained like the drawer's peek, so it keeps
-                // alerts expanded (showAlerts defaults to true) rather than offering a collapse toggle.
-                is ArrivalsUiState.Content -> ArrivalsList(
-                    content = state,
-                    rowCallbacks = rowCallbacks,
-                    handler = handler,
-                    onShowHiddenAlerts = onShowHiddenAlerts,
-                    onLoadMore = onLoadMore,
-                    loadingMore = loadingMore
-                )
-
-                is ArrivalsUiState.Error -> Text(
-                    text = state.message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(32.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun OverflowMenu(
-    onStopDetails: () -> Unit,
-    onReportStopProblem: () -> Unit,
-    onHideAlerts: () -> Unit,
-    // In-NavHost hosts supply a NavController lambda; null falls back to the standalone launcher facade.
-    onNightLight: (() -> Unit)? = null
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                painter = painterResource(R.drawable.more_vert),
-                contentDescription = stringResource(R.string.stop_info_item_options_title),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            MenuRow(R.string.stop_info_option_show_details) {
-                expanded = false
-                onStopDetails()
-            }
-            MenuRow(R.string.stop_info_option_report_problem) {
-                expanded = false
-                onReportStopProblem()
-            }
-            MenuRow(R.string.stop_info_option_hide_alerts) {
-                expanded = false
-                onHideAlerts()
-            }
-            MenuRow(R.string.stop_info_option_night_light) {
-                expanded = false
-                onNightLight?.invoke() ?: NightLightLauncher.start(context)
-            }
-        }
-    }
 }
 
 @Composable

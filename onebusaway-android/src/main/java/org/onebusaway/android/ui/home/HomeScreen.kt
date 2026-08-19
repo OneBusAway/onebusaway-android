@@ -115,6 +115,7 @@ import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.home.map.MapChrome
 import org.onebusaway.android.ui.home.map.MapFeature
 import org.onebusaway.android.ui.home.map.PinnedTripFab
+import org.onebusaway.android.ui.home.map.StopFocusMenu
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsSheetHost
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
 import org.onebusaway.android.ui.home.nearby.limitExceeded
@@ -129,6 +130,7 @@ import org.onebusaway.android.ui.mylists.RecentItem
 import org.onebusaway.android.ui.mylists.SearchRecentsRepository
 import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
+import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.PlanResult
@@ -171,12 +173,14 @@ class HomeCallbacks(
     val onSearch: (String) -> Unit,
     val onRecentStopsRoutes: () -> Unit,
     // Search-box recents dropdown: tapping a stop or a route reveals it on the map.
-    val onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
+    val onRecentStop: (StopReveal) -> Unit,
     val onRecentRoute: (routeId: String) -> Unit,
     // Wraps [HomeActivityActions.onHelpActionExternal] with the one branch that's a navigation (AGENCIES).
     val onHelpAction: (HelpAction) -> Unit,
     val onShowTrip: (tripId: String, stopId: String) -> Unit,
     val onEditReminder: (args: ReminderEditorArgs) -> Unit,
+    // The focused stop's overflow "night light" item — the driver-flagging flasher screen.
+    val onNightLight: () -> Unit,
     val onLearnMore: () -> Unit,
     val onOpenSurvey: (url: String) -> Unit
 )
@@ -519,7 +523,10 @@ fun HomeScreen(
                         // not on arrivals, so a legacy-starred stop is never shown unstarred (and thus
                         // un-unstarrable) during that window.
                         isFavorite = currentFocus.stop.id in favoriteStopIds,
-                        favoriteEnabled = stopFavoritesReady,
+                        // Also gated on the stop's location being known: starring one creates its row
+                        // in the stops table from the focus, and a stop revealed by id alone has no
+                        // location until its arrivals land — the same beat the title above is waiting on.
+                        favoriteEnabled = stopFavoritesReady && currentFocus.stop.point != null,
                         hasAlerts = arrivalsContent?.hasAlerts == true,
                         // Like the stop code and direction above: the loaded arrivals are the source, with
                         // the focus as the pre-load fallback. Only a map tap mints a focus from a full
@@ -912,6 +919,16 @@ fun HomeScreen(
                                                 onRecenterStop = {
                                                     homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
                                                 },
+                                                // The focused stop's overflow — the stop actions the
+                                                // retired standalone arrivals screen's top bar used to
+                                                // hold (#1898). Null until the stop has a session to
+                                                // act on, which also keeps it off a route focus.
+                                                stopMenu = arrivalsSession?.let { session ->
+                                                    StopFocusMenu(
+                                                        onReportStopProblem = session.handler::onReportStopProblem,
+                                                        onNightLight = callbacks.onNightLight
+                                                    )
+                                                },
                                                 // The direction menu calls straight into the map VM (which
                                                 // re-filters stops/vehicles + persists the choice), like the height report below.
                                                 onSelectRouteDirection = { directionId ->
@@ -1159,6 +1176,7 @@ fun HomeScreen(
                             onShowAlert = arrivalsSession.handler::onShowAlert,
                             onHideAlert = arrivalsSession.handler::onHideAlert,
                             onShowHiddenAlerts = arrivalsSession.viewModel::showHiddenAlerts,
+                            onHideAllAlerts = arrivalsSession.viewModel::hideAllAlerts,
                             onDismiss = { serviceAlertsVisible = false }
                         )
                     }
@@ -1289,6 +1307,7 @@ private fun BoxScope.HomeMapOverlays(
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
     onRecenterStop: () -> Unit,
+    stopMenu: StopFocusMenu?,
     onSelectRouteDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
@@ -1335,6 +1354,7 @@ private fun BoxScope.HomeMapOverlays(
             onToggleFavorite = onToggleFavorite,
             onShowAlerts = onShowAlerts,
             onRecenterStop = onRecenterStop,
+            stopMenu = stopMenu,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,
             // Same destination as the arrivals drawer's route menu, wired locally rather than through

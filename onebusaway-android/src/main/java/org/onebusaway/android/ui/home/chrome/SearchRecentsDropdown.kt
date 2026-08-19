@@ -44,6 +44,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.components.RouteRowContent
 import org.onebusaway.android.ui.compose.components.StopRowContent
 import org.onebusaway.android.ui.mylists.RecentItem
+import org.onebusaway.android.ui.mylists.toStopReveal
+import org.onebusaway.android.ui.nav.StopReveal
 
 // ~4 rows (each ~48-56dp) stay visible; the rest scroll. A fixed cap, not content-driven, so the
 // dropdown never grows to crowd the keyboard.
@@ -63,7 +65,7 @@ private val DROPDOWN_MAX_HEIGHT = 224.dp
 @Composable
 fun SearchRecentsDropdown(
     recents: List<RecentItem>,
-    onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
+    onRecentStop: (StopReveal) -> Unit,
     onRecentRoute: (routeId: String) -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
@@ -82,7 +84,7 @@ fun SearchRecentsDropdown(
                 when (item) {
                     is RecentItem.Stop -> RecentRow(
                         icon = R.drawable.stop_flag,
-                        onClick = { onRecentStop(item.stop.id, item.stop.lat, item.stop.lon) }
+                        onClick = { onRecentStop(item.stop.toStopReveal()) }
                     ) {
                         StopRowContent(
                             name = item.stop.name,

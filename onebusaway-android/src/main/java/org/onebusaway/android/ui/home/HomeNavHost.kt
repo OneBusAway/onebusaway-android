@@ -19,7 +19,6 @@ package org.onebusaway.android.ui.home
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
@@ -43,7 +42,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,7 +54,6 @@ import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.arrivals.arrivalsGraph
 import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -77,6 +74,7 @@ import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.report.reportGraph
+import org.onebusaway.android.ui.routeinfo.routeInfoGraph
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -88,8 +86,6 @@ import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
-
-private const val TAG = "HomeNavHost"
 
 /**
  * The HOME destination's dependency surface — the one destination that consumes the full home bundle
@@ -145,25 +141,16 @@ fun HomeNavHost(
             }
             LaunchedEffect(revealStopId) {
                 if (revealStopId == null) return@LaunchedEffect
-                // Read + consume all three keys atomically via the typed helper (which owns the key names
-                // and Double types). A non-null result applies the focus; a null result here means STOP_ID
-                // was present but lat/lon were missing.
-                val reveal = handle.consumeStopReveal()
-                if (reveal != null) {
-                    // An in-session reveal (search result / recents / route-info tap): pan the camera
-                    // over to the stop rather than jump, since the map is already on screen.
-                    home.homeViewModel.revealStop(
-                        FocusedStop(reveal.stopId, null, null, reveal.point),
-                        animate = true
-                    )
-                } else {
-                    // Keys already consumed; record the dropped focus so the latent path is findable
-                    // (see consumeStopReveal for why this is only reachable on a corrupted handle).
-                    Log.w(TAG, "Dropped a partial stop reveal: stop id present but lat/lon missing")
-                    FirebaseCrashlytics.getInstance().recordException(
-                        IllegalStateException("Partial stop reveal: stop id present but lat/lon missing")
-                    )
-                }
+                // Read + consume every key atomically via the typed helper (which owns the key names and
+                // their types). Whatever the requester knew about the stop rides along; the rest is
+                // filled in by the arrivals load (see HomeViewModel.onArrivalsLoaded).
+                val reveal = handle.consumeStopReveal() ?: return@LaunchedEffect
+                // An in-session reveal (search result / recents / list-row / route-info tap): pan the
+                // camera over to the stop rather than jump, since the map is already on screen.
+                home.homeViewModel.revealStop(
+                    FocusedStop(reveal.stopId, reveal.name, point = reveal.point),
+                    animate = true
+                )
             }
             val currentFocus by home.homeViewModel.currentFocus.collectAsStateWithLifecycle()
             val routeHeader by home.mapViewModel.routeHeader.collectAsStateWithLifecycle()
@@ -196,7 +183,7 @@ fun HomeNavHost(
                     onRecentStopsRoutes = { navController.navigateFromHome(NavRoutes.myRecent()) },
                     // Recents dropdown taps reveal the stop / route on the map (the same stop-focus the
                     // search results and map markers use).
-                    onRecentStop = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
+                    onRecentStop = { navController.revealStopOnMap(it) },
                     onRecentRoute = { routeId -> navController.revealRouteOnMap(routeId) },
                     onHelpAction = { action ->
                         if (action == HelpAction.AGENCIES) {
@@ -211,6 +198,7 @@ fun HomeNavHost(
                         )
                     },
                     onEditReminder = { args -> navController.navigateFromHome(NavRoutes.tripInfo(args)) },
+                    onNightLight = { navController.navigateFromHome(NavRoutes.NIGHT_LIGHT) },
                     onLearnMore = { navController.navigateFromHome(NavRoutes.DONATION_LEARN_MORE) },
                     onOpenSurvey = { url -> navController.navigateFromHome(NavRoutes.surveyWebView(url)) }
                 )
@@ -233,7 +221,7 @@ fun HomeNavHost(
         }
         // The rest of the graph, grouped by feature (each a NavGraphBuilder extension near its
         // feature; they recover the host via findActivity rather than threading dependencies).
-        arrivalsGraph(navController)
+        routeInfoGraph(navController)
         tripGraph(navController)
         myListsGraph(navController)
         homeListsGraph(navController)

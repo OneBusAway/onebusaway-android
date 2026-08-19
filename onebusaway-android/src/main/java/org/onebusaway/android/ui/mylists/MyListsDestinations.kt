@@ -66,8 +66,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
-                onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
-                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) }
+                onRevealStop = { navController.revealStopOnMap(it) }
             )
         }
     }
@@ -88,9 +87,8 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
-                onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
-                onShowRouteOnMap = { navController.revealRouteOnMap(it) },
-                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) }
+                onRevealStop = { navController.revealStopOnMap(it) },
+                onShowRouteOnMap = { navController.revealRouteOnMap(it) }
             )
         }
     }
@@ -136,7 +134,8 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                                 it,
                                 onEdit = onEditReminder,
                                 onShowRoute = { navController.navigate(NavRoutes.routeInfo(it)) },
-                                onShowStop = { navController.navigate(NavRoutes.arrivals(it)) }
+                                // A reminder stores only its stop's id — enough for a reveal.
+                                onShowStop = { navController.revealStopOnMap(it) }
                             )
                         }
                     )

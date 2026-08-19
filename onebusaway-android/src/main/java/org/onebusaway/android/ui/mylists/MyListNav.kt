@@ -19,11 +19,13 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
-import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
+import org.onebusaway.android.ui.arrivals.StopLauncher
 import org.onebusaway.android.ui.common.Shortcuts
+import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.search.RouteSearchResult
 import org.onebusaway.android.ui.tripinfo.confirmDeleteReminder
 import org.onebusaway.android.util.ExternalIntents
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Shared navigation and row-action wiring for the My-tab list destinations (recent/starred ×
@@ -33,24 +35,25 @@ import org.onebusaway.android.util.ExternalIntents
  * rather than a base class.
  */
 
-private fun AppCompatActivity.stopArrivalsBuilder(stop: StopListItem) = ArrivalsListLauncher.Builder(this, stop.id)
+private fun AppCompatActivity.stopLauncherBuilder(stop: StopListItem) = StopLauncher.Builder(this, stop.id)
     .setStopName(stop.name)
 
-/** Opens a stop's arrivals via [onOpen] (the host supplies a NavController-backed navigation). */
-internal fun openStop(stop: StopListItem, onOpen: (stopId: String, stopName: String?) -> Unit) = onOpen(stop.id, stop.name)
+/** This row as a "show me this stop" request, complete: a saved stop knows its own name and location. */
+internal fun StopListItem.toStopReveal() = StopReveal(id, name, GeoPoint(lat, lon))
 
-/** A stop row's long-press actions; [removeLabel] is the only per-list delta. */
+/**
+ * A stop row's long-press actions; [removeLabel] is the only per-list delta.
+ *
+ * No "show on map" item: it is what tapping the row now does (#1898), and the search rows dropped
+ * theirs for the same reason when they moved to map focus.
+ */
 internal fun AppCompatActivity.stopActions(
     stop: StopListItem,
     @StringRes removeLabel: Int,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
     onRemove: () -> Unit
 ): List<RowAction> = listOf(
-    RowAction(getString(R.string.my_context_showonmap)) {
-        onShowOnMap(stop.id, stop.lat, stop.lon)
-    },
     RowAction(getString(R.string.my_context_create_shortcut)) {
-        Shortcuts.createStopShortcut(this, stop.name, stopArrivalsBuilder(stop))
+        Shortcuts.createStopShortcut(this, stop.name, stopLauncherBuilder(stop))
     },
     RowAction(getString(removeLabel), onRemove)
 )
@@ -92,8 +95,9 @@ internal fun editReminder(reminder: ReminderItem, onEdit: (tripId: String, stopI
 
 /**
  * A reminder row's long-press actions: edit / delete (cancels the alarm) / show stop / show route.
- * The host supplies [onEdit]/[onShowRoute]/[onShowStop] to navigate to the in-app TripInfo / RouteInfo /
- * Arrivals destinations.
+ * The host supplies [onEdit]/[onShowRoute] to navigate to the in-app TripInfo / RouteInfo destinations,
+ * and [onShowStop] to reveal the stop on the map. A reminder stores only its stop's id, which is all a
+ * reveal needs — the arrivals load supplies the rest.
  */
 internal fun AppCompatActivity.reminderActions(
     reminder: ReminderItem,

@@ -15,10 +15,8 @@
  */
 package org.onebusaway.android.ui.routeinfo
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,9 +38,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -53,10 +48,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
-import org.onebusaway.android.ui.compose.components.MenuHeader
 import org.onebusaway.android.ui.compose.components.StopRowContent
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
@@ -67,16 +60,14 @@ fun RouteInfoRoute(
     viewModel: RouteInfoViewModel,
     onBack: () -> Unit,
     onShowRouteOnMap: () -> Unit,
-    onStopClick: (RouteStopItem) -> Unit,
-    onStopShowOnMap: (RouteStopItem) -> Unit
+    onStopClick: (RouteStopItem) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     RouteInfoScreen(
         state = state,
         onBack = onBack,
         onShowRouteOnMap = onShowRouteOnMap,
-        onStopClick = onStopClick,
-        onStopShowOnMap = onStopShowOnMap
+        onStopClick = onStopClick
     )
 }
 
@@ -87,8 +78,7 @@ fun RouteInfoScreen(
     state: RouteInfoUiState,
     onBack: () -> Unit,
     onShowRouteOnMap: () -> Unit,
-    onStopClick: (RouteStopItem) -> Unit,
-    onStopShowOnMap: (RouteStopItem) -> Unit
+    onStopClick: (RouteStopItem) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -124,8 +114,7 @@ fun RouteInfoScreen(
 
                 is RouteInfoUiState.Success -> RouteInfoContent(
                     route = state.route,
-                    onStopClick = onStopClick,
-                    onStopShowOnMap = onStopShowOnMap
+                    onStopClick = onStopClick
                 )
 
                 is RouteInfoUiState.Error -> Text(
@@ -144,8 +133,7 @@ fun RouteInfoScreen(
 @Composable
 private fun RouteInfoContent(
     route: RouteInfo,
-    onStopClick: (RouteStopItem) -> Unit,
-    onStopShowOnMap: (RouteStopItem) -> Unit
+    onStopClick: (RouteStopItem) -> Unit
 ) {
     // Direction names are unique within a route, so they key the expand/collapse state
     val expanded = remember { mutableStateMapOf<String, Boolean>() }
@@ -164,7 +152,7 @@ private fun RouteInfoContent(
             }
             if (isExpanded) {
                 items(direction.stops, key = { "${direction.name}:${it.id}" }) { stop ->
-                    StopRow(stop, onStopClick, onStopShowOnMap)
+                    StopRow(stop, onStopClick)
                 }
             }
         }
@@ -249,50 +237,24 @@ private fun DirectionHeaderPreview() {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+/**
+ * A single tap, no long-press menu: the menu's two items — "get stop info" and "show on map" — became
+ * the same gesture once a stop's arrivals moved onto the map (#1898), and a menu offering one action
+ * twice is worse than no menu. Same collapse the stop-search rows made.
+ */
 @Composable
-private fun StopRow(
-    stop: RouteStopItem,
-    onStopClick: (RouteStopItem) -> Unit,
-    onStopShowOnMap: (RouteStopItem) -> Unit
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    Box {
-        // Route info stops are never favorites here, and the start padding indents them under
-        // their direction group
-        StopRowContent(
-            name = stop.name,
-            direction = stop.direction,
-            isFavorite = false,
-            modifier = Modifier
-                .fillMaxWidth()
-                .combinedClickable(
-                    onClick = { onStopClick(stop) },
-                    onLongClick = { menuExpanded = true }
-                )
-                .padding(start = 32.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-        )
-        CenteredLongPressMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false }
-        ) {
-            MenuHeader(stop.name)
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.route_info_context_get_stop_info)) },
-                onClick = {
-                    menuExpanded = false
-                    onStopClick(stop)
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.route_info_context_showonmap)) },
-                onClick = {
-                    menuExpanded = false
-                    onStopShowOnMap(stop)
-                }
-            )
-        }
-    }
+private fun StopRow(stop: RouteStopItem, onStopClick: (RouteStopItem) -> Unit) {
+    // Route info stops are never favorites here, and the start padding indents them under
+    // their direction group
+    StopRowContent(
+        name = stop.name,
+        direction = stop.direction,
+        isFavorite = false,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onStopClick(stop) }
+            .padding(start = 32.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+    )
 }
 
 @Preview(showBackground = true)
@@ -302,13 +264,11 @@ private fun StopRowPreview() {
         Column {
             StopRow(
                 stop = RouteStopItem("1", "Broadway & E Denny Way", "S", 47.6, -122.3),
-                onStopClick = {},
-                onStopShowOnMap = {}
+                onStopClick = {}
             )
             StopRow(
                 stop = RouteStopItem("2", "Stop with no direction", "", 47.6, -122.3),
-                onStopClick = {},
-                onStopShowOnMap = {}
+                onStopClick = {}
             )
         }
     }
@@ -340,8 +300,7 @@ private fun RouteInfoScreenSuccessPreview() {
             ),
             onBack = {},
             onShowRouteOnMap = {},
-            onStopClick = {},
-            onStopShowOnMap = {}
+            onStopClick = {}
         )
     }
 }
@@ -354,8 +313,7 @@ private fun RouteInfoScreenLoadingPreview() {
             state = RouteInfoUiState.Loading,
             onBack = {},
             onShowRouteOnMap = {},
-            onStopClick = {},
-            onStopShowOnMap = {}
+            onStopClick = {}
         )
     }
 }
@@ -368,8 +326,7 @@ private fun RouteInfoScreenErrorPreview() {
             state = RouteInfoUiState.Error("Please check your Internet connection and try again."),
             onBack = {},
             onShowRouteOnMap = {},
-            onStopClick = {},
-            onStopShowOnMap = {}
+            onStopClick = {}
         )
     }
 }

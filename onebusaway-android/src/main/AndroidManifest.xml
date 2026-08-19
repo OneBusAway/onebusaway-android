@@ -189,9 +189,10 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
-        <!-- Arrivals is a HomeActivity NavHost destination. These frozen component names
-             (old pinned launcher shortcuts) keep resolving via aliases → HomeActivity, which reads the
-             stop data URI and navigates. Aliases inherit launchMode/configChanges from HomeActivity. -->
+        <!-- A stop is shown on the HomeActivity map, with its arrivals in the drawer (#1898). These
+             frozen component names (old pinned launcher shortcuts) keep resolving via aliases →
+             HomeActivity, which reads the stop data URI and focuses it. Aliases inherit
+             launchMode/configChanges from HomeActivity. -->
         <activity-alias
             android:name="org.onebusaway.android.ui.ArrivalsListActivity"
             android:targetActivity="org.onebusaway.android.ui.HomeActivity"

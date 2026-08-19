@@ -23,7 +23,6 @@ import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.tracking.TrackedRoute
 import org.onebusaway.android.tracking.TrackedRouteKey
-import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
@@ -213,11 +212,6 @@ fun createArrivalActionHandler(
 
     override fun onHideAlert(alert: AlertItem) {
         viewModel.hideAlert(alert)
-    }
-
-    override fun onShowStopDetails() {
-        // Pure ViewModel operation now: the dialog is Compose ([StopDetailsHost]).
-        viewModel.requestStopDetails()
     }
 
     override fun onReportStopProblem() {

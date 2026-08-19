@@ -18,7 +18,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.reminders.ReminderRepository
-import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
+import org.onebusaway.android.ui.arrivals.StopLauncher
 import org.onebusaway.android.util.ReminderUtils
 
 /**
@@ -72,7 +72,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     private fun showNotification(context: Context, message: String, stopId: String) {
-        val intent = ArrivalsListLauncher.Builder(context, stopId).intent
+        val intent = StopLauncher.Builder(context, stopId).intent
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         val pendingIntent = PendingIntent.getActivity(
             context,

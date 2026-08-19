@@ -103,7 +103,7 @@
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What’s New?</string>
-    <string name="main_help_whatsnew">• <b>Bug fixes</b> Several bug fixes and fit and finish improvements. - See https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Bold new look for a bold new era\n&#8226;\u0020Arrivals are now grouped by route\n&#8226;\u0020Micromobility added to the bike overlay\n&#8226;\u0020Tap a stop to see its routes\n&#8226;\u0020Zoom in to see nearby routes\n&#8226;\u0020Vehicle locations extrapolated and animated\n&#8226;\u0020Track your bus with live notifications\n&#8226;\u0020Significant improvements to the trip planner\n&#8226;\u0020Several small bug fixes\n\nSee https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
     <string name="main_help_legend_ontime">Green means “On time” - within a minute and a half of

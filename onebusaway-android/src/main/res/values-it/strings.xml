@@ -66,7 +66,7 @@
     <string name="map_option_search">Cerca</string>
     <string name="main_help_title">Aiuto</string>
     <string name="main_help_whatsnew_title">Novità</string>
-    <string name="main_help_whatsnew">"• <b>Correzioni di bug</b> Diverse correzioni di bug e miglioramenti nella rifinitura. - Vedi https://bit.ly/oba-android-releases "</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Un aspetto tutto nuovo per una nuova era\n&#8226;\u0020Gli arrivi sono ora raggruppati per linea\n&#8226;\u0020Micromobilità aggiunta al livello delle biciclette\n&#8226;\u0020Tocca una fermata per vedere le sue linee\n&#8226;\u0020Ingrandisci per vedere le linee vicine\n&#8226;\u0020Posizioni dei veicoli estrapolate e animate\n&#8226;\u0020Segui il tuo autobus con notifiche in tempo reale\n&#8226;\u0020Miglioramenti significativi al pianificatore di viaggi\n&#8226;\u0020Diverse piccole correzioni di bug\n\nVedi https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Chiudi</string>
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Verde significa “In orario”</string>

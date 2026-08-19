@@ -57,7 +57,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -152,8 +151,6 @@ fun MapFeature(
     // when HOME is the destination, so this lives with the sheet rather than round-tripping the VM).
     fabBottomInset: Dp,
     modifier: Modifier = Modifier,
-    // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
-    onMapLongPress: (GeoPoint) -> Unit = {},
     // How tall the stops notice currently is, or 0 with none showing (#2229). Reported because the
     // parked-trip button sits in the *host's* overlay layer and has to clear this one, which lives here —
     // the same padding/inset bridging this module already does.
@@ -161,8 +158,6 @@ fun MapFeature(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
-    val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
     // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
     // inset updates on every frame of the keyboard animation, and reading it here directly would
     // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
@@ -190,6 +185,7 @@ fun MapFeature(
     val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
             override fun onStopClick(marker: StopMarker) {
+                dismissNavigateHere()
                 val stop = marker.stop
                 val transition = homeViewModel.onStopFocused(
                     FocusedStop(stop.id, stop.name, stop.stopCode, marker.point, stop.wheelchairBoarding),
@@ -219,19 +215,38 @@ fun MapFeature(
                 // left directions altogether and discarded the trip being entered.
                 if (imeVisible) {
                     // Clearing focus is what closes the editor and its suggestion list; hide() covers
-                    // a keyboard raised by something that isn't a focused Compose field.
+                    // a keyboard raised by something that isn't a focused Compose field. A standing
+                    // "navigate here" offer deliberately survives this tap for the same reason the
+                    // focus does — the tap was aimed at the keyboard, and answering the offer with it
+                    // would be the second unasked-for effect this branch exists to prevent. The next
+                    // tap, aimed at the map the rider can now see, retires it below.
                     focusManager.clearFocus()
                     keyboard?.hide()
                     return
                 }
+                dismissNavigateHere()
                 homeViewModel.unfocusMapOneLevel()
             }
 
             override fun onMapLongClick(point: GeoPoint) {
-                currentOnMapLongPress(point)
+                // The one gesture that *raises* the offer: drop the pin, which is what the home screen
+                // hangs its "navigate here" bubble off (#2243).
+                mapViewModel.setNavigateHerePin(point)
             }
 
+            /**
+             * Any other tap on the map answers a standing offer by moving on from it: the pin and its
+             * bubble go, and the tap does whatever it was for.
+             *
+             * Called from each tap rather than inferred from a focus change, because the commonest
+             * dismissal — a tap on empty map with nothing focused — changes no focus at all. The offer
+             * deliberately survives panning and zooming: it names a place, and the rider is allowed to
+             * look around it before deciding.
+             */
+            private fun dismissNavigateHere() = mapViewModel.setNavigateHerePin(null)
+
             override fun onRentalClick(place: RentalPlace) {
+                dismissNavigateHere()
                 val focusedId = homeViewModel.currentFocus.value.focusedBikeStationId
                 if (focusedId == null || !focusedId.equals(place.id, ignoreCase = true)) {
                     // Refused (directions owns the map): leave before the map tears the trip down —
@@ -253,6 +268,7 @@ fun MapFeature(
             }
 
             override fun onVehicleClick(status: ObaTripStatus) {
+                dismissNavigateHere()
                 val tripId = status.activeTripId
                 // Tap to select (the trip overlay + most-recent-data dot), tap the selected one again to
                 // read it. The bubble this replaces (#2194) put the same navigation behind a chevron the
@@ -278,6 +294,7 @@ fun MapFeature(
                 routeShortName: String,
                 directionId: Int?
             ) {
+                dismissNavigateHere()
                 homeViewModel.advanceRouteContinuation(
                     routeId,
                     routeShortName,
@@ -287,6 +304,7 @@ fun MapFeature(
             }
 
             override fun onRouteBadgeClick(badge: RouteBadge) {
+                dismissNavigateHere()
                 when (val tap = badge.tap) {
                     // An adjacency label (#1827) names a route the rider hasn't opened: open it.
                     is RouteBadgeTap.ShowRoute -> homeViewModel.requestShowFocusedStopRouteOnMap(
@@ -556,6 +574,9 @@ fun MapFeature(
         point = DemoModeController.TRIP_PLAN_DESTINATION,
         anchorId = ScriptedTutorial.KEY_TRIP_DESTINATION
     )
+    // ...and for the length of that step the map also *answers* the mimed press, so the caption's "then
+    // tap Navigate here" points at something that is really there (#2243).
+    TourNavigateHerePin(mapViewModel)
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a
     // self-wired feature module ([MapChromeViewModel]); the map-loading bar reads the map VM's progress
@@ -764,4 +785,26 @@ private fun PermissionRationaleDialog(onOk: () -> Unit, onNoThanks: () -> Unit) 
             TextButton(onClick = onNoThanks) { Text(stringResource(R.string.no_thanks)) }
         }
     )
+}
+
+/**
+ * The pin the scripted tour's long-press step would have left, dropped for the length of that step and
+ * taken away again (#2243).
+ *
+ * Here beside [MapPointSpotlight] — the sibling that rings the same place — rather than in the host:
+ * the tour's press is *map* content, this is where the map view model and the demo system's coordinates
+ * already are, and reading the tutorial state in a composable this small keeps a step change from
+ * recomposing the whole home screen.
+ *
+ * The tour never presses the map itself (the spotlight overlay swallows every touch), so this is the one
+ * writer of that pin which isn't a gesture — and it is a [DisposableEffect] because the teardown is the
+ * point: a tour abandoned on this step must not leave a pin behind.
+ */
+@Composable
+private fun TourNavigateHerePin(mapViewModel: MapViewModel) {
+    val onPressStep = LocalTutorialState.current?.current?.id == ScriptedTutorial.STEP_PLAN_PRESS
+    DisposableEffect(onPressStep) {
+        if (onPressStep) mapViewModel.setNavigateHerePin(DemoModeController.TRIP_PLAN_DESTINATION)
+        onDispose { if (onPressStep) mapViewModel.setNavigateHerePin(null) }
+    }
 }

@@ -66,7 +66,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -96,9 +95,7 @@ import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
 import org.onebusaway.android.ui.arrivals.components.countBefore
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
-import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
-import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
@@ -114,7 +111,6 @@ import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
 import org.onebusaway.android.ui.tripplan.TripDateTimeDialog
-import org.onebusaway.android.ui.tripplan.TripEndpointDotIcon
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanError
@@ -651,57 +647,6 @@ private fun NoEtasText(modifier: Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
     )
-}
-
-/**
- * Stable handles for [DirectionsLongPressMenu]'s endpoint dots, so a render can sample the dot
- * itself rather than guessing at Material's menu-row padding.
- */
-object DirectionsLongPressMenuTestTags {
-    const val FROM_DOT = "directionsFromHereDot"
-    const val TO_DOT = "directionsToHereDot"
-}
-
-/**
- * The menu shown when the user long-presses the map: "directions from here" / "directions to here",
- * each of which enters directions focus and fills that endpoint with the pressed point.
- *
- * The same centered dialog every other long-press menu in the app uses (#2112), rather than the
- * bottom sheet it was: a long press means the same thing wherever the rider does it, and the map is
- * the one surface where a sheet rising from the bottom also covers what was just pressed. The rows
- * are marked with the trip-plan rail's own endpoint dots, so the row names the end of the trip it
- * fills by the same green/red the form will show once it is filled.
- *
- * Always expanded — the host renders this only while there is a pressed point, and dismissal clears
- * it (see HomeScreen).
- */
-@Composable
-fun DirectionsLongPressMenu(
-    onChooseSlot: (TripEndpointSlot) -> Unit,
-    onDismiss: () -> Unit
-) {
-    CenteredLongPressMenu(expanded = true, onDismissRequest = onDismiss) {
-        MenuRow(
-            textRes = R.string.directions_from_here,
-            leadingIcon = {
-                TripEndpointDotIcon(
-                    TripEndpointSlot.FROM,
-                    Modifier.testTag(DirectionsLongPressMenuTestTags.FROM_DOT)
-                )
-            },
-            onClick = { onChooseSlot(TripEndpointSlot.FROM) }
-        )
-        MenuRow(
-            textRes = R.string.directions_to_here,
-            leadingIcon = {
-                TripEndpointDotIcon(
-                    TripEndpointSlot.TO,
-                    Modifier.testTag(DirectionsLongPressMenuTestTags.TO_DOT)
-                )
-            },
-            onClick = { onChooseSlot(TripEndpointSlot.TO) }
-        )
-    }
 }
 
 /**

@@ -70,6 +70,9 @@ class DirectionsMapController(private val host: MapHost) {
 
     private var toEndpoint: EndpointMarker? = null
 
+    // The map long-press offer's pin (#2243) — see [setNavigateHerePin].
+    private var navigateHerePin: EndpointMarker? = null
+
     private class EndpointMarker(val point: GeoPoint, val id: Int)
 
     /**
@@ -185,6 +188,20 @@ class DirectionsMapController(private val host: MapHost) {
 
     /** Remove both endpoint pins (leaving directions, or the itinerary's own pins took over). */
     fun clearEndpoints() = setEndpoints(from = null, to = null)
+
+    /**
+     * Drop, move, or (null) take away the pin a map long press leaves behind — the place the rider is
+     * being offered a trip to (#2243).
+     *
+     * Here rather than beside the caller because it is the same pin as the trip's destination, in the
+     * same red, reconciled the same way: taking the offer turns it into [setEndpoints]' To pin, and the
+     * rider should see one mark move rather than two swap. It is tracked in its own slot all the same,
+     * so neither [clear] nor [clearEndpoints] takes it away — the offer outlives the map transitions
+     * they answer, and is retired by the gestures that answer *it*.
+     */
+    fun setNavigateHerePin(point: GeoPoint?) {
+        navigateHerePin = reconcileEndpoint(navigateHerePin, point, HUE_RED)
+    }
 
     private fun reconcileEndpoint(current: EndpointMarker?, point: GeoPoint?, hue: Float): EndpointMarker? {
         if (current?.point == point) return current

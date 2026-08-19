@@ -35,7 +35,7 @@ interface ObaMapCallbacks {
 
     fun onMapClick(point: GeoPoint?)
 
-    /** A long-press on the map at [point] — the host offers "directions from/to here". */
+    /** A long-press on the map at [point] — the host offers to navigate there (#2243). */
     fun onMapLongClick(point: GeoPoint) {}
 
     fun onRentalClick(place: RentalPlace)

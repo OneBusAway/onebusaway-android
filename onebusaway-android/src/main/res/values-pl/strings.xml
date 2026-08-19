@@ -736,8 +736,6 @@
     <string name="trip_plan_pick_on_map">Wybierz punkt na mapie</string>
     <string name="trip_plan_use_this_location">Użyj tej lokalizacji</string>
     <string name="trip_plan_map_location">Wybrana lokalizacja</string>
-    <string name="directions_from_here">Trasa stąd</string>
-    <string name="directions_to_here">Trasa dotąd</string>
     <string name="directions_stop_no_arrivals">Brak najbliższych odjazdów</string>
     <string name="directions_whichever_comes_first">dowolny z nich (co przyjedzie pierwsze)</string>
     <string name="trip_plan_options_scroll_previous">Pokaż poprzednie opcje</string>

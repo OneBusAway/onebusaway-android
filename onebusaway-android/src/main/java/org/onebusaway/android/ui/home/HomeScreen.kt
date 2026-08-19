@@ -96,10 +96,10 @@ import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
-import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
 import org.onebusaway.android.ui.home.directions.DirectionsSafetyNotice
+import org.onebusaway.android.ui.home.directions.NavigateHereBubble
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -811,8 +811,6 @@ fun HomeScreen(
                                 }
                             }
 
-                            // A long-pressed map point awaiting the "directions from/to here" choice.
-                            var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
                             // Leaving directions ends any in-progress map pick.
                             LaunchedEffect(directionsActive) { if (!directionsActive) pickTarget = null }
                             // While planning but not yet submittable (no results), clear any stale drawn itinerary.
@@ -875,7 +873,6 @@ fun HomeScreen(
                                     homeViewModel = homeViewModel,
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
-                                    onMapLongPress = { longPressPoint = it },
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
                                     modifier = Modifier.fillMaxSize()
                                 )
@@ -1121,17 +1118,14 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                // Long-press → "directions from/to here": enters directions and fills the
-                                // chosen endpoint with the pressed point (see setEndpointPaired).
-                                longPressPoint?.let { point ->
-                                    val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
-                                    DirectionsLongPressMenu(
-                                        onChooseSlot = { slot ->
-                                            homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointPaired(slot, mapPoint)
-                                            longPressPoint = null
-                                        },
-                                        onDismiss = { longPressPoint = null }
+                                // The bubble over a long press's dropped pin: taking it enters directions
+                                // with the pinned point as the trip's far end and the rider's own position
+                                // paired into the near one (see setEndpointPaired).
+                                NavigateHereOverlay(mapViewModel) { point ->
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                    tripPlanViewModel.setEndpointPaired(
+                                        TripEndpointSlot.TO,
+                                        TripEndpoint.MapPoint(point.latitude, point.longitude)
                                     )
                                 }
                                 // Neither Back nor a tap on the map background leaves outright while a trip
@@ -1202,6 +1196,31 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * The map long-press offer, drawn over the map wherever its pin currently stands (#2243).
+ *
+ * Its own composable so that the two flows it needs — where the pin is, and how to project it — are
+ * collected *here* rather than in the screen's shared scope: the offer comes and goes often, and neither
+ * fact concerns anything else on the screen. [onNavigate] is handed the pinned point, since taking the
+ * offer is a trip-planning act the host owns; retiring the pin is the map's own business either way.
+ */
+@Composable
+private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoint) -> Unit) {
+    val pin by mapViewModel.navigateHerePin.collectAsStateWithLifecycle()
+    val projector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
+    pin?.let { point ->
+        NavigateHereBubble(
+            point = point,
+            projector = projector,
+            onNavigate = {
+                mapViewModel.setNavigateHerePin(null)
+                onNavigate(point)
+            },
+            onDismiss = { mapViewModel.setNavigateHerePin(null) }
+        )
     }
 }
 

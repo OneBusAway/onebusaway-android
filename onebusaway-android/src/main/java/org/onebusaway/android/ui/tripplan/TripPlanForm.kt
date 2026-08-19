@@ -619,10 +619,10 @@ private fun CurrentLocationDotIcon() {
 }
 
 /**
- * [EndpointDotIcon] for a row elsewhere that offers to fill one named end of the trip — the map
- * long-press menu's "directions from/to here" (#2112). Takes a [modifier] rather than tagging
- * itself: the tag belongs to whichever feature draws the row, since more than one of them can be
- * on screen at once.
+ * [EndpointDotIcon] for an offer elsewhere to fill one named end of the trip — the map's "navigate
+ * here" bubble, which carries the destination dot the point it names will be given (#2243). Takes a
+ * [modifier] rather than tagging itself: the tag belongs to whichever feature draws the offer, since
+ * more than one of them can be on screen at once.
  */
 @Composable
 fun TripEndpointDotIcon(slot: TripEndpointSlot, modifier: Modifier = Modifier) {

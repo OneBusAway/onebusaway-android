@@ -1,0 +1,134 @@
+/*
+ * Copyright (C) 2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.ui.home.directions
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * Where the map's "navigate here" bubble lands against the point that was pressed (#2243) — the whole
+ * claim the bubble makes, since a bubble that doesn't name its point is just a floating button.
+ */
+class NavigateHereBubbleTest {
+
+    // A 1080x1920 screen, a bubble about the size the pill measures, and the component's own tail and
+    // margin in pixels at 3x density.
+    private val screenWidth = 1080
+    private val screenHeight = 1920
+    private val bubbleWidth = 400
+    private val bubbleHeight = 120
+    private val tail = 42f
+
+    // The pin the flavor says its map draws (R.dimen.map_pin_height), in pixels.
+    private val pin = 120f
+    private val margin = 36f
+
+    private fun placeAt(x: Float, y: Float) = navigateHereBubblePlacement(
+        anchorX = x,
+        anchorY = y,
+        bubbleWidth = bubbleWidth,
+        bubbleHeight = bubbleHeight,
+        containerWidth = screenWidth,
+        containerHeight = screenHeight,
+        tailSizePx = tail,
+        pinClearancePx = pin,
+        marginPx = margin
+    )
+
+    /** The ordinary press, mid-map: centred over the pin and standing clear of it. */
+    @Test
+    fun `a press in open space puts the bubble over the pin`() {
+        val placement = placeAt(x = 540f, y = 960f)
+
+        assertTrue("the bubble should sit above the press", placement.above)
+        assertEquals(540 - bubbleWidth / 2, placement.x)
+        // Clear of the pin standing on the point, with the tail spanning the last half-tail to its head.
+        assertEquals((960f - pin - tail / 2f).toInt() - bubbleHeight, placement.y)
+        assertEquals(540, placement.tailCenterX)
+    }
+
+    /**
+     * Too near the top for the bubble *and* the pin it has to clear: it flips below the point, keeping
+     * the same clearance on that side — which is what makes the placement right on a map that centres
+     * its pin on the point as well as one that stands it on the point.
+     */
+    @Test
+    fun `a press near the top of the map flips the bubble below it`() {
+        val placement = placeAt(x = 540f, y = 150f)
+
+        assertFalse("there is no room above a press this high", placement.above)
+        assertEquals((150f + pin + tail / 2f).toInt(), placement.y)
+        assertEquals(540, placement.tailCenterX)
+    }
+
+    /** A press against an edge: the bubble is held inside the margin, and the tail stays on the point. */
+    @Test
+    fun `a press near the edge keeps the bubble on screen and the tail on the point`() {
+        val placement = placeAt(x = 20f, y = 960f)
+
+        assertEquals(margin.toInt(), placement.x)
+        assertTrue(
+            "the tail should stay within the bubble it hangs off",
+            placement.tailCenterX >= placement.x && placement.tailCenterX <= placement.x + bubbleWidth
+        )
+        // Pinned by the margin rather than left over the point, so it is the tail that reaches across.
+        assertTrue("the bubble is no longer centred on the press", placement.tailCenterX < 540)
+    }
+
+    /** The mirror image, so the clamp isn't one-sided. */
+    @Test
+    fun `a press against the far edge is held off it too`() {
+        val placement = placeAt(x = screenWidth - 10f, y = 960f)
+
+        assertEquals(screenWidth - margin.toInt() - bubbleWidth, placement.x)
+        assertTrue(
+            "the tail should stay within the bubble it hangs off",
+            placement.tailCenterX <= placement.x + bubbleWidth
+        )
+    }
+
+    /**
+     * The pin panned off the map: the offer stands, but there is nothing on screen for it to stand
+     * beside, so it reports itself as not drawable rather than sliding to the nearest edge. The map
+     * SDKs' projectors answer for an off-screen point as readily as an on-screen one, which is exactly
+     * why this is asked here rather than assumed of the projection.
+     */
+    @Test
+    fun `a point panned off the map is not drawn at all`() {
+        assertFalse("panned off the left", placeAt(x = -40f, y = 960f).onScreen)
+        assertFalse("panned off the top", placeAt(x = 540f, y = -10f).onScreen)
+        assertFalse("panned off the right", placeAt(x = screenWidth + 1f, y = 960f).onScreen)
+        assertFalse("panned off the bottom", placeAt(x = 540f, y = screenHeight + 1f).onScreen)
+        assertTrue("still on the map", placeAt(x = 540f, y = 960f).onScreen)
+    }
+
+    /**
+     * A press at the very bottom — over the arrivals drawer's peek. It still goes above the point (the
+     * whole reason above is preferred), and the vertical clamp never pushes it back down over it.
+     */
+    @Test
+    fun `a press at the bottom of the map still puts the bubble above it`() {
+        val placement = placeAt(x = 540f, y = screenHeight - 5f)
+
+        assertTrue(placement.above)
+        assertTrue(
+            "the bubble should stay clear of the bottom edge",
+            placement.y + bubbleHeight <= screenHeight - margin
+        )
+    }
+}

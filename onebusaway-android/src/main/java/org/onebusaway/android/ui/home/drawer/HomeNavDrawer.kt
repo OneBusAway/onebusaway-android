@@ -17,7 +17,9 @@ package org.onebusaway.android.ui.home.drawer
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,12 +34,14 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.components.BetaPill
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
 import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
@@ -80,7 +84,14 @@ fun HomeNavDrawerSheet(
                 DrawerRow(R.string.navdrawer_item_my_reminders, R.drawable.ic_drawer_alarm, onReminders)
             }
             if (planTripAvailable) {
-                DrawerRow(R.string.navdrawer_item_plan_trip, R.drawable.ic_maps_directions, onPlanTrip)
+                // The trip planner is still in beta, and says so with a pill beside its name rather
+                // than "(beta)" glued into the string every locale has to repeat (#2253).
+                DrawerRow(
+                    R.string.navdrawer_item_plan_trip,
+                    R.drawable.ic_maps_directions,
+                    onPlanTrip,
+                    tag = { BetaPill() }
+                )
             }
             if (payFareAvailable) {
                 DrawerRow(R.string.navdrawer_item_pay_fare, R.drawable.credit_card, onPayFare)
@@ -95,14 +106,37 @@ fun HomeNavDrawerSheet(
     }
 }
 
+/** The gap between a row's name and its [tag][DrawerRow] — a word's worth, so the tag reads as pinned
+ *  to the name rather than as part of it. */
+private val DRAWER_ROW_TAG_GAP = 8.dp
+
+/**
+ * One drawer row. [tag] optionally puts a small marker right after the name — a [BetaPill] today — as a
+ * slot rather than a per-marker flag, so a second kind of tag is another caller passing a composable
+ * instead of another boolean here.
+ *
+ * The tag sits against the name rather than in `NavigationDrawerItem`'s own `badge` slot, which would
+ * push it to the row's trailing edge: it qualifies the name ("Plan a trip, in beta"), so it belongs
+ * where the name ends, not across the drawer from it. The name yields the room the tag needs and wraps
+ * into what is left, so a longer translation can't shoulder the tag out of the row.
+ */
 @Composable
 private fun DrawerRow(
     @StringRes title: Int,
     @DrawableRes icon: Int?,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    tag: (@Composable () -> Unit)? = null
 ) {
     NavigationDrawerItem(
-        label = { Text(stringResource(title)) },
+        label = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(DRAWER_ROW_TAG_GAP),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(title), modifier = Modifier.weight(1f, fill = false))
+                tag?.invoke()
+            }
+        },
         selected = false,
         icon = icon?.let { res ->
             // Pin to the standard 24dp; some drawer drawables are hi-res PNGs whose intrinsic size

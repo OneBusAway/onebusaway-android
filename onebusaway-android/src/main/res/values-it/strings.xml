@@ -27,7 +27,7 @@
     <string name="navdrawer_item_help">Aiuto</string>
     <string name="navdrawer_item_send_feedback">Invia feedback</string>
     <string name="navdrawer_item_open_source">Scoprici su GitHub!</string>
-    <string name="navdrawer_item_plan_trip">Pianifica un viaggio (beta)</string>
+    <string name="navdrawer_item_plan_trip">Pianifica un viaggio</string>
     <string name="navdrawer_item_pay_fare">Compra biglietto</string>
 
     <!-- Permissions -->

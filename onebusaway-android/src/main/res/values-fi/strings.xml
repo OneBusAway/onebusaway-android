@@ -26,7 +26,7 @@
     <string name="navdrawer_item_help">Ohjeet</string>
     <string name="navdrawer_item_send_feedback">Lähetä palautetta</string>
     <string name="navdrawer_item_open_source">Vieraile GitHubissa</string>
-    <string name="navdrawer_item_plan_trip">Suunnittele matka (beta)</string>
+    <string name="navdrawer_item_plan_trip">Suunnittele matka</string>
     <string name="navdrawer_item_pay_fare">Maksa matkalippu</string>
     <string name="navdrawer_item_starred_routes">Tähdellä merkityt linjat</string>
 

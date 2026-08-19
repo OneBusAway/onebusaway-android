@@ -29,15 +29,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -105,79 +102,89 @@ fun NavigateHereBubble(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var anchor by remember(point, projector) { mutableStateOf<ScreenOffset?>(null) }
+    val anchor = remember(point, projector) { mutableStateOf<ScreenOffset?>(null) }
     // Re-projected once per frame, rather than on the timed poll the tour's spotlights use: those hang
     // over a map the overlay has frozen, while this one has to survive the rider dragging the map under
     // it. The camera publishes only its *idle*, so a frame is the finest signal there is — and anything
     // coarser shows as the bubble swimming behind the pin through a pan.
+    //
+    // Deliberately not gated on the map's gesture flag (`MapHost.cameraInteracting`, which the stop
+    // loaders use): that is raised for *rider* gestures only, so a programmatic flight — the tour aiming
+    // at its demo destination with the offer already up, a zoom button, a recentre — would strand the
+    // bubble until the flight ended. Standing still is cheap on its own terms instead: an unchanged
+    // projection writes an equal value, which invalidates nothing, and the read below is deferred to
+    // layout, so an idle camera costs one projection per frame and no recomposition at all.
     LaunchedEffect(point, projector) {
         val proj = projector ?: return@LaunchedEffect
         while (true) {
             withFrameNanos { }
-            anchor = proj.toScreen(point)
+            anchor.value = proj.toScreen(point)
         }
     }
-    NavigateHereOffer(anchor, onNavigate, onDismiss, modifier)
+    NavigateHereOffer({ anchor.value }, onNavigate, onDismiss, modifier)
 }
 
 /**
- * The offer as drawn, over the map, once the pinned point has [anchor] to hang off — split from the
- * projection above so what the rider sees can be rendered from a fixed point in a test, rather than
+ * The offer as drawn, over the map, wherever [anchor] currently puts the pin it belongs to — split from
+ * the projection above so what the rider sees can be rendered from a fixed point in a test, rather than
  * against a live map.
+ *
+ * [anchor] is a **lambda**, and is read only inside the measure block below. That is what keeps a moving
+ * pin from recomposing anything: a pan re-runs the placement and nothing else, while the pill and its
+ * tail — and the dp→px conversions, which the measure scope supplies for free — are composed once and
+ * left alone. A null anchor (or one off the map) draws nothing, and needs no separate branch: the
+ * content is composed either way, and simply isn't placed.
  */
 @Composable
 internal fun NavigateHereOffer(
-    anchor: ScreenOffset?,
+    anchor: () -> ScreenOffset?,
     onNavigate: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onDismiss)
 
-    // A bare box: it carries no pointer input of its own, so every gesture it doesn't cover goes
+    val tailColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    // A bare layout: it carries no pointer input of its own, so every gesture it doesn't cover goes
     // straight through to the map — which is what lets the rider pan and zoom around the pinned place.
-    Box(modifier.fillMaxSize()) {
-        val here = anchor ?: return@Box
-        val density = LocalDensity.current
-        val tailSizePx = with(density) { TAIL_SIZE.toPx() }
-        val pinClearancePx = with(density) { PIN_CLEARANCE.toPx() }
-        val marginPx = with(density) { EDGE_MARGIN.toPx() }
-        val tailColor = MaterialTheme.colorScheme.surfaceContainerHigh
-
-        Layout(
-            content = {
-                // The tail is composed first so the bubble draws over the half of it that laps under the
-                // bubble's own edge — which is what leaves a triangle showing on whichever side the
-                // bubble ended up, without the tail having to know which side that was.
-                Box(Modifier.size(TAIL_SIZE).background(tailColor, DiamondShape))
-                NavigateHerePill(onNavigate)
-            }
-        ) { measurables, constraints ->
-            val loose = constraints.copy(minWidth = 0, minHeight = 0)
-            val tail = measurables[0].measure(loose)
-            val bubble = measurables[1].measure(loose)
-            val placement = navigateHereBubblePlacement(
-                anchorX = here.x,
-                anchorY = here.y,
+    Layout(
+        modifier = modifier.fillMaxSize(),
+        content = {
+            // The tail is composed first so the bubble draws over the half of it that laps under the
+            // bubble's own edge — which is what leaves a triangle showing on whichever side the bubble
+            // ended up, without the tail having to know which side that was.
+            Box(Modifier.size(TAIL_SIZE).background(tailColor, DiamondShape))
+            NavigateHerePill(onNavigate)
+        }
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val tail = measurables[0].measure(loose)
+        val bubble = measurables[1].measure(loose)
+        val here = anchor()
+        val placement = here?.let {
+            navigateHereBubblePlacement(
+                anchorX = it.x,
+                anchorY = it.y,
                 bubbleWidth = bubble.width,
                 bubbleHeight = bubble.height,
                 containerWidth = constraints.maxWidth,
                 containerHeight = constraints.maxHeight,
-                tailSizePx = tailSizePx,
-                pinClearancePx = pinClearancePx,
-                marginPx = marginPx
+                tailSizePx = TAIL_SIZE.toPx(),
+                pinClearancePx = PIN_CLEARANCE.toPx(),
+                marginPx = EDGE_MARGIN.toPx()
             )
-            layout(constraints.maxWidth, constraints.maxHeight) {
-                // Nothing placed — so nothing drawn — while the pin is off the map. Measured all the
-                // same, since the size is what decides where it fits when the pin comes back.
-                if (!placement.onScreen) return@layout
-                // Straddling the bubble edge it points away from, so that exactly half of it shows.
-                tail.place(
-                    x = placement.tailCenterX - tail.width / 2,
-                    y = (if (placement.above) placement.y + bubble.height else placement.y) - tail.height / 2
-                )
-                bubble.place(placement.x, placement.y)
-            }
+        }
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            // Nothing placed — so nothing drawn — before the pin has been projected, or once it has been
+            // panned off the map. Measured all the same, since the size is what decides where it fits
+            // when the pin comes back.
+            if (placement == null || !placement.onScreen) return@layout
+            // Straddling the bubble edge it points away from, so that exactly half of it shows.
+            tail.place(
+                x = placement.tailCenterX - tail.width / 2,
+                y = (if (placement.above) placement.y + bubble.height else placement.y) - tail.height / 2
+            )
+            bubble.place(placement.x, placement.y)
         }
     }
 }

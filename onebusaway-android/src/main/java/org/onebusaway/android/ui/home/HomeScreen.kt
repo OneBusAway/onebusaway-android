@@ -46,9 +46,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +71,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
@@ -145,7 +142,6 @@ import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
 import org.onebusaway.android.ui.tutorial.RecordArrivalSpotlightsShown
-import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
@@ -808,39 +804,6 @@ fun HomeScreen(
                                 }
                             }
 
-                            // Where a long press has dropped its pin, if one is down: the map owns that
-                            // pin (it draws it, and its own taps put it away), and this screen draws the
-                            // "navigate here" bubble over it (#2243).
-                            val navigateHerePin by mapViewModel.navigateHerePin
-                                .collectAsStateWithLifecycle()
-                            // The map's own lat/lng -> screen projector, which is how the bubble stays on
-                            // the pin through a pan or a zoom. Flavor-neutral: both maps publish one.
-                            val mapProjector by mapViewModel.renderState.projector
-                                .collectAsStateWithLifecycle()
-                            // The tour's long-press step mimes a press on the demo trip's destination, so
-                            // the map shows what that press produces — the tour never narrates something
-                            // that isn't on screen (see ScriptedTutorial). Drawn, not pressable: the
-                            // spotlight overlay swallows taps, and the step after it plans the trip.
-                            //
-                            // Derived rather than read straight, so this screen recomposes as the step
-                            // comes and goes rather than on every one of the tour's seventeen steps.
-                            val tourPressPoint by remember(tutorialState) {
-                                derivedStateOf {
-                                    DemoModeController.TRIP_PLAN_DESTINATION.takeIf {
-                                        tutorialState.current?.id == ScriptedTutorial.STEP_PLAN_PRESS
-                                    }
-                                }
-                            }
-                            // The mimed press drops the real pin, for the length of that step only. The
-                            // tour never long-presses the map itself (the overlay swallows every touch),
-                            // so this is the one writer that isn't a gesture — and it takes its own pin
-                            // away again, which is what keeps the tour from leaving one behind.
-                            DisposableEffect(tourPressPoint) {
-                                tourPressPoint?.let(mapViewModel::setNavigateHerePin)
-                                onDispose {
-                                    if (tourPressPoint != null) mapViewModel.setNavigateHerePin(null)
-                                }
-                            }
                             // Leaving directions ends any in-progress map pick.
                             LaunchedEffect(directionsActive) { if (!directionsActive) pickTarget = null }
                             // While planning but not yet submittable (no results), clear any stale drawn itinerary.
@@ -1138,22 +1101,14 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                // The bubble over the dropped pin: taking it enters directions with the
-                                // pinned point as the trip's far end and the rider's own position paired
-                                // into the near one (see setEndpointPaired).
-                                navigateHerePin?.let { point ->
-                                    NavigateHereBubble(
-                                        point = point,
-                                        projector = mapProjector,
-                                        onNavigate = {
-                                            mapViewModel.setNavigateHerePin(null)
-                                            homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointPaired(
-                                                TripEndpointSlot.TO,
-                                                TripEndpoint.MapPoint(point.latitude, point.longitude)
-                                            )
-                                        },
-                                        onDismiss = { mapViewModel.setNavigateHerePin(null) }
+                                // The bubble over a long press's dropped pin: taking it enters directions
+                                // with the pinned point as the trip's far end and the rider's own position
+                                // paired into the near one (see setEndpointPaired).
+                                NavigateHereOverlay(mapViewModel) { point ->
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                    tripPlanViewModel.setEndpointPaired(
+                                        TripEndpointSlot.TO,
+                                        TripEndpoint.MapPoint(point.latitude, point.longitude)
                                     )
                                 }
                                 // Neither Back nor a tap on the map background leaves outright while a trip
@@ -1223,6 +1178,31 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * The map long-press offer, drawn over the map wherever its pin currently stands (#2243).
+ *
+ * Its own composable so that the two flows it needs — where the pin is, and how to project it — are
+ * collected *here* rather than in the screen's shared scope: the offer comes and goes often, and neither
+ * fact concerns anything else on the screen. [onNavigate] is handed the pinned point, since taking the
+ * offer is a trip-planning act the host owns; retiring the pin is the map's own business either way.
+ */
+@Composable
+private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoint) -> Unit) {
+    val pin by mapViewModel.navigateHerePin.collectAsStateWithLifecycle()
+    val projector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
+    pin?.let { point ->
+        NavigateHereBubble(
+            point = point,
+            projector = projector,
+            onNavigate = {
+                mapViewModel.setNavigateHerePin(null)
+                onNavigate(point)
+            },
+            onDismiss = { mapViewModel.setNavigateHerePin(null) }
+        )
     }
 }
 

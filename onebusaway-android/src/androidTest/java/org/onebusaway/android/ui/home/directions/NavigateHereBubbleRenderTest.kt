@@ -147,7 +147,7 @@ class NavigateHereBubbleRenderTest {
                         .clickable(interactionSource = null, indication = null, onClick = onMapTap)
                 ) {
                     NavigateHereOffer(
-                        anchor = anchor,
+                        anchor = { anchor },
                         onNavigate = onNavigate,
                         onDismiss = onDismiss
                     )

@@ -703,22 +703,14 @@ class MapViewModel @Inject constructor(
     /** Where the long-press offer currently stands, or null with none standing. */
     val navigateHerePin: StateFlow<GeoPoint?> = _navigateHerePin.asStateFlow()
 
-    private var navigateHereMarkerId: Int? = null
-
     /**
      * Drop the "navigate here" pin at [point] — moving it if one is already down — or clear the offer
-     * with null.
-     *
-     * It carries the destination's own hue ([DirectionsMapController.HUE_RED]), so the pin a press drops
-     * is the pin the trip's destination keeps once the offer is taken, rather than a second mark for the
-     * same place.
+     * with null. The pin itself is the directions layer's (it is the destination's own red pin, drawn
+     * and reconciled where the trip's endpoints are); what this adds is publishing *where* it stands, so
+     * the home screen can hang the offer's bubble off it.
      */
     fun setNavigateHerePin(point: GeoPoint?) {
-        if (_navigateHerePin.value == point) return
-        navigateHereMarkerId?.let { mapHost.removeMarker(it) }
-        navigateHereMarkerId = point?.let {
-            mapHost.addMarker(it.latitude, it.longitude, DirectionsMapController.HUE_RED)
-        }
+        directionsController.setNavigateHerePin(point)
         _navigateHerePin.value = point
     }
 

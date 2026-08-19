@@ -570,6 +570,9 @@ fun MapFeature(
         point = DemoModeController.TRIP_PLAN_DESTINATION,
         anchorId = ScriptedTutorial.KEY_TRIP_DESTINATION
     )
+    // ...and for the length of that step the map also *answers* the mimed press, so the caption's "then
+    // tap Navigate here" points at something that is really there (#2243).
+    TourNavigateHerePin(mapViewModel)
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a
     // self-wired feature module ([MapChromeViewModel]); the map-loading bar reads the map VM's progress
@@ -778,4 +781,26 @@ private fun PermissionRationaleDialog(onOk: () -> Unit, onNoThanks: () -> Unit) 
             TextButton(onClick = onNoThanks) { Text(stringResource(R.string.no_thanks)) }
         }
     )
+}
+
+/**
+ * The pin the scripted tour's long-press step would have left, dropped for the length of that step and
+ * taken away again (#2243).
+ *
+ * Here beside [MapPointSpotlight] — the sibling that rings the same place — rather than in the host:
+ * the tour's press is *map* content, this is where the map view model and the demo system's coordinates
+ * already are, and reading the tutorial state in a composable this small keeps a step change from
+ * recomposing the whole home screen.
+ *
+ * The tour never presses the map itself (the spotlight overlay swallows every touch), so this is the one
+ * writer of that pin which isn't a gesture — and it is a [DisposableEffect] because the teardown is the
+ * point: a tour abandoned on this step must not leave a pin behind.
+ */
+@Composable
+private fun TourNavigateHerePin(mapViewModel: MapViewModel) {
+    val onPressStep = LocalTutorialState.current?.current?.id == ScriptedTutorial.STEP_PLAN_PRESS
+    DisposableEffect(onPressStep) {
+        if (onPressStep) mapViewModel.setNavigateHerePin(DemoModeController.TRIP_PLAN_DESTINATION)
+        onDispose { if (onPressStep) mapViewModel.setNavigateHerePin(null) }
+    }
 }

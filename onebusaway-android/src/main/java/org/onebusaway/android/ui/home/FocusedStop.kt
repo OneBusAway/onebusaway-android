@@ -22,12 +22,19 @@ import org.onebusaway.android.util.GeoPoint
  * The stop the user tapped on the map, decoupled from the io/elements `ObaStop`. Carries its [point] so
  * the host can recenter the map and launch feedback without holding the `ObaStop` object, and so the
  * focus survives process death via the ViewModel's `SavedStateHandle`.
+ *
+ * Only [id] is required. A focus can be asked for by id alone — a deep link, an FCM arrival push, a
+ * pinned shortcut and a reminder row all carry nothing else — and everything the stop *is* arrives with
+ * its arrivals: `HomeViewModel.onArrivalsLoaded` fills in whatever is still missing from the loaded
+ * `ObaStop`. So the nullable fields mean "not resolved yet", not "this stop has no name/location", and
+ * the handful of things that genuinely need a location ([point]) hold off until it lands rather than
+ * inventing one.
  */
 data class FocusedStop(
     val id: String,
-    val name: String?,
-    val code: String?,
-    val point: GeoPoint,
+    val name: String? = null,
+    val code: String? = null,
+    val point: GeoPoint? = null,
     // The tapped stop's accessibility, carried through so the focus banner can show it (#1029);
     // [WheelchairBoarding.UNKNOWN] for focuses minted without an ObaStop (intent extras, restore).
     val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN

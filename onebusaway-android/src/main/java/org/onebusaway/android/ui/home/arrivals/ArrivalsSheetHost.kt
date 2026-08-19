@@ -44,7 +44,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
-import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.routeRowKey
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
@@ -73,8 +72,8 @@ internal data class ArrivalsSession(
  * (via [rememberClearedViewModelStoreOwner]) — so the VM's `viewModelScope`, and the refresh loop
  * [ArrivalsPolling] drives through it, are cancelled rather than accumulating in the activity's store.
  *
- * Polling and stop-detail dialogs live here so the banner and drawer share one lifecycle and one
- * state source. Loaded responses are forwarded to the host for map focus and tutorials.
+ * Polling lives here so the banner and drawer share one lifecycle and one state source. Loaded
+ * responses are forwarded to the host for map focus and tutorials.
  */
 @Composable
 internal fun rememberArrivalsSession(
@@ -128,7 +127,6 @@ internal fun rememberArrivalsSession(
         val listState = remember { LazyListState() }
 
         ArrivalsPolling(viewModel)
-        StopDetailsHost(viewModel)
 
         // Forward each completed load to the host and start onboarding after the sheet is visible.
         val sheetVisibleState = rememberUpdatedState(sheetVisible)

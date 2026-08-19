@@ -68,8 +68,6 @@ private class FakeArrivalsRepository(
     val callGates = mutableListOf<CompletableDeferred<Unit>>()
     val callResults = mutableListOf<Result<ArrivalsData>>()
 
-    var lastFavoriteSet: Pair<String, Boolean>? = null
-
     var lastFavoriteRoute: FavoriteRouteCall? = null
 
     var hiddenAlertIds: List<String>? = null
@@ -93,17 +91,6 @@ private class FakeArrivalsRepository(
         requestedMinutesAfter.add(minutesAfter)
         (callGates.getOrNull(call) ?: gate)?.await()
         return callResults.getOrNull(call) ?: result
-    }
-
-    override suspend fun setStopFavorite(
-        stopId: String,
-        code: String?,
-        name: String?,
-        latitude: Double,
-        longitude: Double,
-        favorite: Boolean
-    ) {
-        lastFavoriteSet = stopId to favorite
     }
 
     override suspend fun favoriteRoute(
@@ -165,11 +152,9 @@ class ArrivalsViewModelTest {
         actions = emptyMap(),
         activeAlerts = emptyList(),
         hideAlertsByDefault = hideAlertsByDefault,
-        routeDisplayNames = emptyList(),
         stopCode = null,
         stopLat = 0.0,
-        stopLon = 0.0,
-        stopUserName = null
+        stopLon = 0.0
     )
 
     @Test
@@ -307,19 +292,6 @@ class ArrivalsViewModelTest {
         val afterStale = viewModel.state.value as ArrivalsUiState.Content
         assertFalse(afterStale.isStale)
         assertEquals(ServerTime(125 * 60_000L), afterStale.windowEnd)
-    }
-
-    @Test
-    fun `toggle favorite optimistically updates the header and persists`() = runTest {
-        val repository = FakeArrivalsRepository(Result.success(data(favorite = false)))
-        val viewModel = ArrivalsViewModel("1_100", repository)
-        viewModel.refresh()
-
-        viewModel.toggleFavorite()
-
-        assertTrue((viewModel.state.value as ArrivalsUiState.Content).header.isFavorite)
-        advanceUntilIdle()
-        assertEquals("1_100" to true, repository.lastFavoriteSet)
     }
 
     private val routeActions = ArrivalActions(

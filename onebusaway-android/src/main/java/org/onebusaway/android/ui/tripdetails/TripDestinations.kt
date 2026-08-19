@@ -36,6 +36,8 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.dataview.TripTrajectoryRoute
 import org.onebusaway.android.ui.dataview.TripTrajectoryViewModel
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.tripinfo.TripInfoEvent
 import org.onebusaway.android.ui.tripinfo.TripInfoRoute
 import org.onebusaway.android.ui.tripinfo.TripInfoViewModel
@@ -77,9 +79,9 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
             TripDetailsRoute(
                 viewModel = tripVm,
                 onBack = { navController.popBackStack() },
-                onStopClick = { sid, name, _ ->
-                    navController.navigate(NavRoutes.arrivals(sid, name))
-                },
+                // A schedule row names its stop but not where it is; the reveal's arrivals load
+                // supplies that (#1898).
+                onStopClick = { sid, name, _ -> navController.revealStopOnMap(StopReveal(sid, name)) },
                 // Off pending the navigation-mode rework; null removes the long-press affordance
                 // rather than leaving a gesture that starts nothing.
                 onSetDestinationReminder = if (!FeatureFlags.DESTINATION_REMINDERS) {
@@ -212,7 +214,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                     infoVm.routeId()?.let { navController.navigate(NavRoutes.routeInfo(it)) }
                 },
                 onShowStop = {
-                    navController.navigate(NavRoutes.arrivals(infoStopId, infoVm.stopName()))
+                    navController.revealStopOnMap(StopReveal(infoStopId, infoVm.stopName()))
                 }
             )
         }

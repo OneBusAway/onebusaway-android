@@ -48,6 +48,7 @@ class ServiceAlertsDialogTest {
                 onShowAlert = { selected = it },
                 onHideAlert = {},
                 onShowHiddenAlerts = {},
+                onHideAllAlerts = {},
                 onDismiss = {}
             )
         }

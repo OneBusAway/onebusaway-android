@@ -214,14 +214,12 @@
     <string name="stop_info_option_showonmap">Näytä kartalla</string>
     <string name="menu_option_sort_by">Järjestä</string>
     <string name="stop_info_option_refresh">Päivitä</string>
-    <string name="stop_info_option_show_details">Pysäkin tiedot</string>
     <string name="stop_info_option_night_light">Yövalo</string>
     <string name="stop_info_option_hide_alerts">Piilota aktiiviset hälytykset</string>
     <string name="stop_info_option_report_problem">Ilmoita pysäkkiongelma</string>
     <string name="stop_info_canceled">PERUTTU</string>
     <string name="stop_info_canceled_arrival">PERUTTU saapuminen</string>
     <string name="stop_info_canceled_departure">PERUTTU lähtö</string>
-    <string name="stop_info_official_stop_name_label">Virallinen nimi: %1$s</string>
     <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -261,7 +259,6 @@
     <string name="stop_info_item_options_title">Toiminnot</string>
     <string name="stop_info_clear">Tyhjennä</string>
     <string name="stop_info_favorite">Suosikkipysäkki</string>
-    <string name="stop_info_route_ids_label">Reitit:</string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Pysäkki # %1$s</string>
@@ -269,8 +266,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Näytä saapuvien tiedot</string>
-    <string name="route_info_context_showonmap">Näytä kartalla</string>
     <string name="route_info_no_shape_data">Tämän reitin karttatietoja ei ole saatavilla
     </string>
 

@@ -122,9 +122,7 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                         .recordDetails(route.id, route.shortName, route.longName, route.url)
                     navController.revealRouteOnMap(route.id)
                 },
-                onStopShowOnMap = { stop ->
-                    navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
-                },
+                onRevealStop = { navController.revealStopOnMap(it) },
                 // A coach-number hit drills into the ride that vehicle is running — the same
                 // route-mode-with-a-focused-vehicle view an arrivals ETA-pill tap opens.
                 onVehicleShowOnMap = { ride ->

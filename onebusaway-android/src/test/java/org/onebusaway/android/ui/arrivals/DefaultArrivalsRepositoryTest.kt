@@ -44,7 +44,6 @@ import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.ServiceAlertRecord
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
 import org.onebusaway.android.database.oba.StopRecentRow
@@ -212,9 +211,6 @@ class DefaultArrivalsRepositoryTest {
         stopArrivals = dataSource,
         serviceAlertDao = FakeServiceAlertDao(),
         stopDao = stopDao,
-        // The real shared owner over the same fake StopDao, so setStopFavorite exercises the actual
-        // ensure-row delegation (#1996) rather than a stub.
-        stopFavorites = StopFavoritesRepository(stopDao, FakeRegionRepository(), NoopImportGate),
         routeFavorites = FakeRouteFavorites(),
         importGate = NoopImportGate,
         preferences = FakePreferencesRepository(),
@@ -351,32 +347,6 @@ class DefaultArrivalsRepositoryTest {
         repository.getArrivals(STOP_ID, 65).getOrThrow()
 
         assertEquals(listOf(STOP_ID), stopDao.markStopUsedCalls)
-    }
-
-    // --- Stop favoriting --------------------------------------------------------------------------
-
-    @Test
-    fun `setStopFavorite ensures the stop row exists instead of a bare no-op update`() = runTest {
-        // The row is absent (this fake's getStop always returns null) — the pre-#1996 bare
-        // stopDao.setFavorite UPDATE would have silently no-op'd. Delegating to StopFavoritesRepository
-        // instead inserts the identity row with the flag already set, matching the map focus banner.
-        val stopDao = FakeStopDao()
-        val repository = repository(FakeStopArrivalsDataSource(), stopDao = stopDao)
-
-        repository.setStopFavorite(
-            stopId = STOP_ID,
-            code = "577",
-            name = "Pine St & 3rd Ave",
-            latitude = 47.6,
-            longitude = -122.3,
-            favorite = true
-        )
-
-        val inserted = stopDao.upsertedStops.single()
-        assertEquals(STOP_ID, inserted.id)
-        assertEquals("577", inserted.code)
-        assertEquals("Pine St & 3rd Ave", inserted.name)
-        assertEquals(1, inserted.favorite)
     }
 
     // --- The stale-fallback path ------------------------------------------------------------------

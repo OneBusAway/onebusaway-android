@@ -18,7 +18,7 @@ package org.onebusaway.android.ui.home
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.models.WheelchairBoarding
-import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.geoPointOrNull
 
 /** Mechanical SavedStateHandle encoding for [CurrentFocus], kept out of focus transition logic. */
 internal object CurrentFocusPersistence {
@@ -153,10 +153,9 @@ internal object CurrentFocusPersistence {
             id = id,
             name = state[KEY_STOP_NAME],
             code = state[KEY_STOP_CODE],
-            point = GeoPoint(
-                state.get<Double>(KEY_STOP_LAT) ?: 0.0,
-                state.get<Double>(KEY_STOP_LON) ?: 0.0
-            ),
+            // Absent when the focus was restored before its arrivals resolved a location for it; null
+            // says so, where the old 0,0 fallback quietly claimed the stop stood off the coast of Ghana.
+            point = geoPointOrNull(state[KEY_STOP_LAT], state[KEY_STOP_LON]),
             wheelchairBoarding = WheelchairBoarding.fromString(state[KEY_STOP_WHEELCHAIR])
         )
     }

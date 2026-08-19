@@ -187,17 +187,12 @@ object NavRoutes {
     /** Builds a navigable [ROUTE_INFO] route, encoding the id (route ids can contain `/`, spaces). */
     fun routeInfo(routeId: String): String = "routeInfo/${Uri.encode(routeId)}"
 
-    // --- Arrivals (C-b) ---
-    // stopId is the clean nav-arg; stopName is an optional pre-load title (the screen replaces it with
-    // the loaded header). The standalone ArrivalsListActivity keeps its data-URI contract; this route
-    // is the in-app destination. Direction/routes come from the loaded response, so they're not args.
+    // --- Stop nav-args ---
+    // A stop is no longer a destination of its own: showing one is map state (focus + the arrivals
+    // drawer), reached through `NavController.revealStopOnMap` rather than a route (#1898). These keys
+    // survive because the trip destinations below carry a stop alongside their trip.
     const val ARG_STOP_ID = "stopId"
     const val ARG_STOP_NAME = "stopName"
-    const val ARRIVALS = "arrivals/{$ARG_STOP_ID}?$ARG_STOP_NAME={$ARG_STOP_NAME}"
-
-    /** Builds a navigable [ARRIVALS] route (stop ids can contain `/`, `_`; encode them). */
-    fun arrivals(stopId: String, stopName: String? = null): String = "arrivals/${Uri.encode(stopId)}" +
-        if (stopName != null) "?$ARG_STOP_NAME=${Uri.encode(stopName)}" else ""
 
     // --- Trip details (C-d) ---
     // Clean nav-arg keys read by TripDetailsViewModel from SavedStateHandle (TripDetailsActivity's

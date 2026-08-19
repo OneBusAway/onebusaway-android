@@ -185,7 +185,6 @@
     <string name="stop_info_option_showonmap">Pokaż na mapie</string>
     <string name="menu_option_sort_by">Sortuj</string>
     <string name="stop_info_option_refresh">Odśwież</string>
-    <string name="stop_info_option_show_details">Pokaż szczegóły przystanku</string>
     <string name="stop_info_option_report_problem">Zgłoś problem z przystankiem</string>
     <string name="stop_info_option_night_light">Światło nocne</string>
     <string name="stop_info_option_hide_alerts">Ukryj aktywne alerty</string>
@@ -224,8 +223,6 @@
     <string name="stop_info_item_options_title">Opcje</string>
     <string name="stop_info_clear">Wyczyść</string>
     <string name="stop_info_favorite">Ulubiony przystanek</string>
-    <string name="stop_info_route_ids_label">Trasy:</string>
-    <string name="stop_info_official_stop_name_label">Oficjalna nazwa: %1$s</string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Przypomnienie o celu podróży (beta)</string>
@@ -261,8 +258,6 @@
     <string name="stop_details_code">Przystanek # %1$s</string>
 
     <!-- Route Info -->
-    <string name="route_info_context_get_stop_info">Pokaż informację przyjazdu</string>
-    <string name="route_info_context_showonmap">Pokaż na mapie</string>
     <string name="route_info_no_shape_data">Przepraszamy, informacje na mapie nie są dostępne dla tej trasy.
     </string>
 

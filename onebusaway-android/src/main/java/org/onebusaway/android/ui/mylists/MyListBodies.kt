@@ -23,12 +23,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.search.RouteSearchContent
 import org.onebusaway.android.ui.search.RouteSearchResult
 import org.onebusaway.android.ui.search.SearchViewModel
 import org.onebusaway.android.ui.search.StopSearchContent
 import org.onebusaway.android.ui.search.StopSearchResult
 import org.onebusaway.android.util.ExternalIntents
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The shared list/search "destinations": body composables hosted by both the Compose [MyTabsScreen]
@@ -92,11 +94,11 @@ fun ReminderListDestination(
 @Composable
 fun StopSearchDestination(
     viewModel: SearchViewModel<StopSearchResult>,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ) {
     StopSearchContent(
         viewModel = viewModel,
-        onStopClick = { onShowOnMap(it.id, it.latitude, it.longitude) }
+        onStopClick = { onRevealStop(StopReveal(it.id, it.name, GeoPoint(it.latitude, it.longitude))) }
     )
 }
 

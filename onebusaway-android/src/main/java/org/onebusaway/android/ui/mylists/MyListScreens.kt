@@ -27,6 +27,7 @@ import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.search.DefaultRouteSearchRepository
 import org.onebusaway.android.ui.search.DefaultStopSearchRepository
 import org.onebusaway.android.ui.search.RouteSearchResult
@@ -48,8 +49,7 @@ internal fun AppCompatActivity.recentStopsTab(
     viewModel: MyListViewModel<StopListItem>,
     @StringRes titleRes: Int,
     @DrawableRes iconRes: Int,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
-    onOpenStop: (stopId: String, stopName: String?) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ): MyTab = MyTab(
     tag = MyTabs.RECENT_STOPS,
     titleRes = titleRes,
@@ -64,19 +64,16 @@ internal fun AppCompatActivity.recentStopsTab(
     StopListDestination(
         viewModel,
         emptyText = R.string.my_no_recent_stops,
-        onClick = { openStop(it, onOpenStop) },
+        onClick = { onRevealStop(it.toStopReveal()) },
         actions = {
-            stopActions(it, R.string.my_context_remove_recent, onShowOnMap) {
-                viewModel.remove(it.id)
-            }
+            stopActions(it, R.string.my_context_remove_recent) { viewModel.remove(it.id) }
         }
     )
 }
 
 internal fun AppCompatActivity.starredStopsTab(
     viewModel: MyListViewModel<StopListItem>,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
-    onOpenStop: (stopId: String, stopName: String?) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ): MyTab = MyTab(
     tag = MyTabs.STARRED_STOPS,
     titleRes = R.string.my_starred_title,
@@ -97,11 +94,9 @@ internal fun AppCompatActivity.starredStopsTab(
     StopListDestination(
         viewModel,
         emptyText = R.string.my_no_starred_stops,
-        onClick = { openStop(it, onOpenStop) },
+        onClick = { onRevealStop(it.toStopReveal()) },
         actions = {
-            stopActions(it, R.string.my_context_remove_star, onShowOnMap) {
-                viewModel.remove(it.id)
-            }
+            stopActions(it, R.string.my_context_remove_star) { viewModel.remove(it.id) }
         },
         onToggleTracking = badgeTracking()
     )
@@ -137,13 +132,13 @@ internal fun AppCompatActivity.recentRoutesTab(
 
 internal fun stopSearchTab(
     viewModel: SearchViewModel<StopSearchResult>,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ): MyTab = MyTab(
     tag = MyTabs.SEARCH,
     titleRes = R.string.my_search_title,
     iconRes = R.drawable.search
 ) {
-    StopSearchDestination(viewModel, onShowOnMap)
+    StopSearchDestination(viewModel, onRevealStop)
 }
 
 internal fun routeSearchTab(
@@ -184,8 +179,7 @@ fun MyStopsDestination(
     initialTag: String?,
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
-    onShowStopOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
-    onOpenStop: (stopId: String, stopName: String?) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ) {
     val activity = LocalContext.current.findActivity()
     val app = activity.applicationContext
@@ -209,11 +203,10 @@ fun MyStopsDestination(
                 recent,
                 R.string.my_recent_title,
                 R.drawable.ic_tab_recent_unselected,
-                onShowStopOnMap,
-                onOpenStop
+                onRevealStop
             ),
-            activity.starredStopsTab(starred, onShowStopOnMap, onOpenStop),
-            stopSearchTab(search, onShowStopOnMap)
+            activity.starredStopsTab(starred, onRevealStop),
+            stopSearchTab(search, onRevealStop)
         )
     )
 }
@@ -260,9 +253,8 @@ fun MyRecentDestination(
     initialTag: String?,
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
-    onShowStopOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
-    onShowRouteOnMap: (routeId: String) -> Unit,
-    onOpenStop: (stopId: String, stopName: String?) -> Unit
+    onRevealStop: (StopReveal) -> Unit,
+    onShowRouteOnMap: (routeId: String) -> Unit
 ) {
     val activity = LocalContext.current.findActivity()
     val app = activity.applicationContext
@@ -279,8 +271,7 @@ fun MyRecentDestination(
                 recentStops,
                 R.string.my_recent_stops,
                 R.drawable.stop_flag,
-                onShowStopOnMap,
-                onOpenStop
+                onRevealStop
             ),
             activity.recentRoutesTab(
                 recentRoutes,

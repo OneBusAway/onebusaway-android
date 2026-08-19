@@ -251,7 +251,6 @@
     <string name="stop_info_option_showonmap">Show on map</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
-    <string name="stop_info_option_show_details">Show stop details</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
@@ -303,8 +302,6 @@
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_favorite">Favorite stop</string>
-    <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
-    <string name="stop_info_route_ids_label">Routes:</string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Destination reminder (beta)</string>
@@ -378,8 +375,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Show arrival information</string>
-    <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_no_shape_data">Sorry, map information isn’t available for this route
     </string>
     <!-- Route map header: open the menu choosing which direction of the route is shown -->

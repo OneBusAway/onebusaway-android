@@ -22,6 +22,7 @@ import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.geoPointOrNull
 
 /**
  * Navigate to an in-app [route], popping up to HOME and de-duping the top — the single navigation
@@ -50,6 +51,7 @@ const val RESULT_MAP_ROUTE_DIRECTION_STOP_ID = "mapReveal.routeDirectionStopId"
 const val RESULT_MAP_ROUTE_FOCUS_TRIP_ID = "mapReveal.routeFocusTripId"
 const val RESULT_MAP_ROUTE_INITIAL_DIRECTION_ID = "mapReveal.routeInitialDirectionId"
 const val RESULT_MAP_STOP_ID = "mapReveal.stopId"
+const val RESULT_MAP_STOP_NAME = "mapReveal.stopName"
 const val RESULT_MAP_STOP_LAT = "mapReveal.stopLat"
 const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
 
@@ -92,37 +94,56 @@ fun SavedStateHandle.consumeRouteReveal(): ShowRouteRequest? {
     return routeId?.let { ShowRouteRequest(it, directionStopId, focusTripId, initialDirectionId) }
 }
 
-/** Reveal the map focused on [stopId] at [lat]/[lon], popping back to HOME. */
-fun NavController.revealStopOnMap(stopId: String, lat: Double, lon: Double) {
+/**
+ * "Show me this stop" — the one currency every stop affordance in the app speaks, whether it is a
+ * navigation hand-back ([revealStopOnMap]), an external launch translated at the entry boundary
+ * ([IntentRouteMapper.stopRevealForIntent]), or a list row handing one to its host.
+ *
+ * Only [stopId] is required, because it is the only thing every requester has: a deep link, an FCM
+ * arrival push, a pinned shortcut and a reminder row carry nothing else. [name] is the arrivals sheet's
+ * pre-load title and [point] completes the focus before its arrivals land (the recenter button, the
+ * banner star, "report a problem"); both are filled in from the loaded stop by
+ * `HomeViewModel.onArrivalsLoaded` when a requester couldn't supply them, so passing them is a
+ * head start rather than a requirement.
+ */
+data class StopReveal(
+    val stopId: String,
+    val name: String? = null,
+    val point: GeoPoint? = null
+)
+
+/** Reveal the map focused on [reveal]'s stop, popping back to HOME. */
+fun NavController.revealStopOnMap(reveal: StopReveal) {
     getBackStackEntry(NavRoutes.HOME).savedStateHandle.apply {
-        set(RESULT_MAP_STOP_ID, stopId)
-        set(RESULT_MAP_STOP_LAT, lat)
-        set(RESULT_MAP_STOP_LON, lon)
+        set(RESULT_MAP_STOP_ID, reveal.stopId)
+        set(RESULT_MAP_STOP_NAME, reveal.name)
+        set(RESULT_MAP_STOP_LAT, reveal.point?.latitude)
+        set(RESULT_MAP_STOP_LON, reveal.point?.longitude)
     }
     popBackStack(NavRoutes.HOME, false)
 }
 
-/** A complete stop reveal read back off the HOME [SavedStateHandle] — the typed counterpart of the
- *  three [RESULT_MAP_STOP_ID]/[RESULT_MAP_STOP_LAT]/[RESULT_MAP_STOP_LON] keys [revealStopOnMap] writes. */
-data class StopReveal(val stopId: String, val point: GeoPoint)
+/** Reveal the stop [stopId] on the map, knowing nothing else about it. */
+fun NavController.revealStopOnMap(stopId: String) = revealStopOnMap(StopReveal(stopId))
 
 /**
  * Reads and consumes a pending stop reveal from the HOME [SavedStateHandle] — the symmetric typed *read*
- * for [revealStopOnMap], keeping the `RESULT_MAP_STOP_*` keys and their `Double` types in this one file
- * rather than re-naming them in the consumer. All three keys are cleared together regardless of
- * completeness (so a stale lat/lon pair can't linger past the reveal); returns null when no stop id is
- * present, or — the corrupted/half-restored case the producer never writes — an id without both
- * coordinates.
+ * for [revealStopOnMap], keeping the `RESULT_MAP_STOP_*` keys and their types in this one file rather
+ * than re-naming them in the consumer. Every key is cleared together regardless of completeness (so a
+ * stale name or lat/lon pair can't linger past the reveal); returns null when no stop id is present.
+ * A lone coordinate — which the producer never writes — reads as no location at all rather than half
+ * of one.
  */
 fun SavedStateHandle.consumeStopReveal(): StopReveal? {
     val stopId = get<String>(RESULT_MAP_STOP_ID)
+    val name = get<String>(RESULT_MAP_STOP_NAME)
     val lat = get<Double>(RESULT_MAP_STOP_LAT)
     val lon = get<Double>(RESULT_MAP_STOP_LON)
     set(RESULT_MAP_STOP_ID, null)
+    set(RESULT_MAP_STOP_NAME, null)
     set(RESULT_MAP_STOP_LAT, null)
     set(RESULT_MAP_STOP_LON, null)
-    if (stopId == null || lat == null || lon == null) return null
-    return StopReveal(stopId, GeoPoint(lat, lon))
+    return stopId?.let { StopReveal(it, name, geoPointOrNull(lat, lon)) }
 }
 
 /**
@@ -169,8 +190,12 @@ fun Intent.putStopRouteReveal(stop: FocusedStop, route: RouteRevealExtras): Inte
     putExtra(MapParams.STOP_ID, stop.id)
     putExtra(MapParams.STOP_NAME, stop.name)
     putExtra(MapParams.STOP_CODE, stop.code)
-    putExtra(MapParams.CENTER_LAT, stop.point.latitude)
-    putExtra(MapParams.CENTER_LON, stop.point.longitude)
+    // Only when the stop's location is known: `FocusedStop.fromIntent` reads their absence as "not
+    // resolved yet" and lets the arrivals load supply it, which is exactly what a zero pair would mean.
+    stop.point?.let {
+        putExtra(MapParams.CENTER_LAT, it.latitude)
+        putExtra(MapParams.CENTER_LON, it.longitude)
+    }
     putExtra(MapParams.ROUTE_ID, route.routeId)
     putExtra(EXTRA_ROUTE_SHORT_NAME, route.routeShortName)
     putExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN, route.headsign)

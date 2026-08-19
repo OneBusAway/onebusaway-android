@@ -243,6 +243,7 @@ class HomeActivity : AppCompatActivity() {
         maybeRestoreDirectionsFromIntent(intent)
         maybePlanToPlaceFromIntent(intent)
         maybeRevealTrackedRouteFromIntent(intent)
+        maybeRevealStopFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
@@ -266,6 +267,21 @@ class HomeActivity : AppCompatActivity() {
         val stop = FocusedStop.fromIntent(intent) ?: return
         viewModel.revealStop(stop)
         viewModel.selectArrivalRoute(route.request(stop.id), route.routeShortName, route.headsign)
+    }
+
+    /**
+     * A launch that asks for a stop — an exported `oba://…/stops/{id}` deep link, an FCM arrival push,
+     * a pinned stop shortcut — focuses it on the map, with the arrivals drawer over it (#1898). Applied
+     * here, next to the other launch-intent focus changes, because this is where the [HomeViewModel] is;
+     * [IntentRouteMapper] stays a pure translator and correctly resolves these to no destination, since
+     * a stop is map state and not a screen.
+     *
+     * No animation: these arrive from outside the app, where the map is either not yet on screen or
+     * showing somewhere unrelated, so flying the camera would be a long pan from nowhere in particular.
+     */
+    private fun maybeRevealStopFromIntent(intent: Intent) {
+        val reveal = IntentRouteMapper.stopRevealForIntent(intent) ?: return
+        viewModel.revealStop(FocusedStop(reveal.stopId, reveal.name, point = reveal.point))
     }
 
     /**
@@ -432,7 +448,7 @@ class HomeActivity : AppCompatActivity() {
         // The VM picks the report target (focused stop → last location → nothing); the host just launches.
         when (val target = viewModel.reportTarget()) {
             is ReportTarget.Stop -> target.stop.let {
-                ReportLauncher.start(this, it.id, it.name, it.code, it.point.latitude, it.point.longitude)
+                ReportLauncher.start(this, it.id, it.name, it.code, target.point.latitude, target.point.longitude)
             }
             is ReportTarget.Location -> ReportLauncher.start(this, target.point.latitude, target.point.longitude)
             ReportTarget.Generic -> ReportLauncher.start(this)
@@ -481,15 +497,21 @@ fun Context.startHomeActivity(route: String) {
 }
 
 /**
- * The [FocusedStop] a launch intent deep-links into (makeIntent's STOP_ID + CENTER_LAT/LON), or null
- * when it carries no usable stop — an id plus a real (non-zero) location. A plain launch carries
- * neither, so focus stays null. Parsing lives here with the intent contract, off HomeModels.
+ * The [FocusedStop] a launch intent deep-links into (makeIntent's STOP_ID + optional CENTER_LAT/LON),
+ * or null when it names no stop — a plain launch carries no id, so focus stays null. A zero coordinate
+ * is `getDouble`'s default *and* null island, so the pair is read as "no location carried" and the
+ * focus goes without one until its arrivals resolve it (see `HomeViewModel.onArrivalsLoaded`). Parsing
+ * lives here with the intent contract, off HomeModels.
  */
 internal fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val extras = intent.extras ?: return null
     val id = extras.getString(MapParams.STOP_ID) ?: return null
     val lat = extras.getDouble(MapParams.CENTER_LAT)
     val lon = extras.getDouble(MapParams.CENTER_LON)
-    if (lat == 0.0 || lon == 0.0) return null
-    return FocusedStop(id, extras.getString(MapParams.STOP_NAME), extras.getString(MapParams.STOP_CODE), GeoPoint(lat, lon))
+    return FocusedStop(
+        id = id,
+        name = extras.getString(MapParams.STOP_NAME),
+        code = extras.getString(MapParams.STOP_CODE),
+        point = if (lat == 0.0 || lon == 0.0) null else GeoPoint(lat, lon)
+    )
 }

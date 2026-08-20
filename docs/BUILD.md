@@ -72,6 +72,7 @@ Note that the paths in these files always use the Unix path separator `/`, even 
 Before doing each release build, you'll need to:
 1. Set `versionName` in `onebusaway-android/build.gradle.kts` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
 2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
+3. Update the Play Store "What's new" text in `onebusaway-android/src/oba/play/release-notes/en-US/default.txt` to match `main_help_whatsnew`. Play caps this at 500 characters per locale.
 
 Then, to build all flavors run:
 
@@ -84,6 +85,8 @@ The APK files will show up in the `onebusaway-android/build/outputs/apk` folder.
 ### Automated publishing with gradle-play-publisher
 
 We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) (GPP) to automate building, versioning, and uploading releases to Google Play.
+
+**Releases normally ship from CI**, not from a workstation: the *Release to Google Play* GitHub Actions workflow runs these same tasks with the signing key and Play credentials held as repository secrets. See [RELEASING.md](RELEASING.md) for how to cut a release, and use the local setup below when CI isn't an option.
 
 #### Setup
 

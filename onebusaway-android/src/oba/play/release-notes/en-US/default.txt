@@ -1,0 +1,9 @@
+• Bold new look for a bold new era
+• Arrivals are now grouped by route
+• Micromobility added to the bike overlay
+• Tap a stop to see its routes
+• Zoom in to see nearby routes
+• Vehicle locations extrapolated and animated
+• Track your bus with live notifications
+• Significant improvements to the trip planner
+• Several small bug fixes

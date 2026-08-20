@@ -53,8 +53,12 @@ android {
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+        // versionCode is a fallback only: the play {} block's AUTO resolution strategy takes the
+        // real one from the highest code already on Play (154 as of 26.1.0), so this value is used
+        // only by builds with no Play credentials — whose output must never be uploaded. Bump
+        // versionName by hand; see docs/RELEASING.md.
         versionCode = 153
-        versionName = "26.1.0"
+        versionName = "27.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

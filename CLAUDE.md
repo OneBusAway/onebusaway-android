@@ -93,17 +93,19 @@ service account and how to rotate its key — is in **`docs/RELEASING.md`**; loc
 
 Two things that bite:
 
-- **`versionCode` is not yours to edit.** `resolutionStrategy = AUTO` in the `play {}` block
-  auto-increments it from the highest code on Play. Only `versionName` is bumped by hand. AUTO is
+- **`versionCode` is not yours to edit, and git tags don't tell you what shipped.** The tags stop
+  at `v2.4.19` (2025) while `26.1.0`/code 154 is live on Play — ask Play, not git, before choosing
+  a `versionName`. `resolutionStrategy = AUTO` in the `play {}` block
+  auto-increments `versionCode` from the highest code on Play. Only `versionName` is bumped by hand. AUTO is
   consulted on every release *assemble*, not just `publish*` tasks — without credentials the block
   falls back to `IGNORE` and the checked-in `versionCode` is used, so the build works but its
   output must not be uploaded.
 - **Release notes live in two places and must agree**: `main_help_whatsnew` in
   `src/main/res/values/strings.xml` (the in-app what's-new dialog, translated) and
   `src/oba/play/release-notes/en-US/default.txt` (the Play listing, 500-char cap). The Play tree is
-  under `src/oba/` so the sample and third-party brands don't inherit OneBusAway's listing; only
-  `en-US` is checked in, because Play rejects release notes for a locale its listing doesn't
-  declare — see the README there.
+  under `src/oba/` so the sample and third-party brands don't inherit OneBusAway's listing, and
+  `en-US` is the only locale because it is the only one the live store listing declares — Play
+  rejects release notes for any other, failing the publish. See the README there.
 
 ## Build Variants
 

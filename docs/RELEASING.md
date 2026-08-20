@@ -20,10 +20,14 @@ ships by pushing a branch or mistyping a tag; a human opens Actions and presses 
    you edit by hand: `versionCode` is auto-incremented from the highest code already on Play (the
    `resolutionStrategy = AUTO` in the `play {}` block), so the number checked into the file is only
    a fallback for builds without Play credentials.
+
+   Check what's actually live before choosing a name — the git tags have not tracked Play releases
+   and will mislead you. `26.1.0` shipped as versionCode 154 without ever being tagged. The Play
+   Console's release dashboard, or `bootstrapObaGoogleReleaseListing`, is the authority.
 3. **Write the release notes**, in two places that must agree:
    - `onebusaway-android/src/oba/play/release-notes/en-US/default.txt` — the Play "What's new"
-     text, capped at 500 characters per locale. See the [README][playreadme] there for why only
-     `en-US` is checked in.
+     text, capped at 500 characters. `en-US` is the only locale here because it is the only one the
+     store listing declares; adding others would fail the publish. See the [README][playreadme].
    - `main_help_whatsnew` in `onebusaway-android/src/main/res/values/strings.xml` (and the
      `values-*` translations) — the in-app what's-new dialog. Same release, same audience.
 4. **Run the workflow.** Actions → Release to Google Play → Run workflow, on the commit you picked.

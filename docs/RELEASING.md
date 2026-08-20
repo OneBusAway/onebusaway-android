@@ -137,8 +137,14 @@ Console, not from Cloud IAM. Grant them there, once, by hand:
 
 > Play Console → Users and permissions → Invite new users → enter the service-account email →
 > under **App permissions** add OneBusAway (`com.joulespersecond.seattlebusbot`) → grant
-> **Release manager** (or, more narrowly, *View app information*, *Manage testing tracks*, and
-> *Manage production releases*) → Invite user.
+> *View app information* and *Manage testing tracks* → Invite user.
+
+Grant those two and **not** *Release manager* or *Manage production releases*. This credential sits
+in a repository secret and is readable by any workflow run, so it should not be able to reach
+production at all — CI's job ends at the testing tracks. That restriction is load-bearing rather
+than decorative: it is the reason `promoteObaGoogleReleaseArtifact` returns 403 from CI, which is
+what keeps production promotion a human decision made in the Console. Promoting from a workstation
+needs a separate, more privileged credential.
 
 To check that the credential works before trusting a release to it, run a read-only Play task
 locally against the key:

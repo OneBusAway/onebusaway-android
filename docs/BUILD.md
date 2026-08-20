@@ -92,7 +92,7 @@ We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher
 
 1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account under IAM & Admin → Service Accounts and download the JSON key file.
 2. Enable the [Google Play Android Developer API](https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com) in Google Cloud Console.
-3. In [Google Play Console](https://play.google.com/console), go to Users & permissions, invite the service account email, and grant "Release manager" permissions. Note: it can take up to 36 hours for credentials to become active.
+3. In [Google Play Console](https://play.google.com/console), go to Users & permissions, invite the service account email, and grant it app permissions. For a CI credential grant only *View app information* and *Manage testing tracks*, so it cannot reach production — see [RELEASING.md](RELEASING.md#the-play-service-account). A workstation credential used for production promotion additionally needs *Manage production releases*. Note: it can take up to 36 hours for credentials to become active.
 4. Add the path to `gradle.properties`:
    ```
    PLAY_STORE_JSON_KEY=/path/to/service-account-key.json

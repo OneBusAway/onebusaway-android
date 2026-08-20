@@ -94,27 +94,30 @@ jobs:
           # This job never pushes, so don't leave the token in git config.
           persist-credentials: false
 
-      # Fail before the build rather than after the upload. `beta` is Play's OPEN testing track and
-      # `production` is everyone: enrolment in open testing is sticky and per-programme, not
-      # per-release, so both reach their users as silent automatic updates. A full rollout there is
-      # not something to reach by leaving a dropdown at its default, so require a staged one and
-      # make widening it a deliberate Play Console action. `user_fraction: '1.0'` is the escape
-      # hatch if a full rollout really is wanted — it still lands as a haltable release.
-      - name: Refuse an unstaged rollout to an open track
+      # Fail before the build: a bad combination caught here costs seconds, caught after the upload
+      # costs a version code. `beta` is OPEN testing and `production` is everyone — both update
+      # their users silently — so a release to either must be staged, and finishing the rollout is a
+      # deliberate Play Console action. Full-rollout-from-CI isn't offered, and can't be faked: Play
+      # requires 0 < userFraction < 1, so 1.0 is rejected rather than meaning "everyone".
+      - name: Validate the rollout for this track
         env:
           TRACK: ${{ inputs.track }}
           RELEASE_STATUS: ${{ inputs.release_status }}
+          USER_FRACTION: ${{ inputs.user_fraction }}
         run: |
           set -euo pipefail
-          if [ "$RELEASE_STATUS" = "completed" ]; then
-            case "$TRACK" in
-              beta|production)
-                echo "::error::Refusing release_status=completed on the '$TRACK' track, which"
-                echo "::error::updates its users silently. Use inProgress with a user_fraction"
-                echo "::error::(1.0 for everyone), or widen an existing rollout in the Console."
-                exit 1
-                ;;
-            esac
+          case "$RELEASE_STATUS:$TRACK" in
+            completed:beta | completed:production)
+              echo "::error::'$TRACK' updates its users silently, so a release there must be staged."
+              echo "::error::Use inProgress with a user_fraction, then widen to 100% in the Console."
+              exit 1
+              ;;
+          esac
+          if [ "$RELEASE_STATUS" = inProgress ]; then
+            # awk reads a non-number as 0, so a typo like "10" (meaning 10%) is caught here too.
+            awk -v f="$USER_FRACTION" 'BEGIN { exit !(f > 0 && f < 1) }' ||
+              { echo "::error::user_fraction must be between 0 and 1 (0.1 == 10%), got '$USER_FRACTION'."; exit 1; }
+            echo "Staged rollout: $USER_FRACTION of '$TRACK'."
           fi
 
       - name: Setup Java
@@ -177,14 +180,8 @@ jobs:
         run: |
           set -euo pipefail
           args=(publishObaGoogleReleaseBundle --track "$TRACK" --release-status "$RELEASE_STATUS")
-          if [ "$RELEASE_STATUS" = "inProgress" ]; then
-            if [ -z "$USER_FRACTION" ]; then
-              echo "::error::release_status=inProgress needs a user_fraction (e.g. 0.1 for 10%)."
-              exit 1
-            fi
-            args+=(--user-fraction "$USER_FRACTION")
-            echo "Staged rollout: $USER_FRACTION of the $TRACK track."
-          fi
+          # Already validated by the guard step above; Play rejects a fraction on any other status.
+          if [ "$RELEASE_STATUS" = inProgress ]; then args+=(--user-fraction "$USER_FRACTION"); fi
           ./gradlew "${args[@]}" \
             "-Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties" \
             "-PPelias_oba=$PELIAS_KEY" \

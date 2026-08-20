@@ -82,32 +82,37 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
     **fix them, or opt that check out** in the `lint {}` block with a one-line rationale — don't
     reintroduce a whole-project baseline.
 
-## Automated Publishing (gradle-play-publisher)
+## Releasing (gradle-play-publisher, via CI)
 
-Uses [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) to auto-increment `versionCode`, build, and upload to Google Play.
+Releases ship from the **Release to Google Play** workflow (`.github/workflows/release.yml`):
+manual dispatch only, builds a signed `obaGoogle` release App Bundle, and uploads it with
+[gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher). Full procedure — cutting
+a release, the six repository secrets, the Play service account and how to rotate its key — is in
+**`docs/RELEASING.md`**; local publishing is in `docs/BUILD.md`.
 
-### Setup
-1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account (IAM & Admin → Service Accounts) and download the JSON key
-2. Enable the Google Play Android Developer API in Google Cloud Console
-3. In [Google Play Console](https://play.google.com/console), invite the service account email under Users & permissions and grant "Release manager" permissions
-4. Add to `gradle.properties`: `PLAY_STORE_JSON_KEY=/path/to/service-account-key.json`
+A release climbs the tracks one rung at a time, each rung a human decision: `alpha` (closed testing,
+the default, and the only track with testers attached) → `beta` → `production`. **`beta` is Play's
+*open* testing track**, and enrolment there is per-programme and sticky, not per-release — everyone
+who ever joined gets beta builds as silent automatic updates. So a full (`completed`) rollout to
+`beta` or `production` is refused by a guard step; those tracks take a staged (`inProgress`) release
+that can be halted from the Console. Production promotion isn't possible from CI at all: the service
+account has testing-track permission only.
 
-### Commands
-```bash
-# Build AAB, auto-increment versionCode, upload to open testing (beta) track
-./gradlew publishObaGoogleReleaseBundle
+Two things that bite:
 
-# Same as above + upload all Play Store metadata
-./gradlew publishObaGoogleReleaseApps
-
-# Promote beta release to production
-./gradlew promoteObaGoogleReleaseArtifact
-
-# Download existing Play Store listing metadata into repo
-./gradlew bootstrapObaGoogleReleaseListing
-```
-
-Configuration is in the `play {}` block of `onebusaway-android/build.gradle.kts`. Default: App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`.
+- **`versionCode` is not yours to edit, and git tags don't tell you what shipped.** The tags stop
+  at `v2.4.19` (2025) while `26.1.0`/code 154 is live on Play — ask Play, not git, before choosing
+  a `versionName`. `resolutionStrategy = AUTO` in the `play {}` block
+  auto-increments `versionCode` from the highest code on Play. Only `versionName` is bumped by hand. AUTO is
+  consulted on every release *assemble*, not just `publish*` tasks — without credentials the block
+  falls back to `IGNORE` and the checked-in `versionCode` is used, so the build works but its
+  output must not be uploaded.
+- **Release notes live in two places and must agree**: `main_help_whatsnew` in
+  `src/main/res/values/strings.xml` (the in-app what's-new dialog, translated) and
+  `src/oba/play/release-notes/en-US/default.txt` (the Play listing, 500-char cap). The Play tree is
+  under `src/oba/` so the sample and third-party brands don't inherit OneBusAway's listing, and
+  `en-US` is the only locale because it is the only one the live store listing declares — Play
+  rejects release notes for any other, failing the publish. See the README there.
 
 ## Build Variants
 
@@ -123,12 +128,6 @@ Default variant: `obaGoogleDebug`
 Add to `onebusaway-android/gradle.properties`:
 ```
 Pelias_oba=YOUR_API_KEY
-```
-
-### Required for Push Notifications (OneSignal)
-Add to `onebusaway-android/gradle.properties`:
-```
-ONESIGNAL_APP_ID=YOUR_APP_ID
 ```
 
 ### Release Builds

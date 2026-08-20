@@ -1,0 +1,205 @@
+name: Release to Google Play
+
+# Builds a signed obaGoogle release App Bundle and uploads it to Google Play via
+# gradle-play-publisher (the `play {}` block in onebusaway-android/build.gradle.kts).
+#
+# Manual dispatch only. Publishing is an outward-facing, hard-to-undo action — a push- or
+# tag-triggered release would let a mistyped tag or a stray merge ship to real users — so a human
+# presses the button and picks the track.
+#
+# Releases go to a CLOSED track first and are graduated to open testing by hand. The default is
+# `alpha`, the closed track that already has an audience attached
+# (onebusaway-developers@googlegroups.com). This matters because `beta` is Play's *open* testing
+# track, and enrolment there is per-programme and sticky rather than per-release: everyone who ever
+# joined — including people who did so years ago and forgot — receives beta builds as ordinary
+# silent automatic updates. A release reaching them should be a decision, not a default, so a full
+# rollout to `beta` or `production` is refused outright by a guard step below.
+#
+# What this job does NOT do: re-run the test suite. The instrumented suite needs an emulator and
+# takes ~20 minutes (see android.yml); this workflow assumes the commit you're releasing is already
+# green on main. It is still a real compile gate — the release build runs R8/resource shrinking,
+# which the debug CI path does not.
+#
+# Required repository secrets — see docs/RELEASING.md for how each one is produced:
+#   RELEASE_KEYSTORE_BASE64    base64 of the upload keystore
+#   RELEASE_KEY_ALIAS          key alias within that keystore
+#   RELEASE_KEYSTORE_PASSWORD  keystore password
+#   RELEASE_KEY_PASSWORD       key password
+#   PELIAS_API_KEY_OBA         Pelias geocoding key for the oba brand (trip planner search)
+#   ANDROID_PUBLISHER_CREDENTIALS  Google Play service-account JSON (read by GPP from the env)
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: 'Play track to publish to'
+        required: true
+        default: 'alpha'
+        type: choice
+        options:
+          # `alpha` is closed testing, and the only track with an audience already attached
+          # (onebusaway-developers@googlegroups.com). It is the default because a release should
+          # reach a closed group first and be graduated to open testing by hand.
+          - alpha
+          # `Closed beta` and `internal` exist but have no testers attached, so publishing to
+          # either reaches nobody until a group or email list is added in the Play Console.
+          - Closed beta
+          - internal
+          # `beta` is OPEN testing: every enrolled user gets it as a silent automatic update.
+          - beta
+          - production
+      release_status:
+        description: 'Release status on that track'
+        required: true
+        default: 'completed'
+        type: choice
+        options:
+          # `completed` goes to the whole track at once. Fine on a closed track — the closed
+          # audience is itself the staging mechanism — which is why it is the default alongside
+          # `alpha`. On `beta` or `production` it is refused; see the guard step below.
+          # `inProgress` is a staged rollout: only `user_fraction` of the track is offered the
+          # update, and it can be halted or resumed from the Play Console.
+          # `draft` uploads the bundle but leaves the release unpublished, so a human rolls it out
+          # by hand — useful for a first run against a new service-account setup.
+          - completed
+          - inProgress
+          - draft
+      user_fraction:
+        description: 'Fraction of the track to roll out to, for inProgress (0.1 == 10%)'
+        required: false
+        default: '0.1'
+        type: string
+
+# Never let two publishes race: gradle-play-publisher opens a Play "edit" per run, and concurrent
+# edits on the same app conflict. Don't cancel a run in progress — an interrupted upload is worse
+# than a queued one.
+concurrency:
+  group: play-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # This job reads the repository and nothing else; everything it writes goes to Play, authorized
+    # by the service account rather than by GITHUB_TOKEN. Narrow the token explicitly so the job
+    # doesn't inherit a broader repository or organization default — it holds the signing key, so
+    # it's the last place to want ambient write access.
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          # This job never pushes, so don't leave the token in git config.
+          persist-credentials: false
+
+      # Fail before the build: a bad combination caught here costs seconds, caught after the upload
+      # costs a version code. `beta` is OPEN testing and `production` is everyone — both update
+      # their users silently — so a release to either must be staged, and finishing the rollout is a
+      # deliberate Play Console action. Full-rollout-from-CI isn't offered, and can't be faked: Play
+      # requires 0 < userFraction < 1, so 1.0 is rejected rather than meaning "everyone".
+      - name: Validate the rollout for this track
+        env:
+          TRACK: ${{ inputs.track }}
+          RELEASE_STATUS: ${{ inputs.release_status }}
+          USER_FRACTION: ${{ inputs.user_fraction }}
+        run: |
+          set -euo pipefail
+          case "$RELEASE_STATUS:$TRACK" in
+            completed:beta | completed:production)
+              echo "::error::'$TRACK' updates its users silently, so a release there must be staged."
+              echo "::error::Use inProgress with a user_fraction, then widen to 100% in the Console."
+              exit 1
+              ;;
+          esac
+          if [ "$RELEASE_STATUS" = inProgress ]; then
+            # awk reads a non-number as 0, so a typo like "10" (meaning 10%) is caught here too.
+            awk -v f="$USER_FRACTION" 'BEGIN { exit !(f > 0 && f < 1) }' ||
+              { echo "::error::user_fraction must be between 0 and 1 (0.1 == 10%), got '$USER_FRACTION'."; exit 1; }
+            echo "Staged rollout: $USER_FRACTION of '$TRACK'."
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v6.3.0
+
+      # The build script reads signing config from a properties file named by the `secure.properties`
+      # Gradle property (see the signingConfigs block in onebusaway-android/build.gradle.kts), and
+      # resolves `key.store` relative to the module directory. Reproduce that layout from secrets.
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64}" ]; then
+            echo "::error::RELEASE_KEYSTORE_BASE64 is not set. See docs/RELEASING.md."
+            exit 1
+          fi
+          printf '%s' "${KEYSTORE_BASE64}" | base64 --decode > onebusaway-android/release.keystore
+          # Written with a restrictive umask; the runner is ephemeral but the file is a signing key.
+          chmod 600 onebusaway-android/release.keystore
+          umask 077
+          cat > onebusaway-android/secure.properties <<EOF
+          key.store=release.keystore
+          key.alias=${KEY_ALIAS}
+          key.storepassword=${KEYSTORE_PASSWORD}
+          key.keypassword=${KEY_PASSWORD}
+          EOF
+
+      - name: Verify signing config
+        run: >-
+          ./gradlew :onebusaway-android:signingReport
+          "-Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties"
+          --no-configuration-cache --stacktrace
+
+      # `--no-configuration-cache`: the configuration cache buys nothing on a cold runner (each run
+      # is a fresh checkout, so the cache is always a miss) and gradle-play-publisher's Play API
+      # interaction at configuration time has historically not been cache-friendly. Cheap insurance
+      # on a job that runs a few times a year.
+      #
+      # `--user-fraction` is passed only for an `inProgress` release: gradle-play-publisher rejects
+      # it on a `completed` or `draft` one, since a fraction is meaningless there.
+      - name: Build and publish App Bundle
+        env:
+          # gradle-play-publisher reads the service-account JSON from this variable when
+          # PLAY_STORE_JSON_KEY names no file — see the play {} block in build.gradle.kts.
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
+          TRACK: ${{ inputs.track }}
+          RELEASE_STATUS: ${{ inputs.release_status }}
+          USER_FRACTION: ${{ inputs.user_fraction }}
+          PELIAS_KEY: ${{ secrets.PELIAS_API_KEY_OBA }}
+        run: |
+          set -euo pipefail
+          args=(publishObaGoogleReleaseBundle --track "$TRACK" --release-status "$RELEASE_STATUS")
+          # Already validated by the guard step above; Play rejects a fraction on any other status.
+          if [ "$RELEASE_STATUS" = inProgress ]; then args+=(--user-fraction "$USER_FRACTION"); fi
+          ./gradlew "${args[@]}" \
+            "-Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties" \
+            "-PPelias_oba=$PELIAS_KEY" \
+            --no-configuration-cache --stacktrace
+
+      # Keep the exact artifact that was uploaded, plus the R8 mapping needed to read any crash
+      # report from this build that Crashlytics didn't already ingest.
+      - name: Upload bundle and mapping
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: obaGoogleRelease-bundle
+          path: |
+            onebusaway-android/build/outputs/bundle/obaGoogleRelease/*.aab
+            onebusaway-android/build/outputs/mapping/obaGoogleRelease/mapping.txt
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f onebusaway-android/release.keystore onebusaway-android/secure.properties

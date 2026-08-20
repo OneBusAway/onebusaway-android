@@ -2,11 +2,24 @@
 
 Releases go out through the **Release to Google Play** workflow
 (`.github/workflows/release.yml`), which builds a signed `obaGoogle` release App Bundle and uploads
-it with [gradle-play-publisher][gpp]. The default track is **beta** — Play's open testing channel —
-and production releases are promotions of a beta that has been out long enough to be trusted.
+it with [gradle-play-publisher][gpp].
 
 The workflow is **manual dispatch only**. Publishing is outward-facing and hard to undo, so nobody
 ships by pushing a branch or mistyping a tag; a human opens Actions and presses Run workflow.
+
+A release climbs the tracks one rung at a time, and every rung is a human decision:
+
+| Track | Who gets it | How it's reached |
+| --- | --- | --- |
+| `alpha` | closed testing — `onebusaway-developers@googlegroups.com` | the workflow's default; where every release starts |
+| `Closed beta` / `internal` | nobody yet — no testers are attached to either | the workflow, once a group is added in the Console |
+| `beta` | **open testing** — anyone who ever joined the programme | the workflow, staged only (see below) |
+| `production` | everyone | promoted by hand in the Play Console |
+
+The rung that deserves care is `beta`. It is Play's *open* testing channel, and enrolment is
+per-programme and sticky rather than per-release: everyone who has ever joined receives beta builds
+as ordinary silent automatic updates, including people who joined years ago and have forgotten. So
+a release starts closed, and graduating it to open testing is a separate, deliberate act.
 
 [gpp]: https://github.com/Triple-T/gradle-play-publisher
 
@@ -31,20 +44,48 @@ ships by pushing a branch or mistyping a tag; a human opens Actions and presses 
    - `main_help_whatsnew` in `onebusaway-android/src/main/res/values/strings.xml` (and the
      `values-*` translations) — the in-app what's-new dialog. Same release, same audience.
 4. **Run the workflow.** Actions → Release to Google Play → Run workflow, on the commit you picked.
-   - `track`: `beta` for a normal release. `internal` is the safe choice when you're testing the
-     pipeline itself.
-   - `release_status`: `completed` rolls the release out on that track. `draft` uploads the bundle
-     but leaves it unpublished in the Play Console for a human to review and roll out — use it for
-     the first run after any change to the signing or credential setup.
+   - `track`: leave it at `alpha`. That is closed testing, and the only track with an audience
+     already attached.
+   - `release_status`: `completed` is right for a closed track — the closed audience is itself the
+     staging mechanism. Use `draft` instead for the first run after any change to the signing or
+     credential setup: it uploads the bundle without publishing it, proving the pipeline without
+     anything reaching a device.
+   - `user_fraction`: ignored unless `release_status` is `inProgress`.
 5. **Tag it.** Once the upload succeeds, tag the released commit and push the tag, so the bundle on
-   Play maps to a commit:
+   Play maps to a commit. Do this every time — the tags fell out of sync with Play once already,
+   which is why step 2 warns you not to trust them:
 
-       git tag -a v26.1.0 -m "26.1.0" <commit>
-       git push origin v26.1.0
+       git tag -a v27.0.0 -m "27.0.0" <commit>
+       git push origin v27.0.0
 
-6. **Promote to production** when the beta has settled:
+6. **Let the closed track sit.** Watch Crashlytics and the Play Console's vitals. This is the whole
+   point of the closed rung — it is the only audience that can be surprised cheaply.
+7. **Graduate to open testing** when it looks clean: run the workflow again with `track: beta` and
+   `release_status: inProgress`, starting at a small `user_fraction`. A full rollout to `beta` is
+   refused by a guard step in the workflow, because that track updates its users silently; widen
+   the rollout from the Play Console once it has proven itself.
+8. **Promote to production** last. This is deliberately *not* something the CI credential can do:
+   the service account holds testing-track permission only, so `promoteObaGoogleReleaseArtifact`
+   returns 403 for it and production promotion is a human action in the Play Console. If you do
+   want to promote from a workstation, it needs a credential with production rights, and both
+   tracks must be named explicitly — the defaults will otherwise promote a track onto itself:
 
-       ./gradlew promoteObaGoogleReleaseArtifact
+       ./gradlew promoteObaGoogleReleaseArtifact --from-track beta --promote-track production
+
+## Staged rollouts
+
+An `inProgress` release is offered to only `user_fraction` of the track and can be halted from the
+Play Console, so it is the required shape on `beta` and `production` — the workflow refuses a
+`completed` release to either. Raising the fraction, halting, and resuming are all Console actions
+on the existing release; none of them needs another build.
+
+On a closed track a stage is usually pointless: the audience is small enough that 10% of it may be
+nobody, and the closed track is already the staging mechanism.
+
+Users do at least get an explanation on the first launch after an update, whichever track they are
+on — `HelpViewModel.maybeAutoShowWhatsNew` shows the what's-new dialog once when the stored
+`whatsNewVer` is below the running `VERSION_CODE`. That is an explanation after the fact, though,
+not consent before it.
 
 [playreadme]: ../onebusaway-android/src/oba/play/README.md
 

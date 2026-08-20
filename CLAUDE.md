@@ -86,10 +86,17 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
 
 Releases ship from the **Release to Google Play** workflow (`.github/workflows/release.yml`):
 manual dispatch only, builds a signed `obaGoogle` release App Bundle, and uploads it with
-[gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) to the **beta** (open
-testing) track by default. Full procedure — cutting a release, the six repository secrets, the Play
-service account and how to rotate its key — is in **`docs/RELEASING.md`**; local publishing is in
-`docs/BUILD.md`.
+[gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher). Full procedure — cutting
+a release, the six repository secrets, the Play service account and how to rotate its key — is in
+**`docs/RELEASING.md`**; local publishing is in `docs/BUILD.md`.
+
+A release climbs the tracks one rung at a time, each rung a human decision: `alpha` (closed testing,
+the default, and the only track with testers attached) → `beta` → `production`. **`beta` is Play's
+*open* testing track**, and enrolment there is per-programme and sticky, not per-release — everyone
+who ever joined gets beta builds as silent automatic updates. So a full (`completed`) rollout to
+`beta` or `production` is refused by a guard step; those tracks take a staged (`inProgress`) release
+that can be halted from the Console. Production promotion isn't possible from CI at all: the service
+account has testing-track permission only.
 
 Two things that bite:
 

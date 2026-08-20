@@ -104,7 +104,7 @@ We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher
 |---|---|
 | `./gradlew publishObaGoogleReleaseBundle` | Build release AAB, auto-increment `versionCode`, and upload to the open testing (beta) track |
 | `./gradlew publishObaGoogleReleaseApps` | Same as above, plus upload all Play Store metadata (listing, screenshots, etc.) |
-| `./gradlew promoteObaGoogleReleaseArtifact` | Promote the current beta release to production (e.g., alpha → beta → production) |
+| `./gradlew promoteObaGoogleReleaseArtifact --from-track beta --promote-track production` | Promote the current beta release to production. Name both tracks explicitly: the defaults promote the configured track (`beta`) onto itself. Needs a credential with production rights — the CI service account has testing-track permission only. |
 
 #### Managing Play Store metadata
 

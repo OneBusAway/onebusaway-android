@@ -5,8 +5,15 @@ name: Release to Google Play
 #
 # Manual dispatch only. Publishing is an outward-facing, hard-to-undo action — a push- or
 # tag-triggered release would let a mistyped tag or a stray merge ship to real users — so a human
-# presses the button and picks the track. The default track is `beta` (Play's open testing), which
-# is where this app's releases land before promotion.
+# presses the button and picks the track.
+#
+# Releases go to a CLOSED track first and are graduated to open testing by hand. The default is
+# `alpha`, the closed track that already has an audience attached
+# (onebusaway-developers@googlegroups.com). This matters because `beta` is Play's *open* testing
+# track, and enrolment there is per-programme and sticky rather than per-release: everyone who ever
+# joined — including people who did so years ago and forgot — receives beta builds as ordinary
+# silent automatic updates. A release reaching them should be a decision, not a default, so a full
+# rollout to `beta` or `production` is refused outright by a guard step below.
 #
 # What this job does NOT do: re-run the test suite. The instrumented suite needs an emulator and
 # takes ~20 minutes (see android.yml); this workflow assumes the commit you're releasing is already
@@ -27,11 +34,18 @@ on:
       track:
         description: 'Play track to publish to'
         required: true
-        default: 'beta'
+        default: 'alpha'
         type: choice
         options:
-          - internal
+          # `alpha` is closed testing, and the only track with an audience already attached
+          # (onebusaway-developers@googlegroups.com). It is the default because a release should
+          # reach a closed group first and be graduated to open testing by hand.
           - alpha
+          # `Closed beta` and `internal` exist but have no testers attached, so publishing to
+          # either reaches nobody until a group or email list is added in the Play Console.
+          - Closed beta
+          - internal
+          # `beta` is OPEN testing: every enrolled user gets it as a silent automatic update.
           - beta
           - production
       release_status:
@@ -40,11 +54,21 @@ on:
         default: 'completed'
         type: choice
         options:
-          # `draft` uploads the bundle but leaves the release unpublished in the Play Console, so a
-          # human can review and roll it out by hand. Useful for a first run against a new
-          # service-account setup.
+          # `completed` goes to the whole track at once. Fine on a closed track — the closed
+          # audience is itself the staging mechanism — which is why it is the default alongside
+          # `alpha`. On `beta` or `production` it is refused; see the guard step below.
+          # `inProgress` is a staged rollout: only `user_fraction` of the track is offered the
+          # update, and it can be halted or resumed from the Play Console.
+          # `draft` uploads the bundle but leaves the release unpublished, so a human rolls it out
+          # by hand — useful for a first run against a new service-account setup.
           - completed
+          - inProgress
           - draft
+      user_fraction:
+        description: 'Fraction of the track to roll out to, for inProgress (0.1 == 10%)'
+        required: false
+        default: '0.1'
+        type: string
 
 # Never let two publishes race: gradle-play-publisher opens a Play "edit" per run, and concurrent
 # edits on the same app conflict. Don't cancel a run in progress — an interrupted upload is worse
@@ -57,12 +81,41 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # This job reads the repository and nothing else; everything it writes goes to Play, authorized
+    # by the service account rather than by GITHUB_TOKEN. Narrow the token explicitly so the job
+    # doesn't inherit a broader repository or organization default — it holds the signing key, so
+    # it's the last place to want ambient write access.
+    permissions:
+      contents: read
     steps:
       - name: checkout
         uses: actions/checkout@v7
         with:
           # This job never pushes, so don't leave the token in git config.
           persist-credentials: false
+
+      # Fail before the build rather than after the upload. `beta` is Play's OPEN testing track and
+      # `production` is everyone: enrolment in open testing is sticky and per-programme, not
+      # per-release, so both reach their users as silent automatic updates. A full rollout there is
+      # not something to reach by leaving a dropdown at its default, so require a staged one and
+      # make widening it a deliberate Play Console action. `user_fraction: '1.0'` is the escape
+      # hatch if a full rollout really is wanted — it still lands as a haltable release.
+      - name: Refuse an unstaged rollout to an open track
+        env:
+          TRACK: ${{ inputs.track }}
+          RELEASE_STATUS: ${{ inputs.release_status }}
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_STATUS" = "completed" ]; then
+            case "$TRACK" in
+              beta|production)
+                echo "::error::Refusing release_status=completed on the '$TRACK' track, which"
+                echo "::error::updates its users silently. Use inProgress with a user_fraction"
+                echo "::error::(1.0 for everyone), or widen an existing rollout in the Console."
+                exit 1
+                ;;
+            esac
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -102,25 +155,40 @@ jobs:
       - name: Verify signing config
         run: >-
           ./gradlew :onebusaway-android:signingReport
-          -Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties
+          "-Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties"
           --no-configuration-cache --stacktrace
 
       # `--no-configuration-cache`: the configuration cache buys nothing on a cold runner (each run
       # is a fresh checkout, so the cache is always a miss) and gradle-play-publisher's Play API
       # interaction at configuration time has historically not been cache-friendly. Cheap insurance
       # on a job that runs a few times a year.
+      #
+      # `--user-fraction` is passed only for an `inProgress` release: gradle-play-publisher rejects
+      # it on a `completed` or `draft` one, since a fraction is meaningless there.
       - name: Build and publish App Bundle
         env:
           # gradle-play-publisher reads the service-account JSON from this variable when
           # PLAY_STORE_JSON_KEY names no file — see the play {} block in build.gradle.kts.
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
-        run: >-
-          ./gradlew publishObaGoogleReleaseBundle
-          --track ${{ inputs.track }}
-          --release-status ${{ inputs.release_status }}
-          -Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties
-          -PPelias_oba=${{ secrets.PELIAS_API_KEY_OBA }}
-          --no-configuration-cache --stacktrace
+          TRACK: ${{ inputs.track }}
+          RELEASE_STATUS: ${{ inputs.release_status }}
+          USER_FRACTION: ${{ inputs.user_fraction }}
+          PELIAS_KEY: ${{ secrets.PELIAS_API_KEY_OBA }}
+        run: |
+          set -euo pipefail
+          args=(publishObaGoogleReleaseBundle --track "$TRACK" --release-status "$RELEASE_STATUS")
+          if [ "$RELEASE_STATUS" = "inProgress" ]; then
+            if [ -z "$USER_FRACTION" ]; then
+              echo "::error::release_status=inProgress needs a user_fraction (e.g. 0.1 for 10%)."
+              exit 1
+            fi
+            args+=(--user-fraction "$USER_FRACTION")
+            echo "Staged rollout: $USER_FRACTION of the $TRACK track."
+          fi
+          ./gradlew "${args[@]}" \
+            "-Psecure.properties=$GITHUB_WORKSPACE/onebusaway-android/secure.properties" \
+            "-PPelias_oba=$PELIAS_KEY" \
+            --no-configuration-cache --stacktrace
 
       # Keep the exact artifact that was uploaded, plus the R8 mapping needed to read any crash
       # report from this build that Crashlytics didn't already ingest.

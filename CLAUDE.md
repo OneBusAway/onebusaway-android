@@ -310,6 +310,25 @@ refreshed its region cache.
 - Branching on a **new** region field means adding it to `CHECKED_FIELDS` in that script, with the
   default `RegionDto` decodes for it.
 
+### Not every region has a trip planner (#2264)
+
+Trip planning is the one feature whose server is **per region and published by a third party**, so it
+can be missing or dead in one region while everything else there works. Three of the seven directory
+regions today — Washington, D.C., MTA New York, Davis — publish neither `otpBaseUrl` nor
+`otpBaseGraphqlUrl`, and Tampa Bay publishes an `otpBaseUrl` whose host no longer resolves.
+
+- **One gate, asked everywhere**: `OtpTarget.isAvailable` (custom URL → region OTP2 → region OTP1).
+  Every affordance that can start a plan — the nav-drawer row, the map long-press "navigate here"
+  offer, a `geo:` place shared in from another app — asks `tripPlanningUnavailableMessage(context)`
+  and refuses with its message rather than opening a form that can only fail. Don't restate the
+  branch: a duplicate check is what left the drawer blind to OTP2-only regions.
+- A planner-less region is **not** "no region selected" — say which one it is. That contradiction is
+  the whole of #2264.
+- **`tools/check-region-routing.py`** asks every region's planner for a real plan, building the
+  endpoints exactly as the app does (`otpPlanUrl` / `otp2GraphQlEndpoint`). On-demand, not CI —
+  it depends on servers this project doesn't run, so a third party's outage must not redden the
+  nightly. Run it when routing is reported broken somewhere, or when a region's OTP config changes.
+
 ## White-Label / Branding
 
 The app supports white-labeling via Gradle product flavors. See `docs/REBRANDING.md` for full documentation.

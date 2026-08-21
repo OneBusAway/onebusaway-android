@@ -21,6 +21,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -75,6 +76,7 @@ import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.toGeocoded
+import org.onebusaway.android.ui.tripplan.tripPlanningUnavailableMessage
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 import org.onebusaway.android.util.ExternalIntents
@@ -339,6 +341,12 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun maybePlanToPlaceFromIntent(intent: Intent) {
         val place = PlaceIntents.placeForIntent(intent) ?: return
+        // A region with no OTP server can't plan anything, so opening the form on a shared address
+        // would only walk the rider into a failure; say why instead (#2264).
+        tripPlanningUnavailableMessage(this)?.let { message ->
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            return
+        }
         viewModel.enterDirections()
         when (place) {
             is PlaceIntents.Place.Point ->

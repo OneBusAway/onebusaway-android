@@ -89,7 +89,13 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     }
 }
 
-/** Minimal [Region] fixture — only the id matters to the selection logic (compared by id). */
+/**
+ * Minimal [Region] fixture — only the id matters to the selection logic (compared by id).
+ *
+ * The two OTP endpoints are parameters rather than fixed nulls because whether a region publishes a
+ * planner at all is itself behaviour under test (#2264), and every combination of the two is a real
+ * region in the directory: OTP1 only, GraphQL only, both, and neither.
+ */
 internal fun region(
     id: Long,
     obaBaseUrl: String? = null,
@@ -98,7 +104,9 @@ internal fun region(
     otpContactEmail: String? = null,
     custom: Boolean = false,
     sidecarBaseUrl: String? = null,
-    sidecarRegionId: Long? = null
+    sidecarRegionId: Long? = null,
+    otpBaseUrl: String? = null,
+    otpBaseGraphqlUrl: String? = null
 ): Region = Region(
     id = id,
     name = "Region $id",
@@ -115,10 +123,10 @@ internal fun region(
     twitterUrl = twitterUrl,
     experimental = false,
     stopInfoUrl = null,
-    otpBaseUrl = null,
+    otpBaseUrl = otpBaseUrl,
     otpContactEmail = otpContactEmail,
     supportsOtpBikeshare = supportsOtpBikeshare,
-    otpBaseGraphqlUrl = null,
+    otpBaseGraphqlUrl = otpBaseGraphqlUrl,
     supportsOtpGraphqlBikeshare = false,
     supportsEmbeddedSocial = false,
     paymentAndroidAppId = null,

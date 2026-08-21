@@ -679,6 +679,57 @@ class TripPlanViewModelTest {
     }
 
     @Test
+    fun `switching regions clears both endpoints and the plan`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1))
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertTrue(vm.planState.value is PlanResult.Success)
+
+        regionRepo.emit(region(id = 2))
+        advanceUntilIdle()
+
+        // A trip is a pair of places in one transit system; neither end survives the move to another.
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.from)
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.to)
+        assertTrue(vm.planState.value is PlanResult.Idle)
+    }
+
+    /**
+     * The region *resolving* — null until the directory lands — is not a switch. Treating it as one
+     * would wipe a trip a notification restore or a pinned resume put here while it was still settling.
+     */
+    @Test
+    fun `the first region to resolve leaves an existing trip alone`() = runTest {
+        val regionRepo = FakeRegionRepository()
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+
+        regionRepo.emit(region(id = 1))
+        advanceUntilIdle()
+
+        assertEquals(origin, vm.formState.value.from)
+        assertEquals(destination, vm.formState.value.to)
+        assertTrue(vm.planState.value is PlanResult.Success)
+    }
+
+    /** Re-emitting the same region (a directory refresh) is not a switch either. */
+    @Test
+    fun `re-emitting the same region leaves the trip alone`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1))
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+
+        regionRepo.emit(region(id = 1, otpContactEmail = "refreshed@example.com"))
+        advanceUntilIdle()
+
+        assertEquals(origin, vm.formState.value.from)
+        assertEquals(destination, vm.formState.value.to)
+    }
+
+    @Test
     fun `setDateTime refreshes the date and time labels`() = runTest {
         val vm = viewModel()
         vm.setDateTime(1_700_000_000_000L)

@@ -54,11 +54,15 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         // versionCode is a fallback only: the play {} block's AUTO resolution strategy takes the
-        // real one from the highest code already on Play (154 as of 26.1.0), so this value is used
-        // only by builds with no Play credentials — whose output must never be uploaded. Bump
-        // versionName by hand; see docs/RELEASING.md.
+        // real one from the highest code already on Play, so this value is used only by builds with
+        // no Play credentials — whose output must never be uploaded.
+        //
+        // versionName is YY.RELEASE.PATCH — the two-digit year, then which release it is within that
+        // year, then any patch on it. 26.2.0 is the second release of 2026. The minor is NOT the
+        // month: 26.1.0 shipped in March. See "Version numbering" in docs/RELEASING.md, and bump it
+        // by hand.
         versionCode = 153
-        versionName = "27.0.0"
+        versionName = "26.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

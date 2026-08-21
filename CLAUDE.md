@@ -100,13 +100,15 @@ account has testing-track permission only.
 
 Two things that bite:
 
-- **`versionCode` is not yours to edit, and git tags don't tell you what shipped.** The tags stop
-  at `v2.4.19` (2025) while `26.1.0`/code 154 is live on Play — ask Play, not git, before choosing
-  a `versionName`. `resolutionStrategy = AUTO` in the `play {}` block
-  auto-increments `versionCode` from the highest code on Play. Only `versionName` is bumped by hand. AUTO is
-  consulted on every release *assemble*, not just `publish*` tasks — without credentials the block
-  falls back to `IGNORE` and the checked-in `versionCode` is used, so the build works but its
-  output must not be uploaded.
+- **`versionCode` is not yours to edit; only `versionName` is.** `resolutionStrategy = AUTO` in the
+  `play {}` block auto-increments `versionCode` from the highest code on Play. AUTO is consulted on
+  every release *assemble*, not just `publish*` tasks — without credentials the block falls back to
+  `IGNORE` and the checked-in `versionCode` is used, so the build works but its output must not be
+  uploaded.
+- **`versionName` is `YY.RELEASE.PATCH`** — the year, then which release it is within that year. The
+  minor is **not** the month: `26.1.0` shipped in March. Tagging only became reliable at `v26.2.0`;
+  earlier releases went out untagged (`26.1.0`/code 154 is live on Play with no tag behind it), so
+  for anything older ask Play rather than git.
 - **Release notes live in two places and must agree**: `main_help_whatsnew` in
   `src/main/res/values/strings.xml` (the in-app what's-new dialog, translated) and
   `src/oba/play/release-notes/en-US/default.txt` (the Play listing, 500-char cap). The Play tree is

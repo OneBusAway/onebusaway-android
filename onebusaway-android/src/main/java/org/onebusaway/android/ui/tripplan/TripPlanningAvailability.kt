@@ -30,8 +30,8 @@ import org.onebusaway.android.directions.util.OtpTarget
  * drawer has always hidden its "Plan a trip" row for those regions, but the map's long-press "navigate
  * here" offer and a place shared in from another app both entered the trip planner regardless, and the
  * plan then failed with "No region selected" — while the region sat plainly selected in the drawer. So
- * the gate and its wording live here, together, and every affordance that can start a plan asks this
- * one function.
+ * the gate and its wording live here, together; affordances reach them through
+ * [refuseTripPlanIfUnavailable], which is this answer plus the one way the app delivers it.
  *
  * The two "no planner" cases are kept apart because they read as completely different things: with no
  * region resolved the app really doesn't know which transit system to ask, and "No region selected" is

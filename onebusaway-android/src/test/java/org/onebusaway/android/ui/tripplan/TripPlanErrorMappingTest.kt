@@ -243,15 +243,13 @@ class TripPlanErrorMappingTest {
         assertError(
             Category.REQUEST,
             R.string.tripplanner_error_region_no_planner,
-            noPlannerError(OtpTarget.Unavailable.REGION_HAS_NO_PLANNER)
+            noPlannerError(OtpTarget(baseUrl = null, usesOtp2 = false, regionSelected = true))
         )
         assertError(
             Category.REQUEST,
             R.string.tripplanner_no_server_selected_error,
-            noPlannerError(OtpTarget.Unavailable.NO_REGION)
+            noPlannerError(OtpTarget(baseUrl = null, usesOtp2 = false, regionSelected = false))
         )
-        // Defensive: a target that says it has a server, on the path that only runs when it hasn't.
-        assertError(Category.REQUEST, R.string.tripplanner_no_server_selected_error, noPlannerError(null))
     }
 
     private fun graphQlError(classification: Any?, message: String = "boom") = GraphQlError.Builder(message)

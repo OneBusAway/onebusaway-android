@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripplan
 
 import android.content.Context
+import android.widget.Toast
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.directions.util.OtpTarget
@@ -24,12 +25,13 @@ import org.onebusaway.android.directions.util.OtpTarget
  * What to tell a rider who asked for a trip plan on a device that has no trip planner to ask — and, by
  * returning null, that there is one and the gesture may go ahead (#2264).
  *
- * Not every OneBusAway region publishes an OpenTripPlanner server: of the seven in the directory today
- * three (Washington, D.C., MTA New York, Davis) publish none at all. The nav drawer has always hidden
- * its "Plan a trip" row for those, but the map's long-press "navigate here" offer and a place shared in
- * from another app both entered the trip planner regardless, and the plan then failed with "No region
- * selected" — while the region sat plainly selected in the drawer. So the gate and its wording live
- * here, together, and every affordance that can start a plan asks this one function.
+ * Not every OneBusAway region publishes an OpenTripPlanner server, and which ones don't is directory
+ * data that changes without this repo touching anything (CLAUDE.md carries the current list). The nav
+ * drawer has always hidden its "Plan a trip" row for those regions, but the map's long-press "navigate
+ * here" offer and a place shared in from another app both entered the trip planner regardless, and the
+ * plan then failed with "No region selected" — while the region sat plainly selected in the drawer. So
+ * the gate and its wording live here, together, and every affordance that can start a plan asks this
+ * one function.
  *
  * The two "no planner" cases are kept apart because they read as completely different things: with no
  * region resolved the app really doesn't know which transit system to ask, and "No region selected" is
@@ -48,20 +50,36 @@ fun tripPlanningUnavailableMessage(context: Context): String? = when (OtpTarget.
 }
 
 /**
+ * Refuses a trip-planning gesture that has nowhere to go, telling the rider why: shows
+ * [tripPlanningUnavailableMessage] and returns true, or does nothing and returns false when there is a
+ * planner and the gesture should proceed.
+ *
+ * The one home for *how* the app declines — a toast, because the gesture is the rider's whole
+ * interaction here and there is no surface of ours yet on screen to seat a snackbar in. Each caller
+ * then reads as the single line it is, and the third affordance that needs this gate inherits the
+ * decision instead of copying it.
+ */
+fun Context.refuseTripPlanIfUnavailable(): Boolean {
+    val message = tripPlanningUnavailableMessage(this) ?: return false
+    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    return true
+}
+
+/**
  * The error for a plan that never left the device because there is no OTP server to send it to — the
  * same fact as [tripPlanningUnavailableMessage], classified for the directions error snackbar (which
  * renders a bare string resource, so this side can't name the region).
  *
  * Reached when a plan is submitted from a directions form that was already open — a region switch
- * underneath it, a pinned trip resumed, a notification restored — rather than from a gesture the gate
- * above can refuse.
+ * underneath it, a pinned trip resumed, a notification restored — rather than from a gesture
+ * [refuseTripPlanIfUnavailable] can turn away. Takes the resolved [target] rather than a nullable
+ * reason so there is no "no reason" case to write an unreachable branch for.
  */
-internal fun noPlannerError(unavailable: OtpTarget.Unavailable?): TripPlanError = TripPlanError(
+internal fun noPlannerError(target: OtpTarget): TripPlanError = TripPlanError(
     TripPlanError.Category.REQUEST,
-    when (unavailable) {
-        OtpTarget.Unavailable.REGION_HAS_NO_PLANNER -> R.string.tripplanner_error_region_no_planner
-        // NO_REGION, and defensively the "shouldn't happen" null: a base URL did resolve, yet the
-        // request path decided it had no server.
-        else -> R.string.tripplanner_no_server_selected_error
+    if (target.regionSelected) {
+        R.string.tripplanner_error_region_no_planner
+    } else {
+        R.string.tripplanner_no_server_selected_error
     }
 )

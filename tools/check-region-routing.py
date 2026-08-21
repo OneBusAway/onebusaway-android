@@ -191,7 +191,8 @@ def probe_otp1(base_url, origin, destination, when):
     base = base_url.rstrip("/")
     # A router-rooted base is unambiguously a modern server, so only a server-root base gets the
     # app's pre-1.0 retry at the bare /plan path.
-    attempts = [False] if OTP_ROUTERS_SEGMENT in base else [False, True]
+    router_rooted = OTP_ROUTERS_SEGMENT in base
+    attempts = [False] if router_rooted else [False, True]
     last = None
     for old_server in attempts:
         url = otp_plan_url(base, query, old_server)

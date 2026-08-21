@@ -87,7 +87,7 @@ class DefaultTripPlanRepository @Inject constructor(
      */
     private fun planInternal(builder: TripRequestBuilder): List<TripItinerary> {
         val baseUrl = builder.formattedOtpBaseUrl
-            ?: throw TripPlanException(noPlannerError(builder.otpTarget.unavailable))
+            ?: throw TripPlanException(noPlannerError(builder.otpTarget))
 
         if (builder.usesOtp2) {
             return otp2Planner.plan(builder, baseUrl)

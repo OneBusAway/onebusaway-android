@@ -1183,11 +1183,14 @@
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>
     <!-- Shown when the app knows perfectly well which region the rider is in, and that region simply
-         publishes no trip planner (Washington, D.C., MTA New York, Davis) — the case that used to
-         report "No region selected" with the region plainly selected. -->
+         publishes no trip planner — the case that used to report "No region selected" with the region
+         plainly selected. The trip-plan error snackbar renders a bare string with no arguments, which
+         is why this one can't name the region the way trip_plan_unavailable_in_region does; the two
+         say the same thing and should read alike in a given locale. -->
     <string name="tripplanner_error_region_no_planner">This region doesn&#8217;t offer trip planning</string>
     <!-- Toast shown when a trip-planning gesture is made in a region with no trip planner; %1$s is the
-         region name, so the rider can see which region the app thinks they are in. -->
+         region name, so the rider can see which region the app thinks they are in. The unnamed
+         sibling of tripplanner_error_region_no_planner — keep the two worded consistently. -->
     <string name="trip_plan_unavailable_in_region">%1$s doesn&#8217;t offer trip planning</string>
     <!-- Errors -->
     <!-- Trip-plan error category headers (the consistent heading on the error snackbar; the specific

@@ -904,12 +904,14 @@ private fun DirectionsAdvancedSettingsDialog(
                 SwitchRow(
                     label = stringResource(R.string.minimize_transfers),
                     checked = minimizeTransfers,
-                    onCheckedChange = { minimizeTransfers = it }
+                    onCheckedChange = { minimizeTransfers = it },
+                    modifier = Modifier.padding(top = 12.dp)
                 )
                 SwitchRow(
                     label = stringResource(R.string.wheelchair_accessible),
                     checked = wheelchair,
-                    onCheckedChange = { wheelchair = it }
+                    onCheckedChange = { wheelchair = it },
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         },

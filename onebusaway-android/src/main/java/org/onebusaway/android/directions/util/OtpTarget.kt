@@ -52,7 +52,15 @@ data class OtpTarget(
      * row, the map's "navigate here" offer and the request itself can't disagree about whether this
      * rider has a planner (#2264).
      */
-    val isAvailable: Boolean get() = !baseUrl.isNullOrBlank()
+    val isAvailable: Boolean get() = usableBaseUrl != null
+
+    /**
+     * [baseUrl] if there is actually a server in it, else null — blank is "no server" exactly as null
+     * is, and a region cached with an empty `otpBaseUrl` is the way blank arrives. The one place that
+     * rule lives: the request path reads this rather than re-deriving it, so it cannot drift from
+     * [isAvailable].
+     */
+    val usableBaseUrl: String? get() = baseUrl?.takeUnless { it.isBlank() }
 
     /** Why no plan can be attempted, or null exactly when [isAvailable]. */
     val unavailable: Unavailable? get() = when {
@@ -116,8 +124,10 @@ data class OtpTarget(
             // OTP1 REST server); route to it when present, else the OTP1 REST base URL. Reads
             // [org.onebusaway.android.region.Region.usesOtp2] rather than re-deriving it, so a
             // region's endpoint and its per-protocol capability flags are resolved from one
-            // definition. A region that publishes neither (Washington, D.C., MTA New York, Davis)
-            // leaves baseUrl null with [regionSelected] true — that is [Unavailable.REGION_HAS_NO_PLANNER].
+            // definition. A region that publishes neither leaves baseUrl null with [regionSelected]
+            // true — that is [Unavailable.REGION_HAS_NO_PLANNER]. Which regions those are is
+            // directory data that changes without this repo touching anything; CLAUDE.md carries the
+            // current list, deliberately in one place.
             return OtpTarget(
                 baseUrl = if (region.usesOtp2) region.otpBaseGraphqlUrl else region.otpBaseUrl,
                 usesOtp2 = region.usesOtp2,

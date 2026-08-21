@@ -128,7 +128,11 @@ def fetch(url, data=None, content_type=None):
 def load_regions(source, live):
     """The region list from `source` -- a local path, or the live directory when `live`."""
     if live:
-        _, text = fetch(source)
+        status, text = fetch(source)
+        # Report the status rather than letting an error page fall through to "not valid JSON",
+        # which is what a 403 from the directory actually looks like.
+        if status != 200:
+            raise CheckError(f"{source} returned HTTP {status}")
     else:
         path = Path(source)
         if not path.is_file():
@@ -145,7 +149,7 @@ def load_regions(source, live):
 
 
 def probe_points(region):
-    """(from, to) as OTP `lat,lon` strings, or None when the region publishes no bounds."""
+    """((lat, lon), (lat, lon)) to plan between, or None when the region publishes no bounds."""
     bounds = region.get("bounds") or []
     if not bounds:
         return None
@@ -154,7 +158,7 @@ def probe_points(region):
     # Clamped to a quarter of the box so the destination stays inside even a small region.
     offset_lat = min(PROBE_OFFSET_DEGREES, box.get("latSpan", 0) / 4)
     offset_lon = min(PROBE_OFFSET_DEGREES, box.get("lonSpan", 0) / 4)
-    return f"{lat:g},{lon:g}", f"{lat + offset_lat:g},{lon + offset_lon:g}"
+    return (lat, lon), (lat + offset_lat, lon + offset_lon)
 
 
 def otp_plan_url(base_url, query, old_server):
@@ -168,8 +172,9 @@ def otp_plan_url(base_url, query, old_server):
 def probe_otp1(base_url, origin, destination, when):
     """Plan over OTP1 REST. Returns (ok, summary)."""
     parameters = {
-        "fromPlace": origin,
-        "toPlace": destination,
+        # OTP1 places are "lat,lon" text; %g keeps them short without losing probe precision.
+        "fromPlace": "%g,%g" % origin,
+        "toPlace": "%g,%g" % destination,
         "optimize": "QUICK",
         "wheelchair": "false",
         "arriveBy": "false",
@@ -214,8 +219,8 @@ def probe_otp2(graphql_base_url, origin, destination):
     url = graphql_base_url.rstrip("/") + OTP2_GTFS_GRAPHQL_PATH
 
     def coordinate(point):
-        lat, lon = point.split(",")
-        return {"location": {"coordinate": {"latitude": float(lat), "longitude": float(lon)}}}
+        lat, lon = point
+        return {"location": {"coordinate": {"latitude": lat, "longitude": lon}}}
 
     body = json.dumps(
         {

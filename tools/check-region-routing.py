@@ -78,6 +78,9 @@ OTP_PLAN_LOCATION = "/plan"
 OTP2_GTFS_GRAPHQL_PATH = "/gtfs/v1"
 
 TIMEOUT_SECONDS = 45
+# Built once: create_default_context() reads the platform trust store from disk, and a run makes one
+# request per region.
+SSL_CONTEXT = ssl.create_default_context()
 # How far north-east of a region's centre the destination probe point sits, in degrees -- roughly
 # 2km, far enough to want transit and close enough to stay inside the smallest region's box.
 PROBE_OFFSET_DEGREES = 0.02
@@ -119,7 +122,7 @@ def fetch(url, data=None, content_type=None):
         headers["Content-Type"] = content_type
     request = urllib.request.Request(url, data=data, headers=headers)
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS, context=ssl.create_default_context()) as response:
+        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS, context=SSL_CONTEXT) as response:
             return response.status, response.read().decode("utf-8", "replace")
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode("utf-8", "replace")

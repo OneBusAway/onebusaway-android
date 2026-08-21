@@ -21,6 +21,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.region.Region
+import org.onebusaway.android.region.region
 
 /**
  * Unit tests for [OtpTarget.resolve] — which OTP server a plan targets, and whether there is one to
@@ -30,10 +31,9 @@ import org.onebusaway.android.region.Region
  */
 class OtpTargetTest {
 
-    private fun region(otpBaseUrl: String? = null, otpBaseGraphqlUrl: String? = null) = Region(
+    // Region 4 is Washington, D.C. — the planner-less region #2264 was reported against.
+    private fun dcRegion(otpBaseUrl: String? = null, otpBaseGraphqlUrl: String? = null) = region(
         id = 4,
-        name = "Washington, D.C.",
-        active = true,
         otpBaseUrl = otpBaseUrl,
         otpBaseGraphqlUrl = otpBaseGraphqlUrl
     )
@@ -42,7 +42,7 @@ class OtpTargetTest {
 
     @Test
     fun `an OTP1 region targets its REST base url`() {
-        val target = resolve(region = region(otpBaseUrl = "https://otp.example.org/otp"))
+        val target = resolve(region = dcRegion(otpBaseUrl = "https://otp.example.org/otp"))
 
         assertEquals("https://otp.example.org/otp", target.baseUrl)
         assertFalse(target.usesOtp2)
@@ -53,7 +53,7 @@ class OtpTargetTest {
     @Test
     fun `a region publishing a GraphQL endpoint targets it over the REST one`() {
         val target = resolve(
-            region = region(
+            region = dcRegion(
                 otpBaseUrl = "https://otp1.example.org/otp",
                 otpBaseGraphqlUrl = "https://otp2.example.org/otp"
             )
@@ -67,7 +67,7 @@ class OtpTargetTest {
     /** The gap the old drawer check had: OTP2-only regions are planner-carrying regions. */
     @Test
     fun `a GraphQL-only region is available`() {
-        val target = resolve(region = region(otpBaseGraphqlUrl = "https://otp2.example.org/otp"))
+        val target = resolve(region = dcRegion(otpBaseGraphqlUrl = "https://otp2.example.org/otp"))
 
         assertTrue(target.isAvailable)
         assertTrue(target.usesOtp2)
@@ -75,7 +75,7 @@ class OtpTargetTest {
 
     @Test
     fun `a region with no planner is unavailable but is still a selected region`() {
-        val target = resolve(region = region())
+        val target = resolve(region = dcRegion())
 
         assertFalse(target.isAvailable)
         assertEquals(OtpTarget.Unavailable.REGION_HAS_NO_PLANNER, target.unavailable)
@@ -84,7 +84,7 @@ class OtpTargetTest {
     /** An empty otpBaseUrl is the same fact as a missing one — see `formattedOtpBaseUrl`. */
     @Test
     fun `a region with a blank planner url is unavailable`() {
-        val target = resolve(region = region(otpBaseUrl = ""))
+        val target = resolve(region = dcRegion(otpBaseUrl = ""))
 
         assertFalse(target.isAvailable)
         assertEquals(OtpTarget.Unavailable.REGION_HAS_NO_PLANNER, target.unavailable)
@@ -103,7 +103,7 @@ class OtpTargetTest {
         val target = resolve(
             customUrl = "https://custom.example.org/otp",
             customUrlUsesOtp2 = true,
-            region = region(otpBaseUrl = "https://otp.example.org/otp")
+            region = dcRegion(otpBaseUrl = "https://otp.example.org/otp")
         )
 
         assertEquals("https://custom.example.org/otp", target.baseUrl)
@@ -114,6 +114,6 @@ class OtpTargetTest {
     /** A custom server is a planner even where the region has none — the D.C. rider who set one. */
     @Test
     fun `a custom url makes a planner-less region available`() {
-        assertTrue(resolve(customUrl = "https://custom.example.org/otp", region = region()).isAvailable)
+        assertTrue(resolve(customUrl = "https://custom.example.org/otp", region = dcRegion()).isAvailable)
     }
 }

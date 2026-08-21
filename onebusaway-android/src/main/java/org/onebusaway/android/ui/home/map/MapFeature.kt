@@ -114,6 +114,7 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.tripplan.tripPlanningUnavailableMessage
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
 import org.onebusaway.android.ui.tutorial.MapPointSpotlight
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
@@ -229,6 +230,15 @@ fun MapFeature(
             }
 
             override fun onMapLongClick(point: GeoPoint) {
+                // The offer's only destination is the trip planner, so it is made only where there is
+                // one to reach. In a region that publishes no OTP server the bubble could only ever end
+                // in a failed plan, so the gesture is answered with the reason instead — naming the
+                // region, because "no trip planning" arriving as "No region selected" is exactly the
+                // confusion this replaces (#2264).
+                tripPlanningUnavailableMessage(context)?.let { message ->
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    return
+                }
                 // The one gesture that *raises* the offer: drop the pin, which is what the home screen
                 // hangs its "navigate here" bubble off (#2243).
                 mapViewModel.setNavigateHerePin(point)

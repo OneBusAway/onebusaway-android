@@ -34,6 +34,7 @@ import org.onebusaway.android.api.contract.TripPlanRequest
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.util.CustomAddress
+import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.util.runCatchingCancellable
@@ -86,9 +87,7 @@ class DefaultTripPlanRepository @Inject constructor(
      */
     private fun planInternal(builder: TripRequestBuilder): List<TripItinerary> {
         val baseUrl = builder.formattedOtpBaseUrl
-            ?: throw TripPlanException(
-                TripPlanError(TripPlanError.Category.REQUEST, R.string.tripplanner_no_server_selected_error)
-            )
+            ?: throw TripPlanException(noPlannerError(builder.otpTarget.unavailable))
 
         if (builder.usesOtp2) {
             return otp2Planner.plan(builder, baseUrl)

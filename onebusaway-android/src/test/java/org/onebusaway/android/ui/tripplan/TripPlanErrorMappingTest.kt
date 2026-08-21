@@ -24,6 +24,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.OtpErrorId
 import org.onebusaway.android.api.graphql.type.InputField
 import org.onebusaway.android.api.graphql.type.RoutingErrorCode
+import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.ui.tripplan.TripPlanError.Category
 
 /**
@@ -229,6 +230,28 @@ class TripPlanErrorMappingTest {
         val errors = listOf(graphQlError("DataFetchingException"), graphQlError("ValidationError"))
 
         assertEquals(TripPlanError.RequestRejected, otp2GraphQlErrorFor(errors))
+    }
+
+    // ---- No planner at all (nothing reached the wire) ----
+
+    /**
+     * The #2264 distinction: a region that publishes no OTP server must not be reported as no region
+     * selected, because the region *is* selected and the rider can see it.
+     */
+    @Test
+    fun noPlanner_tells_a_planner_less_region_apart_from_no_region() {
+        assertError(
+            Category.REQUEST,
+            R.string.tripplanner_error_region_no_planner,
+            noPlannerError(OtpTarget.Unavailable.REGION_HAS_NO_PLANNER)
+        )
+        assertError(
+            Category.REQUEST,
+            R.string.tripplanner_no_server_selected_error,
+            noPlannerError(OtpTarget.Unavailable.NO_REGION)
+        )
+        // Defensive: a target that says it has a server, on the path that only runs when it hasn't.
+        assertError(Category.REQUEST, R.string.tripplanner_no_server_selected_error, noPlannerError(null))
     }
 
     private fun graphQlError(classification: Any?, message: String = "boom") = GraphQlError.Builder(message)

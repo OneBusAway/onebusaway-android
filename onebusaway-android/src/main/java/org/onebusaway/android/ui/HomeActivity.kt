@@ -74,6 +74,7 @@ import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
+import org.onebusaway.android.ui.tripplan.refuseTripPlanIfUnavailable
 import org.onebusaway.android.ui.tripplan.toGeocoded
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
@@ -339,6 +340,9 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun maybePlanToPlaceFromIntent(intent: Intent) {
         val place = PlaceIntents.placeForIntent(intent) ?: return
+        // Opening the form on a shared address in a region with no planner would only walk the rider
+        // into a failure; say why instead (#2264).
+        if (refuseTripPlanIfUnavailable()) return
         viewModel.enterDirections()
         when (place) {
             is PlaceIntents.Place.Point ->

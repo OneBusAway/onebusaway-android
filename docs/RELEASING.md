@@ -51,9 +51,10 @@ rationale — which is precisely how it came to be misread. Hence writing it dow
    `resolutionStrategy = AUTO` in the `play {}` block), so the number checked into the file is only
    a fallback for builds without Play credentials.
 
-   Check what's actually live before choosing a name — the git tags have not tracked Play releases
-   and will mislead you. `26.1.0` shipped as versionCode 154 without ever being tagged. The Play
-   Console's release dashboard, or `bootstrapObaGoogleReleaseListing`, is the authority.
+   Check what's actually live before choosing a name. Tagging only became reliable at `v26.2.0` —
+   earlier releases went out untagged, so `26.1.0` is live on Play as versionCode 154 with nothing
+   in git to show for it. For anything older than `v26.2.0`, the Play Console's release dashboard
+   (or `bootstrapObaGoogleReleaseListing`) is the authority, not the tags.
 3. **Write the release notes**, in two places that must agree:
    - `onebusaway-android/src/oba/play/release-notes/en-US/default.txt` — the Play "What's new"
      text, capped at 500 characters. `en-US` is the only locale here because it is the only one the
@@ -74,6 +75,10 @@ rationale — which is precisely how it came to be misread. Hence writing it dow
 
        git tag -a v26.2.0 -m "26.2.0" <commit>
        git push origin v26.2.0
+
+   If a release is superseded before it goes anywhere — a wrong version number caught on a closed
+   track, say — delete the tag along with it, so no tag points at a build that was never graduated:
+   `git push origin :refs/tags/vX.Y.Z && git tag -d vX.Y.Z`.
 
 6. **Let the closed track sit.** Watch Crashlytics and the Play Console's vitals. This is the whole
    point of the closed rung — it is the only audience that can be surprised cheaply.

@@ -23,6 +23,23 @@ a release starts closed, and graduating it to open testing is a separate, delibe
 
 [gpp]: https://github.com/Triple-T/gradle-play-publisher
 
+## Version numbering
+
+`versionName` is **`YY.RELEASE.PATCH`**: the two-digit year, then which release it is within that
+year, then any patch on that release. `26.1.0` was the first release of 2026, `26.2.0` the second.
+
+**The minor is not the month.** `26.1.0` shipped in March 2026, which rules that reading out — a
+plausible enough guess that it has already been made once, and it is the reason 27.0.0 briefly
+existed on the alpha track. A release in August is `26.N.0` for whatever N is next, not `26.8.0`.
+
+The year rolls the major: the first release of 2027 is `27.1.0`. Nothing is derived automatically —
+`versionName` is edited by hand, and `versionCode` comes from Play (see below), so the two carry no
+relationship to each other. Don't infer the next number from the git tags either; see step 2.
+
+This convention arrived undocumented — the switch from `2.14.9` to `26.1.0` rode along inside an
+unrelated commit ("Add gradle-play-publisher for automated Play Store releases", 2026-03-19) with no
+rationale — which is precisely how it came to be misread. Hence writing it down here.
+
 ## Cutting a release
 
 1. **Pick the commit.** It should be a commit on `main` that is green in
@@ -55,8 +72,8 @@ a release starts closed, and graduating it to open testing is a separate, delibe
    Play maps to a commit. Do this every time — the tags fell out of sync with Play once already,
    which is why step 2 warns you not to trust them:
 
-       git tag -a v27.0.0 -m "27.0.0" <commit>
-       git push origin v27.0.0
+       git tag -a v26.2.0 -m "26.2.0" <commit>
+       git push origin v26.2.0
 
 6. **Let the closed track sit.** Watch Crashlytics and the Play Console's vitals. This is the whole
    point of the closed rung — it is the only audience that can be surprised cheaply.

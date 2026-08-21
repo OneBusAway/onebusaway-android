@@ -102,7 +102,8 @@ Two things that bite:
 
 - **`versionCode` is not yours to edit, and git tags don't tell you what shipped.** The tags stop
   at `v2.4.19` (2025) while `26.1.0`/code 154 is live on Play — ask Play, not git, before choosing
-  a `versionName`. `resolutionStrategy = AUTO` in the `play {}` block
+  a `versionName`. That name is `YY.RELEASE.PATCH` (year, then which release within the year); the
+  minor is **not** the month — `26.1.0` shipped in March. `resolutionStrategy = AUTO` in the `play {}` block
   auto-increments `versionCode` from the highest code on Play. Only `versionName` is bumped by hand. AUTO is
   consulted on every release *assemble*, not just `publish*` tasks — without credentials the block
   falls back to `IGNORE` and the checked-in `versionCode` is used, so the build works but its

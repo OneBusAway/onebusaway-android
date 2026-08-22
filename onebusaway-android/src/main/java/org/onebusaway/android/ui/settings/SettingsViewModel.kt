@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.settings
 
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -216,6 +217,7 @@ class SettingsViewModel @Inject constructor(
     fun onTutorialClicked() {
         reportPreferencesEvent(context, R.string.analytics_label_button_press_tutorial)
         TutorialPrefs.resetAllTutorials(context)
+        Toast.makeText(context, R.string.preferences_tutorial_toast, Toast.LENGTH_SHORT).show()
         _effects.trySend(SettingsEffect.GoHomeResetTutorial)
     }
 

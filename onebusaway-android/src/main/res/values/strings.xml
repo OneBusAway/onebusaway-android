@@ -755,6 +755,7 @@
     <string name="preferences_analytics_summary">Help us improve the app</string>
     <string name="preferences_tutorial_title">Show tutorial</string>
     <string name="preferences_tutorial_summary">Show instructions for using this app</string>
+    <string name="preferences_tutorial_toast">Tutorials reset. Go back to Home to view them</string>
     <string name="preferences_donate_title">Donate</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="preferences_donate_summary">Support the %1$s open-source project</string>

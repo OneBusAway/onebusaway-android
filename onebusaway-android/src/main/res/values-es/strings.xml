@@ -625,8 +625,6 @@
     </string>
     <string name="preferences_analytics_title">Enviar datos anónimos de uso</string>
     <string name="preferences_analytics_summary">Ayudanos a mejorar la aplicación</string>
-    <string name="preferences_tutorial_title">Mostrar tutorial</string>
-    <string name="preferences_tutorial_summary">Aprende a utilizar la aplicación con este tutorial</string>
     <string name="preferences_donate_title">Donar</string>
     <string name="preferences_donate_summary">Apoyar el proyecto de código abierto %1$s</string>
     <string name="preferences_powered_by_oba_title">Desarrollado por %1$s</string>

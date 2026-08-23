@@ -38,7 +38,6 @@ import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.ui.tutorial.TutorialPrefs
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ThemeUtils
 
@@ -46,9 +45,6 @@ import org.onebusaway.android.util.ThemeUtils
 sealed interface SettingsEffect {
     /** Re-create the Activity so a just-applied app theme takes effect. */
     object RecreateActivity : SettingsEffect
-
-    /** Reset-tutorials was tapped: return home (and replay the tutorials there). */
-    object GoHomeResetTutorial : SettingsEffect
 }
 
 /**
@@ -212,12 +208,6 @@ class SettingsViewModel @Inject constructor(
 
     /** Persists the ringtone the host's picker returned (empty string == silent). */
     fun onRingtonePicked(value: String) = prefs.setString(R.string.preference_key_notification_sound, value)
-
-    fun onTutorialClicked() {
-        reportPreferencesEvent(context, R.string.analytics_label_button_press_tutorial)
-        TutorialPrefs.resetAllTutorials(context)
-        _effects.trySend(SettingsEffect.GoHomeResetTutorial)
-    }
 
     fun onPoweredByObaClicked() = reportPreferencesEvent(context, R.string.analytics_label_button_press_powered_by_oba)
 

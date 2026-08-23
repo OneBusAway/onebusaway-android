@@ -65,7 +65,6 @@ fun SettingsRoute(
     onNavigateToAdvanced: () -> Unit,
     onBack: () -> Unit,
     onRecreate: () -> Unit,
-    onGoHomeResetTutorial: () -> Unit,
     onOpenDonate: () -> Unit,
     onOpenPoweredByOba: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
@@ -108,7 +107,6 @@ fun SettingsRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 SettingsEffect.RecreateActivity -> onRecreate()
-                SettingsEffect.GoHomeResetTutorial -> onGoHomeResetTutorial()
             }
         }
     }
@@ -155,7 +153,6 @@ fun SettingsRoute(
         onSaveBackup = { saveBackupLauncher.launch(BackupUtils.buildCreateBackupFileIntent()) },
         onRestoreBackup = { restoreBackupLauncher.launch(BackupUtils.buildSelectBackupFileIntent()) },
         onAdvancedClick = onNavigateToAdvanced,
-        onTutorialClick = viewModel::onTutorialClicked,
         onDonateClick = onOpenDonate,
         onPoweredByObaClick = {
             viewModel.onPoweredByObaClicked()
@@ -194,7 +191,6 @@ class SettingsActions(
     val onSaveBackup: () -> Unit,
     val onRestoreBackup: () -> Unit,
     val onAdvancedClick: () -> Unit,
-    val onTutorialClick: () -> Unit,
     val onDonateClick: () -> Unit,
     val onPoweredByObaClick: () -> Unit,
     val onAboutClick: () -> Unit
@@ -376,11 +372,6 @@ fun SettingsScreen(
                     summary = stringResource(R.string.preferences_analytics_summary),
                     checked = state.analyticsEnabled,
                     onCheckedChange = actions.onAnalytics
-                )
-                ClickPreferenceItem(
-                    title = stringResource(R.string.preferences_tutorial_title),
-                    summary = stringResource(R.string.preferences_tutorial_summary),
-                    onClick = actions.onTutorialClick
                 )
                 if (state.showDonate) {
                     ClickPreferenceItem(

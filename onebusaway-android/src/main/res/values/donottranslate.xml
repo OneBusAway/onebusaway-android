@@ -131,7 +131,6 @@
     <string name="analytics_label_button_press_help">help</string>
     <string name="analytics_label_button_press_feedback">send_feedback</string>
     <string name="analytics_label_button_press_open_source">github</string>
-    <string name="analytics_label_button_press_tutorial">preference_tutorial</string>
     <string name="analytics_label_button_press_donate">preference_donate</string>
     <string name="analytics_label_button_press_powered_by_oba">preference_power_by_oba</string>
     <string name="analytics_label_button_press_about">preference_about</string>

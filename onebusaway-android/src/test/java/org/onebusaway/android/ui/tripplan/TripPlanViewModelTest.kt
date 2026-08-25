@@ -714,6 +714,26 @@ class TripPlanViewModelTest {
         assertTrue(vm.planState.value is PlanResult.Success)
     }
 
+    /**
+     * Losing the region *is* a switch away from one: deleting the custom region you are on leaves the
+     * trip with no transit system behind it, exactly as moving to another region would.
+     */
+    @Test
+    fun `losing the region clears the trip`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1))
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertTrue(vm.planState.value is PlanResult.Success)
+
+        regionRepo.emit(null)
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.from)
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.to)
+        assertTrue(vm.planState.value is PlanResult.Idle)
+    }
+
     /** Re-emitting the same region (a directory refresh) is not a switch either. */
     @Test
     fun `re-emitting the same region leaves the trip alone`() = runTest {
@@ -721,12 +741,17 @@ class TripPlanViewModelTest {
         val vm = viewModel(region = regionRepo)
         setBothEndpoints(vm)
         advanceUntilIdle()
+        val planned = vm.planState.value
+        assertTrue(planned is PlanResult.Success)
 
         regionRepo.emit(region(id = 1, otpContactEmail = "refreshed@example.com"))
         advanceUntilIdle()
 
         assertEquals(origin, vm.formState.value.from)
         assertEquals(destination, vm.formState.value.to)
+        // The drawn result survives too: clearing the endpoints would drop it back to Idle, so
+        // asserting only the endpoints would pass on a refresh that had quietly wiped the plan.
+        assertEquals(planned, vm.planState.value)
     }
 
     @Test

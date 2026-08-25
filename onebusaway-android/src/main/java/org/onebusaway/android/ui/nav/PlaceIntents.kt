@@ -323,15 +323,13 @@ object PlaceIntents {
 }
 
 /**
- * An incoming place that arrived with coordinates, as a trip-plan endpoint: [TripEndpoint.Geocoded] when
- * the sender named it, and otherwise [TripEndpoint.MapPoint] — whose fixed "Selected location" label is
- * the honest one for a bare coordinate, and whose terminals a plan reverse-geocodes for the itinerary
- * anyway (`TripPlanViewModel.placeNameOf`).
+ * An incoming place that arrived with coordinates, as a trip-plan endpoint — named by the sender when it
+ * named it, and otherwise the bare map point ([TripEndpoint.namedPlace] holds that rule, shared with the
+ * app's other named-place endpoint). An unnamed terminal is reverse-geocoded for the itinerary anyway
+ * (`TripPlanViewModel.placeNameOf`), so nothing is lost by not guessing one here.
  *
  * Top-level and `internal` — like [org.onebusaway.android.ui.tripplan.toGeocoded], the sibling adapter
  * that turns a geocoder result into the same type — so this stays JVM-unit-testable rather than being
  * buried in the Activity that consumes it.
  */
-internal fun PlaceIntents.Place.Point.toEndpoint(): TripEndpoint = label
-    ?.let { TripEndpoint.Geocoded(displayName = it, lat = lat, lon = lon) }
-    ?: TripEndpoint.MapPoint(lat = lat, lon = lon)
+internal fun PlaceIntents.Place.Point.toEndpoint(): TripEndpoint = TripEndpoint.namedPlace(name = label, lat = lat, lon = lon)

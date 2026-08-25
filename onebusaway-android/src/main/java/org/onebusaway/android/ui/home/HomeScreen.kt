@@ -546,6 +546,30 @@ fun HomeScreen(
                     CurrentFocus.None, is CurrentFocus.BikeStation, is CurrentFocus.Directions -> null
                 }
 
+                // A trip to the stop the banner is naming — the map long press's offer, asked of the stop
+                // the rider already has focused (#2272). It names the destination with the banner's own
+                // title so the trip's pill reads as the stop they were looking at, rather than as whatever
+                // the planner would reverse-geocode the coordinate back into. Null — and so no menu row —
+                // until the stop's location is known, since until then there is nothing to route to.
+                val navigateToFocusedStop: (() -> Unit)? =
+                    (focusBannerState as? FocusBannerState.Stop)?.let { banner ->
+                        stopFocus?.stop?.point?.let { at ->
+                            {
+                                navigateTo(
+                                    TripEndpoint.namedPlace(
+                                        name = banner.title,
+                                        lat = at.latitude,
+                                        lon = at.longitude,
+                                        isTransit = true
+                                    ),
+                                    homeViewModel,
+                                    mapViewModel,
+                                    tripPlanViewModel
+                                )
+                            }
+                        }
+                    }
+
                 // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
                 // to fit short content once settled: retargeting mid-open would move the AnchoredDraggable anchor
                 // and strand the sheet, so we slide up to the constant cap first, then shrink (flipped by the
@@ -923,7 +947,8 @@ fun HomeScreen(
                                                 stopMenu = arrivalsSession?.let { session ->
                                                     StopFocusMenu(
                                                         onReportStopProblem = session.handler::onReportStopProblem,
-                                                        onNightLight = callbacks.onNightLight
+                                                        onNightLight = callbacks.onNightLight,
+                                                        onNavigateHere = navigateToFocusedStop
                                                     )
                                                 },
                                                 // The direction menu calls straight into the map VM (which
@@ -1118,14 +1143,15 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                // The bubble over a long press's dropped pin: taking it enters directions
-                                // with the pinned point as the trip's far end and the rider's own position
-                                // paired into the near one (see setEndpointPaired).
+                                // The bubble over a long press's dropped pin. A pressed point has nothing
+                                // to call it, so it travels as a bare map point; see navigateTo for the
+                                // rest, which the focused stop's menu item shares.
                                 NavigateHereOverlay(mapViewModel) { point ->
-                                    homeViewModel.enterDirections(mapViewModel.viewport)
-                                    tripPlanViewModel.setEndpointPaired(
-                                        TripEndpointSlot.TO,
-                                        TripEndpoint.MapPoint(point.latitude, point.longitude)
+                                    navigateTo(
+                                        TripEndpoint.MapPoint(point.latitude, point.longitude),
+                                        homeViewModel,
+                                        mapViewModel,
+                                        tripPlanViewModel
                                     )
                                 }
                                 // Neither Back nor a tap on the map background leaves outright while a trip
@@ -1222,6 +1248,25 @@ private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoin
             onDismiss = { mapViewModel.setNavigateHerePin(null) }
         )
     }
+}
+
+/**
+ * Take the rider to [destination]: enter directions with it as the trip's far end and the rider's own
+ * position paired into the near one, which plans the trip on the spot (see `setEndpointPaired`).
+ *
+ * The one path behind every "take me there" gesture on the map — the long press's bubble (#2243) and the
+ * focused stop's menu item (#2272). They differ only in what the destination *is*, and they say so by
+ * handing a different [TripEndpoint]; everything after that is the same act, so it is spelled out once
+ * here rather than at each gesture.
+ */
+private fun navigateTo(
+    destination: TripEndpoint,
+    homeViewModel: HomeViewModel,
+    mapViewModel: MapViewModel,
+    tripPlanViewModel: TripPlanViewModel
+) {
+    homeViewModel.enterDirections(mapViewModel.viewport)
+    tripPlanViewModel.setEndpointPaired(TripEndpointSlot.TO, destination)
 }
 
 /**

@@ -130,7 +130,15 @@ private const val MAX_TITLE_LINES = 2
  */
 data class StopFocusMenu(
     val onReportStopProblem: () -> Unit,
-    val onNightLight: () -> Unit
+    val onNightLight: () -> Unit,
+    /**
+     * Plan a trip to this stop — the map long press's "navigate here" offer, asked of the stop the rider
+     * already has focused instead of a point they have to press for (#2272). Null while the stop's own
+     * location is still unknown (a stop revealed by id alone has none until its arrivals land), since
+     * there is nothing to route to yet; that is the same beat the banner's star waits on, and it has
+     * passed by the time the menu itself is up in every entry point but that one.
+     */
+    val onNavigateHere: (() -> Unit)?
 )
 
 /**
@@ -592,8 +600,12 @@ private fun HeaderIconButton(
 
 /**
  * The focused stop's overflow: the stop actions that are neither frequent enough for their own icon nor
- * expressible on the map — a problem report against the stop, and the night-light flasher a rider holds
- * up to a driver. Inherited from the retired standalone arrivals screen's top bar (#1898).
+ * expressible on the map — a trip planned to the stop, a problem report against it, and the night-light
+ * flasher a rider holds up to a driver. Inherited from the retired standalone arrivals screen's top bar
+ * (#1898).
+ *
+ * "Navigate here" leads because it is the one item a rider looking at a stop is likely to want (#2272);
+ * the other two answer situations, not intentions.
  */
 @Composable
 private fun StopMenuAction(menu: StopFocusMenu) {
@@ -605,6 +617,13 @@ private fun StopMenuAction(menu: StopFocusMenu) {
             onClick = { expanded = true }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            // The same words the map long press's bubble offers, because it is the same offer.
+            menu.onNavigateHere?.let { navigate ->
+                MenuRow(R.string.map_navigate_here) {
+                    expanded = false
+                    navigate()
+                }
+            }
             MenuRow(R.string.stop_info_option_report_problem) {
                 expanded = false
                 menu.onReportStopProblem()

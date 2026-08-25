@@ -55,7 +55,8 @@ class FocusBannerTest {
         hasAlerts: Boolean = true,
         favoriteEnabled: Boolean = true,
         direction: String? = "N",
-        stopCode: String? = "12345"
+        stopCode: String? = "12345",
+        stopMenu: StopFocusMenu? = null
     ) {
         composeRule.setContent {
             FocusBanner(
@@ -71,12 +72,61 @@ class FocusBannerTest {
                 onToggleFavorite = {},
                 onShowAlerts = {},
                 onRecenterStop = {},
+                stopMenu = stopMenu,
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
                 onHeight = {}
             )
         }
+    }
+
+    private fun openStopMenu() = composeRule.onNodeWithContentDescription(
+        context.getString(R.string.stop_info_item_options_title)
+    ).performClick()
+
+    /**
+     * #2272: a rider looking at a stop can plan a trip to it from the stop's own overflow, without
+     * having to leave and long-press the map at a place they can already see is focused.
+     */
+    @Test
+    fun stopMenuOffersATripToTheFocusedStop() {
+        var navigated = 0
+        setStopBanner(
+            stopMenu = StopFocusMenu(
+                onReportStopProblem = {},
+                onNightLight = {},
+                onNavigateHere = { navigated++ }
+            )
+        )
+
+        openStopMenu()
+        composeRule.onNodeWithText(context.getString(R.string.map_navigate_here))
+            .assertIsDisplayed()
+            .performClick()
+
+        assertEquals(1, navigated)
+    }
+
+    /**
+     * A stop whose own location hasn't landed yet has nothing to route to, so the offer is withheld
+     * rather than made and then failed. The rest of the menu still stands.
+     */
+    @Test
+    fun stopMenuWithholdsTheTripWhenTheStopHasNoLocation() {
+        setStopBanner(
+            stopMenu = StopFocusMenu(
+                onReportStopProblem = {},
+                onNightLight = {},
+                onNavigateHere = null
+            )
+        )
+
+        openStopMenu()
+        composeRule.onNodeWithText(context.getString(R.string.map_navigate_here))
+            .assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.stop_info_option_report_problem))
+            .assertIsDisplayed()
     }
 
     /**

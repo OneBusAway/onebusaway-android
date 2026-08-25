@@ -524,8 +524,6 @@
     </string>
     <string name="preferences_analytics_title">Wysyłaj anonimowo dane o użyciu</string>
     <string name="preferences_analytics_summary">Pomóż nam ulepszać aplikację</string>
-    <string name="preferences_tutorial_title">Pokaż samouczek</string>
-    <string name="preferences_tutorial_summary">Pokaż instrukcję jak używać aplikację</string>
     <string name="preferences_donate_title">Dotacja</string>
     <string name="preferences_donate_summary">Wspieraj %1$s</string>
     <string name="preferences_powered_by_oba_title">Napędzane przez %1$s</string>

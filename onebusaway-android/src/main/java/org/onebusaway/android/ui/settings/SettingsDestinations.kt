@@ -103,7 +103,6 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                 },
                 onBack = { navController.popBackStack() },
                 onRecreate = { activity.recreate() },
-                onGoHomeResetTutorial = { NavHelp.goHome(activity, true) },
                 onOpenDonate = {
                     activity.startActivity(
                         DonationsEntryPoint.get(activity).buildOpenDonationsPageIntent()

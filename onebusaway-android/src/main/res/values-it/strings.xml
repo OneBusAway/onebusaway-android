@@ -484,8 +484,6 @@
     <string name="preferences_experimental_regions_disable_warning">L’area sperimentale corrente non sarà disponibile! Vuoi procedere?</string>
     <string name="preferences_analytics_title">Invia dati di utilizzo anonimi</string>
     <string name="preferences_analytics_summary">Aiutaci a migliorare l’app</string>
-    <string name="preferences_tutorial_title">Mostra tutorial</string>
-    <string name="preferences_tutorial_summary">Mostra istruzioni per utilizzare questa app</string>
     <string name="preferences_donate_title">Dona</string>
     <string name="preferences_donate_summary">Supporta il progetto open-source %1$s</string>
     <string name="preferences_powered_by_oba_title">Powered by %1$s</string>

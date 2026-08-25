@@ -494,8 +494,6 @@
     </string>
     <string name="preferences_analytics_title">Lähetä anonyymeja käyttötietoja</string>
     <string name="preferences_analytics_summary">Auta meitä parantamaan sovellusta. Tiedot lähetetään anonyymisti.</string>
-    <string name="preferences_tutorial_title">Näytä ohje</string>
-    <string name="preferences_tutorial_summary">Tarkemmat ohjeet kuinka käyttää tätä sovellusta</string>
     <string name="preferences_donate_title">Lahjoita</string>
     <string name="preferences_donate_summary">Tue %1$sn avoimen lähdekoodin projektia</string>
     <string name="preferences_powered_by_oba_title">Powered by %1$s</string>

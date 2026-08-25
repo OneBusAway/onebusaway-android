@@ -29,7 +29,10 @@ reads) and, for each region, reports one of:
   * plans            -- the server answered a real plan request.
   * no route         -- the server answered, but found no itinerary between the probe points. Not a
                         failure of the *server*; the probe points are synthetic (see below).
-  * unreachable/err  -- DNS, TLS, timeout or a non-2xx. Trip planning is broken for that region.
+  * unreachable/err  -- DNS, TLS, timeout, a non-2xx, or a 200 that isn't a planner's answer at
+                        all. Trip planning is broken for that region.
+  * not probed       -- the region publishes a planner but no bounds this tool can plan between, so
+                        it has *no* verdict. Reported, never counted as an answer.
 
 Endpoint construction deliberately mirrors the app: `otpPlanUrl` for OTP1 (a `/routers/default`
 base gets only `/plan` appended, a server-root base gets the segment inserted, and a pre-1.0 server
@@ -50,8 +53,9 @@ Usage (from the repo root):
     tools/check-region-routing.py --live          # the live regions directory instead
     tools/check-region-routing.py --regions f.json
 
-Exit status: 0 every region with a planner answered, 1 at least one planner is broken, 2 the check
-itself could not run.
+Exit status: 0 every region with a planner answered, 1 at least one planner is broken, 2 nothing is
+broken but the run is not a complete answer -- a region could not be probed, or the check itself
+could not run at all.
 """
 
 import argparse
@@ -78,8 +82,9 @@ OTP_PLAN_LOCATION = "/plan"
 OTP2_GTFS_GRAPHQL_PATH = "/gtfs/v1"
 
 TIMEOUT_SECONDS = 45
-# Built once: create_default_context() reads the platform trust store from disk, and a run makes one
-# request per region.
+# Built once: create_default_context() reads the platform trust store from disk, and a run opens
+# several connections -- one or two planner requests per region (see probe_otp1), plus the region
+# directory itself under --live.
 SSL_CONTEXT = ssl.create_default_context()
 # How far north-east of a region's centre the destination probe point sits, in degrees -- roughly
 # 2km, far enough to want transit and close enough to stay inside the smallest region's box.
@@ -88,8 +93,12 @@ PROBE_OFFSET_DEGREES = 0.02
 # The OTP2 equivalent of the OTP1 /plan probe: the same planConnection root the app's Plan.graphql
 # query uses, cut down to the one field needed to tell "it planned" from "it didn't".
 OTP2_PROBE_QUERY = """
-query Probe($origin: PlanLabeledLocationInput!, $destination: PlanLabeledLocationInput!) {
-  planConnection(origin: $origin, destination: $destination, first: 3) {
+query Probe(
+  $origin: PlanLabeledLocationInput!
+  $destination: PlanLabeledLocationInput!
+  $dateTime: PlanDateTimeInput
+) {
+  planConnection(origin: $origin, destination: $destination, dateTime: $dateTime, first: 3) {
     routingErrors { code description }
     edges { node { duration } }
   }
@@ -101,6 +110,10 @@ class CheckError(Exception):
     """The check could not run (bad input, unreadable resource) -- distinct from a broken planner."""
 
 
+class UnusableUrl(CheckError):
+    """A URL this tool won't open. Reaching a *region's* planner this way is that region's verdict."""
+
+
 def regions_directory_url(resource_path):
     """The live regions directory URL, read from the `regions_api_url` string resource."""
     path = Path(resource_path)
@@ -108,15 +121,18 @@ def regions_directory_url(resource_path):
         raise CheckError(f"{resource_path} not found (run from the repo root)")
     for string in ElementTree.parse(path).getroot().iter("string"):
         if string.get("name") == REGIONS_URL_RESOURCE_NAME:
-            url = (string.text or "").strip()
-            if not url.startswith(("http://", "https://")):
-                raise CheckError(f"{REGIONS_URL_RESOURCE_NAME} is not an http(s) URL: {url!r}")
-            return url
+            # Not checked for a scheme here: fetch() is the one gate on what this tool opens.
+            return (string.text or "").strip()
     raise CheckError(f'no <string name="{REGIONS_URL_RESOURCE_NAME}"> in {resource_path}')
 
 
 def fetch(url, data=None, content_type=None):
     """GET (or POST, with `data`) `url`, returning (status, body-text). Raises on transport failure."""
+    # urlopen also speaks file: and ftp:, and every URL that reaches here -- the planner endpoints
+    # most of all -- comes from a third party's region directory rather than from this repo.
+    scheme = urllib.parse.urlsplit(url).scheme
+    if scheme not in ("http", "https"):
+        raise UnusableUrl(f"refusing to open a {scheme or 'scheme-less'} URL: {url!r}")
     headers = {"User-Agent": USER_AGENT}
     if content_type:
         headers["Content-Type"] = content_type
@@ -152,15 +168,25 @@ def load_regions(source, live):
 
 
 def probe_points(region):
-    """((lat, lon), (lat, lon)) to plan between, or None when the region publishes no bounds."""
+    """((lat, lon), (lat, lon)) to plan between, or None when the region's bounds can't be probed.
+
+    Every field is required rather than defaulted: a missing span would clamp the offset to zero and
+    ask the planner to route from a point to itself, which every planner answers "no route" to -- a
+    verdict about this tool's arithmetic, not about the server. No points means no verdict.
+    """
     bounds = region.get("bounds") or []
-    if not bounds:
+    if not bounds or not isinstance(bounds[0], dict):
         return None
     box = bounds[0]
-    lat, lon = box["lat"], box["lon"]
+    try:
+        lat, lon, lat_span, lon_span = (float(box[key]) for key in ("lat", "lon", "latSpan", "lonSpan"))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if lat_span <= 0 or lon_span <= 0:
+        return None
     # Clamped to a quarter of the box so the destination stays inside even a small region.
-    offset_lat = min(PROBE_OFFSET_DEGREES, box.get("latSpan", 0) / 4)
-    offset_lon = min(PROBE_OFFSET_DEGREES, box.get("lonSpan", 0) / 4)
+    offset_lat = min(PROBE_OFFSET_DEGREES, lat_span / 4)
+    offset_lon = min(PROBE_OFFSET_DEGREES, lon_span / 4)
     return (lat, lon), (lat + offset_lat, lon + offset_lon)
 
 
@@ -207,18 +233,24 @@ def probe_otp1(base_url, origin, destination, when):
             payload = json.loads(body)
         except json.JSONDecodeError:
             return False, f"HTTP 200 but not JSON from {url}"
-        error = payload.get("error")
-        itineraries = ((payload.get("plan") or {}).get("itineraries")) or []
-        if error:
+        # An OTP1 plan response is one of these two envelopes. Anything else that came back 200 --
+        # a captive portal, a bare {}, some other service at that host -- is not this planner
+        # answering, and reading it as "no route" would report a dead endpoint as a healthy one.
+        plan = payload.get("plan") if isinstance(payload, dict) else None
+        error = payload.get("error") if isinstance(payload, dict) else None
+        if isinstance(error, dict) and error:
             # The planner answered; a planner error is a routing verdict, not a broken server.
             return True, f"no route: OTP error {error.get('id')} {error.get('msg')!r}"
+        if not isinstance(plan, dict):
+            return False, f"HTTP 200 but not an OTP plan response from {url}"
+        itineraries = plan.get("itineraries") or []
         if not itineraries:
             return True, "no route: empty plan"
         return True, f"plans: {len(itineraries)} itineraries"
     return False, last or "no usable response"
 
 
-def probe_otp2(graphql_base_url, origin, destination):
+def probe_otp2(graphql_base_url, origin, destination, when):
     """Plan over the OTP2 GraphQL endpoint. Returns (ok, summary)."""
     url = graphql_base_url.rstrip("/") + OTP2_GTFS_GRAPHQL_PATH
 
@@ -229,7 +261,14 @@ def probe_otp2(graphql_base_url, origin, destination):
     body = json.dumps(
         {
             "query": OTP2_PROBE_QUERY,
-            "variables": {"origin": coordinate(origin), "destination": coordinate(destination)},
+            "variables": {
+                "origin": coordinate(origin),
+                "destination": coordinate(destination),
+                # Otp2PlanRequestBuilder.build: an ISO-8601 offset instant in the local zone. Without
+                # it OTP2 departs "now", so the two probes would ask different questions and this one
+                # could answer "no route" simply for running outside the region's service hours.
+                "dateTime": {"earliestDeparture": when.astimezone().isoformat(timespec="seconds")},
+            },
         }
     ).encode()
     try:
@@ -246,7 +285,11 @@ def probe_otp2(graphql_base_url, origin, destination):
         # A GraphQL error is the server rejecting the query, which for this fixed probe query means
         # the endpoint is not the OTP2 gtfs mount the app would talk to.
         return False, f"GraphQL errors: {json.dumps(payload['errors'])[:200]}"
-    connection = (payload.get("data") or {}).get("planConnection") or {}
+    data = payload.get("data") if isinstance(payload, dict) else None
+    connection = data.get("planConnection") if isinstance(data, dict) else None
+    # As in probe_otp1: only the envelope this query asked for counts as the planner answering.
+    if not isinstance(connection, dict) or "edges" not in connection:
+        return False, f"HTTP 200 but not an OTP2 plan response from {url}"
     if connection.get("routingErrors"):
         return True, f"no route: {json.dumps(connection['routingErrors'])[:160]}"
     edges = connection.get("edges") or []
@@ -256,8 +299,9 @@ def probe_otp2(graphql_base_url, origin, destination):
 
 
 def check(regions, when):
-    """Probe every region; returns the list of regions whose planner is broken."""
+    """Probe every region; returns (regions whose planner is broken, regions left without a verdict)."""
     broken = []
+    not_probed = []
     for region in sorted(regions, key=lambda r: r.get("id", 0)):
         name = f"{region.get('regionName')} (id {region.get('id')})"
         otp1 = (region.get("otpBaseUrl") or "").strip()
@@ -268,24 +312,25 @@ def check(regions, when):
             continue
         points = probe_points(region)
         if points is None:
-            print(f"  {name}: skipped, region publishes no bounds to probe within")
+            print(f"  {name}: not probed, region publishes no usable bounds to plan within")
+            not_probed.append(name)
             continue
         origin, destination = points
         # OtpTarget.resolve: a published GraphQL endpoint is what routes a plan to OTP2, and the
         # OTP1 base is then not the server the app would ask.
         if otp2:
-            ok, summary = probe_otp2(otp2, origin, destination)
+            ok, summary = probe_otp2(otp2, origin, destination, when)
             print(f"  {name}: OTP2 {summary}")
         else:
             ok, summary = probe_otp1(otp1, origin, destination, when)
             print(f"  {name}: OTP1 {summary}")
         if not ok:
             broken.append(f"{name}: {summary}")
-    return broken
+    return broken, not_probed
 
 
 def main(argv):
-    """Run the check and return the process exit status: 0 every planner answered, 1 one didn't."""
+    """Run the check and return the process exit status (see this module's docstring)."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--regions", default=BUNDLED_REGIONS, help="path to a regions file to probe")
     parser.add_argument("--live", action="store_true", help="probe the live regions directory instead")
@@ -298,25 +343,42 @@ def main(argv):
 
     print(f"regions: {source} ({len(regions)} regions)")
     print(f"planning at: {when:%Y-%m-%d %H:%M} local\n")
-    broken = check(regions, when)
+    broken, not_probed = check(regions, when)
 
-    if not broken:
-        print("\nEvery region that publishes a planner answered.")
-        return 0
-    print(f"\nTrip planning is broken in {len(broken)} region(s):\n")
-    for line in broken:
-        print(f"  * {line}")
-    print(
-        "\nThe app can only report these as a connectivity failure -- the region directory says\n"
-        "there is a server. Fixing one means fixing the server, or getting the region's otpBaseUrl\n"
-        "corrected in the regions directory (https://github.com/OneBusAway/regions)."
-    )
-    return 1
+    if broken:
+        print(f"\nTrip planning is broken in {len(broken)} region(s):\n")
+        for line in broken:
+            print(f"  * {line}")
+        print(
+            "\nThe app can only report these as a connectivity failure -- the region directory says\n"
+            "there is a server. Fixing one means fixing the server, or getting the region's otpBaseUrl\n"
+            "corrected in the regions directory (https://github.com/OneBusAway/regions)."
+        )
+    if not_probed:
+        print(f"\n{len(not_probed)} region(s) publish a planner this run could not ask:\n")
+        for name in not_probed:
+            print(f"  * {name}")
+        print(
+            "\nThat is a gap in this check, not a verdict on those servers: the region publishes no\n"
+            "bounds to plan within, so there is nowhere to plan between. Getting the bounds into the\n"
+            "regions directory is what would let this run answer for them."
+        )
+    # A broken planner is the actionable failure, so it takes the exit status when both happen; an
+    # unasked region only has to stop the run being reported as a clean bill of health.
+    if broken:
+        return 1
+    if not_probed:
+        return 2
+    print("\nEvery region that publishes a planner answered.")
+    return 0
 
 
 if __name__ == "__main__":
     try:
         sys.exit(main(sys.argv[1:]))
-    except CheckError as e:
+    # OSError covers urllib's URLError (a failed directory fetch); ParseError, a string resource that
+    # isn't XML. Both are the check failing to get started, same as CheckError -- not a broken planner,
+    # and not something to hand the operator as a traceback.
+    except (CheckError, OSError, UnicodeError, ElementTree.ParseError) as e:
         print(f"error: {e}", file=sys.stderr)
         sys.exit(2)

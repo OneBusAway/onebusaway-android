@@ -88,6 +88,29 @@ sealed interface TripEndpoint {
 
     /** A point chosen on the map. Its label is a fixed string resolved by the UI. */
     data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
+
+    companion object {
+
+        /**
+         * A place with coordinates that the app can already name, as an endpoint: [Geocoded] under that
+         * name, or — with no name to show — the bare [MapPoint], whose fixed "Selected location" label is
+         * the honest one for a coordinate there is nothing to call.
+         *
+         * Every surface that hands the planner a place the rider chose *as a named thing* goes through
+         * here — a place another app shared in (#1936), the focused stop's "navigate here" (#2272) —
+         * rather than each restating the same fallback. [isTransit] is for the callers that know the
+         * place is a transit stop or station; it only drives the pill's icon.
+         */
+        fun namedPlace(
+            name: String?,
+            lat: Double,
+            lon: Double,
+            isTransit: Boolean = false
+        ): TripEndpoint = name
+            ?.takeIf { it.isNotBlank() }
+            ?.let { Geocoded(displayName = it, lat = lat, lon = lon, isTransit = isTransit) }
+            ?: MapPoint(lat = lat, lon = lon)
+    }
 }
 
 /**

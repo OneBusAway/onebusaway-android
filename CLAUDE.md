@@ -328,6 +328,9 @@ regions today — Washington, D.C., MTA New York, Davis — publish neither `otp
   endpoints exactly as the app does (`otpPlanUrl` / `otp2GraphQlEndpoint`). On-demand, not CI —
   it depends on servers this project doesn't run, so a third party's outage must not redden the
   nightly. Run it when routing is reported broken somewhere, or when a region's OTP config changes.
+  Exit `1` is a broken planner; exit `2` is the run not being a complete answer — the check couldn't
+  start, or a region publishing a planner had no bounds to plan between, so it got no verdict. Only
+  `0` means every published planner actually answered.
 
 ## White-Label / Branding
 

@@ -38,7 +38,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -136,12 +136,15 @@ class TripPlanViewModel @Inject constructor(
         // region's planner can only fail on — and in a region with no planner at all it can't even be
         // asked (#2264). Clearing takes the drawn result with it, so nothing outlives the switch.
         //
-        // Only a switch *between* regions counts. The first resolution — null until the directory
-        // lands, or until the rider picks — is not a switch, and treating it as one would wipe a trip
-        // that a notification restore or a pinned resume put here while the region was still settling.
+        // Only a switch *away from* a region counts. The leading null — the region is unresolved
+        // until the directory lands, or until the rider picks — is not a switch, and treating it as
+        // one would wipe a trip that a notification restore or a pinned resume put here while the
+        // region was still settling. Dropped by [dropWhile] rather than by filtering nulls out
+        // altogether, so a *later* null — the rider clearing the region, a refresh that finds none —
+        // still strands the trip and still clears it.
         regionRepository.region
             .map { it?.id }
-            .filterNotNull()
+            .dropWhile { it == null }
             .distinctUntilChanged()
             .drop(1)
             .onEach { clearTrip() }

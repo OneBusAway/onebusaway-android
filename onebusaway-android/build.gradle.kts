@@ -62,7 +62,7 @@ android {
         // month: 26.1.0 shipped in March. See "Version numbering" in docs/RELEASING.md, and bump it
         // by hand.
         versionCode = 153
-        versionName = "26.2.0"
+        versionName = "26.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

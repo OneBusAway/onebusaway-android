@@ -47,32 +47,29 @@ class TripResultsViewModel @Inject constructor(
     private val _selectedItinerary = MutableSharedFlow<Pair<Int, TripItinerary>>(extraBufferCapacity = 1)
     val selectedItinerary: SharedFlow<Pair<Int, TripItinerary>> = _selectedItinerary.asSharedFlow()
 
-    // The plan being shown, or null before the first seed — see [setItineraries], which reads it as the
-    // identity of that plan and not merely as the itineraries it holds.
+    // The plan being shown, or null before the first seed. Held by identity — see [seedPlan].
     private var plan: List<TripItinerary>? = null
     private var selectedIndex: Int = 0
     private var plannedStart: ServerTime? = null
 
     /**
-     * Seeds the results from a completed plan, reporting whether it took it. [initialIndex] is the option
-     * to open on — a resumed trip's pinned one, else the first; [plannedStart] is
+     * Takes a completed plan, reporting whether it took it — hence `seed` rather than `set`: a plan this
+     * ViewModel is already holding is refused. [initialIndex] is the option to *open* on (a resumed
+     * trip's pinned one, else the first); [plannedStart] is
      * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
      *
-     * **Seeding is per *plan*, not per mount of the sheet that calls this** — the rule this whole change
-     * turns on, stated here because this is where it is enforced. That sheet is re-mounted every time
-     * HOME's composition is rebuilt, which is what pushing a destination over the map does, most often
-     * the trip view a rider opens by tapping a vehicle on their own itinerary (#2274). Nothing behind
-     * directions dies on that trip — the ViewModels are activity-scoped and the map keeps its own render
-     * state — so the rider returns to what they left, and re-seeding is the only thing that would take it
-     * away, by answering "which option" with [initialIndex] again over the selection they made. So a plan
-     * this ViewModel is already holding is refused, and the caller skips the rest of its seeding with it.
+     * **Seeding is per plan, not per mount of the sheet that calls this**, which is re-mounted every time
+     * HOME's composition is rebuilt — what pushing a destination over the map does (#2274). Nothing
+     * behind directions dies on that trip, so the rider returns to what they left, and re-seeding would
+     * be the only thing to take it away: it would answer "which option" with [initialIndex] again, over
+     * the selection they had made. Callers hang the rest of their seeding off the return value.
      *
-     * "Already holding" is the identity of [itineraries], not its contents: it arrives as the very
+     * "Already holding" is the identity of [plan], not its contents: [itineraries] arrives as the very
      * `PlanResult.Success.itineraries` the trip-plan ViewModel holds, so the same object *is* the same
      * plan, while a re-plan mints a new one — and does re-seed — even where it happens to come back with
      * equal itineraries, which as data classes they can.
      */
-    fun setItineraries(
+    fun seedPlan(
         itineraries: List<TripItinerary>,
         initialIndex: Int,
         plannedStart: ServerTime? = null
@@ -85,11 +82,7 @@ class TripResultsViewModel @Inject constructor(
         return true
     }
 
-    /**
-     * The itinerary of the option currently selected, or null before any plan is seeded — the one answer
-     * to "which trip is this showing", so a caller re-asserting it on the map doesn't reconstruct the
-     * selection out of [state].
-     */
+    /** The itinerary of the option currently selected, or null before any plan is seeded. */
     fun currentItinerary(): TripItinerary? = plan?.getOrNull(selectedIndex)
 
     /**
@@ -102,7 +95,7 @@ class TripResultsViewModel @Inject constructor(
         if (index !in itineraries.indices) return
         val changed = index != selectedIndex
         selectedIndex = index
-        itineraries.getOrNull(index)?.let { _selectedItinerary.tryEmit(index to it) }
+        _selectedItinerary.tryEmit(index to itineraries[index])
         if (changed) load()
     }
 

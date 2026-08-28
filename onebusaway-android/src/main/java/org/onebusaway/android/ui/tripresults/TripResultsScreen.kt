@@ -1064,8 +1064,7 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
-    // The re-mount half of [showItinerary]: draw the trip only where the map isn't already on it. Kept a
-    // separate lambda because the two mean different things — see `HomeViewModel.restoreItineraryOnMap`.
+    // The re-mount half of [showItinerary] — see `HomeViewModel.restoreItineraryOnMap`.
     restoreItinerary: (TripItinerary) -> Unit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
@@ -1090,51 +1089,40 @@ fun TripResultsSheet(
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
 
-    // Seed from the completed plan + point the map at its chosen itinerary (the old bindResults). All
-    // three reads take the same index: seeding one option while drawing another would leave the picker
-    // highlighting a trip the map isn't showing.
+    // Seed from the completed plan, then point the map at the option it settled on — read back from the
+    // ViewModel rather than re-derived here, so the picker can't highlight a trip the map isn't showing.
     //
     // This effect re-runs on every fresh composition, not only on a new plan, so the seed hangs off
-    // whether the ViewModel actually took the plan — see [TripResultsViewModel.setItineraries] for why
-    // re-seeding a re-mount is what would throw the rider's state away (#2274). Drawing the trip, arming
-    // the change monitor and reporting the resume consumed all belong to that one-time seed.
-    //
-    // A re-mount still owes the map the trip, though: the other way here is a fresh entry to directions
-    // over a plan that outlived the last visit, which keeps the results but not the drawing. So it
-    // re-asserts the option the *rider* has selected, through [restoreItinerary], which draws only where
-    // the map isn't already on it.
+    // whether the ViewModel took the plan — see [TripResultsViewModel.seedPlan] (#2274). Drawing the
+    // trip, arming the change monitor and reporting the resume consumed all belong to that one-time
+    // seed. A refused plan means the sheet was merely re-mounted, and it owes the map only a re-assert
+    // of the rider's own option, since a fresh entry to directions keeps the results but not the drawing.
     LaunchedEffect(itineraries) {
-        val index = initialOptionIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        val seeded = resultsViewModel.setItineraries(
-            itineraries,
-            initialIndex = index,
-            plannedStart = params?.plannedStart
-        )
+        val seeded = resultsViewModel.seedPlan(itineraries, initialOptionIndex, params?.plannedStart)
+        val itinerary = resultsViewModel.currentItinerary()
         if (seeded) {
-            itineraries.getOrNull(index)?.let { showItinerary(it) }
-            if (!fromSnapshot) maybeStartTripUpdates(activity, params, itineraries, index)
+            itinerary?.let(showItinerary)
+            if (!fromSnapshot) maybeStartTripUpdates(activity, params, itinerary)
             onOptionsSeeded()
         } else {
-            resultsViewModel.currentItinerary()?.let(restoreItinerary)
+            itinerary?.let(restoreItinerary)
         }
     }
 
-    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] and
-    // [params] through rememberUpdatedState so the long-lived collector always sees the latest plan —
-    // keying the effect on resultsViewModel alone would pin the first snapshot, so a later selection
-    // could arm trip updates with a stale itinerary list *or* a stale request after new results arrive
-    // (selectedItinerary is a no-replay SharedFlow, so keeping one collector — rather than restarting it
-    // — also can't drop a concurrent emission).
-    val currentItineraries by rememberUpdatedState(itineraries)
+    // Follow the selected option onto the map (the old observeSelection). Read [params] through
+    // rememberUpdatedState so the long-lived collector always sees the latest request — keying the effect
+    // on resultsViewModel alone would pin the first snapshot, so a later selection could arm trip updates
+    // with a stale one after new results arrive (selectedItinerary is a no-replay SharedFlow, so keeping
+    // one collector — rather than restarting it — also can't drop a concurrent emission).
     val currentParams by rememberUpdatedState(params)
     val currentFromSnapshot by rememberUpdatedState(fromSnapshot)
     LaunchedEffect(resultsViewModel) {
-        resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
+        resultsViewModel.selectedItinerary.collect { (_, itinerary) ->
             showItinerary(itinerary)
             // Same gate as the seeding effect: picking a different option out of a *stored* plan is
             // still a stored plan, and none of its departures are any fresher for having been tapped.
             if (!currentFromSnapshot) {
-                maybeStartTripUpdates(activity, currentParams, currentItineraries, index)
+                maybeStartTripUpdates(activity, currentParams, itinerary)
             }
         }
     }
@@ -1174,18 +1162,17 @@ fun TripResultsSheet(
 }
 
 /**
- * Arms the trip-plan-change monitor ([TripPlanMonitor]) for the selected itinerary when trip-update
- * notifications are enabled. [params] is the request that produced [itineraries]; it's null when the
- * results were restored from a notification re-entry (the request isn't reconstructed there), in which
- * case there is nothing to re-plan, so monitoring isn't re-armed.
+ * Arms the trip-plan-change monitor ([TripPlanMonitor]) for [itinerary] when trip-update notifications
+ * are enabled. [params] is the request that produced it; it's null when the results were restored from a
+ * notification re-entry (the request isn't reconstructed there), in which case there is nothing to
+ * re-plan, so monitoring isn't re-armed.
  */
 private fun maybeStartTripUpdates(
     activity: Activity,
     params: TripPlanParams?,
-    itineraries: List<TripItinerary>,
-    index: Int
+    itinerary: TripItinerary?
 ) {
-    val itinerary = itineraries.getOrNull(index) ?: return
+    if (itinerary == null) return
     if (params == null) return
     if (!TripPlanNotifications.isEnabled(activity)) return
 

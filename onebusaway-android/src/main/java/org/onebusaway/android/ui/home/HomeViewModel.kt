@@ -833,14 +833,10 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Put [itinerary] back on the map unless directions is already on it — the results sheet's re-mount
-     * reconcile (#2274; see [org.onebusaway.android.ui.tripresults.TripResultsViewModel.setItineraries]
-     * for what a re-mount is and why it must change nothing).
-     *
-     * The two re-mounts that reach here want opposite things, and [shownItinerary] tells them apart: it
-     * is the trip *this* visit to directions has drawn, and a fresh entry clears it (see
-     * [enterDirections]). So leaving directions and coming back — which keeps the plan but took the trip
-     * off the map — redraws, while a return from a pushed destination finds its own trip already there
-     * and says nothing.
+     * reconcile (#2274; [org.onebusaway.android.ui.tripresults.TripResultsViewModel.seedPlan] has the
+     * rule). [shownItinerary] is what tells the two kinds of re-mount apart: it is the trip *this* visit
+     * to directions drew, and a fresh entry clears it (see [enterDirections]), so re-entering directions
+     * redraws while returning from a pushed destination finds its own trip already there.
      *
      * Deliberately not folded into [showItineraryOnMap] as a guard there. That call means "the rider
      * chose this option", and re-choosing the option already selected is exactly how they get the whole

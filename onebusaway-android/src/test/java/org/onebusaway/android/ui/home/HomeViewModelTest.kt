@@ -822,6 +822,52 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `re-asserting the trip already drawn leaves a drilled-into leg alone`() = runTest {
+        // The #2274 path: the results sheet is re-mounted (HOME's composition rebuilt under the trip
+        // view a vehicle tap opened) and re-asserts its selected option. The rider is still inside a
+        // leg, and nothing about the map has changed, so this has to say nothing at all — redrawing
+        // would drop them back to the itinerary overview and re-frame the whole trip.
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val itinerary = vm.enterDirectionsShowing()
+        vm.focusItineraryRouteLegOnMap("65")
+        advanceUntilIdle()
+        val focusInTheLeg = vm.currentFocus.value
+        map.sent.clear()
+
+        vm.restoreItineraryOnMap(itinerary)
+        advanceUntilIdle()
+
+        assertTrue(map.sent.isEmpty())
+        assertEquals(focusInTheLeg, vm.currentFocus.value)
+        job.cancel()
+    }
+
+    @Test
+    fun `re-asserting the trip draws it again after a fresh entry to directions`() = runTest {
+        // The other side of the same re-mount: leaving directions and coming back keeps the plan (the
+        // trip-plan ViewModel holds it) but took the trip off the map, so the sheet's re-assert is what
+        // puts it back.
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val itinerary = vm.enterDirectionsShowing()
+        vm.leaveDirections()
+        vm.enterDirections()
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.restoreItineraryOnMap(itinerary)
+        advanceUntilIdle()
+
+        assertEquals(listOf(MapDirective.ShowItinerary(itinerary)), map.sent)
+        job.cancel()
+    }
+
+    @Test
     fun `a redrawn trip keeps the terminus pin its current-location endpoint withheld`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

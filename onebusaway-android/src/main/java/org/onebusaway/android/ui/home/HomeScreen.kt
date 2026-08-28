@@ -1020,75 +1020,76 @@ fun HomeScreen(
                                 // flight shows a top progress line. The results selection drives the drawn itinerary.
                                 if (directionsActive && pickTarget == null) {
                                     when {
-                                        directionsResults != null -> DirectionsResultsSheet(
-                                            resultsViewModel = tripResultsViewModel,
-                                            itineraries = directionsResults.itineraries,
-                                            params = directionsResults.params,
-                                            showItinerary = { itinerary ->
-                                                homeViewModel.showItineraryOnMap(
-                                                    itinerary,
-                                                    directionsResults.params.itineraryPins()
-                                                )
-                                            },
-                                            onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
-                                            onFocusLeg = homeViewModel::focusItineraryLegOnMap,
-                                            onFocusPoint = homeViewModel::focusItineraryPointOnMap,
-                                            // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
-                                            // ruled at how the plan gets the rider to the stop (#2125): a transfer's
-                                            // arrival, or — for the first ride — the walk from now (#2227).
-                                            stopEtaStrip = { ride, stop ->
-                                                // The focused leg's boarding stop: the one strip that reads the
-                                                // hoisted session rather than opening a second one on the stop the
-                                                // map is already polling — and so the one strip whose pills can be
-                                                // the map's drilled-into vehicle (#2224).
-                                                val isRideBoardStop =
-                                                    stop.stopId != null && stop.stopId == rideBoardStop?.id
-                                                DirectionStopEtaStrip(
-                                                    routeLeg = ride.routeLeg,
-                                                    stop = stop,
-                                                    reachStop = ride.reachStop,
-                                                    arrivalsViewModelFactory = arrivalsViewModelFactory,
-                                                    onShowTrip = onShowTrip,
-                                                    onEditReminder = onEditReminder,
-                                                    onFocusVehicle = { request ->
-                                                        homeViewModel.focusDirectionsRouteVehicle(request, ride.routeLeg, ride.legPoints)
-                                                    },
-                                                    hoistedSession = rideArrivalsSession?.takeIf { isRideBoardStop },
-                                                    // Same rung and same rim colour the arrivals drawer outlines its
-                                                    // focused pill with, so a pill tapped here and one tapped there
-                                                    // look alike as well as behaving alike.
-                                                    pillFocus = etaPillFocus(
-                                                        rideRouteFocus?.selectedTripId?.takeIf { isRideBoardStop },
-                                                        selectedTripBandColor
+                                        directionsResults != null -> {
+                                            // Both ways of putting this trip on the map must wear the same terminus pins
+                                            // (#2111): the re-assert below compares what is drawn, pins and all.
+                                            val pins = directionsResults.params.itineraryPins()
+                                            DirectionsResultsSheet(
+                                                resultsViewModel = tripResultsViewModel,
+                                                itineraries = directionsResults.itineraries,
+                                                params = directionsResults.params,
+                                                showItinerary = { homeViewModel.showItineraryOnMap(it, pins) },
+                                                restoreItinerary = { homeViewModel.restoreItineraryOnMap(it, pins) },
+                                                onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
+                                                onFocusLeg = homeViewModel::focusItineraryLegOnMap,
+                                                onFocusPoint = homeViewModel::focusItineraryPointOnMap,
+                                                // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
+                                                // ruled at how the plan gets the rider to the stop (#2125): a transfer's
+                                                // arrival, or — for the first ride — the walk from now (#2227).
+                                                stopEtaStrip = { ride, stop ->
+                                                    // The focused leg's boarding stop: the one strip that reads the
+                                                    // hoisted session rather than opening a second one on the stop the
+                                                    // map is already polling — and so the one strip whose pills can be
+                                                    // the map's drilled-into vehicle (#2224).
+                                                    val isRideBoardStop =
+                                                        stop.stopId != null && stop.stopId == rideBoardStop?.id
+                                                    DirectionStopEtaStrip(
+                                                        routeLeg = ride.routeLeg,
+                                                        stop = stop,
+                                                        reachStop = ride.reachStop,
+                                                        arrivalsViewModelFactory = arrivalsViewModelFactory,
+                                                        onShowTrip = onShowTrip,
+                                                        onEditReminder = onEditReminder,
+                                                        onFocusVehicle = { request ->
+                                                            homeViewModel.focusDirectionsRouteVehicle(request, ride.routeLeg, ride.legPoints)
+                                                        },
+                                                        hoistedSession = rideArrivalsSession?.takeIf { isRideBoardStop },
+                                                        // Same rung and same rim colour the arrivals drawer outlines its
+                                                        // focused pill with, so a pill tapped here and one tapped there
+                                                        // look alike as well as behaving alike.
+                                                        pillFocus = etaPillFocus(
+                                                            rideRouteFocus?.selectedTripId?.takeIf { isRideBoardStop },
+                                                            selectedTripBandColor
+                                                        )
                                                     )
-                                                )
-                                            },
-                                            // Its own settled height (peek vs expanded), not a measured
-                                            // size: the sheet now hosts a full-screen scaffold over the
-                                            // map, so the composable's own bounds are the whole screen.
-                                            onSheetHeightPx = { directionsSheetHeightPx = it },
-                                            // A route label tapped on the drawn itinerary (#2101): the
-                                            // sheet resolves it to the ride it names and focuses it —
-                                            // the first in travel order where one label covers the
-                                            // same route ridden twice.
-                                            rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps,
-                                            // A resume opens on the option the rider pinned; every other
-                                            // plan opens on the first, as it always has.
-                                            initialOptionIndex = pendingResumeIndex ?: 0,
-                                            fromSnapshot = directionsResults.fromSnapshot,
-                                            pinnedOptionIndex = pinnedTrip
-                                                ?.selectedIndex
-                                                ?.takeIf { pinnedTripIsOnScreen },
-                                            // A plan with no request behind it has nothing to pin, so
-                                            // its cards carry no long press at all (#2053).
-                                            onTogglePin = onTogglePinOption.takeIf { canPin },
-                                            // Only while this drawer is showing the pinned trip, which
-                                            // is what lets the button say "this trip".
-                                            onUnpinTrip = pinnedTripViewModel::unpin
-                                                .takeIf { pinnedTripIsOnScreen },
-                                            onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
+                                                },
+                                                // Its own settled height (peek vs expanded), not a measured
+                                                // size: the sheet now hosts a full-screen scaffold over the
+                                                // map, so the composable's own bounds are the whole screen.
+                                                onSheetHeightPx = { directionsSheetHeightPx = it },
+                                                // A route label tapped on the drawn itinerary (#2101): the
+                                                // sheet resolves it to the ride it names and focuses it —
+                                                // the first in travel order where one label covers the
+                                                // same route ridden twice.
+                                                rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps,
+                                                // A resume opens on the option the rider pinned; every other
+                                                // plan opens on the first, as it always has.
+                                                initialOptionIndex = pendingResumeIndex ?: 0,
+                                                fromSnapshot = directionsResults.fromSnapshot,
+                                                pinnedOptionIndex = pinnedTrip
+                                                    ?.selectedIndex
+                                                    ?.takeIf { pinnedTripIsOnScreen },
+                                                // A plan with no request behind it has nothing to pin, so
+                                                // its cards carry no long press at all (#2053).
+                                                onTogglePin = onTogglePinOption.takeIf { canPin },
+                                                // Only while this drawer is showing the pinned trip, which
+                                                // is what lets the button say "this trip".
+                                                onUnpinTrip = pinnedTripViewModel::unpin
+                                                    .takeIf { pinnedTripIsOnScreen },
+                                                onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
                                         directionsError != null -> DirectionsErrorSnackbar(
                                             error = directionsError,
                                             onDismiss = tripPlanViewModel::clearPlanResult,

@@ -47,20 +47,43 @@ class TripResultsViewModel @Inject constructor(
     private val _selectedItinerary = MutableSharedFlow<Pair<Int, TripItinerary>>(extraBufferCapacity = 1)
     val selectedItinerary: SharedFlow<Pair<Int, TripItinerary>> = _selectedItinerary.asSharedFlow()
 
-    private var itineraries: List<TripItinerary> = emptyList()
+    // The plan being shown, or null before the first seed. Held by identity — see [seedPlan].
+    private var plan: List<TripItinerary>? = null
     private var selectedIndex: Int = 0
     private var plannedStart: ServerTime? = null
 
     /**
-     * Seeds the results from a completed plan. [initialIndex] restores the prior option selection;
-     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
+     * Takes a completed plan, reporting whether it took it — hence `seed` rather than `set`: a plan this
+     * ViewModel is already holding is refused. [initialIndex] is the option to *open* on (a resumed
+     * trip's pinned one, else the first); [plannedStart] is
+     * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
+     *
+     * **Seeding is per plan, not per mount of the sheet that calls this**, which is re-mounted every time
+     * HOME's composition is rebuilt — what pushing a destination over the map does (#2274). Nothing
+     * behind directions dies on that trip, so the rider returns to what they left, and re-seeding would
+     * be the only thing to take it away: it would answer "which option" with [initialIndex] again, over
+     * the selection they had made. Callers hang the rest of their seeding off the return value.
+     *
+     * "Already holding" is the identity of [plan], not its contents: [itineraries] arrives as the very
+     * `PlanResult.Success.itineraries` the trip-plan ViewModel holds, so the same object *is* the same
+     * plan, while a re-plan mints a new one — and does re-seed — even where it happens to come back with
+     * equal itineraries, which as data classes they can.
      */
-    fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int, plannedStart: ServerTime? = null) {
-        this.itineraries = itineraries
-        this.selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
+    fun seedPlan(
+        itineraries: List<TripItinerary>,
+        initialIndex: Int,
+        plannedStart: ServerTime? = null
+    ): Boolean {
+        if (itineraries === plan) return false
+        plan = itineraries
+        selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
         this.plannedStart = plannedStart
         load()
+        return true
     }
+
+    /** The itinerary of the option currently selected, or null before any plan is seeded. */
+    fun currentItinerary(): TripItinerary? = plan?.getOrNull(selectedIndex)
 
     /**
      * Tapping an option card re-points the map at its itinerary (framing the whole trip) — even when
@@ -68,18 +91,19 @@ class TripResultsViewModel @Inject constructor(
      * a *change* of option reloads its directions.
      */
     fun selectOption(index: Int) {
+        val itineraries = plan ?: return
         if (index !in itineraries.indices) return
         val changed = index != selectedIndex
         selectedIndex = index
-        itineraries.getOrNull(index)?.let { _selectedItinerary.tryEmit(index to it) }
+        _selectedItinerary.tryEmit(index to itineraries[index])
         if (changed) load()
     }
 
     private fun load() {
         viewModelScope.launch {
-            repository.summarize(itineraries).fold(
+            repository.summarize(plan.orEmpty()).fold(
                 onSuccess = { options ->
-                    val selected = itineraries.getOrNull(selectedIndex)
+                    val selected = currentItinerary()
                     val directions = selected
                         ?.let { repository.directionsFor(it, plannedStart).getOrDefault(emptyList()) }
                         .orEmpty()

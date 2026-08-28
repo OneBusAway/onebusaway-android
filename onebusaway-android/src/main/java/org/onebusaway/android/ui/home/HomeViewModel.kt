@@ -831,6 +831,22 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(draw)
     }
 
+    /**
+     * Put [itinerary] back on the map unless directions is already on it — the results sheet's re-mount
+     * reconcile (#2274; [org.onebusaway.android.ui.tripresults.TripResultsViewModel.seedPlan] has the
+     * rule). [shownItinerary] is what tells the two kinds of re-mount apart: it is the trip *this* visit
+     * to directions drew, and a fresh entry clears it (see [enterDirections]), so re-entering directions
+     * redraws while returning from a pushed destination finds its own trip already there.
+     *
+     * Deliberately not folded into [showItineraryOnMap] as a guard there. That call means "the rider
+     * chose this option", and re-choosing the option already selected is exactly how they get the whole
+     * trip framed again after zooming into a leg — so it has to redraw even when nothing changed.
+     */
+    fun restoreItineraryOnMap(itinerary: TripItinerary, pins: ItineraryPins = ItineraryPins()) {
+        if (shownItinerary == MapDirective.ShowItinerary(itinerary, pins)) return
+        showItineraryOnMap(itinerary, pins)
+    }
+
     /** The leg the user has drilled into from the itinerary overview, if any. */
     private val directionsSubFocus: DirectionsSubFocus?
         get() = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus

@@ -47,20 +47,50 @@ class TripResultsViewModel @Inject constructor(
     private val _selectedItinerary = MutableSharedFlow<Pair<Int, TripItinerary>>(extraBufferCapacity = 1)
     val selectedItinerary: SharedFlow<Pair<Int, TripItinerary>> = _selectedItinerary.asSharedFlow()
 
-    private var itineraries: List<TripItinerary> = emptyList()
+    // The plan being shown, or null before the first seed — see [setItineraries], which reads it as the
+    // identity of that plan and not merely as the itineraries it holds.
+    private var plan: List<TripItinerary>? = null
     private var selectedIndex: Int = 0
     private var plannedStart: ServerTime? = null
 
     /**
-     * Seeds the results from a completed plan. [initialIndex] restores the prior option selection;
-     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
+     * Seeds the results from a completed plan, reporting whether it took it. [initialIndex] is the option
+     * to open on — a resumed trip's pinned one, else the first; [plannedStart] is
+     * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
+     *
+     * **Seeding is per *plan*, not per mount of the sheet that calls this** — the rule this whole change
+     * turns on, stated here because this is where it is enforced. That sheet is re-mounted every time
+     * HOME's composition is rebuilt, which is what pushing a destination over the map does, most often
+     * the trip view a rider opens by tapping a vehicle on their own itinerary (#2274). Nothing behind
+     * directions dies on that trip — the ViewModels are activity-scoped and the map keeps its own render
+     * state — so the rider returns to what they left, and re-seeding is the only thing that would take it
+     * away, by answering "which option" with [initialIndex] again over the selection they made. So a plan
+     * this ViewModel is already holding is refused, and the caller skips the rest of its seeding with it.
+     *
+     * "Already holding" is the identity of [itineraries], not its contents: it arrives as the very
+     * `PlanResult.Success.itineraries` the trip-plan ViewModel holds, so the same object *is* the same
+     * plan, while a re-plan mints a new one — and does re-seed — even where it happens to come back with
+     * equal itineraries, which as data classes they can.
      */
-    fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int, plannedStart: ServerTime? = null) {
-        this.itineraries = itineraries
-        this.selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
+    fun setItineraries(
+        itineraries: List<TripItinerary>,
+        initialIndex: Int,
+        plannedStart: ServerTime? = null
+    ): Boolean {
+        if (itineraries === plan) return false
+        plan = itineraries
+        selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
         this.plannedStart = plannedStart
         load()
+        return true
     }
+
+    /**
+     * The itinerary of the option currently selected, or null before any plan is seeded — the one answer
+     * to "which trip is this showing", so a caller re-asserting it on the map doesn't reconstruct the
+     * selection out of [state].
+     */
+    fun currentItinerary(): TripItinerary? = plan?.getOrNull(selectedIndex)
 
     /**
      * Tapping an option card re-points the map at its itinerary (framing the whole trip) — even when
@@ -68,6 +98,7 @@ class TripResultsViewModel @Inject constructor(
      * a *change* of option reloads its directions.
      */
     fun selectOption(index: Int) {
+        val itineraries = plan ?: return
         if (index !in itineraries.indices) return
         val changed = index != selectedIndex
         selectedIndex = index
@@ -77,9 +108,9 @@ class TripResultsViewModel @Inject constructor(
 
     private fun load() {
         viewModelScope.launch {
-            repository.summarize(itineraries).fold(
+            repository.summarize(plan.orEmpty()).fold(
                 onSuccess = { options ->
-                    val selected = itineraries.getOrNull(selectedIndex)
+                    val selected = currentItinerary()
                     val directions = selected
                         ?.let { repository.directionsFor(it, plannedStart).getOrDefault(emptyList()) }
                         .orEmpty()

@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -94,6 +95,45 @@ class TripResultsViewModelTest {
         val state = viewModel.state.value as TripResultsUiState.Success
         assertEquals(options, state.options)
         assertEquals(1, state.selectedIndex)
+    }
+
+    @Test
+    fun `re-seeding the very same plan is refused and keeps the rider's selection`() = runTest {
+        // The #2274 path: the sheet is re-mounted (HOME's composition rebuilt under the trip view a
+        // vehicle tap opened), so it re-runs its seed with the option to *open* on — which must not
+        // overwrite the option the rider picked while it was on screen.
+        val repository = FakeTripResultsRepository(Result.success(options))
+        val viewModel = TripResultsViewModel(repository)
+        val plan = itineraries(2)
+        viewModel.setItineraries(plan, initialIndex = 0)
+        advanceUntilIdle()
+        viewModel.selectOption(1)
+        advanceUntilIdle()
+        repository.directionsForCalls.clear()
+
+        val seeded = viewModel.setItineraries(plan, initialIndex = 0)
+        advanceUntilIdle()
+
+        assertFalse(seeded)
+        assertEquals(1, (viewModel.state.value as TripResultsUiState.Success).selectedIndex)
+        assertTrue(repository.directionsForCalls.isEmpty())
+    }
+
+    @Test
+    fun `a new plan re-seeds even when its itineraries are equal to the old ones`() = runTest {
+        // TripItinerary is a data class, so a re-plan can come back structurally equal to what is on
+        // screen. It is still a new plan, and opens on the index it was given.
+        val repository = FakeTripResultsRepository(Result.success(options))
+        val viewModel = TripResultsViewModel(repository)
+        viewModel.setItineraries(itineraries(2), initialIndex = 1)
+        advanceUntilIdle()
+
+        val replanned = itineraries(2)
+        val seeded = viewModel.setItineraries(replanned, initialIndex = 0)
+        advanceUntilIdle()
+
+        assertTrue(seeded)
+        assertEquals(0, (viewModel.state.value as TripResultsUiState.Success).selectedIndex)
     }
 
     @Test

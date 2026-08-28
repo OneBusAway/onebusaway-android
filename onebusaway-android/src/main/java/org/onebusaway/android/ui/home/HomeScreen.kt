@@ -724,6 +724,10 @@ fun HomeScreen(
                             val directionsResults = (tripPlanResult as? PlanResult.Success)?.takeIf {
                                 it.itineraries.isNotEmpty()
                             }
+                            // The terminus pins the drawn trip wears (#2111), derived once: both ways of
+                            // putting a trip on the map below must agree on them, since the re-assert
+                            // compares what is drawn pins and all.
+                            val itineraryPins = directionsResults?.params.itineraryPins()
                             // The classified error for a failed plan (e.g. endpoints outside the transit
                             // network), so it isn't silently swallowed; the snackbar renders its header + reason.
                             // Success is always non-empty (both planners throw NoRoute on empty), so only Error
@@ -1024,12 +1028,8 @@ fun HomeScreen(
                                             resultsViewModel = tripResultsViewModel,
                                             itineraries = directionsResults.itineraries,
                                             params = directionsResults.params,
-                                            showItinerary = { itinerary ->
-                                                homeViewModel.showItineraryOnMap(
-                                                    itinerary,
-                                                    directionsResults.params.itineraryPins()
-                                                )
-                                            },
+                                            showItinerary = { homeViewModel.showItineraryOnMap(it, itineraryPins) },
+                                            restoreItinerary = { homeViewModel.restoreItineraryOnMap(it, itineraryPins) },
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,

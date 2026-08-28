@@ -76,7 +76,10 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -1061,6 +1064,9 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    // The re-mount half of [showItinerary]: draw the trip only where the map isn't already on it. Kept a
+    // separate lambda because the two mean different things — see `HomeViewModel.restoreItineraryOnMap`.
+    restoreItinerary: (TripItinerary) -> Unit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
@@ -1087,12 +1093,30 @@ fun TripResultsSheet(
     // Seed from the completed plan + point the map at its chosen itinerary (the old bindResults). All
     // three reads take the same index: seeding one option while drawing another would leave the picker
     // highlighting a trip the map isn't showing.
+    //
+    // This effect re-runs on every fresh composition, not only on a new plan, so the seed hangs off
+    // whether the ViewModel actually took the plan — see [TripResultsViewModel.setItineraries] for why
+    // re-seeding a re-mount is what would throw the rider's state away (#2274). Drawing the trip, arming
+    // the change monitor and reporting the resume consumed all belong to that one-time seed.
+    //
+    // A re-mount still owes the map the trip, though: the other way here is a fresh entry to directions
+    // over a plan that outlived the last visit, which keeps the results but not the drawing. So it
+    // re-asserts the option the *rider* has selected, through [restoreItinerary], which draws only where
+    // the map isn't already on it.
     LaunchedEffect(itineraries) {
         val index = initialOptionIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        resultsViewModel.setItineraries(itineraries, initialIndex = index, plannedStart = params?.plannedStart)
-        itineraries.getOrNull(index)?.let { showItinerary(it) }
-        if (!fromSnapshot) maybeStartTripUpdates(activity, params, itineraries, index)
-        onOptionsSeeded()
+        val seeded = resultsViewModel.setItineraries(
+            itineraries,
+            initialIndex = index,
+            plannedStart = params?.plannedStart
+        )
+        if (seeded) {
+            itineraries.getOrNull(index)?.let { showItinerary(it) }
+            if (!fromSnapshot) maybeStartTripUpdates(activity, params, itineraries, index)
+            onOptionsSeeded()
+        } else {
+            resultsViewModel.currentItinerary()?.let(restoreItinerary)
+        }
     }
 
     // Follow the selected option onto the map (the old observeSelection). Read [itineraries] and
@@ -1249,6 +1273,15 @@ private fun timelineScale(): Float = LocalDensity.current.fontScale.coerceIn(1f,
 private fun railSplit(): Dp = RAIL_SPLIT * timelineScale()
 
 /**
+ * Persists [TripLogList]'s set of opened legs — plain leg indices, so the whole set is a saveable
+ * `List<Int>`.
+ */
+private val EXPANDED_LEGS_SAVER = listSaver<SnapshotStateSet<Int>, Int>(
+    save = { it.toList() },
+    restore = { saved -> mutableStateSetOf<Int>().apply { addAll(saved) } }
+)
+
+/**
  * The itinerary as one continuous timeline, one lazy list row per event. Expansion is per-leg state,
  * keyed on the entries so a new plan resets it. The spine's per-node connector colours and each leg's
  * band are derived up front by [flattenLog] from the entry sequence; the rows themselves compose lazily,
@@ -1270,7 +1303,10 @@ private fun TripLogList(
     reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
-    val expanded = remember(entries) { mutableStateSetOf<Int>() }
+    // Which legs the rider has opened inline. Saved, not merely remembered, so it survives HOME's
+    // composition being rebuilt under a pushed destination (#2274) instead of silently re-collapsing.
+    // Still keyed on [entries], so a different plan's log starts collapsed.
+    val expanded = rememberSaveable(entries, saver = EXPANDED_LEGS_SAVER) { mutableStateSetOf<Int>() }
     val onToggle: (Int) -> Unit = remember(expanded) { { i -> if (!expanded.add(i)) expanded.remove(i) } }
     // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
     // what makes a toggle recompose this list.

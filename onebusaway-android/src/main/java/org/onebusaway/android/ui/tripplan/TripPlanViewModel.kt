@@ -36,7 +36,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -127,6 +131,25 @@ class TripPlanViewModel @Inject constructor(
     private val planInputs = Channel<TripPlanParams?>(Channel.CONFLATED)
 
     init {
+        // A trip is a pair of places in one transit system, so a region switch invalidates both ends at
+        // once: the rider is now in Seattle holding a Tampa origin and destination, which the new
+        // region's planner can only fail on — and in a region with no planner at all it can't even be
+        // asked (#2264). Clearing takes the drawn result with it, so nothing outlives the switch.
+        //
+        // Only a switch *away from* a region counts. The leading null — the region is unresolved
+        // until the directory lands, or until the rider picks — is not a switch, and treating it as
+        // one would wipe a trip that a notification restore or a pinned resume put here while the
+        // region was still settling. Dropped by [dropWhile] rather than by filtering nulls out
+        // altogether, so a *later* null — the rider clearing the region, a refresh that finds none —
+        // still strands the trip and still clears it.
+        regionRepository.region
+            .map { it?.id }
+            .dropWhile { it == null }
+            .distinctUntilChanged()
+            .drop(1)
+            .onEach { clearTrip() }
+            .launchIn(viewModelScope)
+
         queries.forEach { (slot, typed) ->
             typed
                 .debounce(SUGGEST_DEBOUNCE_MS)
@@ -281,11 +304,13 @@ class TripPlanViewModel @Inject constructor(
     /**
      * Clears the whole trip — both endpoints and any planned result — back to an empty form.
      *
-     * Not a rider-facing control (the pills clear one end at a time, [clearEndpoint]): this is for the
-     * scripted tour's teardown (#2164). The tour fills the planner in with the demo transit system's
-     * Seattle endpoints and plans them, and this ViewModel is activity-scoped, so without this the
-     * rider's next visit to Plan Trip opens on a trip they never asked for, drawn on the map, that only
-     * the demo deployment could have produced — and re-planning it against the real OTP just errors.
+     * Not a rider-facing control (the pills clear one end at a time, [clearEndpoint]). Two things ask
+     * for it, and they are the same situation: a trip left over from a transit system that is no longer
+     * the one the app is pointed at. The scripted tour's teardown (#2164) — the tour fills the planner
+     * in with the demo system's Seattle endpoints and plans them, and this ViewModel is activity-scoped,
+     * so without this the rider's next visit to Plan Trip opens on a trip they never asked for, drawn on
+     * the map, that only the demo deployment could have produced. And a region switch, above, which
+     * strands a real trip the same way.
      *
      * Both ends are emptied in one form write, so the submit below sees an unsubmittable form and drops
      * the result to [PlanResult.Idle] rather than putting a plan on the wire.

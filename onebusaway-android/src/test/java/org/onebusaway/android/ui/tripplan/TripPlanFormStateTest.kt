@@ -174,4 +174,27 @@ class TripPlanFormStateTest {
         assertFalse(pressed.isEmpty)
         assertFalse(here.isEmpty)
     }
+
+    // --- a place the app can name ---------------------------------------------------------------
+
+    /** The focused stop's "navigate here" (#2272) and a place shared in from another app (#1936). */
+    @Test
+    fun `a named place becomes a geocoded endpoint carrying its name`() {
+        assertEquals(
+            TripEndpoint.Geocoded("Pike St & 3rd Ave", lat = 47.61, lon = -122.34, isTransit = true),
+            TripEndpoint.namedPlace("Pike St & 3rd Ave", lat = 47.61, lon = -122.34, isTransit = true)
+        )
+    }
+
+    /**
+     * Nothing to call it, so it becomes the same kind of endpoint a map press makes — whose fixed
+     * "Selected location" label is honest, where an empty pill would just look broken.
+     */
+    @Test
+    fun `a place with no name to show becomes a map point`() {
+        val bare = TripEndpoint.MapPoint(lat = 47.61, lon = -122.34)
+        assertEquals(bare, TripEndpoint.namedPlace(null, lat = 47.61, lon = -122.34))
+        assertEquals(bare, TripEndpoint.namedPlace("", lat = 47.61, lon = -122.34))
+        assertEquals(bare, TripEndpoint.namedPlace("   ", lat = 47.61, lon = -122.34, isTransit = true))
+    }
 }

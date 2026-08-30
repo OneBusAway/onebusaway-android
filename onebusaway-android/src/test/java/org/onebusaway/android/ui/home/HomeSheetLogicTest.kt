@@ -142,22 +142,50 @@ class HomeSheetLogicTest {
     // --- mapControlsBottomInset ---
 
     @Test
-    fun `the map controls sit at the bottom edge with no sheet over the map`() {
+    fun `with no sheet over the map the controls still clear the navigation bar inset`() {
         assertEquals(
-            0.dp,
-            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = false, directionsSheet = 0.dp)
+            24.dp,
+            mapControlsBottomInset(
+                arrivalsPeek = 200.dp,
+                arrivalsAtPeek = false,
+                directionsSheet = 0.dp,
+                navigationBarInset = 24.dp
+            )
         )
     }
 
     @Test
-    fun `a peeking arrivals sheet lifts the map controls, an expanded one does not`() {
-        assertEquals(
-            200.dp,
-            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 0.dp)
-        )
+    fun `zero navigation bar inset leaves the controls at the bottom edge with no sheet over the map`() {
         assertEquals(
             0.dp,
-            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = false, directionsSheet = 0.dp)
+            mapControlsBottomInset(
+                arrivalsPeek = 200.dp,
+                arrivalsAtPeek = false,
+                directionsSheet = 0.dp,
+                navigationBarInset = 0.dp
+            )
+        )
+    }
+
+    @Test
+    fun `a peeking arrivals sheet lifts the map controls, an expanded one falls back to the nav bar inset`() {
+        assertEquals(
+            200.dp,
+            mapControlsBottomInset(
+                arrivalsPeek = 200.dp,
+                arrivalsAtPeek = true,
+                directionsSheet = 0.dp,
+                navigationBarInset = 24.dp
+            )
+        )
+        assertEquals(
+            24.dp,
+            mapControlsBottomInset(
+                arrivalsPeek = 200.dp,
+                arrivalsAtPeek = false,
+                directionsSheet = 0.dp,
+                navigationBarInset = 24.dp
+            )
         )
     }
 
@@ -166,11 +194,21 @@ class HomeSheetLogicTest {
         // Expanded (a fraction of the window) and collapsed to its handle-only peek.
         assertEquals(
             320.dp,
-            mapControlsBottomInset(arrivalsPeek = 0.dp, arrivalsAtPeek = false, directionsSheet = 320.dp)
+            mapControlsBottomInset(
+                arrivalsPeek = 0.dp,
+                arrivalsAtPeek = false,
+                directionsSheet = 320.dp,
+                navigationBarInset = 24.dp
+            )
         )
         assertEquals(
             48.dp,
-            mapControlsBottomInset(arrivalsPeek = 0.dp, arrivalsAtPeek = false, directionsSheet = 48.dp)
+            mapControlsBottomInset(
+                arrivalsPeek = 0.dp,
+                arrivalsAtPeek = false,
+                directionsSheet = 48.dp,
+                navigationBarInset = 24.dp
+            )
         )
     }
 
@@ -178,11 +216,21 @@ class HomeSheetLogicTest {
     fun `with both sheets reporting a height the controls clear the taller one`() {
         assertEquals(
             320.dp,
-            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 320.dp)
+            mapControlsBottomInset(
+                arrivalsPeek = 200.dp,
+                arrivalsAtPeek = true,
+                directionsSheet = 320.dp,
+                navigationBarInset = 24.dp
+            )
         )
         assertEquals(
             200.dp,
-            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 48.dp)
+            mapControlsBottomInset(
+                arrivalsPeek = 200.dp,
+                arrivalsAtPeek = true,
+                directionsSheet = 48.dp,
+                navigationBarInset = 24.dp
+            )
         )
     }
 

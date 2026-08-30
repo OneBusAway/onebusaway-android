@@ -863,7 +863,8 @@ fun HomeScreen(
                                     with(density) { directionsSheetHeightPx.toDp() }
                                 } else {
                                     0.dp
-                                }
+                                },
+                                navigationBarInset = peekBottomPadding
                             )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The

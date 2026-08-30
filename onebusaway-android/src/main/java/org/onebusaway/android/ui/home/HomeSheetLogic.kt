@@ -132,7 +132,10 @@ internal fun focusBannerTopEdge(
 
 /**
  * How far to lift the map's floating controls (my-location, zoom, layers) off the bottom edge so they
- * stay in the visible map band above whichever bottom sheet is resting over it.
+ * stay in the visible map band above whichever bottom sheet is resting over it — and never sit lower
+ * than the system navigation bar / gesture inset ([navigationBarInset]), which the edge-to-edge map
+ * draws behind. With no sheet showing there is nothing else to clear, but the inset floor still
+ * applies: without it the controls sit at the literal window edge, under the gesture bar.
  *
  * [arrivalsPeek] is the collapsed arrivals peek, counted only while the arrivals sheet rests *at* that
  * peek ([arrivalsAtPeek]) — an expanded arrivals sheet covers the controls outright, so lifting to it
@@ -147,8 +150,9 @@ internal fun focusBannerTopEdge(
 internal fun mapControlsBottomInset(
     arrivalsPeek: Dp,
     arrivalsAtPeek: Boolean,
-    directionsSheet: Dp
-): Dp = maxOf(if (arrivalsAtPeek) arrivalsPeek else 0.dp, directionsSheet)
+    directionsSheet: Dp,
+    navigationBarInset: Dp
+): Dp = maxOf(if (arrivalsAtPeek) arrivalsPeek else 0.dp, directionsSheet, navigationBarInset)
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState = if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded

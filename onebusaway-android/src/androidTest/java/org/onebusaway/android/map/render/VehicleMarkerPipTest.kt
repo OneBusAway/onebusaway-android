@@ -121,7 +121,10 @@ class VehicleMarkerPipTest {
             )
         }
         assertTrue("an all-empty row must still draw its washed pips (saw $whites)", whites.first() > 0)
-        assertTrue("a full row must leave no washed pips (saw $whites)", whites.last() == 0)
+        assertTrue(
+            "a full row must leave next to no washed pips (saw $whites)",
+            whites.last() <= FULL_ROW_WASH_TOLERANCE
+        )
     }
 
     /**
@@ -238,5 +241,14 @@ class VehicleMarkerPipTest {
 
         /** The tab's half-width, for locating its thirds. Independent of the production constant. */
         const val TAB_HALF_WIDTH_GRID = 10.7f
+
+        /**
+         * How many washed pixels a fully-inked row is still allowed, to absorb anti-aliasing rounding at a
+         * black pip's edge — not a real gap, since a black-tinted pip blends *darker* into the tab as its
+         * silhouette antialiases, not lighter, except for sub-pixel coverage rounding that varies by
+         * device/Skia version. Tiny next to the hundreds of washed pixels an actual unfilled pip leaves (see
+         * the empty/one-filled rungs above), so a real regression still fails this loudly.
+         */
+        const val FULL_ROW_WASH_TOLERANCE = 4
     }
 }

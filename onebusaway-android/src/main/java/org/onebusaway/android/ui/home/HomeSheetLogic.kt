@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.showsNearbyArrivals
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 
 /**
  * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`
@@ -114,6 +115,46 @@ internal val HomeSheetContent.peekHeightFraction: Float
 private const val STOP_PEEK_HEIGHT_FRACTION = 0.30f
 
 private const val NEARBY_PEEK_HEIGHT_FRACTION = 0.15f
+
+/**
+ * The tallest the sheet's *content* slot may measure, i.e. how far the expanded sheet may pull up
+ * (#2282).
+ *
+ * Material3 has no sheet-max-height parameter: it derives the `Expanded` anchor from the sheet's own
+ * measured height (anchor y = containerHeight - sheetHeight), so bounding the content slot is the only
+ * way to stop the top edge short. The budget is the window minus everything that has to stay visible
+ * above the sheet — the system inset at the top, the floating map chrome (menu + search FABs) that
+ * [org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE] clears for every other top-of-map
+ * overlay, and the drag handle, which sits above the slot inside the same sheet Surface and so comes
+ * out of the same budget.
+ */
+internal fun arrivalsSheetCeiling(
+    windowHeight: Dp,
+    topSystemInset: Dp,
+    dragHandleHeight: Dp
+): Dp = (windowHeight - topSystemInset - MAP_TOP_CHROME_CLEARANCE - dragHandleHeight)
+    .coerceAtLeast(0.dp)
+
+/**
+ * The height to give the sheet's content slot: tall enough to show all of [measuredContent] and no
+ * taller, clipped at [ceiling] (#2282).
+ *
+ * The slot is sized rather than merely bounded because the panel fills whatever it is given — a
+ * `heightIn(max = …)` measures the full ceiling for a two-row stop just as it does for a fifty-row one,
+ * which is what let the sheet pull all the way to the top with nothing to fill it. Sizing it to the
+ * content instead makes the `Expanded` anchor land exactly where the list ends; a list that overflows
+ * the ceiling gets the ceiling and scrolls inside it.
+ *
+ * [bottomInset] is the nav-bar padding the panel adds below its list, so the slot has room for it and
+ * the fit is exact. [measuredContent] is 0 until the list has been laid out (a loading spinner reports
+ * nothing); the ceiling stands in until then, so a sheet dragged up mid-load still opens full rather
+ * than to a slot that hasn't been measured yet.
+ */
+internal fun arrivalsSheetContentHeight(
+    measuredContent: Dp,
+    bottomInset: Dp,
+    ceiling: Dp
+): Dp = if (measuredContent <= 0.dp) ceiling else minOf(measuredContent + bottomInset, ceiling)
 
 /**
  * Bottom edge used to keep map content below the active top chrome: the stop/route focus banner, or —

@@ -78,10 +78,16 @@ fun navigationBarBottomPadding(): Dp = WindowInsets.navigationBars.asPaddingValu
  * clothes, hoisted here because both arrivals sheets need the identical measurement.
  *
  * Real layout, not an estimate, and not a magnitude heuristic: the reading is the bottom edge of the
- * last laid-out item. Material3 measures sheet content at full container height regardless of the peek,
- * so when the whole list fits that edge *is* the content height. When it doesn't, the last visible item
- * is the one straddling the viewport's bottom, so the same expression yields roughly the viewport
- * extent — a floor rather than a measurement, which is all a caller clamping to a peek cap can use.
+ * last laid-out item. When the whole list fits its viewport that edge *is* the content height. When it
+ * doesn't, the last visible item is the one straddling the viewport's bottom, so the same expression
+ * yields roughly the viewport extent — a floor rather than a measurement, which is all a caller
+ * clamping to a peek cap can use.
+ *
+ * **So give the list a full-height viewport**, whatever height the sheet itself ends up at. Sizing the
+ * viewport to a height derived from this reading feeds the measurement its own output: a list taller
+ * than that height reports only that height back, and the caller can never learn the list has grown.
+ * Both callers sit in the home sheet, which does this deliberately — see the two nested boxes in
+ * `HomeScreen`'s `sheetContent`.
  *
  * Two things make the measurement trustworthy rather than merely cheap:
  *

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home.arrivals
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,12 +26,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
-import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
@@ -155,12 +154,11 @@ internal fun ArrivalsSheetHost(
     selectedRoute: StopRouteSelection?,
     mapRouteColors: Map<RouteDirectionKey, Int>,
     // The selected trip's band tint (#1990), or null when no vehicle is selected.
-    selectedTripBandColor: Int?,
-    onContentHeight: (heightPx: Int) -> Unit
+    selectedTripBandColor: Int?
 ) {
     session ?: return
     val tutorialState = LocalTutorialState.current
-    Surface(color = colorResource(R.color.trip_details_background)) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
         ArrivalsPanel(
             viewModel = session.viewModel,
             state = state,
@@ -172,7 +170,6 @@ internal fun ArrivalsSheetHost(
             selectedRouteId = selectedRoute?.originLeg?.routeId,
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
             selectedTripId = selectedRoute?.selectedTripId,
-            onContentHeight = onContentHeight,
             // The onboarding spotlight targets inside the first arrivals row. The ETA pill is shared
             // with the older opportunistic arrivals tutorial; the badge and star are the scripted
             // tour's own (#2164).

@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -213,7 +212,7 @@ internal fun ArrivalsList(
             listState.scrollToItem(firstRouteIndex)
         }
     }
-    LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
+    LazyColumn(state = listState, modifier = modifier.fillMaxWidth(), contentPadding = contentPadding) {
         if (content.hasAlerts && showAlerts) {
             // The whole alert section is one item, present only while [showAlerts] is set. Toggling the
             // header's alert icon adds/removes this item; Modifier.animateItem() fades it in/out and lets

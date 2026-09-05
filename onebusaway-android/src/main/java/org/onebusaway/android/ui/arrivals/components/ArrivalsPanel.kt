@@ -16,14 +16,12 @@
 
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.onebusaway.android.models.RouteDirectionKey
@@ -32,7 +30,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
-import org.onebusaway.android.ui.compose.ReportListContentHeight
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 
 /**
@@ -40,8 +37,8 @@ import org.onebusaway.android.ui.compose.navigationBarBottomPadding
  * drawer is a single scrollable arrivals list. Stop identity and actions live in Home's focus banner;
  * the hosting BottomSheetScaffold supplies the drag handle above this content.
  *
- * This composable reports the fully-laid-out list height in px via [onContentHeight] so the host can
- * fit the peek to short stops. Polling and stop dialogs are owned by the shared arrivals session.
+ * The list wraps its content within the host's height limit; polling and stop dialogs belong to the
+ * shared arrivals session.
  */
 @Composable
 fun ArrivalsPanel(
@@ -56,9 +53,6 @@ fun ArrivalsPanel(
     selectedRouteId: String? = null,
     selectedRouteNames: List<String> = emptyList(),
     selectedTripId: String? = null,
-    // Reports the list's total content height in px so the host can fit the peek to short stops; not
-    // reported until the whole list is laid out.
-    onContentHeight: (heightPx: Int) -> Unit,
     // Opaque anchor modifiers a host may attach to the first row's pill / badge / star (e.g. for an
     // onboarding spotlight). The panel stays ignorant of what they're for.
     anchors: ArrivalRowAnchors = ArrivalRowAnchors()
@@ -68,41 +62,35 @@ fun ArrivalsPanel(
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content
 
-    // The panel's total content height (px), for the host's fit-the-peek-to-short-stops shrink. Shared
-    // with the nearby drawer, which makes the same measurement — see [ReportListContentHeight].
-    ReportListContentHeight(listState, onContentHeight)
-
-    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
-            if (content == null) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-            } else {
-                ArrivalsList(
-                    content = content,
-                    rowCallbacks = rowCallbacks,
-                    handler = handler,
-                    onShowHiddenAlerts = viewModel::showHiddenAlerts,
-                    onLoadMore = viewModel::loadMore,
-                    // Collected inside the list's footer item, not here — a load-more toggle should
-                    // only recompose that one item, not this whole panel.
-                    loadingMore = viewModel.loadingMore,
-                    mapRouteColors = mapRouteColors,
-                    selectedTripBandColor = selectedTripBandColor,
-                    selectedRowKey = selectedRowKey,
-                    selectedRouteId = selectedRouteId,
-                    selectedRouteNames = selectedRouteNames,
-                    selectedTripId = selectedTripId,
-                    modifier = Modifier.weight(1f),
-                    listState = listState,
-                    // The focus banner already shows the direction as a "(N)" tag.
-                    showDirection = false,
-                    // Home presents alerts in a centered modal owned by the focus banner.
-                    showAlerts = false,
-                    contentPadding = PaddingValues(bottom = navBarInset),
-                    // The onboarding spotlight anchors on the first route row.
-                    anchors = anchors
-                )
-            }
+    if (content == null) {
+        // Reserve the available sheet space while the first response loads.
+        Box(Modifier.fillMaxSize()) {
+            LinearProgressIndicator(Modifier.fillMaxWidth())
         }
+    } else {
+        ArrivalsList(
+            content = content,
+            rowCallbacks = rowCallbacks,
+            handler = handler,
+            onShowHiddenAlerts = viewModel::showHiddenAlerts,
+            onLoadMore = viewModel::loadMore,
+            // Collected inside the list's footer item, not here — a load-more toggle should
+            // only recompose that one item, not this whole panel.
+            loadingMore = viewModel.loadingMore,
+            mapRouteColors = mapRouteColors,
+            selectedTripBandColor = selectedTripBandColor,
+            selectedRowKey = selectedRowKey,
+            selectedRouteId = selectedRouteId,
+            selectedRouteNames = selectedRouteNames,
+            selectedTripId = selectedTripId,
+            listState = listState,
+            // The focus banner already shows the direction as a "(N)" tag.
+            showDirection = false,
+            // Home presents alerts in a centered modal owned by the focus banner.
+            showAlerts = false,
+            contentPadding = PaddingValues(bottom = navBarInset),
+            // The onboarding spotlight anchors on the first route row.
+            anchors = anchors
+        )
     }
 }

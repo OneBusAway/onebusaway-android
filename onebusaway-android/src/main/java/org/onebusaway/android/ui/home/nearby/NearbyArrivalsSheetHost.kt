@@ -41,7 +41,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.convertArrivals
-import org.onebusaway.android.ui.compose.ReportListContentHeight
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
@@ -61,7 +60,6 @@ internal fun NearbyArrivalsSheetHost(
     favoriteRouteIds: Set<String>,
     callbacks: ArrivalRowCallbacks,
     limitExceeded: Boolean,
-    onContentHeight: (heightPx: Int) -> Unit,
     listState: LazyListState = rememberLazyListState()
 ) {
     // Bay labels resolved once per row set rather than per row recomposition — each is a string-resource
@@ -115,10 +113,6 @@ internal fun NearbyArrivalsSheetHost(
             }
         }
     }
-
-    // The laid-out height, so the host can fit the peek to a short list — the same measurement the
-    // per-stop panel makes, so both go through the one helper.
-    ReportListContentHeight(listState, onContentHeight)
 }
 
 /**

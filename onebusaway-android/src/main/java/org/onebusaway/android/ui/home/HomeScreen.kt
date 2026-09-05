@@ -23,9 +23,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -58,7 +56,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -86,7 +83,6 @@ import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
 import org.onebusaway.android.ui.compose.findActivity
-import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
@@ -364,10 +360,6 @@ fun HomeScreen(
                     { scope.launch { drawerState.open() } }
                 }
 
-                // The system navigation-bar inset (height varies by handset) grows the peek so the collapsed
-                // sheet's content clears the bottom chrome; the panel matches this with its own content inset.
-                val peekBottomPadding = navigationBarBottomPadding()
-
                 // The expanded sheet's ceiling: how far it may pull up before it starts covering things
                 // that have to stay visible — the status bar / notch, and the floating map chrome (menu +
                 // search FABs) it used to slide straight under (#2282). safeDrawing rather than statusBars
@@ -383,22 +375,11 @@ fun HomeScreen(
                     )
                 }
 
-                // The panel's fully-laid-out list height in px, reported once
-                // measured (0 until then). Shrinks both the peek and the expanded sheet below their caps for
-                // short stops. Not reset on focus change — the next stop's panel overwrites it once laid out,
-                // avoiding a cap-bounce.
+                // Observe the actual bounded panel height only to fit the collapsed peek. The expanded
+                // anchor comes directly from layout, never from this state. The panel's measured size
+                // already includes its navigation-bar padding.
                 var contentPx by remember { mutableIntStateOf(0) }
-                val contentDp = with(density) { contentPx.toDp() }
-                // That content height as the on-screen peek it implies: the measured content plus the drag handle
-                // above it and the nav-bar inset below (matching what the collapsed sheet actually shows).
-                val contentPeekDp = contentDp + DRAG_HANDLE_HEIGHT + peekBottomPadding
-                // The height of the sheet's content slot, which is what sets the Expanded anchor: the content's
-                // own height, so a stop with two rows stops two rows up rather than at the ceiling (#2282).
-                val sheetContentDp = arrivalsSheetContentHeight(
-                    measuredContent = contentDp,
-                    bottomInset = peekBottomPadding,
-                    ceiling = maxSheetContentDp
-                )
+                val contentPeekDp = with(density) { contentPx.toDp() } + DRAG_HANDLE_HEIGHT
 
                 // The transit-centre drawer's rows, built from the query's last response (#2107). Needed
                 // before the sheet decision below, which gates on there being rows to show.
@@ -699,42 +680,27 @@ fun HomeScreen(
                                 ArrivalsDragHandle(onToggle = toggleSheet)
                             },
                             sheetContent = {
-                                // Two boxes, because the sheet's height and the panel's viewport want
-                                // different things (#2282). The OUTER one is the sheet's actual content
-                                // slot, sized (not merely bounded) to the content: the panel fills whatever
-                                // it is given, so a `heightIn(max = ceiling)` measured the full ceiling for a
-                                // two-row stop just as for a fifty-row one, which is what let the sheet pull
-                                // up over an empty panel. The INNER one keeps the panel measuring at the full
-                                // ceiling — `requiredHeight`, so it isn't re-clamped by the slot — because
-                                // that is the viewport [ReportListContentHeight] measures the list in. Sizing
-                                // the viewport to the slot instead would feed the measurement its own output:
-                                // a list taller than the slot reports only the slot back, and the sheet could
-                                // never learn it had grown. The overflow is clipped (and, the slot being
-                                // flush with the sheet's bottom edge, off-screen anyway).
-                                Box(Modifier.height(sheetContentDp).clipToBounds()) {
-                                    Box(Modifier.fillMaxWidth().requiredHeight(maxSheetContentDp)) {
-                                        // The nearby list only while it *is* the sheet's subject; otherwise the
-                                        // per-stop panel, which stays composed through the hide animation (it
-                                        // returns early on a null session) so the sheet doesn't blank mid-slide.
-                                        if (sheetContent == HomeSheetContent.NearbyRoutes) {
-                                            NearbyArrivalsSheetHost(
-                                                rows = nearbyRows,
-                                                actionsFor = nearbyActionsFor,
-                                                favoriteRouteIds = favoriteRouteIds,
-                                                callbacks = nearbyRowCallbacks,
-                                                limitExceeded = nearbyLimitExceeded,
-                                                onContentHeight = { px -> contentPx = px }
-                                            )
-                                        } else {
-                                            ArrivalsSheetHost(
-                                                session = arrivalsSession,
-                                                state = arrivalsState,
-                                                selectedRoute = stopFocus?.selectedRoute,
-                                                mapRouteColors = mapRouteColors,
-                                                selectedTripBandColor = selectedTripBandColor,
-                                                onContentHeight = { px -> contentPx = px }
-                                            )
-                                        }
+                                ArrivalsSheetContent(
+                                    maxHeight = maxSheetContentDp,
+                                    onHeightChanged = { contentPx = it }
+                                ) {
+                                    // Keep the stop panel composed through the hide animation.
+                                    if (sheetContent == HomeSheetContent.NearbyRoutes) {
+                                        NearbyArrivalsSheetHost(
+                                            rows = nearbyRows,
+                                            actionsFor = nearbyActionsFor,
+                                            favoriteRouteIds = favoriteRouteIds,
+                                            callbacks = nearbyRowCallbacks,
+                                            limitExceeded = nearbyLimitExceeded
+                                        )
+                                    } else {
+                                        ArrivalsSheetHost(
+                                            session = arrivalsSession,
+                                            state = arrivalsState,
+                                            selectedRoute = stopFocus?.selectedRoute,
+                                            mapRouteColors = mapRouteColors,
+                                            selectedTripBandColor = selectedTripBandColor
+                                        )
                                     }
                                 }
                             }

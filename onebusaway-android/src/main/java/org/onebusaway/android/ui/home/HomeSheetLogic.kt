@@ -136,27 +136,6 @@ internal fun arrivalsSheetCeiling(
     .coerceAtLeast(0.dp)
 
 /**
- * The height to give the sheet's content slot: tall enough to show all of [measuredContent] and no
- * taller, clipped at [ceiling] (#2282).
- *
- * The slot is sized rather than merely bounded because the panel fills whatever it is given — a
- * `heightIn(max = …)` measures the full ceiling for a two-row stop just as it does for a fifty-row one,
- * which is what let the sheet pull all the way to the top with nothing to fill it. Sizing it to the
- * content instead makes the `Expanded` anchor land exactly where the list ends; a list that overflows
- * the ceiling gets the ceiling and scrolls inside it.
- *
- * [bottomInset] is the nav-bar padding the panel adds below its list, so the slot has room for it and
- * the fit is exact. [measuredContent] is 0 until the list has been laid out (a loading spinner reports
- * nothing); the ceiling stands in until then, so a sheet dragged up mid-load still opens full rather
- * than to a slot that hasn't been measured yet.
- */
-internal fun arrivalsSheetContentHeight(
-    measuredContent: Dp,
-    bottomInset: Dp,
-    ceiling: Dp
-): Dp = if (measuredContent <= 0.dp) ceiling else minOf(measuredContent + bottomInset, ceiling)
-
-/**
  * Bottom edge used to keep map content below the active top chrome: the stop/route focus banner, or —
  * in directions — the trip-plan form card ([directionsFormBottomPx]), so the map's top content padding
  * reflects the form/FAB and a focused itinerary step centers in the band below it.

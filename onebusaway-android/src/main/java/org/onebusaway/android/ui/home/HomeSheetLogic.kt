@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.showsNearbyArrivals
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 
 /**
  * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`
@@ -114,6 +115,25 @@ internal val HomeSheetContent.peekHeightFraction: Float
 private const val STOP_PEEK_HEIGHT_FRACTION = 0.30f
 
 private const val NEARBY_PEEK_HEIGHT_FRACTION = 0.15f
+
+/**
+ * The tallest the sheet's *content* slot may measure, i.e. how far the expanded sheet may pull up
+ * (#2282).
+ *
+ * Material3 has no sheet-max-height parameter: it derives the `Expanded` anchor from the sheet's own
+ * measured height (anchor y = containerHeight - sheetHeight), so bounding the content slot is the only
+ * way to stop the top edge short. The budget is the window minus everything that has to stay visible
+ * above the sheet — the system inset at the top, the floating map chrome (menu + search FABs) that
+ * [org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE] clears for every other top-of-map
+ * overlay, and the drag handle, which sits above the slot inside the same sheet Surface and so comes
+ * out of the same budget.
+ */
+internal fun arrivalsSheetCeiling(
+    windowHeight: Dp,
+    topSystemInset: Dp,
+    dragHandleHeight: Dp
+): Dp = (windowHeight - topSystemInset - MAP_TOP_CHROME_CLEARANCE - dragHandleHeight)
+    .coerceAtLeast(0.dp)
 
 /**
  * Bottom edge used to keep map content below the active top chrome: the stop/route focus banner, or —

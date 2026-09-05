@@ -23,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.showsNearbyArrivals
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -183,6 +184,26 @@ class HomeSheetLogicTest {
         assertEquals(
             200.dp,
             mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 48.dp)
+        )
+    }
+
+    // --- arrivalsSheetCeiling (#2282) ---
+
+    @Test
+    fun `the ceiling leaves the system inset and the floating map chrome uncovered`() {
+        // 800 window - 24 status bar - 66 chrome clearance - 40 drag handle.
+        assertEquals(
+            800.dp - 24.dp - MAP_TOP_CHROME_CLEARANCE - 40.dp,
+            arrivalsSheetCeiling(windowHeight = 800.dp, topSystemInset = 24.dp, dragHandleHeight = 40.dp)
+        )
+    }
+
+    /** A window smaller than the chrome it has to clear must not hand out a negative height. */
+    @Test
+    fun `the ceiling never goes negative`() {
+        assertEquals(
+            0.dp,
+            arrivalsSheetCeiling(windowHeight = 40.dp, topSystemInset = 24.dp, dragHandleHeight = 40.dp)
         )
     }
 

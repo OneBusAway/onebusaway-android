@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -156,7 +155,8 @@ interface ArrivalActionHandler {
 internal fun ArrivalsList(
     content: ArrivalsUiState.Content,
     rowCallbacks: ArrivalRowCallbacks,
-    handler: ArrivalActionHandler,
+    onShowAlert: (String) -> Unit,
+    onHideAlert: (AlertItem) -> Unit,
     onShowHiddenAlerts: () -> Unit,
     /** Widens the time window and reloads (the list's "load more trips" footer button). */
     onLoadMore: () -> Unit,
@@ -213,7 +213,7 @@ internal fun ArrivalsList(
             listState.scrollToItem(firstRouteIndex)
         }
     }
-    LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
+    LazyColumn(state = listState, modifier = modifier.fillMaxWidth(), contentPadding = contentPadding) {
         if (content.hasAlerts && showAlerts) {
             // The whole alert section is one item, present only while [showAlerts] is set. Toggling the
             // header's alert icon adds/removes this item; Modifier.animateItem() fades it in/out and lets
@@ -224,8 +224,8 @@ internal fun ArrivalsList(
                 ServiceAlertsContent(
                     alerts = content.alerts,
                     hiddenAlertCount = content.hiddenAlertCount,
-                    onShowAlert = handler::onShowAlert,
-                    onHideAlert = handler::onHideAlert,
+                    onShowAlert = onShowAlert,
+                    onHideAlert = onHideAlert,
                     onShowHiddenAlerts = onShowHiddenAlerts,
                     modifier = Modifier.animateItem()
                 )

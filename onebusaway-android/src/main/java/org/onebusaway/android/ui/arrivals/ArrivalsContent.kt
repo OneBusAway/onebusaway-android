@@ -155,7 +155,8 @@ interface ArrivalActionHandler {
 internal fun ArrivalsList(
     content: ArrivalsUiState.Content,
     rowCallbacks: ArrivalRowCallbacks,
-    handler: ArrivalActionHandler,
+    onShowAlert: (String) -> Unit,
+    onHideAlert: (AlertItem) -> Unit,
     onShowHiddenAlerts: () -> Unit,
     /** Widens the time window and reloads (the list's "load more trips" footer button). */
     onLoadMore: () -> Unit,
@@ -223,8 +224,8 @@ internal fun ArrivalsList(
                 ServiceAlertsContent(
                     alerts = content.alerts,
                     hiddenAlertCount = content.hiddenAlertCount,
-                    onShowAlert = handler::onShowAlert,
-                    onHideAlert = handler::onHideAlert,
+                    onShowAlert = onShowAlert,
+                    onHideAlert = onHideAlert,
                     onShowHiddenAlerts = onShowHiddenAlerts,
                     modifier = Modifier.animateItem()
                 )

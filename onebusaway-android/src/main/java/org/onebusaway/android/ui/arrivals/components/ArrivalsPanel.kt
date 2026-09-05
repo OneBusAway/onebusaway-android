@@ -71,7 +71,8 @@ fun ArrivalsPanel(
         ArrivalsList(
             content = content,
             rowCallbacks = rowCallbacks,
-            handler = handler,
+            onShowAlert = handler::onShowAlert,
+            onHideAlert = handler::onHideAlert,
             onShowHiddenAlerts = viewModel::showHiddenAlerts,
             onLoadMore = viewModel::loadMore,
             // Collected inside the list's footer item, not here — a load-more toggle should

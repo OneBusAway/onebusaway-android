@@ -42,6 +42,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,10 +53,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.ui.arrivals.AlertItem
-import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
-import org.onebusaway.android.ui.arrivals.ArrivalActions
-import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
@@ -90,7 +87,7 @@ class ArrivalsSheetContentTest(private val nearby: Boolean) {
         composeRule.runOnIdle { count = 20 }
         assertAtCeiling(400)
         composeRule.onNodeWithText("Destination 0").assertIsDisplayed()
-        composeRule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).performScrollToIndex(19)
+        arrivalsList().performScrollToIndex(19)
         composeRule.onNodeWithText("Destination 19").assertIsDisplayed()
         assertAtCeiling(400)
 
@@ -109,6 +106,10 @@ class ArrivalsSheetContentTest(private val nearby: Boolean) {
         composeRule.onNodeWithText("Destination 0").assertIsDisplayed()
     }
 
+    private fun arrivalsList() = composeRule.onNode(
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
+    )
+
     private fun assertShortList(count: Int) {
         composeRule.waitForIdle()
         val sheet = composeRule.onNodeWithTag("sheet-content").getUnclippedBoundsInRoot()
@@ -118,7 +119,7 @@ class ArrivalsSheetContentTest(private val nearby: Boolean) {
         assertTrue("Last row must fit inside the sheet", last.bottom <= sheet.bottom)
         assertTrue("Short content must not expand to the ceiling", sheet.height < 400.dp)
         // The actual lazy viewport is the sheet, not a larger hidden measurement surface.
-        val list = composeRule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).getUnclippedBoundsInRoot()
+        val list = arrivalsList().getUnclippedBoundsInRoot()
         assertEquals(sheet.top, list.top)
         assertEquals(sheet.bottom, list.bottom)
         if (!nearby) composeRule.onNodeWithText("Load more").assertIsDisplayed()
@@ -134,7 +135,7 @@ class ArrivalsSheetContentTest(private val nearby: Boolean) {
     }
 
     @Composable
-    private fun Harness(rowCount: Int, maxHeight: androidx.compose.ui.unit.Dp = 400.dp) {
+    private fun Harness(rowCount: Int, maxHeight: Dp = 400.dp) {
         val listState = rememberLazyListState()
         val groups = remember(rowCount) {
             List(rowCount) { index ->
@@ -182,7 +183,8 @@ class ArrivalsSheetContentTest(private val nearby: Boolean) {
                     isStale = false
                 ),
                 rowCallbacks = previewRowCallbacks(),
-                handler = unusedActions,
+                onShowAlert = { error("Unexpected alert action") },
+                onHideAlert = { error("Unexpected alert action") },
                 onShowHiddenAlerts = {},
                 onLoadMore = {},
                 loadingMore = remember { MutableStateFlow(false) },
@@ -192,21 +194,6 @@ class ArrivalsSheetContentTest(private val nearby: Boolean) {
                 contentPadding = PaddingValues(bottom = 24.dp)
             )
         }
-    }
-
-    private val unusedActions = object : ArrivalActionHandler {
-        override fun onRouteFavorite(actions: ArrivalActions) = error("Unexpected action")
-        override fun onShowVehiclesOnMap(arrival: ArrivalInfo) = error("Unexpected action")
-        override fun onShowRouteOnMap(arrival: ArrivalInfo) = error("Unexpected action")
-        override fun onFocusVehicleOnMap(arrival: ArrivalInfo) = error("Unexpected action")
-        override fun onShowTripStatus(arrival: ArrivalInfo) = error("Unexpected action")
-        override fun onSetReminder(arrival: ArrivalInfo) = error("Unexpected action")
-        override fun onToggleTracking(arrival: ArrivalInfo) = error("Unexpected action")
-        override fun onShowRouteSchedule(scheduleUrl: String) = error("Unexpected action")
-        override fun onReportArrivalProblem(actions: ArrivalActions) = error("Unexpected action")
-        override fun onShowAlert(alertId: String) = error("Unexpected action")
-        override fun onHideAlert(alert: AlertItem) = error("Unexpected action")
-        override fun onReportStopProblem() = error("Unexpected action")
     }
 
     companion object {

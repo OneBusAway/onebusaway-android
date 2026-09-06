@@ -28,8 +28,11 @@ zoom, or long press.
 The chooser shows each stop's name, code, direction, and available routes in the
 map's badge grid, filled horizontally. Choosing a card forwards that original
 marker to the existing stop callback. Canceling leaves the current focus alone.
-This lives in the shared map surface, with live projections supplied by both map
-implementations, so the report-location map uses the same chooser too.
+Stop selection is opt-in at the shared map surface. The home and report-location
+maps enable it; coordinate pickers retain their original callbacks and never
+open the chooser. Both map implementations supply root-space projections. The
+motion-event observer already receives root-space positions, so it does not add
+the map's inset again when the map sits below a toolbar.
 
 There is no geographic distance tolerance, stop reconciliation, combined arrival
 request, or persisted group membership. A route presentation can hide map labels

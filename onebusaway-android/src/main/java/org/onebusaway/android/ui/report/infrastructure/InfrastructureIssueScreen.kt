@@ -244,6 +244,7 @@ fun InfrastructureIssueDestination(navController: NavController) {
                 ObaMap(
                     host = mapViewModel.host,
                     callbacks = mapCallbacks,
+                    stopSelectionEnabled = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MAP_HEIGHT.dp),

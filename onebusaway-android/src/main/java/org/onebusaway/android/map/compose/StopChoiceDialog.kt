@@ -76,10 +76,11 @@ internal fun StopChoiceDialog(
                         supportingContent = {
                             // Balance the title's visible top inset: its text line includes font space
                             // above the letters, while the route bitmap ends at its visible border.
+                            val routesModifier = Modifier.padding(top = 8.dp, bottom = 5.dp)
                             if (marker.routes.isEmpty()) {
-                                Text(stringResource(R.string.map_stop_routes_unavailable), modifier = Modifier.padding(top = 8.dp, bottom = 5.dp))
+                                Text(stringResource(R.string.map_stop_routes_unavailable), modifier = routesModifier)
                             } else {
-                                StopRouteGrid(marker.routes, modifier = Modifier.padding(top = 8.dp, bottom = 5.dp), orientation = StopRouteGridOrientation.Horizontal)
+                                StopRouteGrid(marker.routes, modifier = routesModifier, orientation = StopRouteGridOrientation.Horizontal)
                             }
                         }
                     )

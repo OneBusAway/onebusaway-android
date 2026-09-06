@@ -36,12 +36,11 @@ internal fun stopChoicesAt(
     targetHeightPx: Float = 0f
 ): List<StopMarker> = (listOfNotNull(tapped) + stops)
     .filter { stop ->
-        stop.id == tapped?.id ||
-            stop.point == tapped?.point ||
-            (if (tap != null) projector?.toScreen(stop.point) else null)?.let { screen ->
-                abs(screen.x - tap!!.x) <= targetWidthPx / 2f &&
-                    abs(screen.y - tap.y) <= targetHeightPx / 2f
-            } == true
+        if (stop.id == tapped?.id || stop.point == tapped?.point) return@filter true
+        if (tap == null) return@filter false
+        val screen = projector?.toScreen(stop.point) ?: return@filter false
+        abs(screen.x - tap.x) <= targetWidthPx / 2f &&
+            abs(screen.y - tap.y) <= targetHeightPx / 2f
     }
     .distinctBy { it.id }
     .sortedWith(compareBy<StopMarker, String>(ROUTE_NAME_ORDER) { it.stop.stopCode.orEmpty() }.thenBy { it.id })

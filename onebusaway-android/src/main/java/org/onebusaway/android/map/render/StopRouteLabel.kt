@@ -62,13 +62,21 @@ fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band
  * hole in the pill — so a trailing remainder is padded with `null`, a blank cell for
  * [stopRouteLabelGrid] to colour. That padding is why this is internal: the nullable cell is how the
  * layout meets the drawing, not something a caller outside this file should have to reason about.
+ * [StopRouteGridOrientation.Horizontal] transposes this layout to read across before growing down.
  */
-internal fun stopRouteLabelColumns(routes: List<StopRoute>): List<List<StopRoute?>> {
+internal fun stopRouteLabelColumns(
+    routes: List<StopRoute>,
+    orientation: StopRouteGridOrientation = StopRouteGridOrientation.Vertical
+): List<List<StopRoute?>> {
     if (routes.isEmpty()) return emptyList()
     val columns = ceilingDivide(routes.size, STOP_ROUTE_LABEL_MAX_ROWS)
     val rows = ceilingDivide(routes.size, columns)
     // Padded to `columns * rows` first, so the chunks come out rectangular without a special last case.
-    return List(columns * rows) { routes.getOrNull(it) }.chunked(rows)
+    val grid = List(columns * rows) { routes.getOrNull(it) }.chunked(rows)
+    return when (orientation) {
+        StopRouteGridOrientation.Vertical -> grid
+        StopRouteGridOrientation.Horizontal -> (0 until rows).map { row -> grid.map { it[row] } }
+    }
 }
 
 /**
@@ -90,30 +98,20 @@ fun stopRouteLabelGrid(
     routes: List<StopRoute>,
     dark: Boolean,
     orientation: StopRouteGridOrientation = StopRouteGridOrientation.Vertical
-): List<List<BadgedRoute>> {
-    val columns = stopRouteLabelColumns(routes)
-    // Transpose the balanced layout: horizontal labels read left to right, then top to bottom,
-    // growing to the same five-cell cap across instead of down. The drawing still takes columns.
-    val oriented = if (orientation == StopRouteGridOrientation.Horizontal && columns.isNotEmpty()) {
-        columns.first().indices.map { row -> columns.map { it[row] } }
-    } else {
-        columns
-    }
-    return oriented.map { column ->
-        column.map { route ->
-            BadgedRoute(
-                // A blank cell names nothing; it exists only so the pill stays a rectangle.
-                route?.shortName.orEmpty(),
-                // Both tones come from the same source, so they are null together — an achromatic or absent
-                // route colour takes the whole neutral chip, exactly as `rememberRouteBadgeColors` gives the
-                // drawer, and so does a blank cell (which has no source at all).
-                routeBadgeChipColor(route?.routeColor, dark) ?: neutralBadgeChipColor(dark),
-                routeBadgeChipTextColor(route?.routeColor, dark) ?: neutralBadgeChipTextColor(dark),
-                // Told to the drawing, so the neutral a blank cell is filled with doesn't read as a second
-                // colour on the pill and case a one-colour label grey (see [ContinuationBadgeBitmaps.casingColor]).
-                blank = route == null
-            )
-        }
+): List<List<BadgedRoute>> = stopRouteLabelColumns(routes, orientation).map { column ->
+    column.map { route ->
+        BadgedRoute(
+            // A blank cell names nothing; it exists only so the pill stays a rectangle.
+            route?.shortName.orEmpty(),
+            // Both tones come from the same source, so they are null together — an achromatic or absent
+            // route colour takes the whole neutral chip, exactly as `rememberRouteBadgeColors` gives the
+            // drawer, and so does a blank cell (which has no source at all).
+            routeBadgeChipColor(route?.routeColor, dark) ?: neutralBadgeChipColor(dark),
+            routeBadgeChipTextColor(route?.routeColor, dark) ?: neutralBadgeChipTextColor(dark),
+            // Told to the drawing, so the neutral a blank cell is filled with doesn't read as a second
+            // colour on the pill and case a one-colour label grey (see [ContinuationBadgeBitmaps.casingColor]).
+            blank = route == null
+        )
     }
 }
 

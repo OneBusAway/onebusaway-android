@@ -283,7 +283,7 @@ class GoogleMapRenderer(
     fun renderStatic(snapshot: MapRenderSnapshot = renderState.snapshot.value) {
         clearStatic()
 
-        stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
+        stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand, snapshot.compactStopIcons)
         routeStopLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,

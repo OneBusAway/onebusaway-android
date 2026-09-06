@@ -504,6 +504,7 @@ data class MapRenderSnapshot(
     // by StopsMapController and carried here so a pure zoom re-fires the renderer like any other
     // snapshot change — keeping the renderer a pure function of the snapshot (no live camera reads).
     val stopBand: StopBand = StopBand.FULL,
+    val compactStopIcons: Boolean = false,
     // The selected vehicle's route continuation (#1691), or null. A discrete, infrequently-changing
     // annotation like the fields above, so it rides the same renderStatic() redraw path rather than
     // the 20Hz vehicle-motion sampler.
@@ -815,6 +816,10 @@ class MapRenderState {
     /** Sets the stop zoom band (full icon vs dot); a no-op emission when unchanged (StateFlow dedups). */
     fun setStopBand(band: StopBand) {
         _snapshot.update { it.copy(stopBand = band) }
+    }
+
+    fun setCompactStopIcons(compact: Boolean) {
+        _snapshot.update { it.copy(compactStopIcons = compact) }
     }
 
     /** Selects (or deselects with null) a vehicle by trip id; the renderer shows its data marker. */

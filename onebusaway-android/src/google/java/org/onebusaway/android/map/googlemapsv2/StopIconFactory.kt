@@ -62,6 +62,10 @@ object StopIconFactory {
     /** Focused (selected) variant of [stopDescriptors]. */
     private val stopDescriptorsFocused = SparseArray<Array<BitmapDescriptor>>()
 
+    /** Original-size circle and arrow without a vehicle glyph, indexed by direction (#2284). */
+    private lateinit var compactDescriptors: Array<BitmapDescriptor>
+    private lateinit var compactDescriptorsFocused: Array<BitmapDescriptor>
+
     /** The small directionless dot shown in place of the full icon at distant zoom (declutter). */
     private lateinit var dotDescriptor: BitmapDescriptor
 
@@ -154,6 +158,13 @@ object StopIconFactory {
     fun stopIcon(context: Context, direction: String, routeType: Int): BitmapDescriptor {
         ensureLoaded(context)
         return lookupStopIcon(stopDescriptors, direction, routeType)
+    }
+
+    @Synchronized
+    fun compactStopIcon(context: Context, direction: String, focused: Boolean = false): BitmapDescriptor {
+        ensureLoaded(context)
+        val descriptors = if (focused) compactDescriptorsFocused else compactDescriptors
+        return descriptors[StopDirection.fromKey(direction).ordinal]
     }
 
     /** The focused (1.5x) stop icon for a direction + primary route type. */
@@ -262,6 +273,15 @@ object StopIconFactory {
             stopDescriptorsFocused.put(routeType, toDescriptors(iconsFocused))
         }
 
+        fun compactIcons(selected: Boolean): Array<BitmapDescriptor> = toDescriptors(
+            StopDirection.entries.map { direction ->
+                val bitmap = createStopIcon(context, direction, selected, ObaRoute.TYPE_BUS, arrowTip, arrowBase, compact = true)
+                if (selected) StopBitmaps.scale(bitmap, FOCUS_ICON_SCALE) else bitmap
+            }.toTypedArray()
+        )
+        compactDescriptors = compactIcons(selected = false)
+        compactDescriptorsFocused = compactIcons(selected = true)
+
         // Star colors: the normal star is the gold gradient (light→dark); a selected star uses the same
         // focus color as every other selected stop (solid). The arrow keeps the theme primary→accent.
         val starLight = ContextCompat.getColor(context, R.color.map_stop_favorite_light)
@@ -327,10 +347,11 @@ object StopIconFactory {
         selected: Boolean,
         routeType: Int,
         arrowTip: Int,
-        arrowBase: Int
+        arrowBase: Int,
+        compact: Boolean = false
     ): Bitmap {
-        // All stops get a slightly larger circle so the vehicle glyph is clearly visible
-        val px = (basePx * GLYPH_ICON_SCALE).toInt()
+        // Compact uses the original circle size; detailed icons grow to fit the vehicle glyph.
+        val px = if (compact) basePx else (basePx * GLYPH_ICON_SCALE).toInt()
         val shape = requireNotNull(
             ContextCompat.getDrawable(
                 context,
@@ -338,7 +359,7 @@ object StopIconFactory {
             )
         )
         return StopBitmaps.directionalStopMarker(shape, direction, px, arrowTip, arrowBase) { canvas, bounds ->
-            drawRouteTypeSymbol(canvas, bounds, routeType)
+            if (!compact) drawRouteTypeSymbol(canvas, bounds, routeType)
         }
     }
 

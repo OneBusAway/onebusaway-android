@@ -111,6 +111,12 @@ class MapHost(
     val renderState = MapRenderState()
 
     init {
+        renderState.setCompactStopIcons(prefsRepository.getBoolean(R.string.preference_key_compact_stop_icons, false))
+        scope.launch {
+            prefsRepository.observeBoolean(R.string.preference_key_compact_stop_icons, false)
+                .collect(renderState::setCompactStopIcons)
+        }
+
         // Re-center when the region changes from the one present at startup (replaces the host's
         // onRegionChanged push). We compare each emission's id against the last-seen id, seeded with the
         // region at construction — rather than dropping the first emission — so it's race-free: even if

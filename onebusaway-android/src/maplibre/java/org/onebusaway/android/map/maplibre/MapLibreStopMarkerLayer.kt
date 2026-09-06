@@ -171,8 +171,8 @@ internal class MapLibreStopMarkerLayer(
     }
 
     private fun icon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
-        StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(context, stop.direction)
-        StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
+        StopIconKind.FULL, StopIconKind.COMPACT -> MapLibreStopIcons.iconForDirection(context, stop.direction)
+        StopIconKind.FULL_FOCUSED, StopIconKind.COMPACT_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
         StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
         StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon(context)
         StopIconKind.FAVORITE -> MapLibreStopIcons.favoriteIcon(context, stop.direction)

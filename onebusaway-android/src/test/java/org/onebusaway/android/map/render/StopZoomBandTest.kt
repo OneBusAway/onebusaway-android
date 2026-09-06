@@ -121,4 +121,35 @@ class StopZoomBandTest {
         assertEquals(StopIconKind.FULL, stopIconKind(focused = false, band = StopBand.FULL))
         assertEquals(StopIconKind.DOT, stopIconKind(focused = false, band = StopBand.DOT))
     }
+
+    @Test
+    fun `compact icons retain focus and route labels at detailed zooms`() {
+        for (band in listOf(StopBand.FULL, StopBand.ROUTES)) {
+            assertEquals(StopIconKind.COMPACT, stopIconKind(focused = false, band = band, compact = true))
+            assertEquals(StopIconKind.COMPACT_FOCUSED, stopIconKind(focused = true, band = band, compact = true))
+        }
+        val state = MapRenderState()
+        state.setStopBand(StopBand.ROUTES)
+        state.setCompactStopIcons(true)
+        assertEquals(StopBand.ROUTES, state.snapshot.value.stopBand)
+        assertEquals(true, state.snapshot.value.compactStopIcons)
+        state.setCompactStopIcons(false)
+        assertEquals(false, state.snapshot.value.compactStopIcons)
+    }
+
+    @Test
+    fun `compact preference preserves dots and favorite stars in every zoom band`() {
+        for (focused in listOf(false, true)) {
+            for (band in StopBand.entries) {
+                assertEquals(
+                    stopIconKind(focused, band, favorite = true),
+                    stopIconKind(focused, band, favorite = true, compact = true)
+                )
+            }
+            assertEquals(
+                stopIconKind(focused, StopBand.DOT),
+                stopIconKind(focused, StopBand.DOT, compact = true)
+            )
+        }
+    }
 }

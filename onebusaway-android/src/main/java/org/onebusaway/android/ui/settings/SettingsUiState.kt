@@ -36,6 +36,7 @@ data class SettingsPrefSnapshot(
     val showNegativeArrivals: Boolean,
     val hideAlerts: Boolean,
     val showZoomControls: Boolean,
+    val compactStopIcons: Boolean,
     val showRentalButton: Boolean,
     val displayWeatherView: Boolean,
     val showAvailableStudies: Boolean,
@@ -55,7 +56,8 @@ data class RegionSummaryInfo(val name: String, val hasOtp: Boolean)
 data class SettingsEnvironment(
     val useFixedRegion: Boolean,
     val sdkInt: Int,
-    val isObaFlavor: Boolean
+    val isObaFlavor: Boolean,
+    val isGoogleMaps: Boolean
 )
 
 data class SettingsUiState(
@@ -63,12 +65,14 @@ data class SettingsUiState(
     val showLegacyNotificationControls: Boolean,
     val showTripPlanNotifications: Boolean,
     val showDonate: Boolean,
+    val showCompactStopIcons: Boolean,
     val showPoweredByOba: Boolean,
     val regionSummary: String,
     val autoSelectRegion: Boolean,
     val showNegativeArrivals: Boolean,
     val hideAlerts: Boolean,
     val showZoomControls: Boolean,
+    val compactStopIcons: Boolean,
     val showRentalButton: Boolean,
     val displayWeatherView: Boolean,
     val showAvailableStudies: Boolean,
@@ -100,12 +104,14 @@ fun buildSettingsUiState(
     showTripPlanNotifications = region == null || region.hasOtp,
     // OBA-branded builds solicit donations; white-label builds show "powered by OneBusAway" instead.
     showDonate = env.isObaFlavor,
+    showCompactStopIcons = env.isGoogleMaps,
     showPoweredByOba = !env.isObaFlavor,
     regionSummary = region?.name ?: customApiRegionSummary,
     autoSelectRegion = prefs.autoSelectRegion,
     showNegativeArrivals = prefs.showNegativeArrivals,
     hideAlerts = prefs.hideAlerts,
     showZoomControls = prefs.showZoomControls,
+    compactStopIcons = prefs.compactStopIcons,
     showRentalButton = prefs.showRentalButton,
     displayWeatherView = prefs.displayWeatherView,
     showAvailableStudies = prefs.showAvailableStudies,

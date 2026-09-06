@@ -568,19 +568,9 @@
     <string name="preferences_show_zoom_controls_summary">Mostrar los controles de Zoom en el mapa
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Ver llegadas sobre el nombre de parada</string>
-    <string name="preferences_show_header_arrivals_summary">Cuando se visualizan paradas favoritas,
-        muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
-    </string>
-
     <string name="preferences_trip_plan_notifications_title">Notificaciones del Planeador de Viajes (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Después de que planeas un viaje, enviar
         notificaciones sobre si el viaje esta atrasado o ya no es recomendado.
-    </string>
-
-    <string name="preferences_show_tutorial_screens_title">Mostrar las pantallas del tutorial</string>
-    <string name="preferences_show_tutorial_screens_summary">Desplegar las ventanas emergentes informacionales explicando
-        como usar las funciones
     </string>
 
     <string name="preferences_left_hand_mode_title">Modo de mano izquierda</string>
@@ -1013,10 +1003,6 @@
     <string name="preferences_reset_donation_timestamps_title">Restablecer las marcas de tiempo de donación</string>
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de ’Recuérdame más tarde’ y ’No me molestes’ asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
-    <string name="preferences_preferred_maps_title">Tipo de Mapa Preferido</string>
-    <string name="preferences_preferred_map_option_normal2d">Mapa predeterminado</string>
-    <string name="preferences_preferred_map_option_normal3d">Mapa predeterminado con edificios 3D</string>
-    <string name="preferences_preferred_map_option_satellite">Mapa satelital</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Mostrar estudios disponibles</string>

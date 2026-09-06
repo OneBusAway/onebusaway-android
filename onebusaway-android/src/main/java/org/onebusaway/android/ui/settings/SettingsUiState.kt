@@ -39,13 +39,10 @@ data class SettingsPrefSnapshot(
     val showRentalButton: Boolean,
     val displayWeatherView: Boolean,
     val showAvailableStudies: Boolean,
-    val showTutorialScreens: Boolean,
     val leftHandMode: Boolean,
-    val showHeaderArrivals: Boolean,
     val vibrateAllowed: Boolean,
     val tripPlanNotifications: Boolean,
     val analyticsEnabled: Boolean,
-    val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
     val appTheme: String?
@@ -63,7 +60,7 @@ data class SettingsEnvironment(
 
 data class SettingsUiState(
     val showRegionCategory: Boolean,
-    val showNotificationsCategory: Boolean,
+    val showLegacyNotificationControls: Boolean,
     val showTripPlanNotifications: Boolean,
     val showDonate: Boolean,
     val showPoweredByOba: Boolean,
@@ -75,17 +72,17 @@ data class SettingsUiState(
     val showRentalButton: Boolean,
     val displayWeatherView: Boolean,
     val showAvailableStudies: Boolean,
-    val showTutorialScreens: Boolean,
     val leftHandMode: Boolean,
-    val showHeaderArrivals: Boolean,
     val vibrateAllowed: Boolean,
     val tripPlanNotifications: Boolean,
     val analyticsEnabled: Boolean,
-    val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
     val appTheme: String?
-)
+) {
+    val showNotificationsCategory: Boolean
+        get() = showLegacyNotificationControls || showTripPlanNotifications
+}
 
 /**
  * @param customApiRegionSummary the "Custom API" region summary string, shown when [region] is null.
@@ -97,8 +94,8 @@ fun buildSettingsUiState(
     customApiRegionSummary: String
 ): SettingsUiState = SettingsUiState(
     showRegionCategory = !env.useFixedRegion,
-    // Android 8+ manages notification channels itself, so the legacy category is dropped there.
-    showNotificationsCategory = env.sdkInt < SDK_O,
+    // Android 8+ owns sound/vibration via channels; the in-app trip toggle still applies on every SDK.
+    showLegacyNotificationControls = env.sdkInt < SDK_O,
     // Trip-plan notifications are dropped only when a region is set but has no OTP endpoint.
     showTripPlanNotifications = region == null || region.hasOtp,
     // OBA-branded builds solicit donations; white-label builds show "powered by OneBusAway" instead.
@@ -112,13 +109,10 @@ fun buildSettingsUiState(
     showRentalButton = prefs.showRentalButton,
     displayWeatherView = prefs.displayWeatherView,
     showAvailableStudies = prefs.showAvailableStudies,
-    showTutorialScreens = prefs.showTutorialScreens,
     leftHandMode = prefs.leftHandMode,
-    showHeaderArrivals = prefs.showHeaderArrivals,
     vibrateAllowed = prefs.vibrateAllowed,
     tripPlanNotifications = prefs.tripPlanNotifications,
     analyticsEnabled = prefs.analyticsEnabled,
-    mapMode = prefs.mapMode,
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,
     appTheme = prefs.appTheme

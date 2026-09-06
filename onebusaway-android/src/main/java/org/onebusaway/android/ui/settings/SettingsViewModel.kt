@@ -95,16 +95,10 @@ class SettingsViewModel @Inject constructor(
         showRentalButton = prefs.getBoolean(R.string.preference_key_show_rental_button, true),
         displayWeatherView = prefs.getBoolean(R.string.preference_key_display_weather_view, true),
         showAvailableStudies = prefs.getBoolean(R.string.preference_key_show_available_studies, true),
-        showTutorialScreens = prefs.getBoolean(R.string.preference_key_show_tutorial_screens, true),
         leftHandMode = prefs.getBoolean(R.string.preference_key_left_hand_mode, false),
-        showHeaderArrivals = prefs.getBoolean(R.string.preference_key_show_header_arrivals, false),
         vibrateAllowed = prefs.getBoolean(R.string.preference_key_preference_vibrate_allowed, true),
         tripPlanNotifications = prefs.getBoolean(R.string.preference_key_trip_plan_notifications, true),
         analyticsEnabled = prefs.getBoolean(R.string.preferences_key_analytics, true),
-        mapMode = prefs.getString(
-            R.string.preference_key_map_mode,
-            context.getString(R.string.preferences_preferred_map_option_normal2d)
-        ),
         preferredUnits = prefs.getString(
             R.string.preference_key_preferred_units,
             context.getString(R.string.preferences_preferred_units_option_automatic)
@@ -164,14 +158,10 @@ class SettingsViewModel @Inject constructor(
 
     fun onShowAvailableStudiesChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_available_studies, value)
 
-    fun onShowTutorialScreensChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_tutorial_screens, value)
-
     fun onLeftHandModeChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_left_hand_mode, value)
         obaAnalytics.setLeftHanded(value)
     }
-
-    fun onShowHeaderArrivalsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_header_arrivals, value)
 
     fun onVibrateAllowedChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_preference_vibrate_allowed, value)
 
@@ -185,8 +175,6 @@ class SettingsViewModel @Inject constructor(
     // endregion
 
     // region List actions
-
-    fun onMapModeChanged(value: String) = prefs.setString(R.string.preference_key_map_mode, value)
 
     fun onPreferredUnitsChanged(value: String) = prefs.setString(R.string.preference_key_preferred_units, value)
 

@@ -449,14 +449,8 @@
     <string name="preferences_show_zoom_controls_title">Mostra controlli zoom</string>
     <string name="preferences_show_zoom_controls_summary">Mostra controlli zoom sulla mappa</string>
 
-    <string name="preferences_show_header_arrivals_title">Mostra arrivi sopra nome fermata</string>
-    <string name="preferences_show_header_arrivals_summary">Quando visualizzi i preferiti, mostra informazioni sugli arrivi nell’intestazione (la visuale della mappa resta invariata)</string>
-
     <string name="preferences_trip_plan_notifications_title">Notifiche sul piano di viaggio (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Dopo aver pianificato un viaggio, invia notifiche se ci sono ritardi o se il viaggio non è più consigliato.</string>
-
-    <string name="preferences_show_tutorial_screens_title">Mostra schermate tutorial</string>
-    <string name="preferences_show_tutorial_screens_summary">Mostra popup informativi sull’utilizzo delle funzionalità</string>
 
     <string name="preferences_left_hand_mode_title">Modalità mano sinistra</string>
     <string name="preferences_left_hand_mode_summary">Sposta alcuni pulsanti sul lato sinistro dello schermo</string>
@@ -868,10 +862,6 @@
     <string name="preferences_reset_donation_timestamps_title">Reimposta i Timestamp delle Donazioni</string>
     <string name="preferences_reset_donation_timestamps_summary">Toccando questa opzione verranno cancellati i timestamp di ’Ricordamelo più tardi’ e ’Non disturbarmi’ associati alle richieste di donazione.</string>
     <string name="preferences_show_weather_view">Mostra vista meteo</string>
-    <string name="preferences_preferred_maps_title">Tipo Di Mappa Preferito</string>
-    <string name="preferences_preferred_map_option_normal2d">Mappa predefinita</string>
-    <string name="preferences_preferred_map_option_normal3d">Mappa predefinita con edifici 3D</string>
-    <string name="preferences_preferred_map_option_satellite">Mappa satellitare</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Mostra studi disponibili</string>

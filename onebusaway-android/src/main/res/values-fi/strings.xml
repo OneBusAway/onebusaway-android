@@ -461,12 +461,6 @@
         negatiivisina saapumisaikoina
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Näytä saapuvat bussit pysäkin yläpuolella</string>
-    <string name="preferences_show_header_arrivals_summary">Näyttää suosikkipysäkeille
-        saapuvien bussien tiedot otsikosssa (ei vaikuta karttaan)
-    </string>
-
-
     <string name="preferences_oba_api_servername_title">%1$s API palvelin</string>
     <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen %1$s
         API kutsuille
@@ -512,8 +506,6 @@
     <string name="preferences_left_hand_mode_summary">Siirtää joidenkin painikkeiden sijainnin näytön vasemmalle puolelle</string>
     <string name="preferences_show_zoom_controls_title">Näytä zoomaussäätimet</string>
     <string name="preferences_show_zoom_controls_summary">Näytä zoomaussäätimet kartalla</string>
-    <string name="preferences_show_tutorial_screens_title">Näytä opastusnäytöt</string>
-    <string name="preferences_show_tutorial_screens_summary">Näytä tiedottavat ponnahdusikkunat, jotka selittävät ominaisuuksien käyttöä</string>
     <string name="preferences_otp_api_servername_title">OpenTripPlanner API -palvelin</string>
     <string name="preferences_otp_api_servername_summary">Määrittää OpenTripPlanner API-kutsuissa käytettävän palvelimen</string>
     <string name="preferences_otp_api_servername_hint">esimerkki.opentripplanner.org/otp</string>
@@ -662,10 +654,6 @@
     <string name="preferences_reset_donation_timestamps_title">Nollaa Lahjoituksen Aikaleimat</string>
     <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä ’Muistuta minua myöhemmin’ että ’Älä vaivaudu’ aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
-    <string name="preferences_preferred_maps_title">Ensisijainen Karttatyyppi</string>
-    <string name="preferences_preferred_map_option_normal2d">Oletuskartta</string>
-    <string name="preferences_preferred_map_option_normal3d">Oletuskartta 3D-rakennuksilla</string>
-    <string name="preferences_preferred_map_option_satellite">Satelliitti kartta</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Näytä saatavilla olevat tutkimukset</string>

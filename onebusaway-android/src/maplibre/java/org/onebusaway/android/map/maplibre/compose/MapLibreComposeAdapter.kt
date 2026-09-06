@@ -32,7 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -61,6 +64,8 @@ import org.onebusaway.android.map.compose.RentalInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.MapProjector
+import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
@@ -131,6 +136,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
             }
         }
 
+        var mapRootOffset by remember { mutableStateOf(Offset.Zero) }
         var mapLibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
         var renderer by remember { mutableStateOf<MapLibreRenderer?>(null) }
         var loadedStyle by remember { mutableStateOf<Style?>(null) }
@@ -263,6 +269,15 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
         // than deferred through a host flag; null clears it (no framing to apply).
         val map = mapLibreMap
         if (map != null) {
+            DisposableEffect(map, renderState) {
+                renderState.setProjector(
+                    MapProjector { point ->
+                        val screen = map.projection.toScreenLocation(LatLng(point.latitude, point.longitude))
+                        ScreenOffset(screen.x + mapRootOffset.x, screen.y + mapRootOffset.y)
+                    }
+                )
+                onDispose { renderState.setProjector(null) }
+            }
             LaunchedEffect(map) {
                 renderState.cameraGestures.collect { command -> applyCameraCommand(command, map, renderState) }
             }
@@ -271,7 +286,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
             }
         }
 
-        AndroidView(factory = { mapView }, modifier = modifier)
+        AndroidView(factory = { mapView }, modifier = modifier.onGloballyPositioned { mapRootOffset = it.positionInRoot() })
     }
 }
 
@@ -297,7 +312,7 @@ private fun wireClicks(
             return@addOnMapClickListener true
         }
         infoWindows.clear()
-        callbacks.onMapClick(null)
+        callbacks.onMapClick(GeoPoint(point.latitude, point.longitude))
         false
     }
     map.addOnMapLongClickListener { point ->

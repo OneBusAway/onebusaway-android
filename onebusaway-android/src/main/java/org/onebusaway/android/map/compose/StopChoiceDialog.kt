@@ -37,13 +37,6 @@ import org.onebusaway.android.R
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.StopRouteGridOrientation
 import org.onebusaway.android.util.DisplayFormat
-import org.onebusaway.android.util.ROUTE_NAME_ORDER
-
-/** A hit-test ambiguity, not a claim that the provider's stops are equivalent. */
-internal fun stopChoicesAt(tapped: StopMarker, stops: List<StopMarker>): List<StopMarker> = (listOf(tapped) + stops)
-    .filter { it.point == tapped.point }
-    .distinctBy { it.id }
-    .sortedWith(compareBy<StopMarker, String>(ROUTE_NAME_ORDER) { it.stop.stopCode.orEmpty() }.thenBy { it.id })
 
 /** Choose an original stop; the caller forwards it through the ordinary single-stop callback. */
 @Composable

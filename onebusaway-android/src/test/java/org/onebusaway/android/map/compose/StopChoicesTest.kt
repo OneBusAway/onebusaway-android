@@ -19,6 +19,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
+import org.onebusaway.android.map.render.MapProjector
+import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.StopRoute
 import org.onebusaway.android.util.GeoPoint
@@ -53,7 +55,7 @@ class StopChoicesTest {
     }
 
     @Test
-    fun `different displayed points remain ordinary single-stop taps`() {
+    fun `without a projection different points retain the native single-stop selection`() {
         val a = marker("a", "1")
         val b = marker("b", "2").copy(point = GeoPoint(point.latitude + 0.000001, point.longitude))
         assertEquals(listOf(a), stopChoicesAt(a, listOf(a, b)))
@@ -63,5 +65,47 @@ class StopChoicesTest {
     fun `a tap still resolves when the rendered list has just refreshed`() {
         val a = marker("a", "1")
         assertEquals(listOf(a), stopChoicesAt(a, emptyList()))
+    }
+
+    @Test
+    fun `a map tap captures separated stops inside its screen touch target`() {
+        val a = marker("a", "1")
+        val b = marker("b", "2").copy(point = GeoPoint(point.latitude + 0.000003, point.longitude))
+        val outside = marker("c", "3").copy(point = GeoPoint(point.latitude + 0.000006, point.longitude))
+        val screens = mapOf(a.point to ScreenOffset(92f, 211f), b.point to ScreenOffset(111f, 188f), outside.point to ScreenOffset(125f, 200f))
+        val choices = stopChoicesAt(null, listOf(outside, b, a), ScreenOffset(100f, 200f), MapProjector(screens::get), 48f, 48f)
+        assertEquals(listOf(a, b), choices)
+        assertSame(a, choices[0])
+        assertSame(b, choices[1])
+    }
+
+    @Test
+    fun `zooming in can separate the same geographic stops into individual targets`() {
+        val a = marker("a", "1")
+        val b = marker("b", "2").copy(point = GeoPoint(point.latitude + 0.000003, point.longitude))
+        val tap = ScreenOffset(100f, 200f)
+        val zoomedOut = MapProjector { if (it == a.point) tap else ScreenOffset(112f, 200f) }
+        val zoomedIn = MapProjector { if (it == a.point) tap else ScreenOffset(148f, 200f) }
+        assertEquals(listOf(a, b), stopChoicesAt(a, listOf(a, b), tap, zoomedOut, 48f, 48f))
+        assertEquals(listOf(a), stopChoicesAt(a, listOf(a, b), tap, zoomedIn, 48f, 48f))
+    }
+
+    @Test
+    fun `the target is centered on the finger rather than the SDK's winning marker`() {
+        val native = marker("a", "1")
+        val underFinger = marker("b", "2").copy(point = GeoPoint(1.0, 1.0))
+        val nearNative = marker("c", "3").copy(point = GeoPoint(2.0, 2.0))
+        val screens = mapOf(native.point to ScreenOffset(0f, 0f), underFinger.point to ScreenOffset(40f, 0f), nearNative.point to ScreenOffset(-10f, 0f))
+        assertEquals(
+            listOf(native, underFinger),
+            stopChoicesAt(native, listOf(nearNative, underFinger, native), ScreenOffset(30f, 0f), MapProjector(screens::get), 48f, 48f)
+        )
+    }
+
+    @Test
+    fun `an empty map tap or an unavailable projection does not invent a selection`() {
+        val a = marker("a", "1")
+        assertEquals(emptyList<StopMarker>(), stopChoicesAt(null, listOf(a), ScreenOffset(0f, 0f), MapProjector { null }, 48f, 48f))
+        assertEquals(emptyList<StopMarker>(), stopChoicesAt(null, listOf(a), ScreenOffset(0f, 0f), MapProjector { ScreenOffset(100f, 100f) }, 48f, 48f))
     }
 }

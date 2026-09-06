@@ -15,16 +15,26 @@
  */
 package org.onebusaway.android.map.compose
 
+import android.view.MotionEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalViewConfiguration
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The flavor-neutral, declarative map surface. A flavor adapter (the Google `GoogleMap {}` content,
@@ -55,6 +65,7 @@ interface ObaComposeMapAdapter {
 }
 
 /** The neutral map composable: resolves the flavor adapter once and renders its [ObaComposeMapAdapter.Content]. */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ObaMap(
     host: MapHost,
@@ -66,16 +77,44 @@ fun ObaMap(
 ) {
     val adapter = remember { ObaComposeMapAdapter.newInstance() }
     var stopChoices by remember(host, callbacks) { mutableStateOf<List<StopMarker>>(emptyList()) }
-    val mapCallbacks = remember(host, callbacks) {
+    val tapPosition = remember(host) { MapTapPosition() }
+    val touchSize = LocalViewConfiguration.current.minimumTouchTargetSize
+    val density = LocalDensity.current
+    val targetWidthPx = with(density) { touchSize.width.toPx() }
+    val targetHeightPx = with(density) { touchSize.height.toPx() }
+    val mapCallbacks = remember(host, callbacks, targetWidthPx, targetHeightPx) {
         callbacks?.let { downstream ->
             object : ObaMapCallbacks by downstream {
-                override fun onStopClick(marker: StopMarker) {
-                    val choices = stopChoicesAt(marker, host.renderState.snapshot.value.stops)
-                    if (choices.size > 1) {
-                        stopChoices = choices
-                    } else {
-                        downstream.onStopClick(marker)
+                private fun chooseStop(marker: StopMarker?, point: GeoPoint? = null): Boolean {
+                    val projector = host.renderState.projector.value
+                    val tap = tapPosition.take() ?: point?.let { projector?.toScreen(it) }
+                    val choices = stopChoicesAt(
+                        marker,
+                        host.renderState.snapshot.value.stops,
+                        tap,
+                        projector,
+                        targetWidthPx,
+                        targetHeightPx
+                    )
+                    when (choices.size) {
+                        0 -> return false
+                        1 -> downstream.onStopClick(choices.single())
+                        else -> stopChoices = choices
                     }
+                    return true
+                }
+
+                override fun onStopClick(marker: StopMarker) {
+                    chooseStop(marker)
+                }
+
+                override fun onMapClick(point: GeoPoint?) {
+                    if (!chooseStop(null, point)) downstream.onMapClick(point)
+                }
+
+                override fun onMapLongClick(point: GeoPoint) {
+                    tapPosition.take()
+                    downstream.onMapLongClick(point)
                 }
             }
         }
@@ -93,9 +132,26 @@ fun ObaMap(
     adapter.Content(
         host,
         mapCallbacks,
-        modifier,
+        modifier
+            .onGloballyPositioned { tapPosition.rootOffset = it.positionInRoot() }
+            .motionEventSpy(tapPosition::observe),
         initialLatitude,
         initialLongitude,
         initialZoom
     )
+}
+
+/** Observe without consuming: the map SDK still decides whether a gesture is a click or a pan. */
+private class MapTapPosition {
+    var rootOffset = Offset.Zero
+    private var position: ScreenOffset? = null
+
+    fun observe(event: MotionEvent) {
+        position = when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP -> ScreenOffset(event.x + rootOffset.x, event.y + rootOffset.y)
+            else -> null
+        }
+    }
+
+    fun take(): ScreenOffset? = position.also { position = null }
 }

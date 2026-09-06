@@ -35,7 +35,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayChoiceDialog
 import org.onebusaway.android.ui.arrivals.components.ArrivalLegend
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
 
 /**
  * The help-menu options, in the order of the `main_help_options` string-array. Dialog-opening actions
@@ -59,12 +61,12 @@ fun HelpFeature(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val regionReady by viewModel.regionReady.collectAsStateWithLifecycle()
-    // Auto-show "What's New" once a region has resolved (its content may need refreshed Regions API
-    // data — the old onRegionResolved poke). maybeAutoShowWhatsNew is self-gating (shows at most once
-    // per app-version bump), so re-running on recomposition / config change is safe.
-    LaunchedEffect(regionReady) {
-        if (regionReady) {
-            viewModel.maybeAutoShowWhatsNew()
+    // Start after region resolution and retry when another dialog or tutorial finishes.
+    // The ViewModel admits this sequence only once per launch.
+    val tutorialActive = LocalTutorialState.current?.active == true
+    LaunchedEffect(regionReady, tutorialActive, state.dialog) {
+        if (regionReady && !tutorialActive) {
+            viewModel.maybeShowStartup()
         }
     }
     when (state.dialog) {
@@ -81,6 +83,11 @@ fun HelpFeature(
                 }
             },
             onDismiss = viewModel::dismiss
+        )
+        HelpDialog.ArrivalDisplay -> ArrivalDisplayChoiceDialog(
+            initialMode = viewModel.arrivalDisplayDefault,
+            onSave = viewModel::chooseArrivalDisplayDefault,
+            onDismiss = viewModel::finishArrivalDisplayChoice
         )
         HelpDialog.WhatsNew -> WhatsNewDialog(
             onDismiss = {

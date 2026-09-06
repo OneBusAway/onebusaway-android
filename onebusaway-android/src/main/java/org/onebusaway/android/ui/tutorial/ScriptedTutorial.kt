@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tutorial
 
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 
 /**
  * What the app does when a scripted tutorial step opens (#2164).
@@ -78,6 +79,15 @@ enum class TutorialAction {
  * step is about somewhere else in the app, a [TutorialAction] that takes the user there.
  */
 object ScriptedTutorial {
+    const val KEY_ARRIVAL_MODE = "tutorial_scripted_arrival_mode"
+    const val STEP_ARRIVAL_TIME = "tutorial_scripted_arrival_time"
+
+    /** A demonstration override, never written into the rider's default or session choice. */
+    fun arrivalDisplayMode(stepId: String?): ArrivalDisplayMode? = when {
+        stepId == STEP_ARRIVAL_TIME -> ArrivalDisplayMode.TIME
+        steps.any { it.id == stepId } -> ArrivalDisplayMode.ROUTE
+        else -> null
+    }
 
     // ---- Spotlight anchor keys, attached to their targets with [Modifier.tutorialAnchor]. Several
     // steps may share one: the tour says three separate things about the itinerary list. ----
@@ -174,6 +184,13 @@ object ScriptedTutorial {
             anchorId = ArrivalTutorial.KEY_ETA,
             title = R.string.tutorial_scripted_arrivals_title,
             body = R.string.tutorial_scripted_arrivals_text
+        ),
+        TutorialStep(
+            id = STEP_ARRIVAL_TIME,
+            anchorId = KEY_ARRIVAL_MODE,
+            title = R.string.tutorial_scripted_arrival_time_title,
+            body = R.string.tutorial_scripted_arrival_time_text,
+            captionAtTop = true
         ),
         // 4. The route badge: every vehicle on that route.
         TutorialStep(

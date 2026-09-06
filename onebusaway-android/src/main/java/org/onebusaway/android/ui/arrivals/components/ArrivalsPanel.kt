@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -55,7 +56,10 @@ fun ArrivalsPanel(
     selectedTripId: String? = null,
     // Opaque anchor modifiers a host may attach to the first row's pill / badge / star (e.g. for an
     // onboarding spotlight). The panel stays ignorant of what they're for.
-    anchors: ArrivalRowAnchors = ArrivalRowAnchors()
+    anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
+    displayMode: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
+    onDisplayModeChange: ((ArrivalDisplayMode) -> Unit)? = null,
+    modeSwitchModifier: Modifier = Modifier
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -70,6 +74,9 @@ fun ArrivalsPanel(
     } else {
         ArrivalsList(
             content = content,
+            displayMode = displayMode,
+            onDisplayModeChange = onDisplayModeChange,
+            modeSwitchModifier = modeSwitchModifier,
             rowCallbacks = rowCallbacks,
             onShowAlert = handler::onShowAlert,
             onHideAlert = handler::onHideAlert,

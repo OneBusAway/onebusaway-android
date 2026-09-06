@@ -25,11 +25,14 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +49,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.backup.BackupUtils
 import org.onebusaway.android.ui.HomeActivity
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
@@ -129,6 +135,7 @@ fun SettingsRoute(
     }
 
     val actions = SettingsActions(
+        onArrivalDisplayDefault = viewModel::onArrivalDisplayDefaultChanged,
         onAutoSelectRegion = viewModel::onAutoSelectRegionChanged,
         onShowNegativeArrivals = viewModel::onShowNegativeArrivalsChanged,
         onHideAlerts = viewModel::onHideAlertsChanged,
@@ -166,6 +173,7 @@ fun SettingsRoute(
 
 /** All the user actions the [SettingsScreen] can fire, wired by [SettingsRoute]. */
 class SettingsActions(
+    val onArrivalDisplayDefault: (ArrivalDisplayMode) -> Unit = {},
     val onAutoSelectRegion: (Boolean) -> Unit,
     val onShowNegativeArrivals: (Boolean) -> Unit,
     val onHideAlerts: (Boolean) -> Unit,
@@ -225,6 +233,17 @@ fun SettingsScreen(
             }
 
             PreferenceCategory(stringResource(R.string.preferences_category_display)) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    val title = stringResource(R.string.arrival_display_default)
+                    Text(title, style = MaterialTheme.typography.bodyLarge)
+                    ArrivalDisplayModeSwitch(
+                        mode = state.arrivalDisplayDefault,
+                        onChange = actions.onArrivalDisplayDefault,
+                        modifier = Modifier.padding(top = 8.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        label = title
+                    )
+                }
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_negative_arrivals_title),
                     summary = stringResource(R.string.preferences_show_negative_arrivals_summary),

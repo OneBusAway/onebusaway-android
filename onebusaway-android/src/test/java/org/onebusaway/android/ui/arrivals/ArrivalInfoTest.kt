@@ -39,6 +39,31 @@ import org.onebusaway.android.time.ServerTime
  */
 class ArrivalInfoTest {
 
+    @Test
+    fun `chronological mode orders expected instants across routes with stable equal-time ties`() {
+        fun at(route: String, expected: Long, sequence: Int) = infoFor(
+            FakeArrivalData(
+                predicted = true,
+                predictedArrivalTime = ServerTime(expected),
+                scheduledArrivalTime = ServerTime(scheduledArrival),
+                routeId = route,
+                stopSequence = sequence
+            )
+        )
+        val later = at("1_8", scheduledArrival + 20_000, 1)
+        val earlier = at("1_40", scheduledArrival + 5_000, 2)
+        val sameTime = at("1_8", scheduledArrival + 5_000, 3)
+        assertEquals(listOf(earlier, sameTime, later), chronologicalArrivals(listOf(later, earlier, sameTime)))
+    }
+
+    @Test
+    fun `arrival row identities distinguish loop visits stops and service days without prediction time`() {
+        val data = FakeArrivalData(predicted = true, predictedArrivalTime = ServerTime(scheduledArrival), scheduledArrivalTime = ServerTime(scheduledArrival))
+        val distinct = listOf(data, data.copy(stopSequence = 8), data.copy(stopId = "other"), data.copy(serviceDate = 123), data.copy(routeId = "other"))
+        assertEquals(distinct.size, distinct.map { infoFor(it).arrivalRowKey() }.distinct().size)
+        assertEquals(infoFor(data).arrivalRowKey(), infoFor(data.copy(predictedArrivalTime = ServerTime(scheduledArrival + 90_000))).arrivalRowKey())
+    }
+
     /** ~2026-04-13, matching the issue's `currentTime ≈ 1783116081756`. */
     private val now = ServerTime(1_783_116_081_756L)
 

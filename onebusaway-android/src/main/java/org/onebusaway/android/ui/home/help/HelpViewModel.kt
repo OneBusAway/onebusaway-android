@@ -26,12 +26,15 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 /** Which help dialog is showing — the dialog state this help feature module owns. */
 sealed interface HelpDialog {
     object None : HelpDialog
     object Menu : HelpDialog
+    object ArrivalDisplay : HelpDialog
     object WhatsNew : HelpDialog
     object Legend : HelpDialog
     object TutorialOptOut : HelpDialog
@@ -77,6 +80,36 @@ class HelpViewModel @Inject constructor(
         _state.update { it.copy(dialog = HelpDialog.Menu, showContactUs = customApiUrl.isNullOrEmpty()) }
     }
 
+    private var startupPresented = false
+
+    val arrivalDisplayDefault: ArrivalDisplayMode get() = prefs.arrivalDisplayDefault()
+
+    /** One startup sequence: default chooser, release notes, then the tutorial invitation. */
+    fun maybeShowStartup() {
+        if (startupPresented || _state.value.dialog != HelpDialog.None) return
+        startupPresented = true
+        // Capture the previous release before What's New advances its marker. Keep it across
+        // launches so dismissing the chooser neither loses eligibility nor opts a fresh install in.
+        val sourceVersion = prefs.getInt(ARRIVAL_DISPLAY_SOURCE_VERSION, -1).takeUnless { it == -1 }
+            ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(ARRIVAL_DISPLAY_SOURCE_VERSION, it) }
+        if (sourceVersion in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) {
+            _state.update { it.copy(dialog = HelpDialog.ArrivalDisplay) }
+        } else {
+            maybeAutoShowWhatsNew()
+        }
+    }
+
+    fun chooseArrivalDisplayDefault(mode: ArrivalDisplayMode) {
+        prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
+        finishArrivalDisplayChoice()
+    }
+
+    /** Dismissing leaves the choice owed on next launch, and allows this launch to continue. */
+    fun finishArrivalDisplayChoice() {
+        dismiss()
+        if (!maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
+    }
+
     fun showWhatsNew() = _state.update { it.copy(dialog = HelpDialog.WhatsNew) }
 
     fun showLegend() = _state.update { it.copy(dialog = HelpDialog.Legend) }
@@ -117,5 +150,10 @@ class HelpViewModel @Inject constructor(
         const val TWITTER_URL = "http://mobile.twitter.com/onebusaway"
 
         private const val WHATS_NEW_VER = "whatsNewVer"
+        private const val ARRIVAL_DISPLAY_SOURCE_VERSION = "arrival_display_migration_source_version"
+
+        // Published release boundary: 26.1.0 = 154; 155 was the later 27.0.0 alpha,
+        // followed by 26.2.0 = 156. See docs/RELEASING.md and commit eddb081a6 (#2261).
+        private const val LAST_LEGACY_ARRIVALS_VERSION = 154
     }
 }

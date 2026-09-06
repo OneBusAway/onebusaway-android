@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -35,13 +36,16 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
+import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
 import org.onebusaway.android.ui.arrivals.routeRowKey
 import org.onebusaway.android.ui.compose.findActivity
@@ -61,7 +65,8 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
 internal data class ArrivalsSession(
     val viewModel: ArrivalsViewModel,
     val handler: ArrivalActionHandler,
-    val listState: LazyListState
+    val listState: LazyListState,
+    val displayMode: MutableState<ArrivalDisplayMode>
 )
 
 /**
@@ -124,6 +129,7 @@ internal fun rememberArrivalsSession(
             )
         }
         val listState = remember { LazyListState() }
+        val displayMode = rememberArrivalDisplayMode(stop.id) { prefs.arrivalDisplayDefault() }
 
         ArrivalsPolling(viewModel)
 
@@ -140,8 +146,8 @@ internal fun rememberArrivalsSession(
             }
         }
 
-        remember(viewModel, handler, listState) {
-            ArrivalsSession(viewModel, handler, listState)
+        remember(viewModel, handler, listState, displayMode) {
+            ArrivalsSession(viewModel, handler, listState, displayMode)
         }
     }
 }
@@ -164,6 +170,9 @@ internal fun ArrivalsSheetHost(
             state = state,
             listState = session.listState,
             handler = session.handler,
+            displayMode = ScriptedTutorial.arrivalDisplayMode(tutorialState?.current?.id) ?: session.displayMode.value,
+            onDisplayModeChange = { session.displayMode.value = it },
+            modeSwitchModifier = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ARRIVAL_MODE),
             mapRouteColors = mapRouteColors,
             selectedTripBandColor = selectedTripBandColor,
             selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
@@ -204,7 +213,7 @@ internal fun StopRouteSelection.selectedArrivalRowKey(): String = originLeg.let 
  * stays unmarked is still owed, so it comes back at the next stop; the [tutorialState.active] guards
  * above are what stop one from double-showing within a run.
  */
-private suspend fun maybeStartArrivalTutorial(
+internal suspend fun maybeStartArrivalTutorial(
     prefs: PreferencesRepository,
     tutorialState: TutorialState,
     hasArrivals: Boolean,
@@ -212,10 +221,11 @@ private suspend fun maybeStartArrivalTutorial(
 ) {
     if (tutorialState.active) return
     if (!hasArrivals) return
+    if (ArrivalTutorial.pendingSteps(prefs).isEmpty()) return
+    awaitSheetVisible()
+    // Startup dialogs can disable tutorials while this is waiting for the sheet.
+    if (tutorialState.active) return
     val pending = ArrivalTutorial.pendingSteps(prefs)
     if (pending.isEmpty()) return
-    awaitSheetVisible()
-    // Re-check after the wait: a stop change or another tutorial may have intervened.
-    if (tutorialState.active) return
     tutorialState.start(pending)
 }

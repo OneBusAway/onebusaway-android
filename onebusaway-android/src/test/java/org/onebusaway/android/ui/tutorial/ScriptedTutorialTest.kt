@@ -26,6 +26,18 @@ import org.junit.Test
  */
 class ScriptedTutorialTest {
 
+    @Test
+    fun `tour demonstrates both modes and releases its override when it ends`() {
+        val timeIndex = ScriptedTutorial.steps.indexOfFirst { it.id == ScriptedTutorial.STEP_ARRIVAL_TIME }
+        assertEquals(org.onebusaway.android.ui.arrivals.ArrivalDisplayMode.ROUTE, ScriptedTutorial.arrivalDisplayMode(ScriptedTutorial.steps[timeIndex - 1].id))
+        assertEquals(org.onebusaway.android.ui.arrivals.ArrivalDisplayMode.TIME, ScriptedTutorial.arrivalDisplayMode(ScriptedTutorial.steps[timeIndex].id))
+        assertEquals(org.onebusaway.android.ui.arrivals.ArrivalDisplayMode.ROUTE, ScriptedTutorial.arrivalDisplayMode(ScriptedTutorial.steps[timeIndex + 1].id))
+        assertEquals(ScriptedTutorial.KEY_ARRIVAL_MODE, ScriptedTutorial.steps[timeIndex].anchorId)
+        assertNull(ScriptedTutorial.arrivalDisplayMode(null))
+        assertNull(ScriptedTutorial.arrivalDisplayMode(ArrivalTutorial.KEY_ETA))
+        assertEquals(governingActionIndex(ScriptedTutorial.steps, timeIndex - 1), governingActionIndex(ScriptedTutorial.steps, timeIndex))
+    }
+
     private fun step(id: String, action: TutorialAction? = null) = TutorialStep(id = id, title = 0, body = 0, action = action)
 
     @Test
@@ -107,6 +119,6 @@ class ScriptedTutorialTest {
         assertEquals(ScriptedTutorial.KEY_MAP, ScriptedTutorial.steps.first().anchorId)
         // The fixed length is the point of a *scripted* tour (#2164) — it walks the issue's script, so
         // a step appearing or disappearing is a change to what the tour teaches, not an incidental one.
-        assertEquals(17, ScriptedTutorial.steps.size)
+        assertEquals(18, ScriptedTutorial.steps.size)
     }
 }

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.settings
 
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+
 /*
  * Pure (Android-free) state + derivation for the Compose settings screens. The ViewModels read the
  * raw preference values + the current region into the snapshot/info holders below and call the
@@ -45,7 +47,8 @@ data class SettingsPrefSnapshot(
     val analyticsEnabled: Boolean,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
-    val appTheme: String?
+    val appTheme: String?,
+    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE
 )
 
 /** What the screen needs to know about the current region; null means no region (custom API). */
@@ -78,7 +81,8 @@ data class SettingsUiState(
     val analyticsEnabled: Boolean,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
-    val appTheme: String?
+    val appTheme: String?,
+    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE
 ) {
     val showNotificationsCategory: Boolean
         get() = showLegacyNotificationControls || showTripPlanNotifications
@@ -115,7 +119,8 @@ fun buildSettingsUiState(
     analyticsEnabled = prefs.analyticsEnabled,
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,
-    appTheme = prefs.appTheme
+    appTheme = prefs.appTheme,
+    arrivalDisplayDefault = prefs.arrivalDisplayDefault
 )
 
 // ---------------------------------------------------------------------------------------------

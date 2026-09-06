@@ -15,18 +15,48 @@
  */
 package org.onebusaway.android.ui.tutorial
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.testing.FakePreferencesRepository
+import org.onebusaway.android.ui.home.arrivals.maybeStartArrivalTutorial
 
 /**
  * Unit tests for [ArrivalTutorial]'s pure gating: which onboarding steps are still owed given the
  * opt-out flag and each step's "already shown" preference.
  */
 class ArrivalTutorialTest {
+
+    @Test
+    fun startupOptOutWhileWaitingForTheSheetPreventsArrivalSpotlight() = runTest {
+        val prefs = FakePreferencesRepository()
+        val tutorial = TutorialState()
+        var waited = false
+
+        maybeStartArrivalTutorial(prefs, tutorial, hasArrivals = true) {
+            waited = true
+            prefs.setBoolean(R.string.preference_key_show_tutorial_screens, false)
+        }
+
+        assertTrue(waited)
+        assertFalse(tutorial.active)
+    }
+
+    @Test
+    fun arrivalSpotlightStartsOnceTheSheetIsVisibleWhenStillEnabled() = runTest {
+        val prefs = FakePreferencesRepository()
+        val tutorial = TutorialState()
+
+        maybeStartArrivalTutorial(prefs, tutorial, hasArrivals = true) {
+            assertFalse(tutorial.active)
+        }
+
+        assertTrue(tutorial.active)
+        assertEquals(ArrivalTutorial.KEY_ETA, tutorial.current?.id)
+    }
 
     @Test
     fun pendingSteps_freshInstall_returnsAllStepsInOrder() {

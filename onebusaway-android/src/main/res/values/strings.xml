@@ -1512,4 +1512,19 @@
     <string name="trip_tracking_stopped">Stopped tracking %1$s</string>
     <string name="trip_tracking_notifications_disabled">Turn on notifications to track a bus</string>
     <string name="trip_tracking_unavailable">This route cannot be tracked</string>
+    <string name="arrival_display_switch">Arrival display</string>
+    <string name="arrival_display_time">Time</string>
+    <string name="arrival_display_route">Route</string>
+    <string name="arrival_display_default">Arrival display default</string>
+    <string name="arrival_display_choose_title">How would you like to see arrivals?</string>
+    <string name="arrival_display_choose_body">Change the default any time in Settings</string>
+    <string name="arrival_display_time_migration_title">Time - old way</string>
+    <string name="arrival_display_route_migration_title">Route - new option</string>
+    <string name="arrival_display_time_description">Each departure in time order, across all routes.</string>
+    <string name="arrival_display_route_description">Departures grouped by route and direction.</string>
+    <string name="arrival_display_save_default">Save default</string>
+    <string name="tutorial_scripted_arrival_time_title">See what comes next</string>
+    <string name="tutorial_scripted_arrival_time_text">Time shows one departure per row, with the earliest first. Use Time and Route to switch views whenever you like. Settings controls which view new drawers open in.</string>
+    <string name="arrival_display_sample_downtown">Downtown</string>
+    <string name="arrival_display_sample_northgate">Northgate</string>
 </resources>

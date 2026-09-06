@@ -27,7 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -36,10 +38,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.arrivals.ArrivalActions
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.arrivals.arrivalRowKey
+import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
+import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.convertArrivals
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.util.DisplayFormat
@@ -65,6 +74,17 @@ internal fun NearbyArrivalsSheetHost(
     // Bay labels resolved once per row set rather than per row recomposition — each is a string-resource
     // lookup, and the row's own content changes far more often than its bay does.
     val context = LocalContext.current
+    val prefs = remember(context) { PreferencesEntryPoint.get(context) }
+    var displayMode by rememberArrivalDisplayMode("nearby") { prefs.arrivalDisplayDefault() }
+    val displayedRows = remember(rows, displayMode) {
+        if (displayMode == ArrivalDisplayMode.TIME) {
+            rows.flatMap { row ->
+                row.group.trips.map { NearbyRouteRow(RouteRowGroup(listOf(it)), row.bay) }
+            }.sortedBy { it.group.representative.displayTime }
+        } else {
+            rows
+        }
+    }
     val stopLabels = remember(rows, context) { rows.associate { it.key to it.bay.label(context) } }
     Surface(color = MaterialTheme.colorScheme.surface) {
         LazyColumn(
@@ -89,9 +109,11 @@ internal fun NearbyArrivalsSheetHost(
                         .semantics { heading() }
                 )
             }
-            items(rows, key = { it.key }) { row ->
+            item(key = "display-mode") { ArrivalDisplayModeSwitch(displayMode, { displayMode = it }) }
+            items(displayedRows, key = { if (displayMode == ArrivalDisplayMode.TIME) it.group.representative.arrivalRowKey() else it.key }) { row ->
                 RouteArrivalRow(
                     group = row.group,
+                    chronological = displayMode == ArrivalDisplayMode.TIME,
                     actionsFor = actionsFor,
                     isFavorite = row.group.routeId in favoriteRouteIds,
                     callbacks = callbacks,

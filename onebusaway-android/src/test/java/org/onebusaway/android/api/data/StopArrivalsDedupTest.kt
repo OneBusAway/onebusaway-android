@@ -89,7 +89,8 @@ class StopArrivalsDedupTest {
                 references = References()
             ),
             currentTime = 1_785_706_000_000L,
-            minutesAfter = 65
+            minutesAfter = 65,
+            receivedAt = org.onebusaway.android.time.ElapsedTime(0)
         )
 
         assertEquals(0, snapshot.arrivals.size)
@@ -122,7 +123,8 @@ class StopArrivalsDedupTest {
                 )
             ),
             currentTime = 1_784_926_038_080L,
-            minutesAfter = 65
+            minutesAfter = 65,
+            receivedAt = org.onebusaway.android.time.ElapsedTime(0)
         )
 
         /** One wire arrival; [located] is the only field that differs within a duplicate pair. */

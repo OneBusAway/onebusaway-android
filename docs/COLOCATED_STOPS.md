@@ -33,11 +33,24 @@ while retaining the original stops in its cache. A focused ID stays selected;
 otherwise a saved stop is preferred, followed by the stop with the most routes
 and then ID order. Route projections combine only if their drawn points match too.
 
-The arrivals loader resolves matching nearby references and fetches each sibling
-once in the same time window. This also works when entering through a favorite or
-deep link without nearby map data. Arrival stop IDs, trip references and alerts
-are preserved. Failure of any member fails the refresh, allowing the existing
-repository to show a complete stale snapshot. Ordinary stops require no extra
-request. Deployments omitting nearby references retain their single-stop behavior.
+A marker carries all of its member IDs through map selection, saved focus and the
+arrivals session. Each refresh (including window widening) requests those members
+even if the deployment omits nearby IDs or stop references. Retapping the same
+representative can add newly discovered members without losing previously selected
+ones or adding a navigation rung.
+
+The arrivals loader also resolves matching nearby references for entry points that
+have only one ID, such as favorites or deep links. It fetches the union of explicit
+members and discovered siblings once in the same time window. Arrival stop IDs,
+trip references and alerts are preserved. Failure of any member fails the refresh,
+allowing the existing repository to show a complete stale snapshot. Ordinary stops
+require no extra request. ID-only entry points on deployments omitting nearby
+references can show only the requested stop until a map selection supplies members.
+
+Each snapshot carries the primary response's original server timestamp and its
+monotonic receipt time. Merging retains that pair. The drawer, tracked-route
+notifications and favorites project the clock from that anchor, including time
+spent loading siblings, rather than inventing a later receipt for an older server
+timestamp. The arrivals window still ends relative to the original response time.
 
 Regression coverage: `ColocatedStopMarkersTest` and `ColocatedStopArrivalsTest`.

@@ -36,6 +36,7 @@ internal fun mergeColocatedStopMarkers(stops: Collection<StopMarker>, focusedSto
                 .thenBy { it.id }
         )
     representative.copy(
+        colocatedStopIds = group.flatMapTo(linkedSetOf()) { it.colocatedStopIds + it.id } - representative.id,
         favorite = group.any { it.favorite },
         presentedRoutes = group.flatMapTo(linkedSetOf()) { it.presentedRoutes },
         routes = group.flatMap { it.routes }.inInterchangeableOrder(StopRoute::shortName)

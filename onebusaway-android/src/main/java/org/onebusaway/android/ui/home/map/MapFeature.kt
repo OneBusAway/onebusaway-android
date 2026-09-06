@@ -188,7 +188,7 @@ fun MapFeature(
                 dismissNavigateHere()
                 val stop = marker.stop
                 val transition = homeViewModel.onStopFocused(
-                    FocusedStop(stop.id, stop.name, stop.stopCode, marker.point, stop.wheelchairBoarding),
+                    FocusedStop(stop.id, stop.name, stop.stopCode, marker.point, stop.wheelchairBoarding, marker.colocatedStopIds),
                     continuingRoutes = marker.presentedRoutes
                 )
                 // Refused (directions owns the map): leave before the map marks the stop selected,

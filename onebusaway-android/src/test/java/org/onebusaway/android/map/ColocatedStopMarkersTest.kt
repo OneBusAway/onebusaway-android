@@ -45,6 +45,7 @@ class ColocatedStopMarkersTest {
         for (stops in listOf(listOf(a, b), listOf(b, a))) {
             val result = mergeColocatedStopMarkers(stops, null).single()
             assertEquals(metro.id, result.id)
+            assertEquals(setOf(express.id), result.colocatedStopIds)
             assertEquals(listOf("5", "40", "62", "597"), result.routes.map { it.shortName })
             assertSame(a.stop, result.stop)
         }

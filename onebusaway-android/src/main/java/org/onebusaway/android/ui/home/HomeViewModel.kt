@@ -247,7 +247,16 @@ class HomeViewModel @Inject constructor(
     ): StopFocusTransition {
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId == stop.id
-        if (sameStop) return StopFocusTransition.Unchanged
+        if (sameStop) {
+            val current = _currentFocus.value as? CurrentFocus.Stop
+            if (current != null) {
+                val members = current.stop.colocatedStopIds + stop.colocatedStopIds
+                if (members != current.stop.colocatedStopIds) {
+                    replaceFocus(current.copy(stop = current.stop.copy(colocatedStopIds = members)))
+                }
+            }
+            return StopFocusTransition.Unchanged
+        }
         val current = _currentFocus.value as? CurrentFocus.Stop
         val continuePresentation = when (val selected = current?.selectedRoute) {
             null -> current != null && presentedRoutes.any(continuingRoutes::contains)

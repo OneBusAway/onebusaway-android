@@ -33,6 +33,8 @@ import org.onebusaway.android.api.contract.RouteReference
 import org.onebusaway.android.api.contract.SituationReference
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.TripReference
+import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.time.ElapsedTime
 
 class ColocatedStopArrivalsTest {
     // Coordinates, names, directions and IDs from the Puget Sound API for #2286.
@@ -55,7 +57,7 @@ class ColocatedStopArrivalsTest {
                 calls += id to minutes
                 response(if (id == metro.id) metro else express)
             }
-            val result = service.arrivalsAtBoardingPoint(selected.id, 65)
+            val result = service.arrivalsAtBoardingPoint(selected.id, 65, elapsedClock = ElapsedClock { ElapsedTime(0) })
             assertEquals(selected.id, result.stopId)
             assertEquals(selected.id, result.stop?.id)
             assertEquals(setOf(metro.id to 65, express.id to 65), calls.toSet())
@@ -73,10 +75,68 @@ class ColocatedStopArrivalsTest {
     }
 
     @Test
+    fun `a merged marker loads all advertised stops when nearby IDs and references are absent`() = runTest {
+        val markers = listOf(metro, express).map { stop ->
+            org.onebusaway.android.map.render.StopMarker(
+                stop.id,
+                org.onebusaway.android.util.GeoPoint(stop.lat, stop.lon),
+                stop.direction!!,
+                3,
+                org.onebusaway.android.api.adapters.DtoStop(stop)
+            )
+        }
+        for (selectedId in listOf(metro.id, express.id)) {
+            val selected = org.onebusaway.android.map.mergeColocatedStopMarkers(markers, selectedId).single()
+            val calls = mutableListOf<String>()
+            val service = service { id, _ ->
+                calls += id
+                val stop = if (id == metro.id) metro else express
+                val envelope = response(stop)
+                val data = envelope.data!!
+                envelope.copy(
+                    data = data.copy(
+                        entry = data.entry.copy(nearbyStopIds = emptyList()),
+                        references = data.references.copy(stops = listOf(stop))
+                    )
+                )
+            }
+            repeat(2) {
+                val result = service.arrivalsAtBoardingPoint(
+                    selected.id,
+                    65,
+                    selected.colocatedStopIds,
+                    ElapsedClock { ElapsedTime(0) }
+                )
+                assertEquals(setOf(metro.id, express.id), result.arrivals.map { it.stopId }.toSet())
+            }
+            assertEquals(2, calls.count { it == metro.id })
+            assertEquals(2, calls.count { it == express.id })
+        }
+    }
+
+    @Test
+    fun `sibling loading preserves the original server receipt anchor`() = runTest {
+        var elapsed = 10_000L
+        val clock = ElapsedClock { ElapsedTime(elapsed) }
+        val service = service { id, _ ->
+            // The primary request's transit time precedes its receipt; only the later seven
+            // seconds of sibling loading should advance that response's server clock.
+            elapsed += if (id == metro.id) 500 else 7_000
+            response(if (id == metro.id) metro else express)
+        }
+        val result = service.arrivalsAtBoardingPoint(metro.id, 65, elapsedClock = clock)
+        assertEquals(ElapsedTime(10_500), result.receivedAt)
+        assertEquals(1_000L, result.currentTime)
+        assertEquals(8_000L, result.serverNow(clock.now()).epochMs)
+        elapsed += 3_000
+        assertEquals(11_000L, result.serverNow(clock.now()).epochMs)
+    }
+
+    @Test
     fun `nearby references do not include opposite stops or unrelated trip status stops`() {
         val data = response(metro).data!!
         val unlisted = metro.copy(id = "unlisted-trip-status-stop")
-        val snapshot = StopArrivals(data.copy(references = data.references.copy(stops = data.references.stops + unlisted)), 1000, 65)
+        val snapshot = StopArrivals(data.copy(references = data.references.copy(stops = data.references.stops + unlisted)), 1000, 65, ElapsedTime(0))
         assertEquals(listOf(express.id), snapshot.colocatedStopIds)
     }
 
@@ -88,7 +148,7 @@ class ColocatedStopArrivalsTest {
             val envelope = response(metro)
             envelope.copy(data = envelope.data!!.copy(entry = envelope.data.entry.copy(nearbyStopIds = listOf(opposite.id))))
         }
-        assertEquals(listOf(metro.id), service.arrivalsAtBoardingPoint(metro.id, 65).arrivals.map { it.stopId })
+        assertEquals(listOf(metro.id), service.arrivalsAtBoardingPoint(metro.id, 65, elapsedClock = ElapsedClock { ElapsedTime(0) }).arrivals.map { it.stopId })
         assertEquals(1, requests)
     }
 
@@ -102,7 +162,7 @@ class ColocatedStopArrivalsTest {
                 response(express)
             }
         }
-        val result = service.arrivalsAtBoardingPoint(metro.id, 65)
+        val result = service.arrivalsAtBoardingPoint(metro.id, 65, elapsedClock = ElapsedClock { ElapsedTime(0) })
         assertTrue(result.hasArrivals)
         assertEquals(express.id, result.arrivals.single().stopId)
     }
@@ -112,7 +172,7 @@ class ColocatedStopArrivalsTest {
         val failure = IllegalArgumentException("sibling unavailable")
         val service = service { id, _ -> if (id == metro.id) response(metro) else throw failure }
         try {
-            service.arrivalsAtBoardingPoint(metro.id, 65)
+            service.arrivalsAtBoardingPoint(metro.id, 65, elapsedClock = ElapsedClock { ElapsedTime(0) })
             fail("Expected sibling failure")
         } catch (e: IllegalArgumentException) {
             assertEquals(failure.message, e.message)
@@ -123,7 +183,7 @@ class ColocatedStopArrivalsTest {
     fun `cancellation during a sibling request propagates`() = runTest {
         val service = service { id, _ -> if (id == metro.id) response(metro) else throw CancellationException("cancelled") }
         try {
-            service.arrivalsAtBoardingPoint(metro.id, 65)
+            service.arrivalsAtBoardingPoint(metro.id, 65, elapsedClock = ElapsedClock { ElapsedTime(0) })
             fail("Expected cancellation")
         } catch (e: CancellationException) {
             assertEquals("cancelled", e.message)

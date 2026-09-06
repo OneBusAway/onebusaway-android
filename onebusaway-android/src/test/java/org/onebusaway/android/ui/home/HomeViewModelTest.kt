@@ -2137,6 +2137,23 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `retapping a representative adds newly loaded siblings and persists the complete selection`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        val stop = FocusedStop("1_590")
+        vm.onStopFocused(stop)
+        vm.onStopFocused(stop.copy(colocatedStopIds = setOf("3_2479")))
+        // A route presentation may later carry only the representative. That re-tap must not
+        // erase the members already selected, nor add a new navigation rung.
+        vm.onStopFocused(stop)
+        val expected = stop.copy(colocatedStopIds = setOf("3_2479"))
+        assertEquals(expected, vm.currentFocus.value.focusedStop)
+        assertEquals(expected, viewModel(savedState = handle).currentFocus.value.focusedStop)
+        vm.navigateBackFocus()
+        assertNull(vm.currentFocus.value.focusedStop)
+    }
+
+    @Test
     fun `focused stop is restored from SavedStateHandle on recreation`() = runTest {
         val handle = SavedStateHandle()
         val stop = FocusedStop("42", "Pike St", "577", GeoPoint(47.61, -122.34))

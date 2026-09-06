@@ -50,12 +50,13 @@ import org.onebusaway.android.tracking.TrackedRouteStore
 class ArrivalsViewModel @AssistedInject constructor(
     @Assisted private val stopId: String,
     private val repository: ArrivalsRepository,
-    private val trackedRoutes: TrackedRouteStore
+    private val trackedRoutes: TrackedRouteStore,
+    @Assisted private val colocatedStopIds: Set<String> = emptySet()
 ) : ViewModel() {
 
     @AssistedFactory
     interface Factory {
-        fun create(stopId: String): ArrivalsViewModel
+        fun create(stopId: String, colocatedStopIds: Set<String> = emptySet()): ArrivalsViewModel
     }
 
     // --- Reactive state sources. The UI [state] is derived from these, so a user action updates the
@@ -126,7 +127,7 @@ class ArrivalsViewModel @AssistedInject constructor(
      */
     suspend fun refresh(): Boolean {
         val generation = ++refreshGeneration
-        val result = repository.getArrivals(stopId, minutesAfter)
+        val result = repository.getArrivals(stopId, minutesAfter, colocatedStopIds)
         // A newer refresh started while this one was in flight — drop this (now stale) completion so it
         // can't overwrite the fresher state, emit an out-of-date map snapshot, or push the poll timer
         // (measured against the *shown* data) past the fresher completion. See #1933.

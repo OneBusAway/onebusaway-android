@@ -311,7 +311,9 @@ data class StopMarker(
     val stop: ObaStop,
     val favorite: Boolean = false,
     val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
-    val routes: List<StopRoute> = emptyList()
+    val routes: List<StopRoute> = emptyList(),
+    /** Other feed IDs represented by this marker; selection must load these even without API references. */
+    val colocatedStopIds: Set<String> = emptySet()
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }

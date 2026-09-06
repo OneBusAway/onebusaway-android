@@ -38,6 +38,10 @@ import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.boardingPoint
+import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.time.ElapsedTime
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.liveServerTime
 
 /**
  * A resolved snapshot of a stop's arrivals-and-departures: the [arrivals] plus the references the
@@ -50,8 +54,13 @@ class StopArrivals internal constructor(
     /** The server `currentTime` of this response (epoch millis). */
     val currentTime: Long,
     /** The effective minutes-after window this response was fetched with. */
-    val minutesAfter: Int
+    val minutesAfter: Int,
+    /** Monotonic receipt of the primary response, before fetching siblings. */
+    val receivedAt: ElapsedTime
 ) {
+    /** Project from the original receipt, including sibling loading and downstream processing time. */
+    fun serverNow(elapsed: ElapsedTime): ServerTime = liveServerTime(ServerTime(currentTime), receivedAt, elapsed)
+
     private val refs get() = data.references
     private val entry get() = data.entry
 
@@ -101,7 +110,8 @@ class StopArrivals internal constructor(
                 )
             ),
             currentTime,
-            minutesAfter
+            minutesAfter,
+            receivedAt
         )
     }
 
@@ -157,16 +167,19 @@ interface StopArrivalsDataSource {
     /**
      * One arrivals fetch at [minutesAfter]. [Result.failure] (IO / HTTP / non-OK code via
      * [requireData]) rather than throwing; the caller owns the widen-on-empty + stale-fallback policy.
+     * [colocatedStopIds] are the other feed IDs explicitly selected on the map. They are requested
+     * even if nearby references are unavailable; API discovery may add further matching IDs.
      */
-    suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals>
+    suspend fun arrivals(stopId: String, minutesAfter: Int, colocatedStopIds: Set<String> = emptySet()): Result<StopArrivals>
 }
 
 class DefaultStopArrivalsDataSource @Inject constructor(
-    private val api: ObaApiProvider
+    private val api: ObaApiProvider,
+    private val elapsedClock: ElapsedClock
 ) : StopArrivalsDataSource {
 
-    override suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals> = api.call {
-        it.arrivalsAtBoardingPoint(stopId, minutesAfter)
+    override suspend fun arrivals(stopId: String, minutesAfter: Int, colocatedStopIds: Set<String>): Result<StopArrivals> = api.call {
+        it.arrivalsAtBoardingPoint(stopId, minutesAfter, colocatedStopIds, elapsedClock)
     }.onFailure { Log.e(TAG, "arrivals($stopId) failed", it) }
 
     private companion object {
@@ -175,8 +188,8 @@ class DefaultStopArrivalsDataSource @Inject constructor(
 }
 
 /**
- * OBA keeps separate arrivals per feed stop ID. Its nearbyStopIds references let us discover the
- * other IDs at the boarding point even when opened from a favorite/deep link, without a map cache.
+ * OBA keeps separate arrivals per feed stop ID. Load every explicitly selected ID, augmented by
+ * matching nearbyStopIds references for ID-only entry points such as favorites and deep links.
  * The server's StopWithArrivalsAndDeparturesBeanServiceImpl asks NearbyStopsBeanService for stops in
  * a 100m bounding box, excluding only the requested ID. Those IDs are neighbors, not equivalences;
  * [colocatedStopIds][StopArrivals.colocatedStopIds] applies the same exact match as the map.
@@ -184,13 +197,21 @@ class DefaultStopArrivalsDataSource @Inject constructor(
  * Fetch siblings once, on this same service and window; do not recursively expand nearby stops.
  * Any failed member fails the refresh so the repository can retain a complete stale snapshot.
  */
-internal suspend fun ObaWebService.arrivalsAtBoardingPoint(stopId: String, minutesAfter: Int): StopArrivals = coroutineScope {
+internal suspend fun ObaWebService.arrivalsAtBoardingPoint(
+    stopId: String,
+    minutesAfter: Int,
+    colocatedStopIds: Set<String> = emptySet(),
+    elapsedClock: ElapsedClock
+): StopArrivals = coroutineScope {
     suspend fun fetch(id: String): StopArrivals {
         val envelope = arrivalsAndDeparturesForStop(id, minutesAfter)
-        return StopArrivals(envelope.requireData(), serverNowOrDeviceClock(envelope.currentTime), minutesAfter)
+        return StopArrivals(envelope.requireData(), serverNowOrDeviceClock(envelope.currentTime), minutesAfter, elapsedClock.now())
     }
     val primary = fetch(stopId)
-    val siblings = primary.colocatedStopIds.map { id -> async { fetch(id) } }.awaitAll()
+    // Explicit selection is authoritative even when nearby references are omitted. Discovery adds
+    // siblings for ID-only entry points. Neither source can drop or duplicate a selected member.
+    val siblingIds = (colocatedStopIds + primary.colocatedStopIds) - stopId
+    val siblings = siblingIds.map { id -> async { fetch(id) } }.awaitAll()
     primary.withColocatedArrivals(siblings)
 }
 

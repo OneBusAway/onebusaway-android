@@ -136,13 +136,10 @@ fun SettingsRoute(
         onShowRentalButton = viewModel::onShowRentalButtonChanged,
         onDisplayWeatherView = viewModel::onDisplayWeatherViewChanged,
         onShowAvailableStudies = viewModel::onShowAvailableStudiesChanged,
-        onShowTutorialScreens = viewModel::onShowTutorialScreensChanged,
         onLeftHandMode = viewModel::onLeftHandModeChanged,
-        onShowHeaderArrivals = viewModel::onShowHeaderArrivalsChanged,
         onVibrateAllowed = viewModel::onVibrateAllowedChanged,
         onTripPlanNotifications = viewModel::onTripPlanNotificationsChanged,
         onAnalytics = viewModel::onAnalyticsChanged,
-        onMapMode = viewModel::onMapModeChanged,
         onPreferredUnits = viewModel::onPreferredUnitsChanged,
         onPreferredTempUnits = viewModel::onPreferredTempUnitsChanged,
         onAppTheme = viewModel::onAppThemeChanged,
@@ -176,13 +173,10 @@ class SettingsActions(
     val onShowRentalButton: (Boolean) -> Unit,
     val onDisplayWeatherView: (Boolean) -> Unit,
     val onShowAvailableStudies: (Boolean) -> Unit,
-    val onShowTutorialScreens: (Boolean) -> Unit,
     val onLeftHandMode: (Boolean) -> Unit,
-    val onShowHeaderArrivals: (Boolean) -> Unit,
     val onVibrateAllowed: (Boolean) -> Unit,
     val onTripPlanNotifications: (Boolean) -> Unit,
     val onAnalytics: (Boolean) -> Unit,
-    val onMapMode: (String) -> Unit,
     val onPreferredUnits: (String) -> Unit,
     val onPreferredTempUnits: (String) -> Unit,
     val onAppTheme: (String) -> Unit,
@@ -257,14 +251,6 @@ fun SettingsScreen(
                     checked = state.showRentalButton,
                     onCheckedChange = actions.onShowRentalButton
                 )
-                val mapOptions = stringArrayResource(R.array.preferred_map_options).toList()
-                ListPreferenceItem(
-                    title = stringResource(R.string.preferences_preferred_maps_title),
-                    entries = mapOptions,
-                    entryValues = mapOptions,
-                    selectedValue = state.mapMode,
-                    onValueSelected = actions.onMapMode
-                )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_weather_view),
                     summary = stringResource(R.string.preferences_show_weather_view_on_map),
@@ -278,22 +264,10 @@ fun SettingsScreen(
                     onCheckedChange = actions.onShowAvailableStudies
                 )
                 SwitchPreferenceItem(
-                    title = stringResource(R.string.preferences_show_tutorial_screens_title),
-                    summary = stringResource(R.string.preferences_show_tutorial_screens_summary),
-                    checked = state.showTutorialScreens,
-                    onCheckedChange = actions.onShowTutorialScreens
-                )
-                SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_left_hand_mode_title),
                     summary = stringResource(R.string.preferences_left_hand_mode_summary),
                     checked = state.leftHandMode,
                     onCheckedChange = actions.onLeftHandMode
-                )
-                SwitchPreferenceItem(
-                    title = stringResource(R.string.preferences_show_header_arrivals_title),
-                    summary = stringResource(R.string.preferences_show_header_arrivals_summary),
-                    checked = state.showHeaderArrivals,
-                    onCheckedChange = actions.onShowHeaderArrivals
                 )
                 val unitOptions = stringArrayResource(R.array.preferred_units_options).toList()
                 ListPreferenceItem(
@@ -323,17 +297,19 @@ fun SettingsScreen(
 
             if (state.showNotificationsCategory) {
                 PreferenceCategory(stringResource(R.string.preferences_category_notifications)) {
-                    ClickPreferenceItem(
-                        title = stringResource(R.string.preferences_preferred_sound_title),
-                        summary = stringResource(R.string.preferences_preferred_sound_summary, appName),
-                        onClick = actions.onRingtoneClick
-                    )
-                    SwitchPreferenceItem(
-                        title = stringResource(R.string.preferences_preferred_vibration_title),
-                        summary = stringResource(R.string.preferences_preferred_vibration_summary, appName),
-                        checked = state.vibrateAllowed,
-                        onCheckedChange = actions.onVibrateAllowed
-                    )
+                    if (state.showLegacyNotificationControls) {
+                        ClickPreferenceItem(
+                            title = stringResource(R.string.preferences_preferred_sound_title),
+                            summary = stringResource(R.string.preferences_preferred_sound_summary, appName),
+                            onClick = actions.onRingtoneClick
+                        )
+                        SwitchPreferenceItem(
+                            title = stringResource(R.string.preferences_preferred_vibration_title),
+                            summary = stringResource(R.string.preferences_preferred_vibration_summary, appName),
+                            checked = state.vibrateAllowed,
+                            onCheckedChange = actions.onVibrateAllowed
+                        )
+                    }
                     if (state.showTripPlanNotifications) {
                         SwitchPreferenceItem(
                             title = stringResource(R.string.preferences_trip_plan_notifications_title),

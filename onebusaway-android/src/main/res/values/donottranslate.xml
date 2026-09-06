@@ -37,13 +37,11 @@
     <string name="preference_key_app_theme">preference_app_theme</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
     <string name="preference_key_show_zoom_controls">preference_show_zoom_controls</string>
-    <string name="preference_key_map_mode">preference_key_map_mode</string>
     <string name="preference_key_show_available_studies">preference_show_available_studies</string>
     <string name="preference_key_hide_alerts">preference_hide_alerts</string>
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
     <string name="preference_key_default_reminder_time">preference_default_reminder_time</string>
     <string name="preference_key_default_reminder_sort">preference_default_reminder_sort</string>
-    <string name="preference_key_show_header_arrivals">preference_key_show_header_arrivals</string>
     <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens</string>
     <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
     <string name="preference_key_left_hand_mode">preference_key_left_hand_mode</string>

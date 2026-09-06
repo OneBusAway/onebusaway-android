@@ -35,13 +35,10 @@ class SettingsUiStateTest {
         showRentalButton = true,
         displayWeatherView = true,
         showAvailableStudies = true,
-        showTutorialScreens = true,
         leftHandMode = false,
-        showHeaderArrivals = false,
         vibrateAllowed = true,
         tripPlanNotifications = true,
         analyticsEnabled = true,
-        mapMode = "normal",
         preferredUnits = "Automatic",
         preferredTempUnits = "Automatic",
         appTheme = "System default"
@@ -71,10 +68,40 @@ class SettingsUiStateTest {
     // --- notifications / trip plan ---
 
     @Test
-    fun `notifications category hidden on Android 8 and up`() {
-        assertTrue(build(env = env(sdkInt = 25)).showNotificationsCategory)
-        assertFalse(build(env = env(sdkInt = 26)).showNotificationsCategory)
-        assertFalse(build(env = env(sdkInt = 33)).showNotificationsCategory)
+    fun `trip notification toggle remains accessible on every Android version`() {
+        for (sdk in listOf(23, 25, 26, 33, 36)) {
+            val state = build(env = env(sdkInt = sdk))
+            assertTrue(state.showNotificationsCategory)
+            assertTrue(state.showTripPlanNotifications)
+            assertEquals(sdk < 26, state.showLegacyNotificationControls)
+        }
+    }
+
+    @Test
+    fun `region without trip planning only shows legacy notification controls`() {
+        val region = RegionSummaryInfo("R", hasOtp = false)
+        val legacy = build(region = region, env = env(sdkInt = 25))
+        assertTrue(legacy.showNotificationsCategory)
+        assertTrue(legacy.showLegacyNotificationControls)
+        assertFalse(legacy.showTripPlanNotifications)
+
+        val modern = build(region = region, env = env(sdkInt = 26))
+        assertFalse(modern.showNotificationsCategory)
+        assertFalse(modern.showLegacyNotificationControls)
+        assertFalse(modern.showTripPlanNotifications)
+    }
+
+    @Test
+    fun `disabled trip notifications can be re-enabled on modern Android`() {
+        val state = buildSettingsUiState(
+            prefs.copy(tripPlanNotifications = false),
+            region = null,
+            env = env(sdkInt = 33),
+            customApiRegionSummary = "Custom API"
+        )
+        assertTrue(state.showNotificationsCategory)
+        assertTrue(state.showTripPlanNotifications)
+        assertFalse(state.tripPlanNotifications)
     }
 
     @Test
@@ -107,7 +134,6 @@ class SettingsUiStateTest {
     fun `toggle and list values are copied through to the state`() {
         val s = build()
         assertTrue(s.autoSelectRegion)
-        assertEquals("normal", s.mapMode)
         assertEquals("System default", s.appTheme)
     }
 

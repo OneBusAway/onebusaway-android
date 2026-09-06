@@ -683,19 +683,9 @@
     <string name="preferences_show_zoom_controls_summary">Display zoom controls on map
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
-    <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
-        show arrival info in the header at the top of the screen (doesn’t affect map view)
-    </string>
-
     <string name="preferences_trip_plan_notifications_title">Trip plan notifications (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">After planning a trip, send
         notifications if the trip is delayed or no longer recommended.
-    </string>
-
-    <string name="preferences_show_tutorial_screens_title">Show tutorial screens</string>
-    <string name="preferences_show_tutorial_screens_summary">Display informational popups explaining
-        how to use features
     </string>
 
     <string name="preferences_left_hand_mode_title">Left hand mode</string>
@@ -1460,10 +1450,6 @@
     <string name="preferences_reset_donation_timestamps_title">Reset Donation Timestamps</string>
     <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the ’Remind Me Later’ and ’Don’t Bother Me’ timestamps associated with donation requests.</string>
     <string name="preferences_show_weather_view">Show weather view</string>
-    <string name="preferences_preferred_maps_title">Preferred Map Type</string>
-    <string name="preferences_preferred_map_option_normal2d">Default Map</string>
-    <string name="preferences_preferred_map_option_normal3d">Default Map with 3D Buildings</string>
-    <string name="preferences_preferred_map_option_satellite">Satellite Map</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Show available studies</string>

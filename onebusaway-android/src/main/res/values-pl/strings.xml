@@ -477,17 +477,8 @@
     <string name="preferences_show_zoom_controls_summary">Wyświetl kontrolki powiększenia na mapie
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Pokaż przyjazd nad nazwą przystanku</string>
-    <string name="preferences_show_header_arrivals_summary">Kiedy oglądasz ulubione przystanki,
-        pokaż przyjazdy w nagłówku u góry ekranu (nie wpływa na widok mapy)
-    </string>
-
     <string name="preferences_trip_plan_notifications_title">Powiadomienia o planowaniu podróży (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Po zaplanowaniu podróży wysyłaj powiadomienia, jeśli podróż jest opóźniona lub nie jest już zalecana.
-    </string>
-
-    <string name="preferences_show_tutorial_screens_title">Pokaż ekrany samouczka</string>
-    <string name="preferences_show_tutorial_screens_summary">Wyświetlaj wyskakujące okienka informacyjne wyjaśniające jak korzystać z funkcji
     </string>
 
     <string name="preferences_left_hand_mode_title">Tryb leworęczny</string>
@@ -790,10 +781,6 @@
     <string name="preferences_reset_donation_timestamps_title">Zresetuj Znaczniki Czasu Dotacji</string>
     <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu ’Przypomnij mi później’ i ’Nie przeszkadzaj mi’ związanych z prośbami o darowizny.</string>
     <string name="preferences_show_weather_view">Pokaż widok pogody</string>
-    <string name="preferences_preferred_maps_title">Preferowany Typ Mapy</string>
-    <string name="preferences_preferred_map_option_normal2d">Domyślna mapa</string>
-    <string name="preferences_preferred_map_option_normal3d">Domyślna mapa z budynkami 3D</string>
-    <string name="preferences_preferred_map_option_satellite">Mapa satelitarna</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Pokaż dostępne badania</string>

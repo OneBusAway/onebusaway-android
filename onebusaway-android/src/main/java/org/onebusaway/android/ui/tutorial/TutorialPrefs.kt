@@ -23,7 +23,7 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
  * Tutorial preference-flag constants and reset, kept after the ShowcaseView-based tutorials were
  * replaced by Compose onboarding: [TUTORIAL_WELCOME] gates the launch flow's "show the tutorial?"
  * prompt and [TUTORIAL_OPT_OUT_DIALOG] the help dialog. [resetAllTutorials] re-arms onboarding from
- * Settings.
+ * Help.
  *
  * Five further flags used to live here — the arrival sort, Recent stops/routes, the two starred-stops
  * hints and the Open311 categories. Each was declared and dutifully reset, and none had been *read*

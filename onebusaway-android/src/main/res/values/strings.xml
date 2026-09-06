@@ -1532,4 +1532,9 @@
     <string name="tutorial_scripted_arrival_time_text">Time shows one departure per row, with the earliest first. Use Time and Route to switch views whenever you like. Settings controls which view new drawers open in.</string>
     <string name="arrival_display_sample_downtown">Downtown</string>
     <string name="arrival_display_sample_northgate">Northgate</string>
+    <string name="view_arrivals_only">View arrivals only</string>
+    <string name="arrivals_board_title">Arrivals</string>
+    <string name="home_map">Map</string>
+    <string name="stop_add_star">Add star to stop</string>
+    <string name="stop_remove_star">Remove star from stop</string>
 </resources>

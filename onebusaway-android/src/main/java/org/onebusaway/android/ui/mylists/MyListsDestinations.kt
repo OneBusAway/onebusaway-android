@@ -37,10 +37,13 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.home.rememberHomeSection
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.navigateUpInApp
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
+import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -65,8 +68,8 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
             MyStopsDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
-                onBack = { navController.popBackStack() },
-                onRevealStop = { navController.revealStopOnMap(it) }
+                onBack = { navController.navigateUpInApp() },
+                onRevealStop = { navController.showArrivals(it) }
             )
         }
     }
@@ -75,7 +78,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
             MyRoutesDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
-                onBack = { navController.popBackStack() },
+                onBack = { navController.navigateUpInApp() },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) },
                 onOpenRoute = { navController.navigateFromHome(NavRoutes.routeInfo(it)) }
             )
@@ -86,8 +89,8 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
             MyRecentDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
-                onBack = { navController.popBackStack() },
-                onRevealStop = { navController.revealStopOnMap(it) },
+                onBack = { navController.navigateUpInApp() },
+                onRevealStop = { navController.showArrivals(it) },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) }
             )
         }
@@ -105,8 +108,17 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 topBar = {
                     ObaTopAppBar(
                         title = stringResource(R.string.navdrawer_item_my_reminders),
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.navigateUpInApp() }
                     ) {
+                        IconButton(onClick = {
+                            PreferencesEntryPoint.get(activity).rememberHomeSection(NavRoutes.HOME)
+                            navController.navigateFromHome(NavRoutes.HOME)
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_action_location_map),
+                                contentDescription = stringResource(R.string.home_map)
+                            )
+                        }
                         IconButton(onClick = {
                             activity.chooseSortOrder(
                                 PreferenceUtils.getReminderSortOrderFromPreferences(activity),
@@ -135,7 +147,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                                 onEdit = onEditReminder,
                                 onShowRoute = { navController.navigate(NavRoutes.routeInfo(it)) },
                                 // A reminder stores only its stop's id — enough for a reveal.
-                                onShowStop = { navController.revealStopOnMap(it) }
+                                onShowStop = { navController.showArrivals(org.onebusaway.android.ui.nav.StopReveal(it)) }
                             )
                         }
                     )

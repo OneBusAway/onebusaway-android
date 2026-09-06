@@ -20,9 +20,51 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.geoPointOrNull
+
+/** A directly launched board/list exits on Back, without exposing the map underneath. */
+const val LAUNCH_ROOT = "navigation.launchRoot"
+
+fun NavController.navigateBackOrFinish() {
+    if (currentBackStackEntry?.savedStateHandle?.get<Boolean>(LAUNCH_ROOT) == true) {
+        context.findActivity().finish()
+    } else {
+        popBackStack()
+    }
+}
+
+/** Toolbar Up stays in the app, even when Android Back would exit a shortcut/launcher root. */
+fun NavController.navigateUpInApp(parentRoute: String = NavRoutes.HOME) {
+    if (currentBackStackEntry?.savedStateHandle?.get<Boolean>(LAUNCH_ROOT) == true) {
+        navigateFromHome(parentRoute)
+        // A shortcut has no list underneath it. Its parent becomes the new launch root, so
+        // system Back still exits from that list without unexpectedly opening the map.
+        if (parentRoute != NavRoutes.HOME) {
+            currentBackStackEntry?.savedStateHandle?.set(LAUNCH_ROOT, true)
+        }
+    } else {
+        popBackStack()
+    }
+}
+
+/** Open a board without discarding the list that led to it. */
+fun NavController.showArrivals(reveal: StopReveal) = navigate(NavRoutes.arrivals(reveal.stopId, reveal.name)) {
+    launchSingleTop = true
+}
+
+/** Push the map above the board so Back returns to its existing state. */
+fun NavController.showStopMapFromArrivals(reveal: StopReveal) {
+    navigate(NavRoutes.HOME)
+    revealStopOnMap(reveal)
+}
+
+fun NavController.showRouteMapFromArrivals(request: ShowRouteRequest) {
+    navigate(NavRoutes.HOME)
+    revealRouteOnMap(request)
+}
 
 /**
  * Navigate to an in-app [route], popping up to HOME and de-duping the top — the single navigation
@@ -97,7 +139,7 @@ fun SavedStateHandle.consumeRouteReveal(): ShowRouteRequest? {
 /**
  * "Show me this stop" — the one currency every stop affordance in the app speaks, whether it is a
  * navigation hand-back ([revealStopOnMap]), an external launch translated at the entry boundary
- * ([IntentRouteMapper.stopRevealForIntent]), or a list row handing one to its host.
+ * ([IntentRouteMapper.routeForIntent]), or a list row handing one to its host.
  *
  * Only [stopId] is required, because it is the only thing every requester has: a deep link, an FCM
  * arrival push, a pinned shortcut and a reminder row carry nothing else. [name] is the arrivals sheet's

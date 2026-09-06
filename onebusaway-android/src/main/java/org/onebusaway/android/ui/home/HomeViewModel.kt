@@ -1393,11 +1393,12 @@ class HomeViewModel @Inject constructor(
     /**
      * Home was created. On the very first launch ever we defer the region check until the map's
      * location-permission result (so an auto-select has a location to work with); otherwise — or once
-     * permission is already granted — check now. [hasLocationPermission] is read by the activity
+     * permission is already granted — check now. Mapless launches resolve immediately so a known
+     * stop can load without waiting for a map permission callback. [hasLocationPermission] is read by the activity
      * (it needs a Context); the decision lives here.
      */
-    fun onHomeStarted(hasLocationPermission: Boolean) {
-        if (startupRepo.isInitialStartup() && !hasLocationPermission) {
+    fun onHomeStarted(hasLocationPermission: Boolean, mapless: Boolean = false) {
+        if (!mapless && startupRepo.isInitialStartup() && !hasLocationPermission) {
             return
         }
         refreshRegions()

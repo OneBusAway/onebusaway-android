@@ -109,19 +109,21 @@ internal fun ArrivalsPolling(viewModel: ArrivalsViewModel) {
 @Composable
 internal fun rememberArrivalRowCallbacks(
     handler: ArrivalActionHandler,
-    viewModel: ArrivalsViewModel
-): ArrivalRowCallbacks = remember(handler, viewModel) {
+    viewModel: ArrivalsViewModel,
+    mapless: Boolean = false
+): ArrivalRowCallbacks = remember(handler, viewModel, mapless) {
     ArrivalRowCallbacks(
         onRouteFavorite = handler::onRouteFavorite,
         onShowVehiclesOnMap = handler::onShowVehiclesOnMap,
         onShowRouteOnMap = handler::onShowRouteOnMap,
-        onEtaClick = handler::onFocusVehicleOnMap,
+        onEtaClick = if (mapless) handler::onShowTripStatus else handler::onFocusVehicleOnMap,
         onShowTripStatus = handler::onShowTripStatus,
         onSetReminder = handler::onSetReminder,
         onToggleTracking = handler::onToggleTracking,
         onShowRouteSchedule = handler::onShowRouteSchedule,
         onReportArrivalProblem = handler::onReportArrivalProblem,
-        onShowAlert = handler::onShowAlert
+        onShowAlert = handler::onShowAlert,
+        onRowClick = if (mapless) handler::onShowTripStatus else handler::onShowVehiclesOnMap
     )
 }
 

@@ -2283,6 +2283,15 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `first mapless launch resolves the region without a map permission callback`() = runTest {
+        val region = FakeRegionRepository()
+        viewModel(regionRepo = region, startupRepo = FakeStartupPreferencesRepository(initial = true))
+            .onHomeStarted(hasLocationPermission = false, mapless = true)
+        advanceUntilIdle()
+        assertEquals(1, region.refreshCount)
+    }
+
+    @Test
     fun `first launch with permission checks the region now`() = runTest {
         val region = FakeRegionRepository()
         viewModel(regionRepo = region, startupRepo = FakeStartupPreferencesRepository(initial = true))

@@ -26,6 +26,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -61,6 +65,7 @@ import org.onebusaway.android.ui.home.SettingsRehomeEffect
 import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
+import org.onebusaway.android.ui.home.launchDestination
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
@@ -154,7 +159,10 @@ class HomeActivity : AppCompatActivity() {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            LaunchIntentEffect(navController, launchIntents.items, ::applyLaunchIntentSideEffects)
+            var launchReady by rememberSaveable { mutableStateOf(false) }
+            LaunchIntentEffect(navController, launchIntents.items, ::applyLaunchIntentSideEffects, initialLaunch = !launchReady) {
+                launchReady = true
+            }
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -164,6 +172,7 @@ class HomeActivity : AppCompatActivity() {
             Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                 HomeNavHost(
                     navController = navController,
+                    launchReady = launchReady,
                     home = HomeDestinationDeps(
                         homeViewModel = viewModel,
                         mapViewModel = mapViewModel,
@@ -199,7 +208,8 @@ class HomeActivity : AppCompatActivity() {
         // The VM owns the startup region-check decision (defer to the map's permission result on a first
         // launch without permission, else check now). The permission read needs a Context, so it stays here.
         viewModel.onHomeStarted(
-            PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS)
+            hasLocationPermission = PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS),
+            mapless = launchDestination(intent, org.onebusaway.android.app.di.PreferencesEntryPoint.get(this)) != NavRoutes.HOME
         )
     }
 
@@ -242,8 +252,10 @@ class HomeActivity : AppCompatActivity() {
         applyIntentSideEffects(intent)
         maybeRestoreDirectionsFromIntent(intent)
         maybePlanToPlaceFromIntent(intent)
+        if (intent.readRouteReveal() == null) {
+            FocusedStop.fromIntent(intent)?.let { viewModel.revealStop(it) }
+        }
         maybeRevealTrackedRouteFromIntent(intent)
-        maybeRevealStopFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
@@ -267,21 +279,6 @@ class HomeActivity : AppCompatActivity() {
         val stop = FocusedStop.fromIntent(intent) ?: return
         viewModel.revealStop(stop)
         viewModel.selectArrivalRoute(route.request(stop.id), route.routeShortName, route.headsign)
-    }
-
-    /**
-     * A launch that asks for a stop — an exported `oba://…/stops/{id}` deep link, an FCM arrival push,
-     * a pinned stop shortcut — focuses it on the map, with the arrivals drawer over it (#1898). Applied
-     * here, next to the other launch-intent focus changes, because this is where the [HomeViewModel] is;
-     * [IntentRouteMapper] stays a pure translator and correctly resolves these to no destination, since
-     * a stop is map state and not a screen.
-     *
-     * No animation: these arrive from outside the app, where the map is either not yet on screen or
-     * showing somewhere unrelated, so flying the camera would be a long pan from nowhere in particular.
-     */
-    private fun maybeRevealStopFromIntent(intent: Intent) {
-        val reveal = IntentRouteMapper.stopRevealForIntent(intent) ?: return
-        viewModel.revealStop(FocusedStop(reveal.stopId, reveal.name, point = reveal.point))
     }
 
     /**

@@ -497,6 +497,7 @@ fun MapFeature(
     ObaMap(
         host = mapViewModel.host,
         callbacks = callbacks,
+        stopSelectionEnabled = true,
         // The scripted tour's opening step rings the whole map ("this is the map"), and its
         // long-press step draws its gesture hint at this surface's centre (#2164).
         modifier = modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_MAP),

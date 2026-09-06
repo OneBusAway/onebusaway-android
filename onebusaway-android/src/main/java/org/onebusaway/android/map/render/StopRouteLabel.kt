@@ -34,6 +34,9 @@ import org.onebusaway.android.util.routeBadgeChipTextColor
  */
 const val STOP_ROUTE_LABEL_MAX_ROWS = 5
 
+/** The map fills columns first; wider surfaces can fill rows first using the same balanced grid. */
+enum class StopRouteGridOrientation { Vertical, Horizontal }
+
 /**
  * The routes [stop]'s label names at [band] — empty below [StopBand.ROUTES], which draws no label at all.
  * The single place either flavor asks "is this stop naming its routes right now", so a band crossing can't
@@ -43,7 +46,7 @@ const val STOP_ROUTE_LABEL_MAX_ROWS = 5
  * [StopBand.ROUTES] would show everything this one does and more, and an equality test would silently
  * switch the labels back off at the very zoom that wants them most.
  */
-fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band >= StopBand.ROUTES) stop.routes else emptyList()
+fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band >= StopBand.ROUTES && stop.showRouteLabel) stop.routes else emptyList()
 
 /**
  * [routes] laid out in columns of at most [STOP_ROUTE_LABEL_MAX_ROWS], read top to bottom and then left to
@@ -59,13 +62,21 @@ fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band
  * hole in the pill — so a trailing remainder is padded with `null`, a blank cell for
  * [stopRouteLabelGrid] to colour. That padding is why this is internal: the nullable cell is how the
  * layout meets the drawing, not something a caller outside this file should have to reason about.
+ * [StopRouteGridOrientation.Horizontal] transposes this layout to read across before growing down.
  */
-internal fun stopRouteLabelColumns(routes: List<StopRoute>): List<List<StopRoute?>> {
+internal fun stopRouteLabelColumns(
+    routes: List<StopRoute>,
+    orientation: StopRouteGridOrientation = StopRouteGridOrientation.Vertical
+): List<List<StopRoute?>> {
     if (routes.isEmpty()) return emptyList()
     val columns = ceilingDivide(routes.size, STOP_ROUTE_LABEL_MAX_ROWS)
     val rows = ceilingDivide(routes.size, columns)
     // Padded to `columns * rows` first, so the chunks come out rectangular without a special last case.
-    return List(columns * rows) { routes.getOrNull(it) }.chunked(rows)
+    val grid = List(columns * rows) { routes.getOrNull(it) }.chunked(rows)
+    return when (orientation) {
+        StopRouteGridOrientation.Vertical -> grid
+        StopRouteGridOrientation.Horizontal -> (0 until rows).map { row -> grid.map { it[row] } }
+    }
 }
 
 /**
@@ -83,7 +94,11 @@ internal fun stopRouteLabelColumns(routes: List<StopRoute>): List<List<StopRoute
  *
  * Resolved here, at draw time, because these colours flip with [dark] (see [StopRoute]).
  */
-fun stopRouteLabelGrid(routes: List<StopRoute>, dark: Boolean): List<List<BadgedRoute>> = stopRouteLabelColumns(routes).map { column ->
+fun stopRouteLabelGrid(
+    routes: List<StopRoute>,
+    dark: Boolean,
+    orientation: StopRouteGridOrientation = StopRouteGridOrientation.Vertical
+): List<List<BadgedRoute>> = stopRouteLabelColumns(routes, orientation).map { column ->
     column.map { route ->
         BadgedRoute(
             // A blank cell names nothing; it exists only so the pill stays a rectangle.

@@ -268,7 +268,7 @@ private fun StopFocusBanner(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val subtitle = stopSubtitleText(state.stopCode, state.direction)
+        val subtitle = DisplayFormat.stopSubtitleText(LocalContext.current, state.stopCode, state.direction)
         Column(
             modifier = Modifier.weight(1f).clickable(
                 onClickLabel = stringResource(R.string.stop_info_recenter),
@@ -363,15 +363,6 @@ private fun ShrinkToFitStopTitle(title: String) {
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.fillMaxWidth().onSizeChanged { maxWidthPx = it.width }
     )
-}
-
-/** The stop's identity line: passenger-facing stop number and formatted direction, joined when both are known. */
-@Composable
-private fun stopSubtitleText(stopCode: String?, direction: String?): String? {
-    val codeText = stopCode?.takeIf { it.isNotBlank() }
-        ?.let { stringResource(R.string.stop_details_code, it) }
-    val directionText = DisplayFormat.stopDirectionText(LocalContext.current, direction)
-    return listOfNotNull(codeText, directionText).takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 
 @OptIn(ExperimentalFoundationApi::class)

@@ -187,6 +187,14 @@ object ContinuationBadgeBitmaps {
         return bitmap
     }
 
+    /** The same grid sized to UI text, including the user's font scale, instead of map zoom. */
+    fun badgeGridForTextSize(
+        columns: List<List<BadgedRoute>>,
+        density: Float,
+        darkMode: Boolean,
+        textSizePx: Float
+    ): Bitmap = badgeGrid(columns, density, darkMode, scale = textSizePx / TEXT_SIZE_PX)
+
     /**
      * A stable key identifying the bitmap [badge] draws for these inputs, beside the function itself so the
      * two can't disagree about which of them the key names (as [VehicleBitmaps.iconKey] is). A renderer

@@ -370,6 +370,9 @@
     </string>
 
     <!-- Stop Details -->
+    <string name="map_choose_stop">Choose a stop</string>
+    <string name="map_stop_routes">Routes: %1$s</string>
+    <string name="map_stop_routes_unavailable">Routes unavailable</string>
     <string name="stop_details_code">Stop # %1$s</string>
     <string name="stop_wheelchair_accessible">Wheelchair accessible</string>
     <string name="stop_wheelchair_not_accessible">Not wheelchair accessible</string>

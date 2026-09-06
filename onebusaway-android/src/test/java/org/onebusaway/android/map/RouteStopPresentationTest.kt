@@ -58,7 +58,7 @@ class RouteStopPresentationTest {
     }
 
     @Test
-    fun `a presentation drops the stops' own route labels — it names the routes on screen itself`() {
+    fun `a presentation hides map labels but keeps routes available to the stop chooser`() {
         val focused = stop("focused")
         val labelled = marker(focused).copy(routes = listOf(StopRoute("62", 0xFF00FF00.toInt())))
         val presentation = RouteStopPresentation(
@@ -70,7 +70,8 @@ class RouteStopPresentationTest {
 
         val result = applyRouteStopPresentation(listOf(labelled), focused.id, presentation, ::marker)
 
-        assertEquals(emptyList<StopRoute>(), result.single().routes)
+        assertEquals(labelled.routes, result.single().routes)
+        assertEquals(emptyList<StopRoute>(), org.onebusaway.android.map.render.stopRouteLabel(result.single(), org.onebusaway.android.map.render.StopBand.ROUTES))
     }
 
     private fun stop(id: String) = ObaStopElement(id = id, lat = 47.0, lon = -122.0)

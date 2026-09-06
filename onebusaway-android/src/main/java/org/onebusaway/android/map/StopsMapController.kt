@@ -628,7 +628,7 @@ internal fun applyRouteStopPresentation(
             // through a palette that deliberately assigns each one a distinct hue so they can be told
             // apart (#2043). A stop label built from the routes' own GTFS colours would name those same
             // routes a second time, in a second colour, right beside the line saying otherwise.
-            routes = emptyList()
+            showRouteLabel = false
         )
     }
 }

@@ -43,8 +43,8 @@ class StopChoiceDialogTest {
         render()
         composeRule.onNodeWithContentDescription(context.getString(R.string.map_stop_routes, "5, 40")).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(context.getString(R.string.map_stop_routes, "597")).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(R.string.stop_details_code, "590")).performClick()
-        composeRule.onNodeWithText(context.getString(R.string.stop_details_code, "4720")).performClick()
+        composeRule.onNodeWithText(context.getString(R.string.stop_details_code, "590") + " · " + context.getString(R.string.direction_nw)).performClick()
+        composeRule.onNodeWithText(context.getString(R.string.stop_details_code, "4720") + " · " + context.getString(R.string.direction_nw)).performClick()
         assertEquals(listOf("1_590", "3_2479"), selected)
         assertEquals(0, dismissals)
     }
@@ -74,7 +74,7 @@ class StopChoiceDialogTest {
         GeoPoint(47.611137, -122.338951),
         "NW",
         3,
-        ObaStopElement(id = id, code = code, name = "3rd Ave & Pine St"),
+        ObaStopElement(id = id, code = code, name = "3rd Ave & Pine St", direction = "NW"),
         routes = routes.map { StopRoute(it, null) }
     )
 }

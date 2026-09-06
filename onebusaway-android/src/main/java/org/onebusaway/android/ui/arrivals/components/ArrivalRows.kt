@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -66,6 +67,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.time.Duration.Companion.minutes
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
@@ -379,7 +381,9 @@ fun RouteArrivalRow(
     // The bay this row departs from, drawn under the headsign — for the transit-centre drawer (#2107),
     // whose list spans every stop in view and where "which bay" is half the answer. Null on every
     // stop-scoped surface, where the stop is already the screen's subject and naming it again is noise.
-    stopLabel: String? = null
+    stopLabel: String? = null,
+    /** One trip per card, sharing the route and trip actions with grouped rows. */
+    chronological: Boolean = false
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -465,33 +469,46 @@ fun RouteArrivalRow(
                 // similar-looking rounded colored chips don't read as the same kind of thing.
                 VerticalDivider()
                 Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    if (direction.isNotBlank()) {
-                        DirectionHeadsign(direction)
-                    }
-                    if (stopLabel != null) {
-                        Text(
-                            text = stopLabel,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            // Gap between the headsign and the bay, when both show. Carried by the label
-                            // rather than an unconditional spacer under the headsign, which would also
-                            // shift every stop-scoped row — none of which passes a stopLabel.
-                            modifier = Modifier.padding(top = if (direction.isNotBlank()) 2.dp else 0.dp)
+                if (chronological) {
+                    ChronologicalArrivalContent(
+                        representative,
+                        direction,
+                        stopLabel,
+                        routeActions,
+                        callbacks,
+                        anchors.eta,
+                        pillFocus,
+                        Modifier.weight(1f)
+                    )
+                } else {
+                    Column(Modifier.weight(1f)) {
+                        if (direction.isNotBlank()) {
+                            DirectionHeadsign(direction)
+                        }
+                        if (stopLabel != null) {
+                            Text(
+                                text = stopLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                // Gap between the headsign and the bay, when both show. Carried by the label
+                                // rather than an unconditional spacer under the headsign, which would also
+                                // shift every stop-scoped row — none of which passes a stopLabel.
+                                modifier = Modifier.padding(top = if (direction.isNotBlank()) 2.dp else 0.dp)
+                            )
+                        }
+                        if (direction.isNotBlank() || stopLabel != null) {
+                            Spacer(Modifier.height(6.dp))
+                        }
+                        EtaStrip(
+                            trips = group.trips,
+                            actionsFor = actionsFor,
+                            callbacks = callbacks,
+                            firstPillModifier = anchors.eta,
+                            focus = pillFocus
                         )
                     }
-                    if (direction.isNotBlank() || stopLabel != null) {
-                        Spacer(Modifier.height(6.dp))
-                    }
-                    EtaStrip(
-                        trips = group.trips,
-                        actionsFor = actionsFor,
-                        callbacks = callbacks,
-                        firstPillModifier = anchors.eta,
-                        focus = pillFocus
-                    )
                 }
             }
             if (routeActions != null) {
@@ -780,13 +797,12 @@ private data class PreviewArrivalData(
     override val predictedDepartureTime: ServerTime? get() = predictedArrivalTime
 }
 
-private const val PREVIEW_MIN_MS = 60_000L
-
 /**
  * Builds a real [ArrivalInfo] for a preview: [etaMinutes] from "now" (predicted when [predicted]),
  * with the schedule offset by [scheduleDeviationMinutes] so the pill takes its on-time/late/early
- * color. A null context is passed deliberately — the row shows only the badge, headsign, and pills, so
- * the (context-dependent) status/time labels stay empty and no resources/app singletons are touched.
+ * color. Supply a context for localized status labels in in-app illustrations; the default keeps
+ * resource-dependent labels empty for numeric tests and tooling previews. [now] fixes the sample
+ * clock times without depending on the time the rider opens an illustration.
  */
 internal fun previewArrival(
     shortName: String,
@@ -805,26 +821,28 @@ internal fun previewArrival(
     // multi-pill strip must pass a distinct id per pill — the default alone collides, and a duplicate
     // key throws. Not derived from etaMinutes on purpose: two pills legitimately share an ETA (a loop
     // route's two visits, a pre-dedup phantom), so identity must stay independent of it.
-    tripId: String = "trip"
+    tripId: String = "trip",
+    context: Context? = null,
+    now: ServerTime = ServerTime(0L)
 ): ArrivalInfo {
-    val predictedMs = etaMinutes * PREVIEW_MIN_MS
-    val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
+    val predictedTime = now + etaMinutes.minutes
+    val scheduledTime = now + (etaMinutes - scheduleDeviationMinutes).minutes
     return ArrivalInfo(
-        context = null,
+        context = context,
         data = PreviewArrivalData(
             routeId = routeId,
             directionId = directionId,
             shortName = shortName,
             headsign = headsign,
-            scheduledArrivalTime = ServerTime(scheduledMs),
-            predictedArrivalTime = if (predicted) ServerTime(predictedMs) else null,
+            scheduledArrivalTime = scheduledTime,
+            predictedArrivalTime = if (predicted) predictedTime else null,
             predicted = predicted,
             status = status,
             routeLongName = routeLongName,
             tripId = tripId,
             hasPlottableVehicle = hasPlottableVehicle
         ),
-        now = ServerTime(0L),
+        now = now,
         includeArrivalDepartureInStatusLabel = false
     )
 }

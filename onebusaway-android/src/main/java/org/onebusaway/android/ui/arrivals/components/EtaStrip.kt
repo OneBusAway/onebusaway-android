@@ -496,7 +496,7 @@ private fun ReferencePillHeightFrame(
  *  [clock] is this trip's entry in the strip's once-per-poll formatted clock times (see EtaStrip),
  *  passed in rather than derived here because this composable recomposes every second. */
 @Composable
-private fun EtaPillWithMenu(
+internal fun EtaPillWithMenu(
     trip: ArrivalInfo,
     clock: ArrivalClock,
     liveNow: ServerTime,

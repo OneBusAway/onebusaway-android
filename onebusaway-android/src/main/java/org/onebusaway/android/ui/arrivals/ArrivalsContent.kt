@@ -70,6 +70,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
@@ -190,13 +191,25 @@ internal fun ArrivalsList(
     /** Spotlight anchors for the first route row — its ETA pill, its route badge and its favourite
      *  star, each addressable on its own so a tutorial can point at one without the others (e.g. the
      *  home sheet's onboarding spotlight). The defaults are no-ops for hosts that don't spotlight. */
-    anchors: ArrivalRowAnchors = ArrivalRowAnchors()
+    anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
+    displayMode: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
+    onDisplayModeChange: ((ArrivalDisplayMode) -> Unit)? = null,
+    modeSwitchModifier: Modifier = Modifier
 ) {
     val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {
         resolveSelectedRouteGroupKey(content.routeGroups, selectedRowKey, selectedRouteId)
     }
-    val routeGroups = remember(content.routeGroups, effectiveSelectedRowKey) {
-        promoteSelectedRouteGroup(content.routeGroups, effectiveSelectedRowKey)
+    val displayedGroups = remember(content.arrivals, content.routeGroups, effectiveSelectedRowKey, displayMode) {
+        if (displayMode == ArrivalDisplayMode.TIME) {
+            chronologicalArrivals(content.arrivals).map { RouteRowGroup(listOf(it)) }
+        } else {
+            promoteSelectedRouteGroup(content.routeGroups, effectiveSelectedRowKey)
+        }
+    }
+    var previousMode by rememberSaveable { mutableStateOf(displayMode) }
+    LaunchedEffect(displayMode) {
+        if (previousMode != displayMode) listState.scrollToItem(0)
+        previousMode = displayMode
     }
     var hadSelection by remember { mutableStateOf(false) }
     LaunchedEffect(effectiveSelectedRowKey) {
@@ -205,15 +218,19 @@ internal fun ArrivalsList(
         // visible again when route mode clears.
         val wasSelected = hadSelection
         hadSelection = effectiveSelectedRowKey != null
-        if (effectiveSelectedRowKey != null || wasSelected) {
+        if (displayMode == ArrivalDisplayMode.ROUTE && (effectiveSelectedRowKey != null || wasSelected)) {
             val alertsBeforeRoutes = content.hasAlerts && showAlerts
             val directionBeforeRoutes = showDirection && content.header.direction != null
             val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
-                (if (directionBeforeRoutes) 1 else 0)
+                (if (directionBeforeRoutes) 1 else 0) +
+                (if (onDisplayModeChange != null) 1 else 0)
             listState.scrollToItem(firstRouteIndex)
         }
     }
     LazyColumn(state = listState, modifier = modifier.fillMaxWidth(), contentPadding = contentPadding) {
+        if (onDisplayModeChange != null) {
+            item(key = "display-mode") { ArrivalDisplayModeSwitch(displayMode, onDisplayModeChange, modeSwitchModifier) }
+        }
         if (content.hasAlerts && showAlerts) {
             // The whole alert section is one item, present only while [showAlerts] is set. Toggling the
             // header's alert icon adds/removes this item; Modifier.animateItem() fades it in/out and lets
@@ -236,15 +253,15 @@ internal fun ArrivalsList(
                 item(key = "direction") { DirectionLine(direction) }
             }
         }
-        if (content.routeGroups.isEmpty()) {
+        if (displayedGroups.isEmpty()) {
             item(key = "empty") { EmptyArrivals(content.minutesAfter) }
         } else {
-            itemsIndexed(routeGroups, key = { _, group -> group.key }) { index, group ->
-                // Every aspect of the map's selection applies to exactly one row, so the row-key test
-                // is made once here rather than repeated per aspect.
+            itemsIndexed(displayedGroups, key = { _, group -> if (displayMode == ArrivalDisplayMode.TIME) group.representative.arrivalRowKey() else group.key }) { index, group ->
+                // Route selection highlights its group, or each matching departure in Time mode.
                 val isSelectedRow = group.key == effectiveSelectedRowKey
                 RouteArrivalRow(
                     group = group,
+                    chronological = displayMode == ArrivalDisplayMode.TIME,
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,

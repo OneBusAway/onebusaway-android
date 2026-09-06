@@ -105,6 +105,7 @@ import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
 import org.onebusaway.android.ui.home.drawer.NavDrawerViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
+import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpFeature
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.map.FocusBanner
@@ -435,9 +436,10 @@ fun HomeScreen(
 
                 // One keyed arrivals session feeds the focus banner, alert modal, and drawer body. Keeping it
                 // above the scaffold prevents duplicate polling while preserving the per-stop ViewModelStore.
+                val helpState by helpViewModel.state.collectAsStateWithLifecycle()
                 val arrivalsSession = rememberArrivalsSession(
                     focusedStop = stopFocus?.stop,
-                    sheetVisible = sheetShown,
+                    sheetVisible = sheetShown && helpState.dialog == HelpDialog.None,
                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                     tutorialState = tutorialState,
                     onArrivalsLoaded = onArrivalsLoaded,

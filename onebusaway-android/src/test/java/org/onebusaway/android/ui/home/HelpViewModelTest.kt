@@ -19,19 +19,94 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpViewModel
 
 /**
  * Unit tests for [HelpViewModel]'s dialog-state transitions (migrated from HomeViewModelTest when help
- * became its own feature module) and its region-derived Twitter URL. `maybeAutoShowWhatsNew` still reads
- * package info from Application, so it's verified by equivalence rather than here.
+ * became its own feature module), migration eligibility, and region-derived Twitter URL.
  */
 class HelpViewModelTest {
+
+    @Test
+    fun `migration choice precedes release notes and persists the selected default`() {
+        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 1) }
+        val vm = viewModel(prefs)
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
+        vm.chooseArrivalDisplayDefault(ArrivalDisplayMode.TIME)
+        assertEquals(ArrivalDisplayMode.TIME, prefs.arrivalDisplayDefault())
+        assertEquals(HelpDialog.WhatsNew, vm.state.value.dialog)
+        vm.dismiss()
+        vm.maybeShowTutorialOptOut()
+        assertEquals(HelpDialog.TutorialOptOut, vm.state.value.dialog)
+        vm.setTutorialsEnabled(false)
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.None, vm.state.value.dialog)
+        val nextLaunch = viewModel(prefs)
+        nextLaunch.maybeShowStartup()
+        assertEquals(HelpDialog.None, nextLaunch.state.value.dialog)
+    }
+
+    @Test
+    fun `dismissed migration stays eligible after release notes advance the version marker`() {
+        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 154) }
+        val vm = viewModel(prefs)
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
+        vm.finishArrivalDisplayChoice()
+        assertEquals(null, prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null))
+        prefs.setInt("whatsNewVer", 156)
+        val nextLaunch = viewModel(prefs)
+        nextLaunch.maybeShowStartup()
+        assertEquals(HelpDialog.ArrivalDisplay, nextLaunch.state.value.dialog)
+    }
+
+    @Test
+    fun `only recorded releases through 26_1 are eligible`() {
+        for (version in listOf(1, 153, 154, 155, 156, 157)) {
+            val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", version) }
+            val vm = viewModel(prefs)
+            vm.maybeShowStartup()
+            assertEquals("Previous version $version", version <= 154, vm.state.value.dialog == HelpDialog.ArrivalDisplay)
+        }
+    }
+
+    @Test
+    fun `fresh installs never become migration candidates on later launches`() {
+        val prefs = FakePreferencesRepository()
+        val vm = viewModel(prefs)
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.WhatsNew, vm.state.value.dialog)
+        assertEquals(BuildConfig.VERSION_CODE, prefs.getInt("whatsNewVer", 0))
+
+        // Debug builds reuse an old versionCode; the recorded source must still exclude them.
+        val nextLaunch = viewModel(prefs)
+        nextLaunch.maybeShowStartup()
+        assertEquals(HelpDialog.None, nextLaunch.state.value.dialog)
+    }
+
+    @Test
+    fun `a default chosen in settings suppresses migration and existing dialogs are respected`() {
+        val prefs = FakePreferencesRepository().apply {
+            setInt("whatsNewVer", 1)
+            setString(ArrivalDisplayMode.PREFERENCE_KEY, "time")
+        }
+        val vm = viewModel(prefs)
+        vm.showLegend()
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.Legend, vm.state.value.dialog)
+        vm.dismiss()
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.WhatsNew, vm.state.value.dialog)
+    }
 
     private fun viewModel(
         prefs: FakePreferencesRepository = FakePreferencesRepository(),

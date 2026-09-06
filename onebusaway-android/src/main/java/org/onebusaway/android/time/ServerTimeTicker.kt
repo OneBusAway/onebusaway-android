@@ -19,9 +19,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
+
+/** Fixed server-clock instant for illustrative arrivals. Real arrivals keep the live clock. */
+internal val LocalIllustrationTime = staticCompositionLocalOf<ServerTime?> { null }
 
 /**
  * A live "now" in the **server** clock domain, anchored on [serverTime] (a poll's server-clock
@@ -36,6 +40,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun rememberLiveServerTime(serverTime: ServerTime): ServerTime {
+    LocalIllustrationTime.current?.let { return it }
     val anchorElapsed = remember(serverTime) { ElapsedTime.now() }
     val nowElapsed = rememberTickingElapsedTime()
     return liveServerTime(serverTime, anchorElapsed, nowElapsed)

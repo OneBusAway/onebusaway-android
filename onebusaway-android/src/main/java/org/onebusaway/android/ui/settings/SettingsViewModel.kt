@@ -38,6 +38,8 @@ import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ThemeUtils
 
@@ -88,6 +90,7 @@ class SettingsViewModel @Inject constructor(
     )
 
     private fun readSnapshot() = SettingsPrefSnapshot(
+        arrivalDisplayDefault = prefs.arrivalDisplayDefault(),
         autoSelectRegion = prefs.getBoolean(R.string.preference_key_auto_select_region, true),
         showNegativeArrivals = prefs.getBoolean(R.string.preference_key_show_negative_arrivals, true),
         hideAlerts = prefs.getBoolean(R.string.preference_key_hide_alerts, false),
@@ -118,6 +121,10 @@ class SettingsViewModel @Inject constructor(
             context.getString(R.string.preferences_app_theme_option_system_default)
         )
     )
+
+    fun onArrivalDisplayDefaultChanged(mode: ArrivalDisplayMode) {
+        prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
+    }
 
     // region Toggle actions
 

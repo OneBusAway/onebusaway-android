@@ -462,6 +462,9 @@ class StopsMapController(
                     existing.point == marker.point &&
                     existing.direction == marker.direction &&
                     existing.routeType == marker.routeType &&
+                    existing.stop.name == marker.stop.name &&
+                    existing.stop.locationType == marker.stop.locationType &&
+                    existing.stop.routeIds.contentEquals(marker.stop.routeIds) &&
                     existing.favorite == marker.favorite &&
                     existing.routes == marker.routes
                 ) {
@@ -505,7 +508,7 @@ class StopsMapController(
     /** Programmatic focus (intent/rotation): ensures the stop is on the map, then focuses it. */
     fun setFocusStop(stop: ObaStop?, routes: List<ObaRoute>?) {
         if (stop == null) {
-            renderState.setFocusedStopId(null)
+            setFocusedStopId(null)
             return
         }
         // Cached before the marker is built or re-labelled, and whether or not the stop is new: these are
@@ -528,12 +531,14 @@ class StopsMapController(
         // presentation's keep-the-focused-stop fallback. With a route presentation active the marker
         // list keys off the focus even for an already-accumulated stop, so republish then too.
         renderState.setFocusedStopId(stop.id)
-        if (markerChanged || routePresentation != null) {
-            publishStops()
-        }
+        publishStops()
     }
 
-    fun setFocusedStopId(stopId: String?) = renderState.setFocusedStopId(stopId)
+    fun setFocusedStopId(stopId: String?) {
+        renderState.setFocusedStopId(stopId)
+        // A deep link or restored focus can select any member of a merged boarding point.
+        publishStops()
+    }
 
     /** A snapshot copy of the cached routes, for reporting a stop's routes to focus listeners. */
     fun cachedRoutes(): HashMap<String, ObaRoute> = HashMap(cachedRoutes)
@@ -581,15 +586,18 @@ class StopsMapController(
     private fun publishStops() {
         val presentation = routePresentation
         if (presentation == null) {
-            renderState.setStops(ArrayList(stopAccum.values))
+            renderState.setStops(mergeColocatedStopMarkers(stopAccum.values, renderState.snapshot.value.focusedStopId))
             return
         }
         renderState.setStops(
-            applyRouteStopPresentation(
-                nearby = stopAccum.values,
-                focusedStopId = renderState.snapshot.value.focusedStopId,
-                presentation = presentation,
-                markerFor = ::toStopMarker
+            mergeColocatedStopMarkers(
+                applyRouteStopPresentation(
+                    nearby = stopAccum.values,
+                    focusedStopId = renderState.snapshot.value.focusedStopId,
+                    presentation = presentation,
+                    markerFor = ::toStopMarker
+                ),
+                renderState.snapshot.value.focusedStopId
             )
         )
     }

@@ -17,12 +17,17 @@ package org.onebusaway.android.api.data
 
 import android.util.Log
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoStop
 import org.onebusaway.android.api.adapters.DtoTrip
 import org.onebusaway.android.api.adapters.asArrivalData
 import org.onebusaway.android.api.contract.ArrivalsForStop
 import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaWebService
+import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.SituationReference
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
@@ -32,6 +37,7 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
+import org.onebusaway.android.models.boardingPoint
 
 /**
  * A resolved snapshot of a stop's arrivals-and-departures: the [arrivals] plus the references the
@@ -66,6 +72,38 @@ class StopArrivals internal constructor(
             it.asArrivalData(refs.trip(it.tripId)?.directionId?.toIntOrNull())
         }
             .collapseDuplicateTripInstances { tripId -> refs.trip(tripId)?.blockId }
+
+    /** Only nearby IDs explicitly describing this exact boarding point are eligible for merging. */
+    internal val colocatedStopIds: List<String>
+        get() {
+            val point = stop?.boardingPoint() ?: return emptyList()
+            return entry.nearbyStopIds.distinct().filter { id ->
+                id != stopId && refs.stop(id)?.let(::DtoStop)?.boardingPoint() == point
+            }
+        }
+
+    internal fun withColocatedArrivals(others: List<StopArrivals>): StopArrivals {
+        if (others.isEmpty()) return this
+        val snapshots = listOf(this) + others
+        val references = snapshots.map { it.refs }
+        return StopArrivals(
+            data.copy(
+                entry = entry.copy(
+                    arrivalsAndDepartures = snapshots.flatMap { it.entry.arrivalsAndDepartures },
+                    situationIds = snapshots.flatMap { it.entry.situationIds }.distinct()
+                ),
+                references = References(
+                    agencies = references.flatMap { it.agencies }.distinctBy { it.id },
+                    stops = references.flatMap { it.stops }.distinctBy { it.id },
+                    routes = references.flatMap { it.routes }.distinctBy { it.id },
+                    trips = references.flatMap { it.trips }.distinctBy { it.id },
+                    situations = references.flatMap { it.situations }.distinctBy { it.id }
+                )
+            ),
+            currentTime,
+            minutesAfter
+        )
+    }
 
     /** Every referenced route (for the map overlay). */
     val routes: List<ObaRoute> get() = refs.routes.map(::DtoRoute)
@@ -128,13 +166,32 @@ class DefaultStopArrivalsDataSource @Inject constructor(
 ) : StopArrivalsDataSource {
 
     override suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals> = api.call {
-        val envelope = it.arrivalsAndDeparturesForStop(stopId, minutesAfter)
-        StopArrivals(envelope.requireData(), serverNowOrDeviceClock(envelope.currentTime), minutesAfter)
+        it.arrivalsAtBoardingPoint(stopId, minutesAfter)
     }.onFailure { Log.e(TAG, "arrivals($stopId) failed", it) }
 
     private companion object {
         const val TAG = "StopArrivalsDataSource"
     }
+}
+
+/**
+ * OBA keeps separate arrivals per feed stop ID. Its nearbyStopIds references let us discover the
+ * other IDs at the boarding point even when opened from a favorite/deep link, without a map cache.
+ * The server's StopWithArrivalsAndDeparturesBeanServiceImpl asks NearbyStopsBeanService for stops in
+ * a 100m bounding box, excluding only the requested ID. Those IDs are neighbors, not equivalences;
+ * [colocatedStopIds][StopArrivals.colocatedStopIds] applies the same exact match as the map.
+ * Verified against the Puget Sound responses for 1_590 and 3_2479 (3rd & Pine), 2026-09-06.
+ * Fetch siblings once, on this same service and window; do not recursively expand nearby stops.
+ * Any failed member fails the refresh so the repository can retain a complete stale snapshot.
+ */
+internal suspend fun ObaWebService.arrivalsAtBoardingPoint(stopId: String, minutesAfter: Int): StopArrivals = coroutineScope {
+    suspend fun fetch(id: String): StopArrivals {
+        val envelope = arrivalsAndDeparturesForStop(id, minutesAfter)
+        return StopArrivals(envelope.requireData(), serverNowOrDeviceClock(envelope.currentTime), minutesAfter)
+    }
+    val primary = fetch(stopId)
+    val siblings = primary.colocatedStopIds.map { id -> async { fetch(id) } }.awaitAll()
+    primary.withColocatedArrivals(siblings)
 }
 
 /** Presents a [SituationReference] DTO as the [ObaSituation] model interface. */

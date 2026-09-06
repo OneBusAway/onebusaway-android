@@ -320,8 +320,8 @@ When `USE_FIXED_REGION` is `false`, the `FIXED_REGION_*` fields are unread; leav
 
 See the following flavor files for complete examples:
 
-* [`agencyX.gradle`](../onebusaway-android/flavors/agencyX.gradle) - Multi-region brand with Style A arrivals
-* [`agencyY.gradle`](../onebusaway-android/flavors/agencyY.gradle) - Fixed-region brand with Style B arrivals
+* [`agencyX.gradle`](../onebusaway-android/flavors/agencyX.gradle) - Multi-region brand
+* [`agencyY.gradle`](../onebusaway-android/flavors/agencyY.gradle) - Fixed-region brand
 * [`kiedybus.gradle`](../onebusaway-android/flavors/kiedybus.gradle) - Multi-region brand with custom regions API
 
 ## Acknowledgements

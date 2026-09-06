@@ -53,7 +53,9 @@ internal fun ChronologicalArrivalContent(
 ) {
     val description: @Composable () -> Unit = {
         val decoration = strikeThroughIf(arrival.status == Status.CANCELED)
-        Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, textDecoration = decoration)
+        if (direction.isNotBlank()) {
+            Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, textDecoration = decoration)
+        }
         if (stopLabel != null) Text(stopLabel, style = MaterialTheme.typography.bodySmall)
         Text(arrival.statusText, style = MaterialTheme.typography.bodySmall, color = colorResource(arrival.deviationStatus.textColorRes))
     }

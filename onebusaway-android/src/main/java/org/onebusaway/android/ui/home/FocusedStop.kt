@@ -37,9 +37,7 @@ data class FocusedStop(
     val point: GeoPoint? = null,
     // The tapped stop's accessibility, carried through so the focus banner can show it (#1029);
     // [WheelchairBoarding.UNKNOWN] for focuses minted without an ObaStop (intent extras, restore).
-    val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN,
-    /** Other feed stops selected with this boarding point, retained across restoration and refresh. */
-    val colocatedStopIds: Set<String> = emptySet()
+    val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
 ) {
     // Empty companion so intent/extras parsing can hang off it as a `FocusedStop.fromIntent(...)`
     // extension where that contract lives (HomeActivity), without this model knowing about intents.

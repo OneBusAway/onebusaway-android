@@ -43,7 +43,7 @@ const val STOP_ROUTE_LABEL_MAX_ROWS = 5
  * [StopBand.ROUTES] would show everything this one does and more, and an equality test would silently
  * switch the labels back off at the very zoom that wants them most.
  */
-fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band >= StopBand.ROUTES) stop.routes else emptyList()
+fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band >= StopBand.ROUTES && stop.showRouteLabel) stop.routes else emptyList()
 
 /**
  * [routes] laid out in columns of at most [STOP_ROUTE_LABEL_MAX_ROWS], read top to bottom and then left to

@@ -57,7 +57,6 @@ private class FakeArrivalsRepository(
 ) : ArrivalsRepository {
 
     val requestedMinutesAfter = mutableListOf<Int>()
-    val requestedMembers = mutableListOf<Set<String>>()
 
     /** When set, [getArrivals] suspends until it completes — lets a test hold a load in flight
      *  (e.g. to fire a superseding load-more before the first finishes). */
@@ -86,12 +85,10 @@ private class FakeArrivalsRepository(
 
     override suspend fun getArrivals(
         stopId: String,
-        minutesAfter: Int,
-        colocatedStopIds: Set<String>
+        minutesAfter: Int
     ): Result<ArrivalsData> {
         val call = requestedMinutesAfter.size
         requestedMinutesAfter.add(minutesAfter)
-        requestedMembers.add(colocatedStopIds)
         (callGates.getOrNull(call) ?: gate)?.await()
         return callResults.getOrNull(call) ?: result
     }
@@ -159,21 +156,6 @@ class ArrivalsViewModelTest {
         stopLat = 0.0,
         stopLon = 0.0
     )
-
-    @Test
-    fun `every refresh carries the selected marker members`() = runTest {
-        val repository = FakeArrivalsRepository(Result.success(data()))
-        val members = setOf("3_2479")
-        val viewModel = ArrivalsViewModel(
-            "1_590",
-            repository,
-            TrackedRouteStore(FakePreferencesRepository()),
-            members
-        )
-        viewModel.refresh()
-        viewModel.refresh()
-        assertEquals(listOf(members, members), repository.requestedMembers)
-    }
 
     @Test
     fun `initial state is Loading`() = runTest {

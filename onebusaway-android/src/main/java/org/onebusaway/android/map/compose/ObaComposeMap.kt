@@ -16,11 +16,15 @@
 package org.onebusaway.android.map.compose
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.StopMarker
 
 /**
  * The flavor-neutral, declarative map surface. A flavor adapter (the Google `GoogleMap {}` content,
@@ -61,9 +65,34 @@ fun ObaMap(
     initialZoom: Float = 16f
 ) {
     val adapter = remember { ObaComposeMapAdapter.newInstance() }
+    var stopChoices by remember(host, callbacks) { mutableStateOf<List<StopMarker>>(emptyList()) }
+    val mapCallbacks = remember(host, callbacks) {
+        callbacks?.let { downstream ->
+            object : ObaMapCallbacks by downstream {
+                override fun onStopClick(marker: StopMarker) {
+                    val choices = stopChoicesAt(marker, host.renderState.snapshot.value.stops)
+                    if (choices.size > 1) {
+                        stopChoices = choices
+                    } else {
+                        downstream.onStopClick(marker)
+                    }
+                }
+            }
+        }
+    }
+    if (stopChoices.isNotEmpty()) {
+        StopChoiceDialog(
+            stops = stopChoices,
+            onSelect = { selected ->
+                stopChoices = emptyList()
+                callbacks?.onStopClick(selected)
+            },
+            onDismiss = { stopChoices = emptyList() }
+        )
+    }
     adapter.Content(
         host,
-        callbacks,
+        mapCallbacks,
         modifier,
         initialLatitude,
         initialLongitude,

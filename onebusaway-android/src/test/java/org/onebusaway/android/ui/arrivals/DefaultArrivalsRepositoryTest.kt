@@ -85,12 +85,10 @@ class DefaultArrivalsRepositoryTest {
     /** Scripted [StopArrivalsDataSource]: answers with [respond] and records each requested window. */
     private class FakeStopArrivalsDataSource : StopArrivalsDataSource {
         val requestedMinutes = mutableListOf<Int>()
-        val requestedMembers = mutableListOf<Set<String>>()
         lateinit var respond: (minutesAfter: Int) -> Result<StopArrivals>
 
-        override suspend fun arrivals(stopId: String, minutesAfter: Int, colocatedStopIds: Set<String>): Result<StopArrivals> {
+        override suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals> {
             requestedMinutes.add(minutesAfter)
-            requestedMembers.add(colocatedStopIds)
             return respond(minutesAfter)
         }
     }
@@ -226,7 +224,6 @@ class DefaultArrivalsRepositoryTest {
     /** A real [StopArrivals] snapshot (wire fixtures, no Android): one arrival [arrivalAt] on a trip. */
     private fun snapshot(
         currentTime: Long = T0,
-        receivedAt: ElapsedTime = ElapsedTime(100_000L),
         tripId: String = "trip-A",
         shapeId: String = "shape-A",
         arrivalAt: Long = currentTime + 10 * 60_000L,
@@ -267,43 +264,10 @@ class DefaultArrivalsRepositoryTest {
             )
         ),
         currentTime = currentTime,
-        minutesAfter = minutesAfter,
-        receivedAt = receivedAt
+        minutesAfter = minutesAfter
     )
 
     // --- Fresh loads ------------------------------------------------------------------------------
-
-    @Test
-    fun `selected members survive window widening and later refreshes`() = runTest {
-        val source = FakeStopArrivalsDataSource()
-        source.respond = { minutes -> Result.success(snapshot(hasArrivals = minutes >= 125, minutesAfter = minutes)) }
-        val repository = repository(source)
-        val members = setOf("other-feed-stop")
-        repeat(2) { repository.getArrivals(STOP_ID, 65, members).getOrThrow() }
-        assertEquals(listOf(65, 125, 65, 125), source.requestedMinutes)
-        assertTrue(source.requestedMembers.all { it == members })
-    }
-
-    @Test
-    fun `fresh and stale ETAs include time spent loading siblings without extending the data window`() = runTest {
-        val source = FakeStopArrivalsDataSource()
-        val clock = FakeElapsedClock()
-        source.respond = {
-            val primaryReceivedAt = clock.now()
-            clock.advance(2.minutes)
-            Result.success(snapshot(receivedAt = primaryReceivedAt))
-        }
-        val repository = repository(source, clock = clock)
-        val fresh = repository.getArrivals(STOP_ID, 65).getOrThrow()
-        assertEquals(8L, fresh.arrivals.single().eta)
-        assertEquals(ServerTime(T0) + 65.minutes, fresh.windowEnd)
-        clock.advance(3.minutes)
-        source.respond = { Result.failure(IOException("offline")) }
-        val stale = repository.getArrivals(STOP_ID, 65).getOrThrow()
-        assertEquals(5L, stale.arrivals.single().eta)
-        assertTrue(stale.isStale)
-        assertEquals(fresh.windowEnd, stale.windowEnd)
-    }
 
     @Test
     fun `a fresh load publishes a lastLoaded snapshot consistent with the displayed trips`() = runTest {

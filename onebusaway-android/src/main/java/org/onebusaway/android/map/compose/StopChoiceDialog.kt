@@ -1,0 +1,76 @@
+/*
+ * Copyright (C) 2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.map.compose
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import org.onebusaway.android.R
+import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.util.ROUTE_NAME_ORDER
+
+/** A hit-test ambiguity, not a claim that the provider's stops are equivalent. */
+internal fun stopChoicesAt(tapped: StopMarker, stops: List<StopMarker>): List<StopMarker> = (listOf(tapped) + stops)
+    .filter { it.point == tapped.point }
+    .distinctBy { it.id }
+    .sortedWith(compareBy<StopMarker, String>(ROUTE_NAME_ORDER) { it.stop.stopCode.orEmpty() }.thenBy { it.id })
+
+/** Choose an original stop; the caller forwards it through the ordinary single-stop callback. */
+@Composable
+internal fun StopChoiceDialog(
+    stops: List<StopMarker>,
+    onSelect: (StopMarker) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.map_choose_stop)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                for (marker in stops) {
+                    val stop = marker.stop
+                    ListItem(
+                        modifier = Modifier.clickable(role = Role.Button) { onSelect(marker) },
+                        headlineContent = {
+                            Text(stringResource(R.string.stop_details_code, stop.stopCode?.takeIf(String::isNotBlank) ?: stop.id))
+                        },
+                        overlineContent = { stop.name?.takeIf(String::isNotBlank)?.let { Text(it) } },
+                        supportingContent = {
+                            Text(
+                                if (marker.routes.isEmpty()) {
+                                    stringResource(R.string.map_stop_routes_unavailable)
+                                } else {
+                                    stringResource(R.string.map_stop_routes, marker.routes.joinToString(", ") { it.shortName })
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+    )
+}

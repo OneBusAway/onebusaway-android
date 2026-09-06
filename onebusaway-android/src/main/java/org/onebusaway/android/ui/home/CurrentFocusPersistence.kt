@@ -24,7 +24,6 @@ import org.onebusaway.android.util.geoPointOrNull
 internal object CurrentFocusPersistence {
     private const val KEY_FOCUS_KIND = "home.currentFocus.kind"
     private const val KEY_STOP_ID = "home.focusedStop.id"
-    private const val KEY_STOP_MEMBERS = "home.focusedStop.colocatedStopIds"
     private const val KEY_STOP_NAME = "home.focusedStop.name"
     private const val KEY_STOP_CODE = "home.focusedStop.code"
     private const val KEY_STOP_LAT = "home.focusedStop.lat"
@@ -76,7 +75,6 @@ internal object CurrentFocusPersistence {
         }
         val stop = (focus as? CurrentFocus.Stop)?.stop
         state[KEY_STOP_ID] = stop?.id
-        state[KEY_STOP_MEMBERS] = stop?.colocatedStopIds?.toTypedArray()
         state[KEY_STOP_NAME] = stop?.name
         state[KEY_STOP_CODE] = stop?.code
         state[KEY_STOP_LAT] = stop?.point?.latitude
@@ -158,8 +156,7 @@ internal object CurrentFocusPersistence {
             // Absent when the focus was restored before its arrivals resolved a location for it; null
             // says so, where the old 0,0 fallback quietly claimed the stop stood off the coast of Ghana.
             point = geoPointOrNull(state[KEY_STOP_LAT], state[KEY_STOP_LON]),
-            wheelchairBoarding = WheelchairBoarding.fromString(state[KEY_STOP_WHEELCHAIR]),
-            colocatedStopIds = state.get<Array<String>>(KEY_STOP_MEMBERS)?.toSet().orEmpty()
+            wheelchairBoarding = WheelchairBoarding.fromString(state[KEY_STOP_WHEELCHAIR])
         )
     }
 }

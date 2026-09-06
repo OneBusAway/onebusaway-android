@@ -337,11 +337,8 @@ class TripTrackingService : Service() {
             withContext(Dispatchers.IO) {
                 stopArrivals.arrivals(stopId, DefaultArrivalsRepository.MINUTES_AFTER_DEFAULT)
                     .map { response ->
-                        StopSnapshot(
-                            matches = matchesByRow(response.arrivals, response.serverNow(elapsedClock.now())),
-                            serverTime = ServerTime(response.currentTime),
-                            receivedAt = response.receivedAt
-                        )
+                        val serverTime = ServerTime(response.currentTime)
+                        serverTime to matchesByRow(response.arrivals, serverTime)
                     }
             }
         } catch (e: CancellationException) {
@@ -351,11 +348,17 @@ class TripTrackingService : Service() {
             if (before == null) polls.remove(stopId) else polls[stopId] = before
             throw e
         }
-        // Keep the API's receipt anchor, which precedes any sibling requests and row projection.
-        result.onSuccess { snapshot ->
+        // Stamp the receipt as close to the response as possible: it is the baseline the server clock
+        // is projected forward from between polls.
+        val receivedAt = elapsedClock.now()
+        result.onSuccess { (serverTime, matches) ->
             polls[stopId] = StopPoll(
                 askedAt = askedAt,
-                snapshot = snapshot
+                snapshot = StopSnapshot(
+                    matches = matches,
+                    serverTime = serverTime,
+                    receivedAt = receivedAt
+                )
             )
         }.onFailure {
             // Keep the previous snapshot and let its countdowns keep projecting; a dropped poll is not

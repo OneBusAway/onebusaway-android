@@ -46,7 +46,7 @@ import org.onebusaway.android.database.oba.RouteRecentRow
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.TripDepartureTime
-import org.onebusaway.android.time.ElapsedTime
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
@@ -390,7 +390,7 @@ private suspend fun fetchStopBadges(
         .getOrThrow()
     // Server clock as the ETA baseline so badges cancel device clock skew (#1612). These badge
     // rows don't render the favorite star.
-    convertArrivals(context, snapshot.arrivals, snapshot.serverNow(ElapsedTime.now()), false)
+    convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
         .take(MAX_ARRIVALS_PER_STOP)
         .map { it.toBadge(context, stop) }
 }.getOrDefault(emptyList())

@@ -53,8 +53,7 @@ class StopArrivalsTripPatternTest {
                 )
             ),
             currentTime = 0L,
-            minutesAfter = 65,
-            receivedAt = org.onebusaway.android.time.ElapsedTime(0)
+            minutesAfter = 65
         )
 
         val trips = snapshot.focusedTrips(
@@ -92,8 +91,7 @@ class StopArrivalsTripPatternTest {
                 )
             ),
             currentTime = 0L,
-            minutesAfter = 65,
-            receivedAt = org.onebusaway.android.time.ElapsedTime(0)
+            minutesAfter = 65
         )
 
         assertEquals(1, snapshot.arrivals.single().directionId)

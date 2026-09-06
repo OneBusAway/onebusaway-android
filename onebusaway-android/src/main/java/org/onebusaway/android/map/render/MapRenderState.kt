@@ -297,11 +297,8 @@ data class RentalMarker(
  * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  *
  * [routes] are the routes this marker's **label** names at transit-centre zoom (#2107) — see
- * [stopRouteLabel] — in the order it reads them. Deliberately "what the label says" rather than "what
- * serves this stop", which is the wider fact and lives on [stop]: a producer that wants no label says so
- * by naming no routes, and empty is therefore both "not looked up yet" and "not labelled here", neither of
- * which the renderer has to tell apart. That is what lets a route presentation suppress the labels
- * (`applyRouteStopPresentation`) without a second flag riding the snapshot.
+ * [stopRouteLabel]. Also available to the overlapping-stop chooser when the map label is hidden.
+ * [showRouteLabel] controls the drawing independently of this stop's route metadata.
  */
 data class StopMarker(
     val id: String,
@@ -312,8 +309,7 @@ data class StopMarker(
     val favorite: Boolean = false,
     val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
     val routes: List<StopRoute> = emptyList(),
-    /** Other feed IDs represented by this marker; selection must load these even without API references. */
-    val colocatedStopIds: Set<String> = emptySet()
+    val showRouteLabel: Boolean = true
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }

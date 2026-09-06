@@ -44,6 +44,7 @@ import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.util.MyTextUtils
@@ -134,8 +135,7 @@ interface ArrivalsRepository {
 
     suspend fun getArrivals(
         stopId: String,
-        minutesAfter: Int,
-        colocatedStopIds: Set<String> = emptySet()
+        minutesAfter: Int
     ): Result<ArrivalsData>
 
     /**
@@ -240,7 +240,8 @@ class DefaultArrivalsRepository @Inject constructor(
      * Everything derived from the last good load, held as one unit so all three readers
      * ([alertDetails], [lastLoaded], and the stale-fallback path) see a mutually consistent set:
      * - [snapshot] — the raw response, for situation lookups and stale re-projection.
-     *   It also owns the original monotonic receipt, so sibling loading cannot reset the clock.
+     * - [receivedAt] — the monotonic device time the snapshot was received, so the stale-fallback path
+     *   can project that server clock forward by elapsed device time (#1612).
      * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
      *   [ArrivalsLoaded.focusedTrips] exactly matches the drawer's displayed trips.
      *
@@ -253,6 +254,7 @@ class DefaultArrivalsRepository @Inject constructor(
      */
     private data class LastGood(
         val snapshot: StopArrivals,
+        val receivedAt: ElapsedTime,
         val loaded: ArrivalsLoaded
     )
 
@@ -265,21 +267,23 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override suspend fun getArrivals(
         stopId: String,
-        minutesAfter: Int,
-        colocatedStopIds: Set<String>
+        minutesAfter: Int
     ): Result<ArrivalsData> = withContext(Dispatchers.IO) {
         importGate.awaitReady()
         var minutes = minutesAfter
         // Widen the window while the fetch is empty (or failing), matching the legacy loader.
         var result: Result<StopArrivals>
         do {
-            result = stopArrivals.arrivals(stopId, minutes, colocatedStopIds)
+            result = stopArrivals.arrivals(stopId, minutes)
             if (result.getOrNull()?.hasArrivals == true) break
             minutes += MINUTES_AFTER_INCREMENT
         } while (minutes <= MINUTES_AFTER_MAX)
 
         result.fold(
             onSuccess = { snapshot ->
+                // Stamp the receipt time as close to the response as possible (before the DB reads in
+                // toData), then publish the whole consistent set with one write once [data] is built.
+                val receivedAt = elapsedClock.now()
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
@@ -287,8 +291,8 @@ class DefaultArrivalsRepository @Inject constructor(
                     // system records nothing, and must not consume the one recording this session owes.
                     snapshot.stop?.let { stopRecorded = recordStop(it, System.currentTimeMillis()) }
                 }
-                val data = toData(snapshot, isStale = false, now = snapshot.serverNow(elapsedClock.now()))
-                lastGood.set(LastGood(snapshot, loadedSnapshot(snapshot, data)))
+                val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
+                lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
                 Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
@@ -298,7 +302,8 @@ class DefaultArrivalsRepository @Inject constructor(
                     // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
                     // reintroducing device clock skew (#1612) — a same-domain ElapsedTime subtraction,
                     // so the typed API allows it directly.
-                    val now = stale.snapshot.serverNow(elapsedClock.now())
+                    val now = ServerTime(stale.snapshot.currentTime) +
+                        (elapsedClock.now() - stale.receivedAt)
                     val data = toData(stale.snapshot, isStale = true, now = now)
                     // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
                     // stale ETAs advance. CAS so this can't roll back a fresh snapshot a concurrent

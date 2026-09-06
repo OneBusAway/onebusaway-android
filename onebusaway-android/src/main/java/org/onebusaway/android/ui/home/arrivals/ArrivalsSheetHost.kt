@@ -91,8 +91,8 @@ internal fun rememberArrivalsSession(
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
 ): ArrivalsSession? {
     val stop = focusedStop ?: return null
-    return key(stop.id, stop.colocatedStopIds) {
-        val viewModelStoreOwner = rememberClearedViewModelStoreOwner(stop.id to stop.colocatedStopIds)
+    return key(stop.id) {
+        val viewModelStoreOwner = rememberClearedViewModelStoreOwner(stop.id)
         val context = LocalContext.current
         // Resolve the Hilt entry point once per stop rather than on each recomposition / each
         // arrivals load (matches the remember { RegionEntryPoint.get(...) } pattern elsewhere).
@@ -101,7 +101,7 @@ internal fun rememberArrivalsSession(
             viewModelStoreOwner = viewModelStoreOwner,
             factory = viewModelFactory {
                 initializer {
-                    arrivalsViewModelFactory.create(stop.id, stop.colocatedStopIds)
+                    arrivalsViewModelFactory.create(stop.id)
                 }
             }
         )

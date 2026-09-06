@@ -16,19 +16,24 @@
 package org.onebusaway.android.map.compose
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.StopRouteGridOrientation
 import org.onebusaway.android.util.ROUTE_NAME_ORDER
 
 /** A hit-test ambiguity, not a claim that the provider's stops are equivalent. */
@@ -48,23 +53,21 @@ internal fun StopChoiceDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.map_choose_stop)) },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 for (marker in stops) {
                     val stop = marker.stop
                     ListItem(
-                        modifier = Modifier.clickable(role = Role.Button) { onSelect(marker) },
+                        modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(role = Role.Button) { onSelect(marker) },
                         headlineContent = {
                             Text(stringResource(R.string.stop_details_code, stop.stopCode?.takeIf(String::isNotBlank) ?: stop.id))
                         },
                         overlineContent = { stop.name?.takeIf(String::isNotBlank)?.let { Text(it) } },
                         supportingContent = {
-                            Text(
-                                if (marker.routes.isEmpty()) {
-                                    stringResource(R.string.map_stop_routes_unavailable)
-                                } else {
-                                    stringResource(R.string.map_stop_routes, marker.routes.joinToString(", ") { it.shortName })
-                                }
-                            )
+                            if (marker.routes.isEmpty()) {
+                                Text(stringResource(R.string.map_stop_routes_unavailable))
+                            } else {
+                                StopRouteGrid(marker.routes, orientation = StopRouteGridOrientation.Horizontal)
+                            }
                         }
                     )
                 }

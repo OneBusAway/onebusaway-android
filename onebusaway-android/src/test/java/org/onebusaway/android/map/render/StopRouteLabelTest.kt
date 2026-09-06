@@ -150,6 +150,24 @@ class StopRouteLabelTest {
         assertEquals(listOf(3, 3), stopRouteLabelColumns(routes(6)).map { it.size })
     }
 
+    @Test
+    fun `horizontal grids read across before adding a balanced second row`() {
+        val grid = stopRouteLabelGrid(routes(7), dark = false, orientation = StopRouteGridOrientation.Horizontal)
+        val rows = grid.first().indices.map { row -> grid.map { it[row].routeShortName } }
+        assertEquals(listOf(listOf("1", "2", "3", "4"), listOf("5", "6", "7", "")), rows)
+        assertEquals(1, grid.flatten().count(BadgedRoute::blank))
+    }
+
+    @Test
+    fun `horizontal grids retain every route in reading order`() {
+        for (count in 1..40) {
+            val grid = stopRouteLabelGrid(routes(count), dark = false, orientation = StopRouteGridOrientation.Horizontal)
+            assertTrue(grid.size <= STOP_ROUTE_LABEL_MAX_ROWS)
+            val readingOrder = grid.first().indices.flatMap { row -> grid.map { it[row] } }.filterNot(BadgedRoute::blank)
+            assertEquals(routes(count).map(StopRoute::shortName), readingOrder.map(BadgedRoute::routeShortName))
+        }
+    }
+
     // --- colour: the arrivals drawer's badge, not the basemap's line ---
 
     @Test

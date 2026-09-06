@@ -12,7 +12,8 @@ they do not establish that two IDs are the same stop.
 
 The client handles this as a map selection problem. When several rendered stops
 have the same point, tapping any of them offers a chooser with each stop's name,
-code and available route names. Choosing a row forwards that original marker to
+code and available routes in the map's badge grid, filled horizontally. The stop
+cards are separated by a small gap. Choosing a row forwards that original marker to
 the existing stop callback. Canceling leaves the current focus alone. This lives
 in the shared map surface, so both map implementations and the report-location
 map use the same chooser.

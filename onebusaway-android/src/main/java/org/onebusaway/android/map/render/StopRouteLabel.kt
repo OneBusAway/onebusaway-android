@@ -34,6 +34,9 @@ import org.onebusaway.android.util.routeBadgeChipTextColor
  */
 const val STOP_ROUTE_LABEL_MAX_ROWS = 5
 
+/** The map fills columns first; wider surfaces can fill rows first using the same balanced grid. */
+enum class StopRouteGridOrientation { Vertical, Horizontal }
+
 /**
  * The routes [stop]'s label names at [band] — empty below [StopBand.ROUTES], which draws no label at all.
  * The single place either flavor asks "is this stop naming its routes right now", so a band crossing can't
@@ -83,20 +86,34 @@ internal fun stopRouteLabelColumns(routes: List<StopRoute>): List<List<StopRoute
  *
  * Resolved here, at draw time, because these colours flip with [dark] (see [StopRoute]).
  */
-fun stopRouteLabelGrid(routes: List<StopRoute>, dark: Boolean): List<List<BadgedRoute>> = stopRouteLabelColumns(routes).map { column ->
-    column.map { route ->
-        BadgedRoute(
-            // A blank cell names nothing; it exists only so the pill stays a rectangle.
-            route?.shortName.orEmpty(),
-            // Both tones come from the same source, so they are null together — an achromatic or absent
-            // route colour takes the whole neutral chip, exactly as `rememberRouteBadgeColors` gives the
-            // drawer, and so does a blank cell (which has no source at all).
-            routeBadgeChipColor(route?.routeColor, dark) ?: neutralBadgeChipColor(dark),
-            routeBadgeChipTextColor(route?.routeColor, dark) ?: neutralBadgeChipTextColor(dark),
-            // Told to the drawing, so the neutral a blank cell is filled with doesn't read as a second
-            // colour on the pill and case a one-colour label grey (see [ContinuationBadgeBitmaps.casingColor]).
-            blank = route == null
-        )
+fun stopRouteLabelGrid(
+    routes: List<StopRoute>,
+    dark: Boolean,
+    orientation: StopRouteGridOrientation = StopRouteGridOrientation.Vertical
+): List<List<BadgedRoute>> {
+    val columns = stopRouteLabelColumns(routes)
+    // Transpose the balanced layout: horizontal labels read left to right, then top to bottom,
+    // growing to the same five-cell cap across instead of down. The drawing still takes columns.
+    val oriented = if (orientation == StopRouteGridOrientation.Horizontal && columns.isNotEmpty()) {
+        columns.first().indices.map { row -> columns.map { it[row] } }
+    } else {
+        columns
+    }
+    return oriented.map { column ->
+        column.map { route ->
+            BadgedRoute(
+                // A blank cell names nothing; it exists only so the pill stays a rectangle.
+                route?.shortName.orEmpty(),
+                // Both tones come from the same source, so they are null together — an achromatic or absent
+                // route colour takes the whole neutral chip, exactly as `rememberRouteBadgeColors` gives the
+                // drawer, and so does a blank cell (which has no source at all).
+                routeBadgeChipColor(route?.routeColor, dark) ?: neutralBadgeChipColor(dark),
+                routeBadgeChipTextColor(route?.routeColor, dark) ?: neutralBadgeChipTextColor(dark),
+                // Told to the drawing, so the neutral a blank cell is filled with doesn't read as a second
+                // colour on the pill and case a one-colour label grey (see [ContinuationBadgeBitmaps.casingColor]).
+                blank = route == null
+            )
+        }
     }
 }
 

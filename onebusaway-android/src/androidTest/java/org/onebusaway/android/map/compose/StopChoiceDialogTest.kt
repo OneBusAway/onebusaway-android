@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.compose
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
@@ -40,8 +41,8 @@ class StopChoiceDialogTest {
     @Test
     fun eachRowNamesItsOwnRoutesAndSelectsItsOriginalStop() {
         render()
-        composeRule.onNodeWithText(context.getString(R.string.map_stop_routes, "5, 40")).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(R.string.map_stop_routes, "597")).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.map_stop_routes, "5, 40")).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.map_stop_routes, "597")).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.stop_details_code, "590")).performClick()
         composeRule.onNodeWithText(context.getString(R.string.stop_details_code, "4720")).performClick()
         assertEquals(listOf("1_590", "3_2479"), selected)

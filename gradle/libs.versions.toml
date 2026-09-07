@@ -19,7 +19,7 @@ targetSdk = "36"
 jdk = "17"
 
 # --- Build tooling / plugins ---
-agp = "9.3.2"
+agp = "9.4.0"
 # Kotlin Gradle plugin + its compiler plugins (serialization, compose) all track this version.
 kotlin = "2.4.10"
 # KSP2 is versioned independently of Kotlin — plain semver, not the old kotlinVersion-kspVersion
@@ -35,7 +35,7 @@ playPublisher = "4.1.1"
 # google-java-format (the handful of *.java files). See root build.gradle.kts's spotless {} block
 # and .editorconfig (ktlint_code_style = android_studio). ktlint's version is pinned separately so
 # formatting output is reproducible across machines regardless of Spotless's bundled default.
-spotless = "8.10.1"
+spotless = "8.10.2"
 ktlint = "1.7.0"
 # Lint tooling tracks AGP: lintVersion == agpVersion + 23.0.0 (AGP 9.2.0 -> 32.2.0). Consumed by
 # the :lint-rules module.
@@ -61,7 +61,7 @@ work = "2.11.2"
 room = "2.8.4"
 lifecycle = "2.11.0"
 # Navigation 2.10.0 requires minSdk 24; keep 2.9.x while supporting API 23 (#2280).
-navigationCompose = "2.9.8"
+navigationCompose = "2.10.0"
 hiltNavigationCompose = "1.4.0"
 composeBom = "2026.08.00"
 retrofit = "3.0.0"

@@ -37,7 +37,7 @@ fun NavController.navigateBackOrFinish() {
 }
 
 /** Toolbar Up stays in the app, even when Android Back would exit a shortcut/launcher root. */
-fun NavController.navigateUpInApp(parentRoute: String = NavRoutes.HOME) {
+fun NavController.navigateUpFromArrivals(parentRoute: String) {
     if (currentBackStackEntry?.savedStateHandle?.get<Boolean>(LAUNCH_ROOT) == true) {
         navigateFromHome(parentRoute)
         // A shortcut has no list underneath it. Its parent becomes the new launch root, so
@@ -58,12 +58,12 @@ fun NavController.showArrivals(reveal: StopReveal) = navigate(NavRoutes.arrivals
 /** Push the map above the board so Back returns to its existing state. */
 fun NavController.showStopMapFromArrivals(reveal: StopReveal) {
     navigate(NavRoutes.HOME)
-    revealStopOnMap(reveal)
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal)
 }
 
 fun NavController.showRouteMapFromArrivals(request: ShowRouteRequest) {
     navigate(NavRoutes.HOME)
-    revealRouteOnMap(request)
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putRouteReveal(request)
 }
 
 /**
@@ -156,13 +156,15 @@ data class StopReveal(
 
 /** Reveal the map focused on [reveal]'s stop, popping back to HOME. */
 fun NavController.revealStopOnMap(reveal: StopReveal) {
-    getBackStackEntry(NavRoutes.HOME).savedStateHandle.apply {
-        set(RESULT_MAP_STOP_ID, reveal.stopId)
-        set(RESULT_MAP_STOP_NAME, reveal.name)
-        set(RESULT_MAP_STOP_LAT, reveal.point?.latitude)
-        set(RESULT_MAP_STOP_LON, reveal.point?.longitude)
-    }
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal)
     popBackStack(NavRoutes.HOME, false)
+}
+
+internal fun SavedStateHandle.putStopReveal(reveal: StopReveal) {
+    set(RESULT_MAP_STOP_ID, reveal.stopId)
+    set(RESULT_MAP_STOP_NAME, reveal.name)
+    set(RESULT_MAP_STOP_LAT, reveal.point?.latitude)
+    set(RESULT_MAP_STOP_LON, reveal.point?.longitude)
 }
 
 /** Reveal the stop [stopId] on the map, knowing nothing else about it. */

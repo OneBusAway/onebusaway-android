@@ -244,7 +244,7 @@ class ArrivalsNavigationTest {
             composable(NavRoutes.HOME_STARRED_STOPS) {
                 Column(Modifier.fillMaxSize()) {
                     Text("Starred stops")
-                    Button(onClick = { nav.navigateUpInApp() }) { Text("List up") }
+                    Button(onClick = { nav.popBackStack() }) { Text("List up") }
                     Button(onClick = { nav.showArrivals(StopReveal("stop/1", "My stop")) }) { Text("Open stop") }
                 }
             }
@@ -263,7 +263,7 @@ class ArrivalsNavigationTest {
                 val id = requireNotNull(entry.arguments?.getString(NavRoutes.ARG_STOP_ID))
                 var mode by rememberArrivalDisplayMode(id) { ArrivalDisplayMode.TIME }
                 Column(Modifier.fillMaxSize()) {
-                    Button(onClick = { nav.navigateUpInApp(NavRoutes.HOME_STARRED_STOPS) }) { Text("Board up") }
+                    Button(onClick = { nav.navigateUpFromArrivals(NavRoutes.HOME_STARRED_STOPS) }) { Text("Board up") }
                     Text(if (mode == ArrivalDisplayMode.ROUTE) "Route selected" else "Time selected")
                     Button(onClick = { mode = ArrivalDisplayMode.ROUTE }) { Text("Route") }
                     Button(onClick = { nav.showStopMapFromArrivals(StopReveal(id, "My stop", GeoPoint(0.0, 0.0))) }) { Text("Map") }

@@ -132,7 +132,7 @@ data class StopFocusMenu(
     val onReportStopProblem: () -> Unit,
     val onNightLight: () -> Unit,
     val onCreateShortcut: () -> Unit,
-    val onShowArrivals: (() -> Unit)? = null
+    val onShowArrivals: () -> Unit
 )
 
 /**
@@ -598,11 +598,9 @@ private fun StopMenuAction(menu: StopFocusMenu) {
             onClick = { expanded = true }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            menu.onShowArrivals?.let { showArrivals ->
-                MenuRow(R.string.view_arrivals_only) {
-                    expanded = false
-                    showArrivals()
-                }
+            MenuRow(R.string.view_arrivals_only) {
+                expanded = false
+                menu.onShowArrivals()
             }
             MenuRow(R.string.my_context_create_shortcut) {
                 expanded = false

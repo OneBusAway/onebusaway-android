@@ -60,6 +60,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
+import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
@@ -72,7 +73,7 @@ import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.nav.arrivalsMapEnterTransition
 import org.onebusaway.android.ui.nav.arrivalsMapExitTransition
-import org.onebusaway.android.ui.nav.navigateUpInApp
+import org.onebusaway.android.ui.nav.navigateUpFromArrivals
 import org.onebusaway.android.ui.nav.showRouteMapFromArrivals
 import org.onebusaway.android.ui.nav.showStopMapFromArrivals
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -93,65 +94,44 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
             }
         )
     ) { entry ->
-        val context = LocalContext.current
         val stopId = requireNotNull(entry.arguments?.getString(NavRoutes.ARG_STOP_ID)) { "Arrivals requires a stop id" }
         val initialName = entry.arguments?.getString(NavRoutes.ARG_STOP_NAME)
-        val vm: ArrivalsViewModel = viewModel(
-            factory = viewModelFactory {
-                initializer { ArrivalsViewModelFactoryEntryPoint.get(context).create(stopId) }
-            }
-        )
-        val activity = context.findActivity()
-        val snackbar = remember { SnackbarHostState() }
-        val scope = rememberCoroutineScope()
-        val handler = remember(vm, navController) {
-            createArrivalActionHandler(
-                activity = activity,
-                viewModel = vm,
-                currentContent = { vm.state.value as? ArrivalsUiState.Content },
-                revealRoute = { _, request -> navController.showRouteMapFromArrivals(request) },
-                showUndoSnackbar = { message, action, undo ->
-                    scope.launch {
-                        if (snackbar.showSnackbar(activity.getString(message), action?.let(activity::getString)) ==
-                            SnackbarResult.ActionPerformed
-                        ) {
-                            undo?.invoke()
-                        }
-                    }
-                },
-                onShowTrip = { trip, stop ->
-                    navController.navigate(NavRoutes.tripDetails(trip, stop, TripDetailsLauncher.SCROLL_MODE_STOP))
-                },
-                onEditReminder = { navController.navigate(NavRoutes.tripInfo(it)) }
-            )
-        }
-        ObaTheme {
-            ArrivalsBoard(
-                vm,
-                stopId,
-                initialName,
-                handler,
-                snackbar,
-                onBack = { navController.navigateUpInApp(PreferencesEntryPoint.get(context).homeStartDestination()) },
-                onShowMap = { navController.showStopMapFromArrivals(it) },
-                onNightLight = { navController.navigate(NavRoutes.NIGHT_LIGHT) }
-            )
-        }
+        ObaTheme { ArrivalsBoard(stopId, initialName, navController) }
     }
 }
 
 @Composable
-private fun ArrivalsBoard(
-    viewModel: ArrivalsViewModel,
-    stopId: String,
-    initialName: String?,
-    handler: ArrivalActionHandler,
-    snackbar: SnackbarHostState,
-    onBack: () -> Unit,
-    onShowMap: (StopReveal) -> Unit,
-    onNightLight: () -> Unit
-) {
+private fun ArrivalsBoard(stopId: String, initialName: String?, navController: NavHostController) {
     val context = LocalContext.current
+    val viewModel: ArrivalsViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer { ArrivalsViewModelFactoryEntryPoint.get(context).create(stopId) }
+        }
+    )
+    val activity = context.findActivity()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val handler = remember(viewModel, navController) {
+        createArrivalActionHandler(
+            activity = activity,
+            viewModel = viewModel,
+            currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
+            revealRoute = { _, request -> navController.showRouteMapFromArrivals(request) },
+            showUndoSnackbar = { message, action, undo ->
+                scope.launch {
+                    if (snackbar.showSnackbar(activity.getString(message), action?.let(activity::getString)) ==
+                        SnackbarResult.ActionPerformed
+                    ) {
+                        undo?.invoke()
+                    }
+                }
+            },
+            onShowTrip = { trip, stop ->
+                navController.navigate(NavRoutes.tripDetails(trip, stop, TripDetailsLauncher.SCROLL_MODE_STOP))
+            },
+            onEditReminder = { navController.navigate(NavRoutes.tripInfo(it)) }
+        )
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val content = state as? ArrivalsUiState.Content
     val title = initialName ?: content?.header?.name ?: stringResource(R.string.arrivals_board_title)
@@ -165,16 +145,20 @@ private fun ArrivalsBoard(
     val favoritesReady by favorites.stopFavoritesReady.collectAsStateWithLifecycle()
     var menuOpen by remember { mutableStateOf(false) }
     val point = content?.let { GeoPoint(it.stopLat, it.stopLon) }
-    // A shortcut can be the first-ever launch. Let the region picker finish before making requests.
+    // Wait for endpoint resolution. Active(null) is a configured custom API URL and can poll
+    // without a region; Resolving/NeedsManualChoice/Failed must still wait.
     val regions = remember { RegionEntryPoint.get(context) }
-    val region by regions.region.collectAsStateWithLifecycle()
-    if (region != null) ArrivalsPolling(viewModel)
+    val regionState by regions.state.collectAsStateWithLifecycle()
+    if (regionState is RegionState.Active) ArrivalsPolling(viewModel)
 
     Scaffold(
         modifier = Modifier.testTag("arrivals_board"),
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            ObaTopAppBar(title = title, onBack = onBack) {
+            ObaTopAppBar(
+                title = title,
+                onBack = { navController.navigateUpFromArrivals(prefs.homeStartDestination()) }
+            ) {
                 IconButton(
                     enabled = favoritesReady && point != null,
                     onClick = {
@@ -186,7 +170,7 @@ private fun ArrivalsBoard(
                         stringResource(if (stopId in favoriteIds) R.string.stop_remove_star else R.string.stop_add_star)
                     )
                 }
-                IconButton(onClick = { onShowMap(StopReveal(stopId, initialName ?: content?.header?.name, point)) }) {
+                IconButton(onClick = { navController.showStopMapFromArrivals(StopReveal(stopId, initialName ?: content?.header?.name, point)) }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_action_location_map),
                         contentDescription = stringResource(R.string.home_map)
@@ -211,7 +195,7 @@ private fun ArrivalsBoard(
                         })
                         DropdownMenuItem(text = { Text(stringResource(R.string.stop_info_option_night_light)) }, onClick = {
                             menuOpen = false
-                            onNightLight()
+                            navController.navigate(NavRoutes.NIGHT_LIGHT)
                         })
                     }
                 }

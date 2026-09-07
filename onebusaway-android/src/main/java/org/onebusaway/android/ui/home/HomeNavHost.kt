@@ -85,7 +85,6 @@ import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.report.reportGraph
 import org.onebusaway.android.ui.routeinfo.routeInfoGraph
@@ -308,17 +307,13 @@ internal fun LaunchIntentEffect(
                 onSideEffects(i)
                 val route = launchDestination(i, prefs)
                 navController.navigateFromHome(route)
-                if (initial &&
-                    (
-                        route.startsWith("arrivals/") ||
-                            route in setOf(
-                                NavRoutes.HOME_STARRED_STOPS,
-                                NavRoutes.HOME_STARRED_ROUTES,
-                                NavRoutes.MY_REMINDERS
-                            )
-                        )
-                ) {
-                    navController.currentBackStackEntry?.savedStateHandle?.set(LAUNCH_ROOT, true)
+                if (initial) {
+                    val entry = navController.currentBackStackEntry
+                    when (entry?.destination?.route) {
+                        NavRoutes.ARRIVALS, NavRoutes.HOME_STARRED_STOPS,
+                        NavRoutes.HOME_STARRED_ROUTES, NavRoutes.MY_REMINDERS ->
+                            entry.savedStateHandle[LAUNCH_ROOT] = true
+                    }
                 }
                 handled()
             }

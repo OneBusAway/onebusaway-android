@@ -48,9 +48,7 @@ import org.onebusaway.android.ui.mylists.stopActions
 import org.onebusaway.android.ui.mylists.toStopReveal
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.navigateFromHome
-import org.onebusaway.android.ui.nav.navigateUpInApp
 import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.tracking.badgeTracking
 import org.onebusaway.android.util.PreferenceUtils
@@ -68,7 +66,11 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
         StarredListScaffold(
             title = R.string.navdrawer_item_starred_stops,
             clearLabel = R.string.my_option_clear_starred_stops,
-            onBack = { navController.navigateUpInApp() },
+            onBack = {
+                // This screen uses its Up arrow as the map section selector, without a duplicate icon.
+                PreferencesEntryPoint.get(host).rememberHomeSection(NavRoutes.HOME)
+                navController.navigateFromHome(NavRoutes.HOME)
+            },
             onSort = {
                 host.chooseSortOrder(
                     PreferenceUtils.getStopSortOrderFromPreferences(host),
@@ -99,7 +101,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
         StarredListScaffold(
             title = R.string.navdrawer_item_starred_routes,
             clearLabel = R.string.my_option_clear_starred_routes,
-            onBack = { navController.navigateUpInApp() },
+            onBack = { navController.popBackStack() },
             onMap = {
                 PreferencesEntryPoint.get(host).rememberHomeSection(NavRoutes.HOME)
                 navController.navigateFromHome(NavRoutes.HOME)

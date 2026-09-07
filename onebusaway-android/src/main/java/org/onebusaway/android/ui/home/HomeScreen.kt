@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -368,6 +370,7 @@ fun HomeScreen(
                 // clearance is the same one every other top-of-map overlay insets by, so the sheet's top
                 // edge lines up with them instead of drifting when the FAB row is resized.
                 val topSystemInsetPx = WindowInsets.safeDrawing.getTop(density)
+                val navigationBarInsetPx = WindowInsets.navigationBars.getBottom(density)
                 val maxSheetContentDp = with(density) {
                     arrivalsSheetCeiling(
                         windowHeight = LocalWindowInfo.current.containerSize.height.toDp(),
@@ -671,7 +674,9 @@ fun HomeScreen(
                         BottomSheetScaffold(
                             modifier = Modifier.fillMaxSize(),
                             scaffoldState = scaffoldState,
-                            snackbarHost = { SnackbarHost(snackbarHostState) },
+                            snackbarHost = {
+                                SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
+                            },
                             // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
                             sheetPeekHeight = visiblePeekDp,
                             // Paint the sheet container (incl. the strip behind the drag handle) the same color
@@ -856,7 +861,7 @@ fun HomeScreen(
                                 } else {
                                     0.dp
                                 },
-                                navigationBarInset = peekBottomPadding
+                                navigationBarInset = with(density) { navigationBarInsetPx.toDp() }
                             )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The

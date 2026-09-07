@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -856,7 +857,7 @@ fun HomeScreen(
                                 } else {
                                     0.dp
                                 },
-                                navigationBarInset = peekBottomPadding
+                                navigationBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
                             )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The

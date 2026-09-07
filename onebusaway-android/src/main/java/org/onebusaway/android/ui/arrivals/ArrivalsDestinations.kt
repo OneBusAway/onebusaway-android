@@ -235,7 +235,8 @@ private fun ArrivalsBoard(
                     loadingMore = viewModel.loadingMore,
                     listState = listState,
                     displayMode = displayMode,
-                    onDisplayModeChange = { displayMode = it }
+                    onDisplayModeChange = { displayMode = it },
+                    modeSwitchModifier = Modifier.padding(top = 3.dp, end = 3.dp)
                 )
             }
         }

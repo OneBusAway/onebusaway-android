@@ -682,6 +682,8 @@
 
     <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
     <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
+    <string name="preferences_compact_stop_icons_title">Compact stop icons</string>
+    <string name="preferences_compact_stop_icons_summary">Use smaller stop markers without vehicle symbols</string>
     <string name="preferences_show_zoom_controls_title">Show zoom controls</string>
     <string name="preferences_show_zoom_controls_summary">Display zoom controls on map
     </string>

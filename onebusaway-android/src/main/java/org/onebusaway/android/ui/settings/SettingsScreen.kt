@@ -140,6 +140,7 @@ fun SettingsRoute(
         onShowNegativeArrivals = viewModel::onShowNegativeArrivalsChanged,
         onHideAlerts = viewModel::onHideAlertsChanged,
         onShowZoomControls = viewModel::onShowZoomControlsChanged,
+        onCompactStopIcons = viewModel::onCompactStopIconsChanged,
         onShowRentalButton = viewModel::onShowRentalButtonChanged,
         onDisplayWeatherView = viewModel::onDisplayWeatherViewChanged,
         onShowAvailableStudies = viewModel::onShowAvailableStudiesChanged,
@@ -178,6 +179,7 @@ class SettingsActions(
     val onShowNegativeArrivals: (Boolean) -> Unit,
     val onHideAlerts: (Boolean) -> Unit,
     val onShowZoomControls: (Boolean) -> Unit,
+    val onCompactStopIcons: (Boolean) -> Unit,
     val onShowRentalButton: (Boolean) -> Unit,
     val onDisplayWeatherView: (Boolean) -> Unit,
     val onShowAvailableStudies: (Boolean) -> Unit,
@@ -262,6 +264,14 @@ fun SettingsScreen(
                     checked = state.showZoomControls,
                     onCheckedChange = actions.onShowZoomControls
                 )
+                if (state.showCompactStopIcons) {
+                    SwitchPreferenceItem(
+                        title = stringResource(R.string.preferences_compact_stop_icons_title),
+                        summary = stringResource(R.string.preferences_compact_stop_icons_summary),
+                        checked = state.compactStopIcons,
+                        onCheckedChange = actions.onCompactStopIcons
+                    )
+                }
                 // The map's own long-press menu is the other way to turn this off, and the only way a
                 // rider is likely to find it; this row is how it comes back (#2168).
                 SwitchPreferenceItem(

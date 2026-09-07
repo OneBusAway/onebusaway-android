@@ -117,6 +117,8 @@ fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
 enum class StopIconKind {
     FULL,
     FULL_FOCUSED,
+    COMPACT,
+    COMPACT_FOCUSED,
     DOT,
     DOT_FOCUSED,
     FAVORITE,
@@ -134,16 +136,19 @@ enum class StopIconKind {
  *
  * [StopBand.ROUTES] takes the same icon as [StopBand.FULL]: what that band adds is the separate route
  * label beside the marker (#2107, see [stopRouteLabel]), not a different icon.
+ * [compact] replaces only full ordinary icons with the smaller, glyph-free circle and arrow (#2284).
  */
 fun stopIconKind(
     focused: Boolean,
     band: StopBand,
-    favorite: Boolean = false
+    favorite: Boolean = false,
+    compact: Boolean = false
 ): StopIconKind = when {
     favorite && band == StopBand.DOT ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
     favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE
     band == StopBand.DOT -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
+    compact -> if (focused) StopIconKind.COMPACT_FOCUSED else StopIconKind.COMPACT
     focused -> StopIconKind.FULL_FOCUSED
     else -> StopIconKind.FULL
 }

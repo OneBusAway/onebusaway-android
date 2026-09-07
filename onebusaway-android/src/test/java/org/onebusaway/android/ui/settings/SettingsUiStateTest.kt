@@ -32,6 +32,7 @@ class SettingsUiStateTest {
         showNegativeArrivals = true,
         hideAlerts = false,
         showZoomControls = false,
+        compactStopIcons = false,
         showRentalButton = true,
         displayWeatherView = true,
         showAvailableStudies = true,
@@ -44,12 +45,26 @@ class SettingsUiStateTest {
         appTheme = "System default"
     )
 
-    private fun env(useFixedRegion: Boolean = false, sdkInt: Int = 30, isObaFlavor: Boolean = true) = SettingsEnvironment(useFixedRegion, sdkInt, isObaFlavor)
+    private fun env(useFixedRegion: Boolean = false, sdkInt: Int = 30, isObaFlavor: Boolean = true, isGoogleMaps: Boolean = true) = SettingsEnvironment(useFixedRegion, sdkInt, isObaFlavor, isGoogleMaps)
 
     private fun build(
         region: RegionSummaryInfo? = RegionSummaryInfo("Puget Sound", hasOtp = true),
         env: SettingsEnvironment = env()
     ) = buildSettingsUiState(prefs, region, env, customApiRegionSummary = "Custom API")
+
+    @Test
+    fun `compact stop option is available only on Google Maps which has detailed icons`() {
+        assertTrue(build().showCompactStopIcons)
+        assertFalse(build(env = env(isGoogleMaps = false)).showCompactStopIcons)
+        assertFalse(build().compactStopIcons)
+        val enabled = buildSettingsUiState(
+            prefs.copy(compactStopIcons = true),
+            region = null,
+            env = env(),
+            customApiRegionSummary = "Custom API"
+        )
+        assertTrue(enabled.compactStopIcons)
+    }
 
     // --- region category / summary ---
 

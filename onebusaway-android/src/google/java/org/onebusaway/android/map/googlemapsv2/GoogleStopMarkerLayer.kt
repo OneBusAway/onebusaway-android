@@ -52,7 +52,7 @@ internal class GoogleStopMarkerLayer(
     private val labelIcons =
         BitmapDescriptorCache(LABEL_ICON_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
-    fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
+    fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand, compact: Boolean) {
         val markerStops = stops.filterNot(StopMarker::routeStop)
         val liveIds = markerStops.mapTo(HashSet(), StopMarker::id)
         val gone = markerByStopId.iterator()
@@ -71,7 +71,8 @@ internal class GoogleStopMarkerLayer(
             val kind = stopIconKind(
                 focused = stop.id == focusedStopId,
                 band = band,
-                favorite = stop.favorite
+                favorite = stop.favorite,
+                compact = compact
             )
             val existing = markerByStopId[stop.id]
             if (existing == null) {
@@ -179,6 +180,8 @@ internal class GoogleStopMarkerLayer(
     private fun icon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
         StopIconKind.FULL -> StopIconFactory.stopIcon(context, stop.direction, stop.routeType)
         StopIconKind.FULL_FOCUSED -> StopIconFactory.focusedStopIcon(context, stop.direction, stop.routeType)
+        StopIconKind.COMPACT -> StopIconFactory.compactStopIcon(context, stop.direction)
+        StopIconKind.COMPACT_FOCUSED -> StopIconFactory.compactStopIcon(context, stop.direction, focused = true)
         StopIconKind.DOT -> StopIconFactory.dotStopIcon(context)
         StopIconKind.DOT_FOCUSED -> StopIconFactory.focusedDotStopIcon(context)
         StopIconKind.FAVORITE -> StopIconFactory.favoriteStopIcon(context, stop.direction)
@@ -188,7 +191,7 @@ internal class GoogleStopMarkerLayer(
     }
 
     private fun anchor(stop: StopMarker, kind: StopIconKind): Pair<Float, Float> = when (kind) {
-        StopIconKind.FULL, StopIconKind.FULL_FOCUSED ->
+        StopIconKind.FULL, StopIconKind.FULL_FOCUSED, StopIconKind.COMPACT, StopIconKind.COMPACT_FOCUSED ->
             StopIconFactory.anchorX(context, stop.direction) to
                 StopIconFactory.anchorY(context, stop.direction)
         else -> 0.5f to 0.5f

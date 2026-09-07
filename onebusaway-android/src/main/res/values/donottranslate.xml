@@ -36,6 +36,7 @@
     <string name="preference_key_display_weather_view">preference_key_display_weather_view</string>
     <string name="preference_key_app_theme">preference_app_theme</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
+    <string name="preference_key_compact_stop_icons">preference_compact_stop_icons</string>
     <string name="preference_key_show_zoom_controls">preference_show_zoom_controls</string>
     <string name="preference_key_show_available_studies">preference_show_available_studies</string>
     <string name="preference_key_hide_alerts">preference_hide_alerts</string>

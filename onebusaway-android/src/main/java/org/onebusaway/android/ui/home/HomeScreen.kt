@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -85,6 +84,7 @@ import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
@@ -370,7 +370,6 @@ fun HomeScreen(
                 // clearance is the same one every other top-of-map overlay insets by, so the sheet's top
                 // edge lines up with them instead of drifting when the FAB row is resized.
                 val topSystemInsetPx = WindowInsets.safeDrawing.getTop(density)
-                val navigationBarInsetPx = WindowInsets.navigationBars.getBottom(density)
                 val maxSheetContentDp = with(density) {
                     arrivalsSheetCeiling(
                         windowHeight = LocalWindowInfo.current.containerSize.height.toDp(),
@@ -861,7 +860,7 @@ fun HomeScreen(
                                 } else {
                                     0.dp
                                 },
-                                navigationBarInset = with(density) { navigationBarInsetPx.toDp() }
+                                navigationBarInset = navigationBarBottomPadding()
                             )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The

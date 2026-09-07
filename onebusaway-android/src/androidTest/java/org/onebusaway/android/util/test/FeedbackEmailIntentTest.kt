@@ -3,7 +3,6 @@ package org.onebusaway.android.util.test
 import android.content.ActivityNotFoundException
 import android.content.ContextWrapper
 import android.content.Intent
-import android.content.IntentFilter
 import androidx.core.net.MailTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -22,10 +21,7 @@ class FeedbackEmailIntentTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
 
     // Capture the real launch without opening a mail app or sending any feedback.
-    private class EmailContext(val noEmailApp: Boolean = false) :
-        ContextWrapper(
-            InstrumentationRegistry.getInstrumentation().targetContext
-        ) {
+    private class EmailContext(private val noEmailApp: Boolean = false) : ContextWrapper(InstrumentationRegistry.getInstrumentation().targetContext) {
         lateinit var launched: Intent
 
         override fun startActivity(intent: Intent) {
@@ -42,11 +38,8 @@ class FeedbackEmailIntentTest {
 
         val intent = context.launched
         assertEquals(Intent.ACTION_SENDTO, intent.action)
+        assertEquals("mailto", intent.scheme)
         assertNull(intent.type)
-        val emailFilter = IntentFilter(Intent.ACTION_SENDTO).apply { addDataScheme("mailto") }
-        assertTrue(emailFilter.match(context.contentResolver, intent, false, "test") >= 0)
-        val shareFilter = IntentFilter(Intent.ACTION_SEND).apply { addDataType("*/*") }
-        assertTrue(shareFilter.match(context.contentResolver, intent, false, "test") < 0)
 
         // AndroidX implements RFC 6068; android.net.MailTo decodes before splitting query fields
         // and misreads encoded ampersands inside a report body as additional headers.

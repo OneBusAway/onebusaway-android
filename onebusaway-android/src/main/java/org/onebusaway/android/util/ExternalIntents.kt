@@ -361,21 +361,16 @@ object ExternalIntents {
                 subject = context.getString(R.string.bug_report_subject_trip_plan, appName)
             }
         }
-        // SEND + message/rfc822 also matches generic sharing apps (#2296). SENDTO + mailto
-        // opens an email composer. Put the draft in the URI as well as extras for email clients
-        // that only read mailto fields; encode each value so report URLs cannot become headers.
-        val uri = (
-            "mailto:${Uri.encode(email, "@")}" +
-                "?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}"
-            ).toUri()
+        // SENDTO + mailto restricts feedback to email apps (#2296). Encode the draft in the URI
+        // as well as extras for clients that read only mailto fields, including reports with URLs.
+        val uri = "mailto:${Uri.encode(email, "@")}?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}".toUri()
         val send = Intent(Intent.ACTION_SENDTO, uri).apply {
             putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
             putExtra(Intent.EXTRA_SUBJECT, subject)
             putExtra(Intent.EXTRA_TEXT, body)
         }
         try {
-            // Launch directly so a missing email handler reaches the error below. Wrapping this
-            // in a chooser can open an empty system chooser instead. Android resolves email apps.
+            // A chooser can open even without an email handler; launch directly to catch that case.
             context.startActivity(send)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(context, R.string.bug_report_error, Toast.LENGTH_LONG)

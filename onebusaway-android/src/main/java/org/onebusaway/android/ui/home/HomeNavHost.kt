@@ -78,6 +78,8 @@ import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
 import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.nav.arrivalsMapEnterTransition
+import org.onebusaway.android.ui.nav.arrivalsMapExitTransition
 import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
@@ -140,7 +142,11 @@ fun HomeNavHost(
         BackHandler(enabled = launchRoot) { navController.navigateBackOrFinish() }
     }
     NavHost(navController = navController, startDestination = NavRoutes.HOME) {
-        composable(NavRoutes.HOME) { entry ->
+        composable(
+            NavRoutes.HOME,
+            enterTransition = { arrivalsMapEnterTransition() },
+            exitTransition = { arrivalsMapExitTransition() }
+        ) { entry ->
             // Navigation retains outgoing content during transitions. A cold launch's blank HOME
             // anchor must stay blank while the board/list enters, even after launch routing completes.
             // Once actually visited, keep normal transition/state-saving behavior for this map entry.

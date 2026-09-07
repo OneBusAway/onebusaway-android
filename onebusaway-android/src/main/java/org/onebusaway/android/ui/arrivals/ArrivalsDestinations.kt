@@ -70,6 +70,8 @@ import org.onebusaway.android.ui.home.homeStartDestination
 import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.nav.arrivalsMapEnterTransition
+import org.onebusaway.android.ui.nav.arrivalsMapExitTransition
 import org.onebusaway.android.ui.nav.navigateUpInApp
 import org.onebusaway.android.ui.nav.showRouteMapFromArrivals
 import org.onebusaway.android.ui.nav.showStopMapFromArrivals
@@ -80,6 +82,8 @@ import org.onebusaway.android.util.GeoPoint
 fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
     composable(
         NavRoutes.ARRIVALS,
+        enterTransition = { arrivalsMapEnterTransition() },
+        exitTransition = { arrivalsMapExitTransition() },
         arguments = listOf(
             navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType },
             navArgument(NavRoutes.ARG_STOP_NAME) {

@@ -39,6 +39,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -175,6 +176,56 @@ class ArrivalsNavigationTest {
         }
     }
 
+    @Test
+    fun boardMapTransitionsResumeWithinFourFramesInBothDirections() {
+        compose.setContent { Harness() }
+        openBoard()
+        // Finish the ordinary list-to-board fade before timing the separate board/map hop.
+        compose.waitForIdle()
+        compose.runOnIdle {
+            assertEquals(Lifecycle.State.RESUMED, nav.currentBackStackEntry!!.lifecycle.currentState)
+        }
+        compose.mainClock.autoAdvance = false
+        compose.runOnIdle { nav.showStopMapFromArrivals(StopReveal("stop/1", "My stop")) }
+        repeat(4) {
+            compose.mainClock.advanceTimeByFrame()
+            compose.waitForIdle()
+        }
+        compose.runOnIdle {
+            assertEquals(NavRoutes.HOME, nav.currentDestination?.route)
+            assertEquals(Lifecycle.State.RESUMED, nav.currentBackStackEntry!!.lifecycle.currentState)
+            nav.popBackStack()
+        }
+        repeat(4) {
+            compose.mainClock.advanceTimeByFrame()
+            compose.waitForIdle()
+        }
+        compose.runOnIdle {
+            assertEquals(NavRoutes.ARRIVALS, nav.currentDestination?.route)
+            assertEquals(Lifecycle.State.RESUMED, nav.currentBackStackEntry!!.lifecycle.currentState)
+        }
+        compose.mainClock.autoAdvance = true
+    }
+
+    @Test
+    fun otherDestinationsKeepTheirNormalTransition() {
+        compose.setContent { Harness() }
+        compose.mainClock.autoAdvance = false
+        compose.runOnIdle { nav.navigate(NavRoutes.HOME_STARRED_STOPS) }
+        repeat(4) {
+            compose.mainClock.advanceTimeByFrame()
+            compose.waitForIdle()
+        }
+        compose.runOnIdle {
+            assertEquals(Lifecycle.State.STARTED, nav.currentBackStackEntry!!.lifecycle.currentState)
+        }
+        compose.mainClock.advanceTimeBy(800)
+        compose.runOnIdle {
+            assertEquals(Lifecycle.State.RESUMED, nav.currentBackStackEntry!!.lifecycle.currentState)
+        }
+        compose.mainClock.autoAdvance = true
+    }
+
     private fun openBoard() {
         compose.runOnIdle { nav.navigate(NavRoutes.HOME_STARRED_STOPS) }
         compose.onNodeWithText("Open stop").performClick()
@@ -184,10 +235,14 @@ class ArrivalsNavigationTest {
     private fun Harness() {
         activity = requireNotNull(LocalActivity.current)
         nav = rememberNavController()
-        NavHost(nav, startDestination = NavRoutes.HOME) {
-            composable(NavRoutes.HOME) { Text("Map screen") }
+        NavHost(nav, startDestination = NavRoutes.HOME, modifier = Modifier.fillMaxSize()) {
+            composable(
+                NavRoutes.HOME,
+                enterTransition = { arrivalsMapEnterTransition() },
+                exitTransition = { arrivalsMapExitTransition() }
+            ) { Text("Map screen", Modifier.fillMaxSize()) }
             composable(NavRoutes.HOME_STARRED_STOPS) {
-                Column {
+                Column(Modifier.fillMaxSize()) {
                     Text("Starred stops")
                     Button(onClick = { nav.navigateUpInApp() }) { Text("List up") }
                     Button(onClick = { nav.showArrivals(StopReveal("stop/1", "My stop")) }) { Text("Open stop") }
@@ -195,6 +250,8 @@ class ArrivalsNavigationTest {
             }
             composable(
                 NavRoutes.ARRIVALS,
+                enterTransition = { arrivalsMapEnterTransition() },
+                exitTransition = { arrivalsMapExitTransition() },
                 arguments = listOf(
                     navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType },
                     navArgument(NavRoutes.ARG_STOP_NAME) {

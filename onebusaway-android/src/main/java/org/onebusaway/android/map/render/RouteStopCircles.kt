@@ -30,6 +30,6 @@ object RouteStopCircles {
     /** The arrow keeps its finer outline independently of the heavier circle rim. */
     const val ARROW_OUTLINE_WIDTH_DP = 1.75f
 
-    // Unselected centers are theme-aware (`route_stop_fill`) with displayed-route-colored rims.
+    // Route-colored and neutral gray rims have white centers in both light and dark mode.
     // The selected stop uses the ordinary orange stop icon instead.
 }

@@ -57,11 +57,18 @@ and stays available when that stop has no departures. Clearing focus restores th
 ordinary nearby marker and label presentation. Standalone route and directions
 views keep their existing stop selection scope.
 
+Switching between focused stops keeps the existing markers and route presentation
+visible until the replacement stop's trips and stops are ready. This also applies
+when the stops share no route. An unrelated selected route is cleared without
+tearing down the nearby-stop cache.
+
 Route stops use the displayed line's color as an outline around an opaque,
-theme-aware center. The selected stop uses the regular orange stop icon, with the
+white center in both light and dark mode. The selected stop uses the regular orange stop icon, with the
 whole icon (including its direction arrow and transit symbol) enlarged to 125%.
 Other route stops retain their direction arrows in both map providers. A stop shared by differently colored displayed routes uses a
-neutral outline; selecting one route gives it that route's color. Stop colors
+neutral gray outline around the same white center. In dark mode, the neutral rim
+is roughly halfway between white and the map background. Selecting one route
+gives it that route's outline color. Stop colors
 follow the map palette, including adjacency colors and directions palettes.
 
 At full detail, unselected route-stop circles are 22.5 dp across with a 4.125 dp rim. Before a route is selected, the other route stops

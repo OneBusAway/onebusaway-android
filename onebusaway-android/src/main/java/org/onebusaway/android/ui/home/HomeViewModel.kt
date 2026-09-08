@@ -209,17 +209,12 @@ class HomeViewModel @Inject constructor(
             return if (loaded.stopId == stopId) loaded.trips else emptySet()
         }
 
-    // The route-directions currently drawn for the focused-stop presentation. Unlike [focusedTrips]
-    // this deliberately *persists* across a continuing stop-to-stop handoff (the old routes stay on the
-    // map until the new stop's arrivals replace them), so it stays an explicitly-managed field.
-    private var presentedRoutes: Set<RouteDirectionKey> = emptySet()
-
     /** An arrivals load's exact trips, tagged with the stop id they were loaded for. */
     private data class LoadedTrips(val stopId: String, val trips: Set<FocusedTrip>)
 
     /**
-     * A map stop gained focus. When it shares any presented route-direction with the current stop,
-     * keep that presentation alive while the new arrivals replace it, including any selected route.
+     * A map stop gained focus. Keep the current stop presentation visible while the new arrivals
+     * replace it. A selected route continues only when the new stop belongs to that route-direction.
      */
     internal fun onStopFocused(
         stop: FocusedStop,
@@ -249,21 +244,22 @@ class HomeViewModel @Inject constructor(
         val sameStop = previousId == stop.id
         if (sameStop) return StopFocusTransition.Unchanged
         val current = _currentFocus.value as? CurrentFocus.Stop
-        val continuePresentation = when (val selected = current?.selectedRoute) {
-            null -> current != null && presentedRoutes.any(continuingRoutes::contains)
-            else -> selected.currentLeg.routeDirection in continuingRoutes
-        }
-        if (!continuePresentation) {
-            presentedRoutes = emptySet()
+        val selectedRoute = current?.selectedRoute
+        val continueSelectedRoute = selectedRoute != null && selectedRoute.currentLeg.routeDirection in continuingRoutes
+        if (current == null) {
             emitMapDirective(MapDirective.ClearStopRoutes)
+        } else if (selectedRoute != null && !continueSelectedRoute) {
+            // Leave the selected route, retaining stop focus and its cached markers until the new
+            // stop's complete presentation is ready. A full teardown would blink all nearby stops.
+            emitMapDirective(MapDirective.ClearSelectedRoute)
         }
         pushFocus(
             CurrentFocus.Stop(
                 stop = stop,
-                selectedRoute = if (continuePresentation) current?.selectedRoute else null
+                selectedRoute = if (continueSelectedRoute) selectedRoute else null
             )
         )
-        return if (continuePresentation) {
+        return if (current != null) {
             StopFocusTransition.ContinuePresentation
         } else {
             StopFocusTransition.ReplacePresentation
@@ -395,7 +391,6 @@ class HomeViewModel @Inject constructor(
         if (focus.stop.id != stop.id) return
         resolveFocusedStopDetails(focus, stop)
         loadedTrips = LoadedTrips(focus.stop.id, trips)
-        presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
         val pending = pendingFocus
         val preserveViewport = pending?.preserveViewport == true
         // Frame the selected route only when this load is the initial (restore/deep-link) focus
@@ -635,7 +630,6 @@ class HomeViewModel @Inject constructor(
         focusTripId: String? = null,
         undoViewport: MapViewport? = null
     ) {
-        presentedRoutes = emptySet()
         // Arm the latch for *this* bay, so the load that follows emits `MapDirective.FocusStop` and the
         // map renders the bay as the selected stop — the marker a rider expects after tapping a row, and
         // which nothing else here would set (`ShowRoute` draws the route, not the stop focus).
@@ -747,7 +741,6 @@ class HomeViewModel @Inject constructor(
             // Popped a leg sub-focus back to the whole trip.
             target is CurrentFocus.Directions -> emitMapDirective(itineraryOverviewDirective(focus))
             else -> {
-                presentedRoutes = emptySet()
                 emitMapDirective(MapDirective.ClearFocus)
             }
         }
@@ -770,7 +763,6 @@ class HomeViewModel @Inject constructor(
     fun clearMapFocus() {
         if (_currentFocus.value == CurrentFocus.None) return
         pushFocus(CurrentFocus.None)
-        presentedRoutes = emptySet()
         // Drop any pending restore/deep-link latch too; otherwise a stop closed before its arrivals
         // load leaves it set, and the next stop's onArrivalsLoaded would consume it and recenter.
         pendingFocus = null
@@ -799,7 +791,6 @@ class HomeViewModel @Inject constructor(
      */
     fun enterDirections(undoViewport: MapViewport? = null) {
         if (_currentFocus.value is CurrentFocus.Directions) return
-        presentedRoutes = emptySet()
         pendingFocus = null
         // A fresh entry has nothing drawn yet — the previous visit's trip is long off the map, and a
         // stale record of it would make the first Back out of an empty form ask to discard it (#2140).

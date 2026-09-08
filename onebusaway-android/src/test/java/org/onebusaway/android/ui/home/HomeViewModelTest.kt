@@ -1890,7 +1890,7 @@ class HomeViewModelTest {
         vm.onStopFocused(FocusedStop("2", "2nd Ave", "200", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         assertEquals(emptySet<FocusedTrip>(), vm.focusedTrips)
-        assertEquals(1, map.clearStopRoutesCount)
+        assertEquals(0, map.clearStopRoutesCount)
         job.cancel()
     }
 
@@ -1996,7 +1996,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `another direction of the selected route replaces route focus`() = runTest {
+    fun `another direction drops route selection without clearing the stop presentation`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
@@ -2021,9 +2021,9 @@ class HomeViewModelTest {
         )
         advanceUntilIdle()
 
-        assertEquals(StopFocusTransition.ReplacePresentation, transition)
+        assertEquals(StopFocusTransition.ContinuePresentation, transition)
         assertNull((vm.currentFocus.value as CurrentFocus.Stop).selectedRoute)
-        assertEquals(1, map.clearStopRoutesCount)
+        assertEquals(listOf(MapDirective.ClearSelectedRoute), map.sent)
         job.cancel()
     }
 
@@ -2064,7 +2064,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `stop without a shared route replaces the map presentation`() = runTest {
+    fun `stop without a shared route retains the map until replacement arrivals load`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
@@ -2087,8 +2087,13 @@ class HomeViewModelTest {
         )
         advanceUntilIdle()
 
-        assertEquals(StopFocusTransition.ReplacePresentation, transition)
-        assertEquals(1, map.clearStopRoutesCount)
+        assertEquals(StopFocusTransition.ContinuePresentation, transition)
+        assertTrue(map.sent.isEmpty())
+
+        val nextTrips = setOf(FocusedTrip("trip-62", "62", "shape-62", null))
+        vm.onArrivalsLoaded(ObaStopElement("2", 47.61, -122.31, "2nd Ave", "200"), null, nextTrips)
+        advanceUntilIdle()
+        assertEquals(listOf(MapDirective.ShowStopRoutes("2", emptyList(), nextTrips)), map.sent)
         job.cancel()
     }
 

@@ -11,18 +11,18 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class RouteStopBitmapTest {
     @Test
-    fun routeStopsHaveRouteColoredRimsAndThemeAwareCenters() {
-        val routeColor = 0xFF2277BB.toInt()
-        for (surface in listOf(Color.WHITE, 0xFF4D4D4D.toInt())) {
-            val normal = drawRouteStopBitmap(RouteStopIconKey(54, routeColor, null), surface)
-            assertEquals(surface, normal.getPixel(normal.width / 2, normal.height / 2))
-            assertEquals(routeColor, normal.getPixel(normal.width / 2 + 23, normal.height / 2))
+    fun coloredAndNeutralStopsKeepWhiteCenters() {
+        for (outlineColor in listOf(0xFF2277BB.toInt(), 0xFF616161.toInt(), 0xFF969696.toInt())) {
+            val bitmap = drawRouteStopBitmap(RouteStopIconKey(54, outlineColor, null), Color.WHITE)
+            assertEquals(Color.WHITE, bitmap.getPixel(bitmap.width / 2, bitmap.height / 2))
+            assertEquals(outlineColor, bitmap.getPixel(bitmap.width / 2 + 23, bitmap.height / 2))
         }
     }
 
     @Test
     fun everyDirectionFitsWithoutClippingAndKeepsTheBoardingPointCentered() {
         val color = 0xFF2277BB.toInt()
+        val north = drawRouteStopBitmap(RouteStopIconKey(54, color, 0f), Color.WHITE)
         for (direction in StopDirection.entries) {
             val angle = direction.takeIf { it != StopDirection.NONE }?.compassAngle
             val bitmap = drawRouteStopBitmap(RouteStopIconKey(54, color, angle), Color.WHITE)
@@ -34,6 +34,17 @@ class RouteStopBitmapTest {
                 assertEquals(0, Color.alpha(bitmap.getPixel(bitmap.width - 1, i)))
             }
             if (angle != null) {
+                // Rotating the arrow must not change the white center or cut into the circular rim.
+                val center = bitmap.width / 2f
+                for (y in 0 until bitmap.height) {
+                    for (x in 0 until bitmap.width) {
+                        val dx = x + 0.5f - center
+                        val dy = y + 0.5f - center
+                        if (dx * dx + dy * dy < 25f * 25f) {
+                            assertEquals("Arrow changes the $direction rim at ($x, $y)", north.getPixel(x, y), bitmap.getPixel(x, y))
+                        }
+                    }
+                }
                 val radians = Math.toRadians(angle.toDouble())
                 val radius = 30
                 val x = bitmap.width / 2 + (kotlin.math.sin(radians) * radius).toInt()

@@ -41,7 +41,6 @@ fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int): Bitmap {
     val scale = diameterPx / (2f * RouteStopCircles.RADIUS_PX)
     val strokeWidth = RouteStopCircles.STROKE_WIDTH_PX * scale
     val radius = diameterPx / 2f - strokeWidth / 2f
-    val centerColor = surfaceColor
     val arrowOutlineWidth = RouteStopCircles.ARROW_OUTLINE_WIDTH_DP * scale
     val circleReach = diameterPx / 2f
     val arrowReach = if (arrowAngleDeg == null) {
@@ -54,18 +53,19 @@ fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int): Bitmap {
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
     val center = size / 2f
+    // Keep the arrow's white border behind the disc so it cannot cut into the circular rim.
+    if (arrowAngleDeg != null) {
+        StopBitmaps.drawDirectionArrow(
+            canvas, center, center, radius, routeColor, routeColor, arrowAngleDeg,
+            outlineColor = surfaceColor, outlineWidthPx = arrowOutlineWidth
+        )
+    }
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    paint.color = centerColor
+    paint.color = surfaceColor
     canvas.drawCircle(center, center, radius, paint)
     paint.color = routeColor
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = strokeWidth
     canvas.drawCircle(center, center, radius, paint)
-    if (arrowAngleDeg != null) {
-        StopBitmaps.drawDirectionArrow(
-            canvas, center, center, radius, routeColor, routeColor, arrowAngleDeg,
-            outlineColor = centerColor, outlineWidthPx = arrowOutlineWidth
-        )
-    }
     return bitmap
 }

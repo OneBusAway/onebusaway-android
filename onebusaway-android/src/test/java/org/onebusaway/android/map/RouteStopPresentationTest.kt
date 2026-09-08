@@ -46,7 +46,7 @@ class RouteStopPresentationTest {
         assertEquals(eastMarker.routes, alternative.routes)
         assertSame(east, alternative.stop)
 
-        val choices = stopChoicesAt(focused, result, ScreenOffset(0f, 0f), MapProjector { ScreenOffset(0f, 0f) }, 48f, 48f)
+        val choices = stopChoicesAt(focused, result, ScreenOffset(0f, 0f), MapProjector { ScreenOffset(0f, 0f) }, 24f)
         assertEquals(listOf(west.id, east.id), choices.map { it.id })
         assertEquals("E", choices.last().stop.direction)
 

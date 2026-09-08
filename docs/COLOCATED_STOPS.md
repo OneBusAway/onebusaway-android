@@ -10,9 +10,10 @@ The [stop contract](https://developer.onebusaway.org/api/where/elements/stop)
 maps stops to GTFS records. Nearby references describe geographic neighbors;
 they do not establish that two IDs are the same stop.
 
-The client handles this as a map selection problem. Stop taps use the platform's
-minimum touch target (normally 48 dp wide and tall), centered on the actual tap
-in screen coordinates. Stops within that target are choices even when their GTFS
+The client handles this as a map selection problem. Stop taps use a circular
+target, normally 48 dp in diameter (24 dp radius), centered on the actual tap
+in screen coordinates. Its diameter follows the smaller dimension of the platform's
+minimum touch target, excluding the corners of the former square target. Stops within that target are choices even when their GTFS
 coordinates differ. The live map projection makes this zoom-dependent: zooming in
 can separate two stops into independently selectable targets. A tap on empty map
 within a stop's target can select it too. Vehicle, rental, and route-badge taps

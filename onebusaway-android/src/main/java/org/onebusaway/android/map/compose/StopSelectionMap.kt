@@ -50,9 +50,8 @@ internal fun StopSelectionMap(
     val tapPosition = remember(renderState) { MapTapPosition() }
     val touchSize = LocalViewConfiguration.current.minimumTouchTargetSize
     val density = LocalDensity.current
-    val targetWidthPx = with(density) { touchSize.width.toPx() }
-    val targetHeightPx = with(density) { touchSize.height.toPx() }
-    val mapCallbacks = remember(renderState, callbacks, targetWidthPx, targetHeightPx) {
+    val targetRadiusPx = with(density) { minOf(touchSize.width, touchSize.height).toPx() / 2f }
+    val mapCallbacks = remember(renderState, callbacks, targetRadiusPx) {
         object : ObaMapCallbacks by callbacks {
             private fun chooseStop(marker: StopMarker?, point: GeoPoint? = null): Boolean {
                 val projector = renderState.projector.value
@@ -62,8 +61,7 @@ internal fun StopSelectionMap(
                     renderState.snapshot.value.stops,
                     tap,
                     projector,
-                    targetWidthPx,
-                    targetHeightPx
+                    targetRadiusPx
                 )
                 when (choices.size) {
                     0 -> return false

@@ -237,6 +237,20 @@ fun SettingsScreen(
                 }
             }
 
+            // What the app does over time, as distinct from what it shows (Display). One row so far.
+            PreferenceCategory(stringResource(R.string.preferences_category_behavior)) {
+                // How long a selected stop (or route / bike station / trip plan) outlives the rider's
+                // last visit before the home screen forgets it (#2294). The stored values are the
+                // enum's stable tokens, not the labels, so the choice survives a locale change.
+                ListPreferenceItem(
+                    title = stringResource(R.string.preferences_focus_timeout_title),
+                    entries = FocusTimeout.entries.map { stringResource(it.labelRes) },
+                    entryValues = FocusTimeout.entries.map { it.value },
+                    selectedValue = state.focusTimeout.value,
+                    onValueSelected = { actions.onFocusTimeout(FocusTimeout.fromPreference(it)) }
+                )
+            }
+
             PreferenceCategory(stringResource(R.string.preferences_category_display)) {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                     val title = stringResource(R.string.arrival_display_default)
@@ -249,16 +263,6 @@ fun SettingsScreen(
                         label = title
                     )
                 }
-                // How long a selected stop (or route / bike station / trip plan) outlives the rider's
-                // last visit before the home screen forgets it (#2294). The stored values are the
-                // enum's stable tokens, not the labels, so the choice survives a locale change.
-                ListPreferenceItem(
-                    title = stringResource(R.string.preferences_focus_timeout_title),
-                    entries = FocusTimeout.entries.map { stringResource(it.labelRes) },
-                    entryValues = FocusTimeout.entries.map { it.value },
-                    selectedValue = state.focusTimeout.value,
-                    onValueSelected = { actions.onFocusTimeout(FocusTimeout.fromPreference(it)) }
-                )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_negative_arrivals_title),
                     summary = stringResource(R.string.preferences_show_negative_arrivals_summary),

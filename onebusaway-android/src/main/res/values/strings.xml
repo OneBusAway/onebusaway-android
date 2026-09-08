@@ -647,6 +647,7 @@
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>
+    <string name="preferences_category_behavior">Behavior</string>
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_notifications">Notifications</string>

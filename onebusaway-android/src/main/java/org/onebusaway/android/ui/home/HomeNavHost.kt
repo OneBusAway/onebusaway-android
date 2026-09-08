@@ -277,7 +277,7 @@ fun HomeNavHost(
 }
 
 /**
- * Drains [HomeActivity]'s `launchIntents` channel once the NavHost is composed (cold launch) and as each
+ * Handles [initialIntent] once, then drains [HomeActivity]'s `launchIntents` channel as each
  * `onNewIntent` enqueues more (warm relaunch): for each external intent it runs the intent's domain side
  * effects, translates it to a route via [IntentRouteMapper] (null = stay on the map), then navigates there
  * popping up to HOME. This is the only navigation that can't hold the NavController itself — the OS hands
@@ -288,37 +288,45 @@ fun HomeNavHost(
  * The collect is gated on `repeatOnLifecycle(STARTED)` so we never navigate while the activity is STOPPED.
  * The UNLIMITED channel buffers any intent submitted during that window and replays it when the lifecycle
  * returns to STARTED, so the gate costs no deliveries (#1592).
+ *
+ * Returns the saved launch readiness used to gate HOME's map. If state is saved before the cold intent
+ * is handled, recreation retries it from [initialIntent], even though the new Activity's channel is
+ * empty. Once handled, recreation restores navigation without replaying the launch's side effects.
  */
 @Composable
 internal fun LaunchIntentEffect(
     navController: NavHostController,
+    initialIntent: Intent,
     launchIntents: Flow<Intent>,
-    onSideEffects: (Intent) -> Unit,
-    initialLaunch: Boolean = false,
-    onHandled: () -> Unit = {}
-) {
+    onSideEffects: (Intent) -> Unit
+): Boolean {
     val lifecycleOwner = LocalLifecycleOwner.current
     val prefs = PreferencesEntryPoint.get(LocalContext.current)
-    val handled by rememberUpdatedState(onHandled)
-    val initial by rememberUpdatedState(initialLaunch)
+    val sideEffects by rememberUpdatedState(onSideEffects)
+    var launchReady by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(navController, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            launchIntents.collect { i ->
-                onSideEffects(i)
-                val route = launchDestination(i, prefs)
-                navController.navigateFromHome(route)
-                if (initial) {
-                    val entry = navController.currentBackStackEntry
-                    when (entry?.destination?.route) {
-                        NavRoutes.ARRIVALS, NavRoutes.HOME_STARRED_STOPS,
-                        NavRoutes.HOME_STARRED_ROUTES, NavRoutes.MY_REMINDERS ->
-                            entry.savedStateHandle[LAUNCH_ROOT] = true
-                    }
+        fun handle(intent: Intent, initial: Boolean) {
+            sideEffects(intent)
+            val route = launchDestination(intent, prefs)
+            navController.navigateFromHome(route)
+            if (initial) {
+                val entry = navController.currentBackStackEntry
+                when (entry?.destination?.route) {
+                    NavRoutes.ARRIVALS, NavRoutes.HOME_STARRED_STOPS,
+                    NavRoutes.HOME_STARRED_ROUTES, NavRoutes.MY_REMINDERS ->
+                        entry.savedStateHandle[LAUNCH_ROOT] = true
                 }
-                handled()
             }
         }
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            if (!launchReady) {
+                handle(initialIntent, initial = true)
+                launchReady = true
+            }
+            launchIntents.collect { handle(it, initial = false) }
+        }
     }
+    return launchReady
 }
 
 /**

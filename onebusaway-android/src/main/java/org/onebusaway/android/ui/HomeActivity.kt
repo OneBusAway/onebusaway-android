@@ -26,10 +26,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -98,13 +94,9 @@ class HomeActivity : AppCompatActivity() {
     @Inject
     lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
 
-    // The launch-intent channel: the OS delivers external entry points (deep links, FCM, launcher
-    // shortcuts) to this Activity before/around the composition, so they're surfaced here for the NavHost's
-    // [LaunchIntentEffect] to translate (via IntentRouteMapper) and open once composed. Seeded on a fresh
-    // launch only (onCreate), fed warm relaunches via onNewIntent — the in-app navigation no longer flows
-    // through here (it uses the NavController directly). A [LaunchIntentChannel] (UNLIMITED queue, not a
-    // latch) so a fresh-launch intent staged before the NavHost composes isn't lost, and so rapid, distinct
-    // back-to-back intents are each delivered exactly once rather than overwriting one another (#1582).
+    // Warm external launches queue until the NavHost is started, without dropping rapid, distinct
+    // intents (#1582). LaunchIntentEffect handles the cold intent separately, using its saved readiness
+    // state to retry after recreation if the Activity was saved before collection started.
     private val launchIntents = LaunchIntentChannel<Intent>()
 
     private val viewModel: HomeViewModel by viewModels()
@@ -148,21 +140,12 @@ class HomeActivity : AppCompatActivity() {
 
         val activityActions = buildActivityActions()
 
-        // Surface the launch intent for the NavHost's [LaunchIntentEffect] (it runs the side effects then
-        // opens the translated route once composed). Fresh launch only, so a rotation doesn't re-fire
-        // reminder deletes / URL applies.
-        if (savedInstanceState == null) {
-            launchIntents.submit(intent)
-        }
-
+        val initialIntent = intent
         setContent {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            var launchReady by rememberSaveable { mutableStateOf(false) }
-            LaunchIntentEffect(navController, launchIntents.items, ::applyLaunchIntentSideEffects, initialLaunch = !launchReady) {
-                launchReady = true
-            }
+            val launchReady = LaunchIntentEffect(navController, initialIntent, launchIntents.items, ::applyLaunchIntentSideEffects)
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -235,7 +218,7 @@ class HomeActivity : AppCompatActivity() {
     /**
      * A warm re-launch (singleTop) carrying an external screen intent — FCM CLEAR_TOP, the
      * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [LaunchIntentEffect]
-     * (cold launches are seeded in onCreate).
+     * (cold launches are handled from the Activity intent when composition starts).
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -290,9 +273,9 @@ class HomeActivity : AppCompatActivity() {
      * results from those extras — the itineraries are injected as-is (no re-plan). Restores the behavior
      * the retired standalone screen's `maybeRestoreFromIntent` used to provide (#1939).
      *
-     * No re-restore guard is needed: the launch-intent channel submits each real intent exactly once
-     * (cold `onCreate` seed gated on a null `savedInstanceState`, warm `onNewIntent`), so a config change
-     * doesn't re-fire this — and the activity-scoped [tripPlanViewModel] keeps the restored results.
+     * No re-restore guard is needed here: LaunchIntentEffect saves whether the cold intent was handled,
+     * and the channel submits each warm `onNewIntent` once, so a config change doesn't re-fire this —
+     * and the activity-scoped [tripPlanViewModel] keeps the restored results.
      */
     // UnwrappedClockValue: the trip-plan time defaults to device "now" only when the intent carries none.
     @Suppress("UnwrappedClockValue")

@@ -51,7 +51,7 @@ class LaunchIntentChannelTest {
     @Test
     fun `an item submitted before the collector subscribes is not lost`() = runTest {
         val channel = LaunchIntentChannel<String>()
-        channel.submit("home") // staged in onCreate, before the NavHost (collector) composes
+        channel.submit("home") // staged before the NavHost (collector) composes
 
         val received = mutableListOf<String>()
         val job = launch { channel.items.collect { received.add(it) } }

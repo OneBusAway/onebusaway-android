@@ -167,7 +167,6 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 wireClicks(map, r, windows, cb)
 
                 map.setOnCameraMoveStartedListener { reason ->
-                    r.onCameraMoveStarted()
                     // A user gesture (pan/fling/pinch) started: gate the stop/bike loaders until it settles.
                     // Programmatic camera animations (recenter, zoom-to-route) don't gate — they emit only
                     // their terminating idle, so there's nothing mid-move to suppress.

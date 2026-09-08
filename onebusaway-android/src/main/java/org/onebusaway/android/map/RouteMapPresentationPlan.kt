@@ -177,7 +177,22 @@ internal fun assembleRouteMapPresentation(
     val showBaseRoute = isActive &&
         emphasizedRoute != null &&
         focusTrips.none { it.routeDirection == emphasizedRoute }
-    val routesByStopId = focusedStops.routeDirectionsByStopId(focusTrips, emphasizedRoute)
+    val stopPresentation = if (showBaseRoute) {
+        baseStopPresentation?.copy(keepNearbyStops = true)
+    } else {
+        val routesByStopId = focusedStops.routeDirectionsByStopId(focusTrips, emphasizedRoute)
+        RouteStopPresentation(
+            stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
+            routes = focusedRoutes,
+            routeDirectionsByStopId = routesByStopId,
+            routeColors = routesByStopId.values.flatten().distinct().associateWith { key ->
+                routeColors[key] ?: mapRouteLineColorOrNull(
+                    focusedGeometry.shapes.firstOrNull { it.routeDirection == key }?.routeColor
+                ) ?: DEFAULT_ROUTE_LINE_COLOR
+            },
+            keepNearbyStops = true
+        )
+    }
     return RouteMapPresentation(
         polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
             if (showBaseRoute) basePolylines else emptyList(),
@@ -186,21 +201,6 @@ internal fun assembleRouteMapPresentation(
         framingPolylines = if (isActive) basePolylines else emptyList(),
         routeModeScalesStopsWithZoom = isActive,
         badges = badges,
-        stopPresentation = (
-            if (showBaseRoute) {
-                baseStopPresentation
-            } else {
-                RouteStopPresentation(
-                    stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
-                    routes = focusedRoutes,
-                    routeDirectionsByStopId = routesByStopId,
-                    routeColors = routesByStopId.values.flatten().distinct().associateWith { key ->
-                        routeColors[key] ?: mapRouteLineColorOrNull(
-                            focusedGeometry.shapes.firstOrNull { it.routeDirection == key }?.routeColor
-                        ) ?: DEFAULT_ROUTE_LINE_COLOR
-                    }
-                )
-            }
-            )?.copy(keepNearbyStops = true)
+        stopPresentation = stopPresentation
     )
 }

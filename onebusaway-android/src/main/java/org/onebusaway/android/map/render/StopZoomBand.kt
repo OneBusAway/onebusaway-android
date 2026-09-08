@@ -115,7 +115,7 @@ fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
 /**
  * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each
  * normal/focused), the distinctive star a starred (favorite) stop gets in place of either (#1680),
- * likewise normal/focused. Route stops are native circles owned by the flavor-specific circle layer.
+ * likewise normal/focused. Unselected route stops use the shared ring artwork in each map provider's route-stop layer.
  */
 enum class StopIconKind {
     FULL,

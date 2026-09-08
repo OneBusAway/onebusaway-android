@@ -38,8 +38,8 @@ fun routeStopIconKey(stop: StopMarker, diameterPx: Int, neutralColor: Int): Rout
 /** Route-colored rings for unselected stops, centered on their geographic boarding positions. */
 fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int): Bitmap {
     val (diameterPx, routeColor, arrowAngleDeg) = key
-    val scale = diameterPx / (2f * RouteStopCircles.RADIUS_PX)
-    val strokeWidth = RouteStopCircles.STROKE_WIDTH_PX * scale
+    val scale = diameterPx / (2f * RouteStopCircles.RADIUS_DP)
+    val strokeWidth = RouteStopCircles.STROKE_WIDTH_DP * scale
     val radius = diameterPx / 2f - strokeWidth / 2f
     val arrowOutlineWidth = RouteStopCircles.ARROW_OUTLINE_WIDTH_DP * scale
     val circleReach = diameterPx / 2f

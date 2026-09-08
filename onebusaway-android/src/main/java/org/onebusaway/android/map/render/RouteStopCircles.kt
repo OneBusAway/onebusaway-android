@@ -17,8 +17,8 @@ package org.onebusaway.android.map.render
 
 /** Shared screen-space styling for geographic route-stop markers in both map flavors. */
 object RouteStopCircles {
-    const val RADIUS_PX = 11.25f
-    const val STROKE_WIDTH_PX = 4.125f
+    const val RADIUS_DP = 11.25f
+    const val STROKE_WIDTH_DP = 4.125f
 
     /**
      * Adjacent (non-focused) route-stop circles shrink to 80% size in stop focus, before any route

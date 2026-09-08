@@ -625,12 +625,10 @@ internal fun applyRouteStopPresentation(
     } else {
         nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
     }
-    presentation.stops.forEach { source.putIfAbsent(it.id, markerFor(it)) }
+    presentation.stops.forEach { stop -> source.getOrPut(stop.id) { markerFor(stop) } }
     return source.values.map { marker ->
         val presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty()
         marker.copy(
-            // Always use the boarding location, including when route/vehicle selection changes.
-            point = GeoPoint(marker.stop.latitude, marker.stop.longitude),
             routeColor = presentedRoutes.map { presentation.routeColors[it] }.distinct().singleOrNull(),
             presentedRoutes = presentedRoutes,
             compact = presentation.keepNearbyStops && marker.id != focusedStopId && presentedRoutes.isEmpty(),

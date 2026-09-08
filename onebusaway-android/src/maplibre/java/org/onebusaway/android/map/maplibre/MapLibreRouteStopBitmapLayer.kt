@@ -59,7 +59,6 @@ internal class MapLibreRouteStopBitmapLayer(
     private var nextImageId = 0
     private var stopById: Map<String, StopMarker> = emptyMap()
     private var renderedStops: List<StopMarker> = emptyList()
-    private var renderedFocusedStopId: String? = null
     private var renderedScaleWithZoom = false
     private var renderedRecedeAdjacent = false
 
@@ -88,35 +87,32 @@ internal class MapLibreRouteStopBitmapLayer(
     fun render(stops: List<StopMarker>, focusedStopId: String?, scaleWithZoom: Boolean, recedeAdjacent: Boolean) {
         val routeStops = stops.filter { it.routeStop && it.id != focusedStopId }
         if (routeStops == renderedStops &&
-            focusedStopId == renderedFocusedStopId &&
             scaleWithZoom == renderedScaleWithZoom &&
             recedeAdjacent == renderedRecedeAdjacent
         ) {
             return
         }
         renderedStops = routeStops
-        renderedFocusedStopId = focusedStopId
         renderedScaleWithZoom = scaleWithZoom
         renderedRecedeAdjacent = recedeAdjacent
         stopById = routeStops.associateBy(StopMarker::id)
         val usedImages = HashSet<RouteStopIconKey>()
+        val diameter = (2f * RouteStopCircles.RADIUS_DP * REFERENCE_DENSITY).roundToInt()
+        val size = density / REFERENCE_DENSITY * if (recedeAdjacent) RouteStopCircles.ADJACENT_SCALE else 1f
+        val minSize = size * if (scaleWithZoom) STOP_FOCUS_ROUTE_MIN_SCALE else 1f
         val features = routeStops.map { stop ->
-            val diameter = 2f * RouteStopCircles.RADIUS_PX * REFERENCE_DENSITY
-            val key = routeStopIconKey(stop, diameter.roundToInt(), outlineColor)
+            val key = routeStopIconKey(stop, diameter, outlineColor)
             usedImages.add(key)
             val image = images.getOrPut(key) {
                 val id = "oba-route-stop-${nextImageId++}"
                 style.addImage(id, drawRouteStopBitmap(key, fillColor))
                 id
             }
-            val size = density /
-                REFERENCE_DENSITY *
-                if (recedeAdjacent) RouteStopCircles.ADJACENT_SCALE else 1f
             Feature.fromGeometry(Point.fromLngLat(stop.point.longitude, stop.point.latitude)).apply {
                 addStringProperty(STOP_ID_PROPERTY, stop.id)
                 addStringProperty(IMAGE_PROPERTY, image)
                 addNumberProperty(MAX_SIZE_PROPERTY, size)
-                addNumberProperty(MIN_SIZE_PROPERTY, size * if (scaleWithZoom) STOP_FOCUS_ROUTE_MIN_SCALE else 1f)
+                addNumberProperty(MIN_SIZE_PROPERTY, minSize)
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
@@ -151,7 +147,6 @@ internal class MapLibreRouteStopBitmapLayer(
         images.clear()
         stopById = emptyMap()
         renderedStops = emptyList()
-        renderedFocusedStopId = null
     }
 
     private companion object {

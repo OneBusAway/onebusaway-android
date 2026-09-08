@@ -36,7 +36,7 @@ internal class GoogleRouteStopBitmapLayer(
     private val density: Float,
     private val fillColor: Int,
     private val outlineColor: Int
-) : GoogleRouteStopLayer {
+) {
     private data class RenderedStop(val marker: Marker, var stop: StopMarker, var iconKey: RouteStopIconKey)
     private val stopsById = HashMap<String, RenderedStop>()
     private val icons = LruCache<RouteStopIconKey, BitmapDescriptor>(128)
@@ -46,7 +46,7 @@ internal class GoogleRouteStopBitmapLayer(
     private var renderedRecedeAdjacent = false
     private var renderedZoom: Float? = null
 
-    override fun render(
+    fun render(
         stops: List<StopMarker>,
         focusedStopId: String?,
         scaleWithZoom: Boolean,
@@ -76,12 +76,9 @@ internal class GoogleRouteStopBitmapLayer(
                 gone.remove()
             }
         }
+        val diameter = routeStopDiameterPx(zoom, scaleWithZoom, recedeAdjacent, density)
         for (stop in renderedStops) {
-            val key = routeStopIconKey(
-                stop,
-                routeStopDiameterPx(zoom, scaleWithZoom, recedeAdjacent, density),
-                outlineColor
-            )
+            val key = routeStopIconKey(stop, diameter, outlineColor)
             val rendered = stopsById[stop.id]
             if (rendered == null) {
                 val marker = map.addMarkerOrFail(
@@ -94,7 +91,6 @@ internal class GoogleRouteStopBitmapLayer(
                 if (rendered.stop.point != stop.point) rendered.marker.position = stop.point.toLatLng()
                 if (rendered.iconKey != key) {
                     rendered.marker.setIcon(icon(key))
-                    rendered.marker.zIndex = stopZIndex(routeStop = true, favorite = false)
                     rendered.iconKey = key
                 }
                 rendered.stop = stop
@@ -102,7 +98,7 @@ internal class GoogleRouteStopBitmapLayer(
         }
     }
 
-    override fun onCameraSettled(zoom: Float) = render(
+    fun onCameraSettled(zoom: Float) = render(
         renderedStops,
         renderedFocusedStopId,
         renderedScaleWithZoom,
@@ -110,9 +106,9 @@ internal class GoogleRouteStopBitmapLayer(
         zoom
     )
 
-    override fun stopForMarker(marker: Marker): StopMarker? = (marker.tag as? String)?.let(stopsById::get)?.stop
+    fun stopForMarker(marker: Marker): StopMarker? = (marker.tag as? String)?.let(stopsById::get)?.stop
 
-    override fun dispose() {
+    fun dispose() {
         stopsById.values.forEach { it.marker.remove() }
         stopsById.clear()
         icons.evictAll()
@@ -132,7 +128,7 @@ internal fun routeStopDiameterPx(
 ): Int {
     val focusScale = if (scaleWithZoom) focusedRouteStopScale(zoom) else 1f
     val emphasisScale = if (recedeAdjacent) RouteStopCircles.ADJACENT_SCALE else 1f
-    return (2f * RouteStopCircles.RADIUS_PX * focusScale * emphasisScale * density)
+    return (2f * RouteStopCircles.RADIUS_DP * focusScale * emphasisScale * density)
         .roundToInt()
         .coerceAtLeast(1)
 }

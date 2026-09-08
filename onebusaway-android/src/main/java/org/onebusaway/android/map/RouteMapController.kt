@@ -967,8 +967,7 @@ class RouteMapController(
             focusedStops = focus.stops,
             focusedRoutes = focus.routes,
             routeColors = focus.routeColors,
-            selected = selectedTripRenderInput(routeColor),
-            projectedFocusStops = focus::projectedStops
+            selected = selectedTripRenderInput(routeColor)
         )
         val recoloured = selectedTripLineColor != (plan.selectedTripColor ?: routeColor)
         selectedTripLineColor = plan.selectedTripColor ?: routeColor
@@ -1062,14 +1061,13 @@ class RouteMapController(
      */
     private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> = directionPolylines(directionId).asDeemphasizedRouteUnderlay()
 
-    /** The selected trip's scheduled stops, projected onto its exact shape in schedule order. */
+    /** The selected trip's scheduled stops at their boarding locations, in schedule order. */
     private fun selectedTripStopPresentation(selected: SelectedTripPresentation): RouteStopPresentation {
         val stops = routeStops.stopsForTrip(selected.stopIds)
         return RouteStopPresentation(
             stops = stops,
             routes = routeStopRoutes,
-            routeDirectionsByStopId = stops.associate { it.id to setOf(selected.routeDirection) },
-            projectedPoints = projectStopsOntoPolylines(stops, listOf(selected.points))
+            routeDirectionsByStopId = stops.associate { it.id to setOf(selected.routeDirection) }
         )
     }
 
@@ -1197,27 +1195,11 @@ class RouteMapController(
             stops = stops,
             routes = (routeStopRoutes + extraRouteMaps.values.flatMap { it.routes }).distinctBy { it.id },
             routeDirectionsByStopId = keysById.mapValues { it.value.toSet() },
-            // An interline ride spans multiple direction shapes, so project onto the ridden line (the
-            // emphasized one every leg's stops sit on); a plain leg keeps projecting onto its own shape.
-            // Span by span rather than onto the joined path, so no stop can land on the jump between two
-            // spans — that join is a seam in the geometry, not somewhere a vehicle travels.
-            projectedPoints = if (isInterlineComposite) {
-                projectStopsOntoPolylines(stops, riddenSpans.map { it.points })
-            } else {
-                projectStopsOntoShape(stops)
+            routeColors = keysById.values.flatten().distinct().associateWith { key ->
+                palette.lineColor(loadedRouteMap(key.routeId)?.route?.color) ?: DEFAULT_ROUTE_LINE_COLOR
             }
         )
         publishMapPresentation()
-    }
-
-    /**
-     * The [stops]' positions projected onto the current direction's drawn shape, keyed by stop id. Each
-     * stop is snapped to the nearest point across the direction's polyline segments; a stop that can't be
-     * placed (no drawable shape) falls back to its own location, so it still shows (just off the line).
-     */
-    private fun projectStopsOntoShape(stops: List<ObaStop>): Map<String, GeoPoint> {
-        val route = routeShape ?: return emptyMap()
-        return projectStopsOntoPolylines(stops, route.shapeForDirection(currentDirectionId).polylines)
     }
 
     /**

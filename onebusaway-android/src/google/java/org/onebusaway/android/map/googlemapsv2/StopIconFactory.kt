@@ -29,6 +29,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import kotlin.math.roundToInt
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.MarkerRendering
+import org.onebusaway.android.map.render.NEARBY_STOP_ICON_SCALE
 import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopDirection
 import org.onebusaway.android.models.ObaRoute
@@ -65,6 +66,11 @@ object StopIconFactory {
     /** Original-size circle and arrow without a vehicle glyph, indexed by direction (#2284). */
     private lateinit var compactDescriptors: Array<BitmapDescriptor>
     private lateinit var compactDescriptorsFocused: Array<BitmapDescriptor>
+
+    private val nearbyDescriptors = HashMap<BitmapDescriptor, BitmapDescriptor>()
+
+    /** Cached smaller variant of an unfocused compact, dot, or favorite icon. */
+    fun nearbyIcon(icon: BitmapDescriptor): BitmapDescriptor = requireNotNull(nearbyDescriptors[icon])
 
     /** The small directionless dot shown in place of the full icon at distant zoom (declutter). */
     private lateinit var dotDescriptor: BitmapDescriptor
@@ -107,7 +113,7 @@ object StopIconFactory {
     // (The primary-route-type priority that used to live here is now the pure primaryRouteType() in
     // src/main, called by GoogleMapHost when it builds StopMarkers.)
 
-    private const val FOCUS_ICON_SCALE = 1.5f
+    private const val FOCUS_ICON_SCALE = 1.25f
 
     /**
      * Scale factor for stop icons to make the vehicle glyph clearly visible inside the circle.
@@ -167,7 +173,7 @@ object StopIconFactory {
         return descriptors[StopDirection.fromKey(direction).ordinal]
     }
 
-    /** The focused (1.5x) stop icon for a direction + primary route type. */
+    /** The focused (1.25x) stop icon for a direction + primary route type. */
     @Synchronized
     fun focusedStopIcon(context: Context, direction: String, routeType: Int): BitmapDescriptor {
         ensureLoaded(context)
@@ -277,7 +283,8 @@ object StopIconFactory {
             StopDirection.entries.map { direction ->
                 val bitmap = createStopIcon(context, direction, selected, ObaRoute.TYPE_BUS, arrowTip, arrowBase, compact = true)
                 if (selected) StopBitmaps.scale(bitmap, FOCUS_ICON_SCALE) else bitmap
-            }.toTypedArray()
+            }.toTypedArray(),
+            nearbyVariant = !selected
         )
         compactDescriptors = compactIcons(selected = false)
         compactDescriptorsFocused = compactIcons(selected = true)
@@ -302,12 +309,13 @@ object StopIconFactory {
                     topColor, bottomColor, arrowTip, arrowBase, starOutlinePx
                 )
                 if (focused) StopBitmaps.scale(marker, FOCUS_ICON_SCALE) else marker
-            }.toTypedArray()
+            }.toTypedArray(),
+            nearbyVariant = !focused
         )
         favoriteDescriptors = favoriteStars(starLight, starDark, focused = false)
         favoriteDescriptorsFocused = favoriteStars(focusColor, focusColor, focused = true)
 
-        dotDescriptor = BitmapDescriptorFactory.fromBitmap(StopBitmaps.dot(basePx, arrowTip))
+        dotDescriptor = toDescriptor(StopBitmaps.dot(basePx, arrowTip), nearbyVariant = true)
         dotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
             StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE)
         )
@@ -315,8 +323,9 @@ object StopIconFactory {
         // Dot-band starred stops: a plain star (no arrow, matching the plain dot), dot-sized and enlarged
         // when focused. Gold gradient normally, the selected color when focused; same thin outline.
         val starDotPx = (basePx * 0.5f * StopBitmaps.STAR_SIZE_SCALE).roundToInt()
-        starDotDescriptor = BitmapDescriptorFactory.fromBitmap(
-            StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx)
+        starDotDescriptor = toDescriptor(
+            StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx),
+            nearbyVariant = true
         )
         starDotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
             StopBitmaps.star(
@@ -329,7 +338,13 @@ object StopIconFactory {
     }
 
     /** Wraps each pre-rendered bitmap into a BitmapDescriptor once, so callers can reuse them. */
-    private fun toDescriptors(bitmaps: Array<Bitmap>): Array<BitmapDescriptor> = Array(bitmaps.size) { BitmapDescriptorFactory.fromBitmap(bitmaps[it]) }
+    private fun toDescriptors(bitmaps: Array<Bitmap>, nearbyVariant: Boolean = false): Array<BitmapDescriptor> = Array(bitmaps.size) { toDescriptor(bitmaps[it], nearbyVariant) }
+
+    private fun toDescriptor(bitmap: Bitmap, nearbyVariant: Boolean): BitmapDescriptor = BitmapDescriptorFactory.fromBitmap(bitmap).also { descriptor ->
+        if (nearbyVariant) {
+            nearbyDescriptors[descriptor] = BitmapDescriptorFactory.fromBitmap(StopBitmaps.scale(bitmap, NEARBY_STOP_ICON_SCALE))
+        }
+    }
 
     /**
      * Creates a stop icon: the shared circle + direction arrow, with this flavor's route-type glyph

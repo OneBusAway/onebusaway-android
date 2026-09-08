@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
@@ -87,8 +88,10 @@ internal fun StopSelectionMap(
         }
     }
     if (stopChoices.isNotEmpty()) {
+        val snapshot by renderState.snapshot.collectAsStateWithLifecycle()
         StopChoiceDialog(
             stops = stopChoices,
+            selectedStopId = snapshot.focusedStopId,
             onSelect = { selected ->
                 stopChoices = emptyList()
                 callbacks.onStopClick(selected)

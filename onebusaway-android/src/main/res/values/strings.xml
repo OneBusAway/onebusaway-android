@@ -371,6 +371,7 @@
 
     <!-- Stop Details -->
     <string name="map_choose_stop">Choose a stop</string>
+    <string name="map_stop_currently_selected">Currently selected</string>
     <string name="map_stop_routes">Routes: %1$s</string>
     <string name="map_stop_routes_unavailable">Routes unavailable</string>
     <string name="stop_details_code">Stop # %1$s</string>

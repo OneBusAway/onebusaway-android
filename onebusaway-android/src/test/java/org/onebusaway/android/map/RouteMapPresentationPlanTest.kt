@@ -70,13 +70,12 @@ class RouteMapPresentationPlanTest {
             emphasizedRoute = emphasized,
             focusTrips = setOf(trip("t-79", "79", directionId = 1)),
             focusedGeometry = geometryFor("79", 1),
-            selected = null,
-            projectedFocusStops = { fail("projection is only computed when focused-stop siblings draw") }
+            selected = null
         )
 
         // Adjacency line for route 79 + the base route drawn underneath it.
         assertEquals(2, plan.polylines.size)
-        assertSame(baseStops, plan.stopPresentation)
+        assertEquals(baseStops.copy(keepNearbyStops = true), plan.stopPresentation)
         assertSame(basePolylines, plan.framingPolylines)
     }
 
@@ -90,22 +89,21 @@ class RouteMapPresentationPlanTest {
             emphasizedRoute = RouteDirectionKey("45", null),
             focusTrips = setOf(trip("t-45", "45", directionId = 0)),
             focusedGeometry = geometryFor("45", 0),
-            selected = null,
-            projectedFocusStops = { fail("base route stays, so no focused-stop projection") }
+            selected = null
         )
 
         // Adjacency line for the focused direction + the merged base route drawn underneath it.
         assertEquals(2, plan.polylines.size)
-        assertSame(baseStops, plan.stopPresentation)
+        assertEquals(baseStops.copy(keepNearbyStops = true), plan.stopPresentation)
         assertSame(basePolylines, plan.framingPolylines)
     }
 
     @Test
     fun `emphasized route among focused trips drops the base route and builds focused-stop presentation`() {
         val emphasized = RouteDirectionKey("45", 0)
-        val projected = mapOf("stop-a" to GeoPoint(2.0, 2.0))
-        var projections = 0
+        val color = 0xFF2266AA.toInt()
         val plan = assemble(
+            routeColors = mapOf(emphasized to color),
             emphasizedRoute = emphasized,
             focusTrips = setOf(trip("t-45", "45", directionId = 0)),
             focusedGeometry = geometryFor("45", 0),
@@ -114,19 +112,15 @@ class RouteMapPresentationPlanTest {
                 stopsById = mapOf("stop-a" to stop("stop-a"))
             ),
             focusedRoutes = listOf(route("45", "45")),
-            selected = null,
-            projectedFocusStops = {
-                projections++
-                projected
-            }
+            selected = null
         )
 
         // Only the adjacency line — the base route is not drawn underneath its own focus.
         assertEquals(1, plan.polylines.size)
         val stops = plan.stopPresentation!!
         assertEquals(listOf("stop-a"), stops.stops.map { it.id })
-        assertEquals(projected, stops.projectedPoints)
-        assertEquals(1, projections)
+        assertEquals(plan.polylines.single().color, stops.routeColors[emphasized])
+        assertTrue(stops.keepNearbyStops)
     }
 
     @Test
@@ -141,14 +135,14 @@ class RouteMapPresentationPlanTest {
                 stopsById = mapOf("stop-b" to stop("stop-b"))
             ),
             focusedRoutes = listOf(route("79", "79")),
-            selected = null,
-            projectedFocusStops = { emptyMap() }
+            selected = null
         )
 
         // No emphasized route -> route badges are emitted, and there's no active base route to frame to.
         assertEquals(listOf("79"), plan.badges.map { (it.tap as? RouteBadgeTap.ShowRoute)?.route?.routeId })
         assertEquals(emptyList<RoutePolyline>(), plan.framingPolylines)
         assertEquals(1, plan.polylines.size)
+        assertTrue(requireNotNull(plan.stopPresentation).keepNearbyStops)
     }
 
     // --- Mode 1: selected vehicle, and the #1899 adjacency-colour/underlay interaction ---
@@ -178,7 +172,7 @@ class RouteMapPresentationPlanTest {
         val trip = plan.polylines.last()
         assertEquals(0xFF00FF00.toInt(), trip.color)
         assertEquals(listOf(trip), plan.framingPolylines)
-        assertSame(selectedStops, plan.stopPresentation)
+        assertEquals(selectedStops.copy(routeColors = mapOf(RouteDirectionKey("45", 0) to 0xFF00FF00.toInt())), plan.stopPresentation)
         assertEquals(trip.color, plan.selectedTripColor)
     }
 
@@ -206,6 +200,7 @@ class RouteMapPresentationPlanTest {
         // ...and that adjacency colour, not the route's own, is what the band contrasts (#1990): the
         // reported colour is the one the line was actually drawn in.
         assertEquals(adjacencyColor, plan.selectedTripColor)
+        assertEquals(adjacencyColor, plan.stopPresentation!!.routeColors[RouteDirectionKey("45", 0)])
     }
 
     @Test
@@ -299,12 +294,19 @@ class RouteMapPresentationPlanTest {
                 routeColorFallback = 0xFF00FF00.toInt(),
                 directionUnderlay = { emptyList() },
                 stopPresentation = { selectedStops }
-            ),
-            projectedFocusStops = { fail("selection branch must not project focused stops") }
+            )
         )
 
-        assertSame(selectedStops, plan.stopPresentation)
+        assertEquals(selectedStops.copy(keepNearbyStops = true, routeColors = mapOf(RouteDirectionKey("45", 0) to 0xFF00FF00.toInt())), plan.stopPresentation)
         assertEquals(1, plan.framingPolylines.size)
+    }
+
+    @Test
+    fun `a stop without departures still requests nearby alternatives`() {
+        val plan = assemble(isActive = false, emphasizedRoute = null, focusTrips = emptySet(), selected = null)
+
+        assertTrue(requireNotNull(plan.stopPresentation).keepNearbyStops)
+        assertTrue(requireNotNull(plan.stopPresentation).stops.isEmpty())
     }
 
     // --- helpers ---
@@ -319,8 +321,7 @@ class RouteMapPresentationPlanTest {
         focusedStops: FocusedTripStops = FocusedTripStops(emptyMap(), emptyMap()),
         focusedRoutes: List<ObaRoute> = emptyList(),
         routeColors: Map<RouteDirectionKey, Int> = emptyMap(),
-        selected: SelectedTripRenderInput?,
-        projectedFocusStops: () -> Map<String, GeoPoint> = { emptyMap() }
+        selected: SelectedTripRenderInput?
     ) = assembleRouteMapPresentation(
         isActive = isActive,
         emphasizedRoute = emphasizedRoute,
@@ -332,8 +333,7 @@ class RouteMapPresentationPlanTest {
         focusedStops = focusedStops,
         focusedRoutes = focusedRoutes,
         routeColors = routeColors,
-        selected = selected,
-        projectedFocusStops = projectedFocusStops
+        selected = selected
     )
 
     private fun geometryFor(routeId: String, directionId: Int) = FocusedTripGeometry(

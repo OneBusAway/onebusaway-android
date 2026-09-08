@@ -45,7 +45,7 @@ object StopBitmaps {
      * stays visibly larger than its neighbours even in the zoomed-out dot band (#1679). Mirrors the
      * full-icon focus enlargement the flavour factories apply up close (their `FOCUS_ICON_SCALE`).
      */
-    const val FOCUSED_DOT_SCALE = 1.5f
+    const val FOCUSED_DOT_SCALE = 1.25f
 
     /**
      * How much larger the starred-stop [star] is drawn relative to the base dot/full-icon size, so the

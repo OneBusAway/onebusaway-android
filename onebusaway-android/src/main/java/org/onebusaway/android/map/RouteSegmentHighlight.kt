@@ -29,7 +29,7 @@ import org.onebusaway.android.util.haversineDistance
  * to the boarding point, the segment cased on top, keep only the segment's stops, and pick which colour the
  * segment is drawn from ([riddenSpanColorSource] — the source, not the rendering, which stays with the
  * caller's palette). Pure, over flavor-neutral [GeoPoint]/[RoutePolyline]/[ObaStop] (like
- * [RouteViewGeometry] / [projectStopsOntoPolylines]), so it stays JVM-testable and out of
+ * [RouteViewGeometry]), so it stays JVM-testable and out of
  * [RouteMapController]'s state plumbing.
  */
 

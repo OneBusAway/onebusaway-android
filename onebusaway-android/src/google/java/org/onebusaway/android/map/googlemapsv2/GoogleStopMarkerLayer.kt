@@ -32,7 +32,7 @@ import org.onebusaway.android.map.render.stopRouteLabel
 import org.onebusaway.android.map.render.stopZIndex
 import org.onebusaway.android.util.ThemeUtils
 
-/** Owns non-route stop marker identity, icon reconciliation, tap lookup, and disposal. */
+/** Owns ordinary and selected stop marker identity, icon reconciliation, tap lookup, and disposal. */
 internal class GoogleStopMarkerLayer(
     private val map: GoogleMap,
     private val context: Context
@@ -53,7 +53,7 @@ internal class GoogleStopMarkerLayer(
         BitmapDescriptorCache(LABEL_ICON_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
     fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand, compact: Boolean) {
-        val markerStops = stops.filterNot(StopMarker::routeStop)
+        val markerStops = stops.filter { !it.routeStop || it.id == focusedStopId }
         val liveIds = markerStops.mapTo(HashSet(), StopMarker::id)
         val gone = markerByStopId.iterator()
         while (gone.hasNext()) {
@@ -68,11 +68,12 @@ internal class GoogleStopMarkerLayer(
         }
 
         for (stop in markerStops) {
+            val nearby = stop.compact && stop.id != focusedStopId
             val kind = stopIconKind(
                 focused = stop.id == focusedStopId,
-                band = band,
+                band = if (stop.id == focusedStopId) StopBand.FULL else band,
                 favorite = stop.favorite,
-                compact = compact
+                compact = compact || stop.compact
             )
             val existing = markerByStopId[stop.id]
             if (existing == null) {
@@ -80,23 +81,23 @@ internal class GoogleStopMarkerLayer(
                 val marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(stop.point.toLatLng())
-                        .icon(icon(stop, kind))
+                        .icon(icon(stop, kind, nearby))
                         .flat(true)
                         .anchor(anchorX, anchorY)
-                        .zIndex(stopZIndex(routeStop = false, favorite = stop.favorite))
+                        .zIndex(zIndex(stop, focusedStopId))
                 )
                 markerByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
             } else {
-                if (kindByStopId[stop.id] != kind) {
-                    existing.setIcon(icon(stop, kind))
+                if (kindByStopId[stop.id] != kind || stopByMarker[existing]?.compact != stop.compact) {
+                    existing.setIcon(icon(stop, kind, nearby))
                     val (anchorX, anchorY) = anchor(stop, kind)
                     existing.setAnchor(anchorX, anchorY)
                 }
                 val previous = stopByMarker[existing]
                 if (previous?.point != stop.point) existing.position = stop.point.toLatLng()
-                if (previous?.favorite != stop.favorite) {
-                    existing.zIndex = stopZIndex(routeStop = false, favorite = stop.favorite)
+                if (previous?.favorite != stop.favorite || previous.routeStop != stop.routeStop || kindByStopId[stop.id] != kind) {
+                    existing.zIndex = zIndex(stop, focusedStopId)
                 }
                 stopByMarker[existing] = stop
             }
@@ -177,7 +178,13 @@ internal class GoogleStopMarkerLayer(
         }
     }
 
-    private fun icon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
+    private fun zIndex(stop: StopMarker, focusedStopId: String?): Float = if (stop.id == focusedStopId) {
+        stopZIndex(routeStop = true, favorite = false) + 0.01f
+    } else {
+        stopZIndex(routeStop = stop.routeStop, favorite = stop.favorite)
+    }
+
+    private fun icon(stop: StopMarker, kind: StopIconKind, nearby: Boolean): BitmapDescriptor = when (kind) {
         StopIconKind.FULL -> StopIconFactory.stopIcon(context, stop.direction, stop.routeType)
         StopIconKind.FULL_FOCUSED -> StopIconFactory.focusedStopIcon(context, stop.direction, stop.routeType)
         StopIconKind.COMPACT -> StopIconFactory.compactStopIcon(context, stop.direction)
@@ -188,7 +195,7 @@ internal class GoogleStopMarkerLayer(
         StopIconKind.FAVORITE_FOCUSED -> StopIconFactory.focusedFavoriteStopIcon(context, stop.direction)
         StopIconKind.FAVORITE_DOT -> StopIconFactory.favoriteDotStopIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> StopIconFactory.focusedFavoriteDotStopIcon(context)
-    }
+    }.let { if (nearby) StopIconFactory.nearbyIcon(it) else it }
 
     private fun anchor(stop: StopMarker, kind: StopIconKind): Pair<Float, Float> = when (kind) {
         StopIconKind.FULL, StopIconKind.FULL_FOCUSED, StopIconKind.COMPACT, StopIconKind.COMPACT_FOCUSED ->

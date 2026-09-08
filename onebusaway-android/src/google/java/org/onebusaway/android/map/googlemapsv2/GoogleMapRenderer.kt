@@ -116,7 +116,6 @@ class GoogleMapRenderer(
             map,
             context.resources.displayMetrics.density,
             ContextCompat.getColor(context, R.color.route_stop_fill),
-            ContextCompat.getColor(context, R.color.map_stop_focus),
             ContextCompat.getColor(context, R.color.route_stop_outline)
         )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()

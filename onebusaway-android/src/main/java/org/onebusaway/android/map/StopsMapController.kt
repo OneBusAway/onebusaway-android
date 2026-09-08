@@ -113,7 +113,7 @@ class StopsMapController(
     private var favoriteIds: Set<String> = emptySet()
 
     // Optional route-owned presentation over the canonical nearby-stop cache. A single route hides
-    // nearby stops; a focused stop combines them with exact scheduled trip stops and hides non-members.
+    // nearby stops; a focused stop combines them with exact scheduled trip stops and recedes non-members.
     private var routePresentation: RouteStopPresentation? = null
 
     private var loadJob: Job? = null
@@ -606,7 +606,10 @@ internal data class RouteStopPresentation(
     val stops: List<ObaStop>,
     val routes: List<ObaRoute>,
     val routeDirectionsByStopId: Map<String, Set<RouteDirectionKey>>,
-    val projectedPoints: Map<String, GeoPoint>
+    /** Colors already resolved through the same palette as the displayed route lines. */
+    val routeColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    /** Stop focus keeps nearby alternatives available for comparison and selection (#2293, #2295). */
+    val keepNearbyStops: Boolean = false
 )
 
 /** Pure marker merge/style policy shared by base-route and exact-trip stop presentations. */
@@ -617,12 +620,20 @@ internal fun applyRouteStopPresentation(
     markerFor: (ObaStop) -> StopMarker
 ): List<StopMarker> {
     val source = LinkedHashMap<String, StopMarker>()
-    nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
+    if (presentation.keepNearbyStops) {
+        nearby.forEach { source[it.id] = it }
+    } else {
+        nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
+    }
     presentation.stops.forEach { source.putIfAbsent(it.id, markerFor(it)) }
     return source.values.map { marker ->
+        val presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty()
         marker.copy(
-            point = presentation.projectedPoints[marker.id] ?: marker.point,
-            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
+            // Always use the boarding location, including when route/vehicle selection changes.
+            point = GeoPoint(marker.stop.latitude, marker.stop.longitude),
+            routeColor = presentedRoutes.map { presentation.routeColors[it] }.distinct().singleOrNull(),
+            presentedRoutes = presentedRoutes,
+            compact = presentation.keepNearbyStops && marker.id != focusedStopId && presentedRoutes.isEmpty(),
             // No transit-centre route labels (#2107) in a route presentation. A presentation names the
             // routes on screen itself — labelled on the lines they belong to, and in adjacency view
             // through a palette that deliberately assigns each one a distinct hue so they can be told

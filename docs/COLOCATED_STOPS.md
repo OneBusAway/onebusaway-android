@@ -10,13 +10,17 @@ The [stop contract](https://developer.onebusaway.org/api/where/elements/stop)
 maps stops to GTFS records. Nearby references describe geographic neighbors;
 they do not establish that two IDs are the same stop.
 
-The client handles this as a map selection problem. Stop taps use the platform's
-minimum touch target (normally 48 dp wide and tall), centered on the actual tap
-in screen coordinates. Stops within that target are choices even when their GTFS
+The client handles this as a map selection problem. Stop taps use a circular
+target, normally 48 dp in diameter (24 dp radius), centered on the actual tap
+in screen coordinates. Its diameter follows the smaller dimension of the platform's
+minimum touch target, excluding the corners of the former square target. Stops within that target are choices even when their GTFS
 coordinates differ. The live map projection makes this zoom-dependent: zooming in
 can separate two stops into independently selectable targets. A tap on empty map
 within a stop's target can select it too. Vehicle, rental, and route-badge taps
 retain the SDK's normal dispatch.
+MapLibre draws route stops in a symbol layer with no marker hit testing, so that
+layer applies the same 24 dp radial test itself and reports the nearest stop
+inside it; the map-click fallback then covers the rest of the target.
 
 The SDK's original marker hit is always included, even when the tap lands on its
 route label outside the target around its anchor. Exact overlapping anchors keep
@@ -26,7 +30,8 @@ not consume gestures; the SDK still decides whether a gesture is a click, pan,
 zoom, or long press.
 
 The chooser shows each stop's name, code, direction, and available routes in the
-map's badge grid, filled horizontally. Choosing a card forwards that original
+map's badge grid, filled horizontally. The currently selected stop has a small
+"Currently selected" label directly above its title. Choosing a card forwards that original
 marker to the existing stop callback. Canceling leaves the current focus alone.
 Stop selection is opt-in at the shared map surface. The home and report-location
 maps enable it; coordinate pickers retain their original callbacks and never
@@ -39,3 +44,36 @@ request, or persisted group membership. A route presentation can hide map labels
 while keeping route names available to the chooser. If route metadata has not
 loaded, the chooser still identifies each stop by its code (or original ID if code
 is absent).
+
+## Nearby alternatives during stop focus (#2293, #2295)
+
+Selecting a stop retains the loaded nearby stops alongside the displayed trips'
+stops. Nearby alternatives keep their geographic coordinates and remain tappable,
+including through the chooser; only stops on the displayed trips receive route
+membership. All stops stay at their GTFS boarding coordinates when a stop, route,
+or vehicle is selected. Background stops use the compact
+directional icon (MapLibre already uses glyph-free directional icons), scaled to
+85% of its usual size, and route labels stay hidden during focus. Favorite stars
+and far-zoom dots receive the same size reduction. Tap targets retain their size.
+
+The nearby context survives selecting a route or vehicle from the focused stop,
+and stays available when that stop has no departures. Clearing focus restores the
+ordinary nearby marker and label presentation. Standalone route and directions
+views keep their existing stop selection scope.
+
+Switching between focused stops keeps the existing markers and route presentation
+visible until the replacement stop's trips and stops are ready. This also applies
+when the stops share no route. An unrelated selected route is cleared without
+tearing down the nearby-stop cache.
+
+Route stops use the displayed line's color as an outline around an opaque,
+white center in both light and dark mode. The selected stop uses the regular orange stop icon, with the
+whole icon (including its direction arrow and transit symbol) enlarged to 125%.
+Other route stops retain their direction arrows in both map providers. A stop shared by differently colored displayed routes uses a
+neutral gray outline around the same white center. In dark mode, the neutral rim
+is roughly halfway between white and the map background. Selecting one route
+gives it that route's outline color. Stop colors
+follow the map palette, including adjacency colors and directions palettes.
+
+At full detail, unselected route-stop circles are 22.5 dp across with a 4.125 dp rim. Before a route is selected, the other route stops
+recede to 80% size so they remain readable beside nearby alternatives. These visual sizes do not reduce tap targets.

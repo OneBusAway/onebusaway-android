@@ -33,7 +33,7 @@ import org.onebusaway.android.map.render.stopIconKind
 import org.onebusaway.android.map.render.stopRouteLabel
 import org.onebusaway.android.util.ThemeUtils
 
-/** Owns non-route stop marker identity, icon reconciliation, tap lookup, and disposal. */
+/** Owns ordinary and selected stop marker identity, icon reconciliation, tap lookup, and disposal. */
 internal class MapLibreStopMarkerLayer(
     private val map: MapLibreMap,
     private val context: Context
@@ -55,7 +55,7 @@ internal class MapLibreStopMarkerLayer(
     private val iconFactory = IconFactory.getInstance(context)
 
     fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
-        val markerStops = stops.filterNot(StopMarker::routeStop)
+        val markerStops = stops.filter { !it.routeStop || it.id == focusedStopId }
         val liveIds = markerStops.mapTo(HashSet(), StopMarker::id)
         val gone = markerByStopId.iterator()
         while (gone.hasNext()) {
@@ -70,20 +70,22 @@ internal class MapLibreStopMarkerLayer(
         }
 
         for (stop in markerStops) {
+            val nearby = stop.compact && stop.id != focusedStopId
             val kind = stopIconKind(
                 focused = stop.id == focusedStopId,
-                band = band,
-                favorite = stop.favorite
+                band = if (stop.id == focusedStopId) StopBand.FULL else band,
+                favorite = stop.favorite,
+                compact = stop.compact
             )
             val existing = markerByStopId[stop.id]
             if (existing == null) {
                 val marker = map.addMarker(
-                    MarkerOptions().position(stop.point.toLatLng()).icon(icon(stop, kind))
+                    MarkerOptions().position(stop.point.toLatLng()).icon(icon(stop, kind, nearby))
                 )
                 markerByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
             } else {
-                if (kindByStopId[stop.id] != kind) existing.icon = icon(stop, kind)
+                if (kindByStopId[stop.id] != kind || stopByMarker[existing]?.compact != stop.compact) existing.icon = icon(stop, kind, nearby)
                 if (stopByMarker[existing]?.point != stop.point) {
                     existing.position = stop.point.toLatLng()
                 }
@@ -170,7 +172,7 @@ internal class MapLibreStopMarkerLayer(
             .also { labelIcons.put(key, it) }
     }
 
-    private fun icon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
+    private fun icon(stop: StopMarker, kind: StopIconKind, nearby: Boolean): Icon = when (kind) {
         StopIconKind.FULL, StopIconKind.COMPACT -> MapLibreStopIcons.iconForDirection(context, stop.direction)
         StopIconKind.FULL_FOCUSED, StopIconKind.COMPACT_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
         StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
@@ -179,7 +181,7 @@ internal class MapLibreStopMarkerLayer(
         StopIconKind.FAVORITE_FOCUSED -> MapLibreStopIcons.focusedFavoriteIcon(context, stop.direction)
         StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
-    }
+    }.let { if (nearby) MapLibreStopIcons.nearbyIcon(context, it) else it }
 
     private companion object {
         /** Comfortably more distinct route sets than a viewport at transit-centre zoom holds stops. */

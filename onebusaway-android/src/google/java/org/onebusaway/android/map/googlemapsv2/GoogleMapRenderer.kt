@@ -110,15 +110,12 @@ class GoogleMapRenderer(
 ) : PingTarget {
     private val stopMarkerLayer = GoogleStopMarkerLayer(map, context)
 
-    // The GoogleRouteStopLayer seam keeps route-stop drawing strategies swappable behind one line.
-    private val routeStopLayer: GoogleRouteStopLayer =
-        GoogleRouteStopBitmapLayer(
-            map,
-            context.resources.displayMetrics.density,
-            ContextCompat.getColor(context, R.color.route_stop_fill),
-            ContextCompat.getColor(context, R.color.map_stop_focus),
-            ContextCompat.getColor(context, R.color.route_stop_outline)
-        )
+    private val routeStopLayer = GoogleRouteStopBitmapLayer(
+        map,
+        context.resources.displayMetrics.density,
+        ContextCompat.getColor(context, R.color.route_stop_fill),
+        ContextCompat.getColor(context, R.color.route_stop_outline)
+    )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -884,8 +881,6 @@ class GoogleMapRenderer(
     }
 
     fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker) ?: routeStopLayer.stopForMarker(marker)
-
-    fun onCameraMoveStarted() = routeStopLayer.onCameraMoveStarted()
 
     fun onCameraSettled(zoom: Float) {
         routeStopLayer.onCameraSettled(zoom)

@@ -39,6 +39,9 @@ const val STOP_ROUTES_ZOOM_THRESHOLD = 17.5f
 /** Smallest focused route-stop circle scale at the zoomed-out end of the detail ramp. */
 const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f
 
+/** Nearby alternatives during stop focus are 15% smaller than their ordinary marker. */
+const val NEARBY_STOP_ICON_SCALE = 0.85f
+
 /**
  * Marker-group ordering **within the stop group**. Native map SDKs always place markers above route
  * polylines, but adjacent route stops must still win every overlap with another *stop*; favorites remain
@@ -112,7 +115,7 @@ fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
 /**
  * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each
  * normal/focused), the distinctive star a starred (favorite) stop gets in place of either (#1680),
- * likewise normal/focused. Route stops are native circles owned by the flavor-specific circle layer.
+ * likewise normal/focused. Unselected route stops use the shared ring artwork in each map provider's route-stop layer.
  */
 enum class StopIconKind {
     FULL,

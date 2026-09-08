@@ -286,19 +286,20 @@ data class RentalMarker(
 
 /**
  * One bus-stop marker. [direction]/[routeType] choose the icon + anchor; [stop] is the raw pojo
- * couriered so a tap can notify focus listeners. Whether this stop renders focused (the 1.5x icon) is
+ * couriered so a tap can notify focus listeners. Whether this stop renders focused (the 1.25x orange icon) is
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
  *
  * [presentedRoutes] identifies the route-direction variants in the current presentation that serve
- * this stop. A non-empty set makes [routeStop] true: [point] is projected onto the route centerline
- * and renders as the trip-map-style circle instead of the direction-anchored icon. Carrying identities,
+ * this stop. A non-empty set makes [routeStop] true: it renders as a route-colored ring at its
+ * geographic boarding location. Carrying identities,
  * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  *
  * [routes] are the routes this marker's **label** names at transit-centre zoom (#2107) — see
  * [stopRouteLabel]. Also available to the overlapping-stop chooser when the map label is hidden.
  * [showRouteLabel] controls the drawing independently of this stop's route metadata.
+ * [compact] keeps nearby alternatives small during stop focus without removing their direction arrow.
  */
 data class StopMarker(
     val id: String,
@@ -309,7 +310,10 @@ data class StopMarker(
     val favorite: Boolean = false,
     val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
     val routes: List<StopRoute> = emptyList(),
-    val showRouteLabel: Boolean = true
+    val showRouteLabel: Boolean = true,
+    val compact: Boolean = false,
+    /** Displayed line color; null for stops shared by differently colored routes. */
+    val routeColor: Int? = null
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }

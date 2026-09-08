@@ -32,6 +32,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.StopMarker
@@ -42,6 +44,7 @@ import org.onebusaway.android.util.DisplayFormat
 @Composable
 internal fun StopChoiceDialog(
     stops: List<StopMarker>,
+    selectedStopId: String? = null,
     onSelect: (StopMarker) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -52,8 +55,22 @@ internal fun StopChoiceDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 for (marker in stops) {
                     val stop = marker.stop
+                    val isSelected = marker.id == selectedStopId
                     ListItem(
-                        modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(role = Role.Button) { onSelect(marker) },
+                        modifier = Modifier.clip(MaterialTheme.shapes.small)
+                            .clickable(role = Role.Button) { onSelect(marker) }
+                            .semantics { selected = isSelected },
+                        overlineContent = if (isSelected) {
+                            {
+                                Text(
+                                    text = stringResource(R.string.map_stop_currently_selected),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            null
+                        },
                         headlineContent = {
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(

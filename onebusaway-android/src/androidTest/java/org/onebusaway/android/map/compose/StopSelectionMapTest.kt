@@ -39,10 +39,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.ObaStopElement
+import org.onebusaway.android.map.RouteStopPresentation
+import org.onebusaway.android.map.applyRouteStopPresentation
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.GeoPoint
@@ -70,6 +73,20 @@ class StopSelectionMapTest {
     }
 
     @Test
+    fun westboundFocusStillOffersAndSelectsTheNearbyEastboundStop() {
+        render(enabled = true, stopFocused = true)
+        tapMap()
+        assertCorrectChoices()
+        composeRule.onNodeWithText(context.getString(R.string.map_stop_currently_selected)).assertIsDisplayed()
+        composeRule.onNodeWithText(
+            context.getString(R.string.stop_details_code, "2") + " · " + context.getString(R.string.direction_e)
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Nearby").performClick()
+        assertEquals(listOf("2"), selected)
+        composeRule.onNodeWithText(context.getString(R.string.map_choose_stop)).assertDoesNotExist()
+    }
+
+    @Test
     fun coordinatePickerPassesThroughCallbacksWithoutOpeningAChooser() {
         render()
         composeRule.runOnIdle { assertSame(NoOpObaMapCallbacks, deliveredCallbacks) }
@@ -88,11 +105,31 @@ class StopSelectionMapTest {
         composeRule.onNodeWithText("Below the tap").assertDoesNotExist()
     }
 
-    private fun render(enabled: Boolean = false, nativeMarkerTap: Boolean = true) {
-        val native = stop("1", "Native")
-        val nearby = stop("2", "Nearby")
+    private fun render(enabled: Boolean = false, nativeMarkerTap: Boolean = true, stopFocused: Boolean = false) {
+        val native = stop("1", "Native", "W")
+        val nearby = stop("2", "Nearby", "E")
         val below = stop("3", "Below the tap")
-        val state = MapRenderState().apply { setStops(listOf(native, nearby, below)) }
+        val stops = listOf(native, nearby, below)
+        val state = MapRenderState().apply {
+            if (stopFocused) setFocusedStopId(native.id)
+            setStops(
+                if (stopFocused) {
+                    applyRouteStopPresentation(
+                        stops,
+                        native.id,
+                        RouteStopPresentation(
+                            stops = listOf(native.stop),
+                            routes = emptyList(),
+                            routeDirectionsByStopId = mapOf(native.id to setOf(RouteDirectionKey("11", 0))),
+                            keepNearbyStops = true
+                        ),
+                        markerFor = { stop -> stops.single { it.id == stop.id } }
+                    )
+                } else {
+                    stops
+                }
+            )
+        }
         val callbacks = if (enabled) {
             object : ObaMapCallbacks by NoOpObaMapCallbacks {
                 override fun onStopClick(marker: StopMarker) {
@@ -138,11 +175,11 @@ class StopSelectionMapTest {
         }
     }
 
-    private fun stop(id: String, name: String) = StopMarker(
+    private fun stop(id: String, name: String, direction: String = "NW") = StopMarker(
         id,
         GeoPoint(id.toDouble(), 1.0),
-        "NW",
+        direction,
         3,
-        ObaStopElement(id = id, code = id, name = name, direction = "NW")
+        ObaStopElement(id = id, code = id, name = name, direction = direction, lat = id.toDouble(), lon = 1.0)
     )
 }

@@ -257,12 +257,11 @@ class MapLibreRenderer(
     private var pingStart: WallTime? = null
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
     private val density = context.resources.displayMetrics.density
-    private val routeStopCircleLayer = MapLibreRouteStopCircleLayer(
+    private val routeStopLayer = MapLibreRouteStopBitmapLayer(
         map,
         mapStyle,
         density,
         ContextCompat.getColor(context, R.color.route_stop_fill),
-        ContextCompat.getColor(context, R.color.map_stop_focus),
         ContextCompat.getColor(context, R.color.route_stop_outline)
     )
 
@@ -286,7 +285,7 @@ class MapLibreRenderer(
         routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
-        routeStopCircleLayer.render(
+        routeStopLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,
             snapshot.routeStopsScaleWithZoom,
@@ -419,7 +418,7 @@ class MapLibreRenderer(
         dotSmoother.retainOnly(emptySet())
         clearPing()
         stopMarkerLayer.dispose()
-        routeStopCircleLayer.dispose()
+        routeStopLayer.dispose()
         routeEndpointBulbLayer.dispose()
         interlineSeamLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
@@ -733,7 +732,7 @@ class MapLibreRenderer(
     }
     fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker)
 
-    fun routeStopAt(point: LatLng): StopMarker? = routeStopCircleLayer.stopAt(point)
+    fun routeStopAt(point: LatLng): StopMarker? = routeStopLayer.stopAt(point)
 
     /**
      * The [Icon] for [rental] at [band] — the layer's colour and glyph, filled by its charge ring.

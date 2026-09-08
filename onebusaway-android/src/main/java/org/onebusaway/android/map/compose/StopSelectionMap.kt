@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
@@ -49,9 +50,8 @@ internal fun StopSelectionMap(
     val tapPosition = remember(renderState) { MapTapPosition() }
     val touchSize = LocalViewConfiguration.current.minimumTouchTargetSize
     val density = LocalDensity.current
-    val targetWidthPx = with(density) { touchSize.width.toPx() }
-    val targetHeightPx = with(density) { touchSize.height.toPx() }
-    val mapCallbacks = remember(renderState, callbacks, targetWidthPx, targetHeightPx) {
+    val targetRadiusPx = with(density) { minOf(touchSize.width, touchSize.height).toPx() / 2f }
+    val mapCallbacks = remember(renderState, callbacks, targetRadiusPx) {
         object : ObaMapCallbacks by callbacks {
             private fun chooseStop(marker: StopMarker?, point: GeoPoint? = null): Boolean {
                 val projector = renderState.projector.value
@@ -61,8 +61,7 @@ internal fun StopSelectionMap(
                     renderState.snapshot.value.stops,
                     tap,
                     projector,
-                    targetWidthPx,
-                    targetHeightPx
+                    targetRadiusPx
                 )
                 when (choices.size) {
                     0 -> return false
@@ -87,8 +86,10 @@ internal fun StopSelectionMap(
         }
     }
     if (stopChoices.isNotEmpty()) {
+        val snapshot by renderState.snapshot.collectAsStateWithLifecycle()
         StopChoiceDialog(
             stops = stopChoices,
+            selectedStopId = snapshot.focusedStopId,
             onSelect = { selected ->
                 stopChoices = emptyList()
                 callbacks.onStopClick(selected)

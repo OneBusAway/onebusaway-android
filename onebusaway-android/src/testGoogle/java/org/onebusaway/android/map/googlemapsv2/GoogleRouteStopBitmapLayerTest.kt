@@ -21,33 +21,26 @@ import org.junit.Test
 class GoogleRouteStopBitmapLayerTest {
     @Test
     fun `ordinary route mode keeps the normal fixed bitmap size`() {
-        assertEquals(60, diameter(zoom = 10f, stopFocused = false, selected = false))
-        assertEquals(108, diameter(zoom = 18f, stopFocused = false, selected = true))
+        assertEquals(68, diameter(zoom = 10f, stopFocused = false))
     }
 
     @Test
     fun `stop focus bitmap size follows the zoom ramp`() {
-        assertEquals(18, diameter(zoom = 10f, stopFocused = true, selected = false))
-        assertEquals(32, diameter(zoom = 11f, stopFocused = true, selected = true))
-        assertEquals(39, diameter(zoom = 13.5f, stopFocused = true, selected = false))
-        assertEquals(70, diameter(zoom = 13.5f, stopFocused = true, selected = true))
-        assertEquals(60, diameter(zoom = 16f, stopFocused = true, selected = false))
-        assertEquals(108, diameter(zoom = 18f, stopFocused = true, selected = true))
+        assertEquals(20, diameter(zoom = 10f, stopFocused = true))
+        assertEquals(44, diameter(zoom = 13.5f, stopFocused = true))
+        assertEquals(68, diameter(zoom = 16f, stopFocused = true))
     }
 
     @Test
-    fun `receding halves adjacent stops but never the focused stop`() {
-        // Adjacent (non-selected) stops recede to half the size they'd otherwise have.
-        assertEquals(30, diameter(zoom = 16f, stopFocused = true, selected = false, recedeAdjacent = true))
-        assertEquals(9, diameter(zoom = 10f, stopFocused = true, selected = false, recedeAdjacent = true))
-        // The focused stop keeps its emphasized size — it's the one being highlighted.
-        assertEquals(108, diameter(zoom = 18f, stopFocused = true, selected = true, recedeAdjacent = true))
+    fun `receding slightly shrinks adjacent stops`() {
+        // Adjacent (non-selected) stops recede to 80% of the size they'd otherwise have.
+        assertEquals(54, diameter(zoom = 16f, stopFocused = true, recedeAdjacent = true))
+        assertEquals(16, diameter(zoom = 10f, stopFocused = true, recedeAdjacent = true))
     }
 
     private fun diameter(
         zoom: Float,
         stopFocused: Boolean,
-        selected: Boolean,
         recedeAdjacent: Boolean = false
-    ): Int = routeStopDiameterPx(zoom, stopFocused, selected, recedeAdjacent, density = 3f)
+    ): Int = routeStopDiameterPx(zoom, stopFocused, recedeAdjacent, density = 3f)
 }

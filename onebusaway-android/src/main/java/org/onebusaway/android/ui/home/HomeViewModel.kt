@@ -98,40 +98,10 @@ class HomeViewModel @Inject constructor(
     private val prefs: PreferencesRepository
 ) : ViewModel() {
 
-    // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
-    // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
-    // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
-    // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
-    // destination — must queue for the single consumer instead of vanishing. UNLIMITED (not a fixed
-    // capacity): the whole point is to never drop a queued directive, and trySend on a bounded channel
-    // fails silently once it fills — reviving the very drop bug this Channel replaced. Directives are
-    // tiny and low-frequency, so an unbounded buffer costs nothing in practice.
-    private val _mapDirectives = Channel<MapDirective>(capacity = Channel.UNLIMITED)
-    val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
-
-    // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
-    // SavedStateHandle-restored focus so a recreation reflects the restore by construction — unless
-    // that focus has outlived its timeout, in which case it is never adopted (#2294).
-    private val _currentFocus = MutableStateFlow(restoreFocus())
+    // The single source of truth, replaced atomically by replaceFocus(). Expired saved focus is
+    // cleared in init before callers can observe this ViewModel.
+    private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
     val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
-
-    /**
-     * The persisted focus, or [CurrentFocus.None] if the rider left it behind longer ago than the
-     * focus timeout allows. An expired focus is written back as None so a later recreation doesn't
-     * re-judge it under a since-relaxed timeout.
-     */
-    private fun restoreFocus(): CurrentFocus {
-        val restored = CurrentFocusPersistence.read(savedState)
-        if (restored == CurrentFocus.None || !focusHasExpired()) return restored
-        CurrentFocusPersistence.write(savedState, CurrentFocus.None)
-        // MapViewModel restores its route from a separate handle. Queue the clear before MapFeature
-        // subscribes so that route and its vehicle polling expire along with the home focus.
-        emitMapDirective(MapDirective.ClearFocus)
-        return CurrentFocus.None
-    }
-
-    private fun focusHasExpired(): Boolean = prefs.focusTimeout().hasExpired(CurrentFocusPersistence.readLastActive(savedState), WallTime.now())
 
     // Semantic map actions live on HOME and keep a local undo history of their preceding focus and,
     // when the action moved the camera, viewport. Only current focus is persisted, so reconstruct its
@@ -169,6 +139,18 @@ class HomeViewModel @Inject constructor(
     fun setDirectionsResultsInset(px: Int) {
         _directionsBottomInset.value = px
     }
+
+    // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
+    // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
+    // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
+    // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
+    // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
+    // destination — must queue for the single consumer instead of vanishing. UNLIMITED (not a fixed
+    // capacity): the whole point is to never drop a queued directive, and trySend on a bounded channel
+    // fails silently once it fills — reviving the very drop bug this Channel replaced. Directives are
+    // tiny and low-frequency, so an unbounded buffer costs nothing in practice.
+    private val _mapDirectives = Channel<MapDirective>(capacity = Channel.UNLIMITED)
+    val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
 
     // Telemetry events the host's single HomeAnalyticsEffect reports (region auto-selects, nav/help menu
     // selections) — so the imperative ObaAnalytics calls live in one Compose effect, not scattered here.
@@ -792,18 +774,7 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(MapDirective.ClearFocus)
     }
 
-    /**
-     * Clears the focus hierarchy *and* the undo history behind it, so nothing is left to go back to.
-     * Also how an expired focus is forgotten ([onHomeForegrounded], #2294): the trail behind it is
-     * the same finished errand.
-     *
-     * Written for the scripted tour's teardown (#2164). Every step the tour drives — the demo stop,
-     * its route, the vehicle, the demo trip plan — goes through the same [pushFocus] a real tap does,
-     * and so leaves the same undo trail. [clearMapFocus] only pushes one more entry onto that trail, so
-     * the first Back press after the tour walked the rider back into a demo stop and a demo route, now
-     * resolved against their own region's server: a 404, an empty arrivals sheet, and a camera flying
-     * to Seattle. There is no rider-authored history to preserve here — the tour drove all of it.
-     */
+    /** Clears focus and its undo history after expiration or scripted-tour teardown. */
     fun clearMapFocusAndUndoHistory() {
         clearMapFocus()
         mapUndoHistory.clear()
@@ -1406,27 +1377,16 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * The host is about to snapshot its saved state — the rider is leaving the screen (a background,
-     * a screen-off, a task switch), which is where the focus timeout's clock starts. Stamped into the
-     * same handle as the focus so it rides along into the snapshot; the host must call this *before*
-     * the snapshot is taken (see HomeActivity.onSaveInstanceState), since on API < 28 the snapshot
-     * precedes onPause/onStop and a stamp from either of those would miss it.
-     */
+    /** Called before HomeActivity snapshots saved state, so the background timestamp is included. */
     fun onSavingState() {
         CurrentFocusPersistence.markActive(savedState, WallTime.now())
     }
 
-    /**
-     * The rider is back on the home screen. If the focus they left behind has outlived the focus
-     * timeout ([FocusTimeout], #2294), forget it — the errand it belonged to is over, and the map
-     * should open on nearby stops rather than yesterday's, with nothing stale to Back into. Covers the
-     * process that survived its hours in the background; a process that didn't is judged on restore
-     * ([restoreFocus]) and reaches here with nothing to expire.
-     */
+    /** Expire focus and undo history on restoration or return from the background. */
     fun onHomeForegrounded() {
         // Closing the banner leaves undo history even when the current focus is already empty.
-        if (focusHasExpired()) clearMapFocusAndUndoHistory()
+        val lastActive = CurrentFocusPersistence.readLastActive(savedState)
+        if (prefs.focusTimeout().hasExpired(lastActive, WallTime.now())) clearMapFocusAndUndoHistory()
     }
 
     /**
@@ -1452,6 +1412,13 @@ class HomeViewModel @Inject constructor(
             startupRepo.clearInitialStartup()
             refreshRegions()
         }
+    }
+
+    // Run after all fields are initialized: clearing focus also resets undo and directions state.
+    // The queued ClearFocus reaches MapFeature when it subscribes, clearing MapViewModel's separately
+    // restored route and vehicle polling before the rider resumes using the map.
+    init {
+        onHomeForegrounded()
     }
 }
 

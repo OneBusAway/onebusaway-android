@@ -101,19 +101,10 @@ internal object CurrentFocusPersistence {
         state[KEY_ROUTE_SELECTED_TRIP] = focus.selectedTripId
     }
 
-    /**
-     * When the rider last left the home screen with the focus in place, or null if they haven't since
-     * it was made (or the save predates the stamp). Read against [FocusTimeout] to decide whether a
-     * restored focus is still worth keeping (#2294).
-     */
+    /** Last saved background timestamp, or null for state saved before timeout tracking. */
     fun readLastActive(state: SavedStateHandle): WallTime? = state.get<Long>(KEY_LAST_ACTIVE)?.let(::WallTime)
 
-    /**
-     * Stamps [now] as the moment the rider left the screen. Lives in the handle beside the focus it
-     * dates, so the two share one lifetime: both survive a process death, and both go when the task is
-     * dismissed. Wall-clock rather than the monotonic clock because the gap it measures is the one the
-     * rider perceives, and the monotonic clock restarts on reboot.
-     */
+    /** Persist beside the focus, using wall time so the timestamp remains valid across reboots. */
     fun markActive(state: SavedStateHandle, now: WallTime) {
         state[KEY_LAST_ACTIVE] = now.epochMs
     }

@@ -24,13 +24,8 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.time.WallTime
 
 /**
- * How long the home screen keeps its map focus — the selected stop, route, bike station or trip plan —
- * after the rider last left the screen (#2294). Saved state is otherwise kept faithfully for as long
- * as the task sits in recents, so a stop chosen yesterday is still selected this morning; forgetting
- * it on roughly the schedule the rider's own errand expires is what the OS used to do by accident.
- *
- * The [value] is the persisted form (stable across locales and reorderings); [labelRes] is the
- * settings label. [ALWAYS] never expires.
+ * How long map focus survives in the background (#2294). [value] is the stable preference token;
+ * [labelRes] is its settings label. A null duration ([ALWAYS]) disables expiration.
  */
 enum class FocusTimeout(val value: String, val duration: Duration?, @param:StringRes val labelRes: Int) {
     THIRTY_MINUTES("30m", 30.minutes, R.string.preferences_focus_timeout_30_minutes),
@@ -40,11 +35,7 @@ enum class FocusTimeout(val value: String, val duration: Duration?, @param:Strin
     EIGHT_HOURS("8h", 8.hours, R.string.preferences_focus_timeout_8_hours),
     ALWAYS("always", null, R.string.preferences_focus_timeout_always);
 
-    /**
-     * Whether a focus the rider last left at [lastActive] has sat idle past this timeout as of [now].
-     * A null [lastActive] means nothing has been measured yet — the rider has not left the screen
-     * since the focus was made, or the save predates the stamp — so the focus is kept.
-     */
+    /** An absent timestamp (including older saved state) leaves the focus intact. */
     fun hasExpired(lastActive: WallTime?, now: WallTime): Boolean {
         val limit = duration ?: return false
         if (lastActive == null) return false

@@ -1036,7 +1036,7 @@ class HomeViewModelTest {
     /** A handle holding a focused stop the rider last left [ago] before now. */
     private fun handleLeftAgo(ago: Duration): SavedStateHandle {
         val handle = SavedStateHandle()
-        viewModel(savedState = handle).onStopFocused(FocusedStop("42", "Pike St"))
+        CurrentFocusPersistence.write(handle, CurrentFocus.Stop(FocusedStop("42", "Pike St")))
         CurrentFocusPersistence.markActive(handle, WallTime.now() - ago)
         return handle
     }

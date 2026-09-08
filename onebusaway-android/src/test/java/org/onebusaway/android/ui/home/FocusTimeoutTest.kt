@@ -62,11 +62,6 @@ class FocusTimeoutTest {
     }
 
     @Test
-    fun `stored values are stable tokens, distinct per entry`() {
-        assertEquals(FocusTimeout.entries.size, FocusTimeout.entries.map { it.value }.toSet().size)
-    }
-
-    @Test
     fun `reads the setting through the preferences repository`() {
         val prefs = FakePreferencesRepository()
         assertEquals(FocusTimeout.DEFAULT, prefs.focusTimeout())

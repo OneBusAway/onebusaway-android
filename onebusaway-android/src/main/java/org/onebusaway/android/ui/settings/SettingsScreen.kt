@@ -237,11 +237,7 @@ fun SettingsScreen(
                 }
             }
 
-            // What the app does over time, as distinct from what it shows (Display). One row so far.
             PreferenceCategory(stringResource(R.string.preferences_category_behavior)) {
-                // How long a selected stop (or route / bike station / trip plan) outlives the rider's
-                // last visit before the home screen forgets it (#2294). The stored values are the
-                // enum's stable tokens, not the labels, so the choice survives a locale change.
                 ListPreferenceItem(
                     title = stringResource(R.string.preferences_focus_timeout_title),
                     entries = FocusTimeout.entries.map { stringResource(it.labelRes) },

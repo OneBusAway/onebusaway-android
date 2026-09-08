@@ -1385,8 +1385,13 @@ class HomeViewModel @Inject constructor(
     /** Expire focus and undo history on restoration or return from the background. */
     fun onHomeForegrounded() {
         // Closing the banner leaves undo history even when the current focus is already empty.
+        val now = WallTime.now()
         val lastActive = CurrentFocusPersistence.readLastActive(savedState)
-        if (prefs.focusTimeout().hasExpired(lastActive, WallTime.now())) clearMapFocusAndUndoHistory()
+        if (prefs.focusTimeout().hasExpired(lastActive, now)) {
+            clearMapFocusAndUndoHistory()
+            // Consume the expiration so onStart cannot clear a fresh link applied after restoration.
+            CurrentFocusPersistence.markActive(savedState, now)
+        }
     }
 
     /**

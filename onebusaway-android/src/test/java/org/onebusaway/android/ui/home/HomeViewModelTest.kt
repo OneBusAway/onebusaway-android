@@ -1075,6 +1075,42 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a stop link applied after expired restoration survives onStart`() = runTest {
+        val handle = handleLeftAgo(5.hours)
+        val vm = viewModel(savedState = handle)
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        val stop = FocusedStop("1", "Main St")
+
+        // HomeActivity.setupMapState applies the incoming stop in onCreate, before onStart checks
+        // expiration again. The expired session must not also expire this new focus.
+        vm.applyInitialFocus(stop)
+        vm.onHomeForegrounded()
+
+        assertEquals(stop, vm.currentFocus.value.focusedStop)
+        assertEquals(stop, CurrentFocusPersistence.read(handle).focusedStop)
+        assertTrue(vm.canUndoMapAction.value)
+    }
+
+    @Test
+    fun `a new route survives repeated foreground checks after live expiration`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        vm.onStopFocused(FocusedStop("42", "Pike St"))
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - 5.hours)
+        vm.onHomeForegrounded()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+
+        vm.focusStandaloneRoute(ShowRouteRequest("65"))
+        vm.onHomeForegrounded()
+
+        val route = CurrentFocus.Route(RouteTarget("65"))
+        assertEquals(route, vm.currentFocus.value)
+        assertEquals(route, CurrentFocusPersistence.read(handle))
+        assertTrue(vm.canUndoMapAction.value)
+    }
+
+    @Test
     fun `a restored focus left more recently than the timeout is kept`() = runTest {
         val handle = handleLeftAgo(30.minutes)
 

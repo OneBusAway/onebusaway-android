@@ -101,7 +101,7 @@ internal object CurrentFocusPersistence {
         state[KEY_ROUTE_SELECTED_TRIP] = focus.selectedTripId
     }
 
-    /** Last saved background timestamp, or null for state saved before timeout tracking. */
+    /** Last recorded activity timestamp, or null if none has been recorded. */
     fun readLastActive(state: SavedStateHandle): WallTime? = state.get<Long>(KEY_LAST_ACTIVE)?.let(::WallTime)
 
     /** Persist beside the focus, using wall time so the timestamp remains valid across reboots. */

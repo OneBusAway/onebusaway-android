@@ -61,7 +61,9 @@ work = "2.11.2"
 room = "2.8.4"
 lifecycle = "2.11.0"
 # Navigation 2.10.0 requires minSdk 24; keep 2.9.x while supporting API 23 (#2280).
-navigationCompose = "2.10.0"
+# Dependabot is configured to ignore >=2.10.0 (.github/dependabot.yml) so this bump stops
+# re-proposing itself — it has already been reverted twice (#2280, #2298).
+navigationCompose = "2.9.8"
 hiltNavigationCompose = "1.4.0"
 composeBom = "2026.08.00"
 retrofit = "3.0.0"

@@ -38,6 +38,7 @@ internal object CurrentFocusPersistence {
     private const val KEY_ROUTE_LEG_NAMES = "home.currentFocus.route.legNames"
     private const val KEY_ROUTE_LEG_DIRECTIONS = "home.currentFocus.route.legDirections"
     private const val KEY_ROUTE_SELECTED_TRIP = "home.currentFocus.route.selectedTripId"
+    private const val KEY_FOCUS_TIMESTAMP = "home.currentFocus.timestamp"
 
     private const val FOCUS_NONE = "none"
     private const val FOCUS_STOP = "stop"
@@ -46,7 +47,13 @@ internal object CurrentFocusPersistence {
     private const val FOCUS_DIRECTIONS = "directions"
     private const val NO_DIRECTION = Int.MIN_VALUE
 
-    fun read(state: SavedStateHandle): CurrentFocus {
+    // Focus is discarded after 4 hours of inactivity (#2294).
+    internal const val FOCUS_EXPIRY_MS = 4 * 60 * 60 * 1000L
+
+    fun read(state: SavedStateHandle, now: Long = System.currentTimeMillis()): CurrentFocus {
+        val timestamp = state.get<Long>(KEY_FOCUS_TIMESTAMP)
+        if (timestamp != null && now - timestamp > FOCUS_EXPIRY_MS) return CurrentFocus.None
+
         val stop = readStop(state)
         return when (state.get<String>(KEY_FOCUS_KIND)) {
             FOCUS_STOP -> stop?.let { CurrentFocus.Stop(it, readStopRoute(state)) }
@@ -65,7 +72,8 @@ internal object CurrentFocusPersistence {
         }
     }
 
-    fun write(state: SavedStateHandle, focus: CurrentFocus) {
+    fun write(state: SavedStateHandle, focus: CurrentFocus, now: Long = System.currentTimeMillis()) {
+        state[KEY_FOCUS_TIMESTAMP] = now
         state[KEY_FOCUS_KIND] = when (focus) {
             CurrentFocus.None -> FOCUS_NONE
             is CurrentFocus.Stop -> FOCUS_STOP

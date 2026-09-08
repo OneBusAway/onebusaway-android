@@ -47,9 +47,10 @@ internal fun ChronologicalArrivalContent(
     stopLabel: String?,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
-    etaModifier: Modifier,
     focus: EtaPillFocus?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // A spotlight anchor for the ETA pill, threaded down from the host (see ArrivalRowAnchors).
+    etaModifier: Modifier = Modifier
 ) {
     val description: @Composable () -> Unit = {
         val decoration = strikeThroughIf(arrival.status == Status.CANCELED)

@@ -30,11 +30,6 @@
     <!-- The selected-stop highlight is a deeper orange in dark mode. -->
     <color name="map_stop_focus">#FB8C00</color>
 
-
-    <color name="stop_info_arrival_list_background">@android:color/black</color>
-
-    <!-- Arrival times header -->
-
     <!-- Schedule-deviation foreground tier on a dark ground (#2043) — the iOS dark variants
          (Theme.swift:125-172), which is exactly the mitigation iOS added after its own
          small-colored-text legibility reports (their #506/#508) and which this app previously

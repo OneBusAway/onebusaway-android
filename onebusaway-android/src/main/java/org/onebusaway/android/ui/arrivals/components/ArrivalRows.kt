@@ -473,14 +473,14 @@ fun RouteArrivalRow(
                 Spacer(Modifier.width(10.dp))
                 if (chronological) {
                     ChronologicalArrivalContent(
-                        representative,
-                        direction,
-                        stopLabel,
-                        routeActions,
-                        callbacks,
-                        anchors.eta,
-                        pillFocus,
-                        Modifier.weight(1f)
+                        arrival = representative,
+                        direction = direction,
+                        stopLabel = stopLabel,
+                        actions = routeActions,
+                        callbacks = callbacks,
+                        focus = pillFocus,
+                        modifier = Modifier.weight(1f),
+                        etaModifier = anchors.eta
                     )
                 } else {
                     Column(Modifier.weight(1f)) {

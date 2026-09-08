@@ -24,7 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -117,11 +117,13 @@ internal fun CorrectedClockTime(
         )
         return
     }
-    val context = LocalContext.current
+    // Resources rather than LocalContext.current: a context read isn't configuration-aware, so the
+    // string would go stale across a locale or configuration change (lint: LocalContextResourcesRead).
+    val resources = LocalResources.current
     // Held across recompositions: a corrected pill recomposes on every ETA rollover, and this is a
     // getString + format each time. It only changes when a fresh poll brings a new pair.
-    val spoken = remember(clock, context) {
-        context.getString(R.string.stop_info_clock_corrected, corrects, clock.expected)
+    val spoken = remember(clock, resources) {
+        resources.getString(R.string.stop_info_clock_corrected, corrects, clock.expected)
     }
     // No verticalArrangement: [style]'s trimmed line boxes already sit flush, which is what these two
     // want — they are one reading, not two lines of text.

@@ -1030,7 +1030,6 @@
     <string name="close_donation_card">Cerrar tarjeta de donación</string>
     <string name="map_option_zoom_out">Alejar</string>
     <string name="map_option_zoom_in">Acercar</string>
-    <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
 
     <!-- Destination reminder -->
     <string name="destination_reminder_title">Recordatorio de destino</string>
@@ -1054,9 +1053,6 @@
     <string name="feedback_notify_title">Comentarios sobre el recordatorio</string>
     <string name="feedback_notify_dialog_msg">¿El recordatorio de destino te fue útil?</string>
     <string name="feedback_notify_confirmation">Gracias por compartir tus comentarios</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
-    <string name="map_option_layers">Botón de capas del mapa</string>
 
     <!-- Travel behavior study -->
 

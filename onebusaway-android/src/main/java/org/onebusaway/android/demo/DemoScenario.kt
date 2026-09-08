@@ -176,6 +176,10 @@ object DemoScenario {
      * The service day [nowMs] falls in, as the epoch millis of local midnight in the agency's zone —
      * the `serviceDate` every OBA arrival and trip status carries.
      */
+    // UnwrappedClockValue: no clock is read here — this is a calendar computation over the caller's
+    // [nowMs], and the bare Long it returns is the wire contract for OBA's `serviceDate` field, which
+    // the demo responses carry unchanged (cf. TripDepartureTime.toEpochMillis).
+    @Suppress("UnwrappedClockValue")
     fun serviceDateMs(fixture: DemoTransitFixture, nowMs: Long): Long {
         val zone = runCatching { ZoneId.of(fixture.agency.timezone.orEmpty()) }.getOrElse { ZoneId.systemDefault() }
         return LocalDate.ofInstant(Instant.ofEpochMilli(nowMs), zone).atStartOfDay(zone).toInstant().toEpochMilli()

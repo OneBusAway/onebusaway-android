@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
  *
  * Generic in [T] purely so the no-drop / in-order contract is unit-testable on the JVM without an Android
  * `Intent`; the Activity uses `LaunchIntentChannel<Intent>`. [items] is a cold [receiveAsFlow] with a
- * single intended collector: the NavHost's `LaunchIntentEffect`.
+ * single intended collector: the NavHost's `launchIntentEffect`.
  */
 class LaunchIntentChannel<T> {
 

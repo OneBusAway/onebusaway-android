@@ -94,8 +94,6 @@
     <color name="stop_info_delayed_fill">#006EE5</color>
     <color name="stop_info_early_fill">#D63228</color>
 
-    <color name="stop_info_arrival_list_background">#eaeaea</color>
-
     <!--Reporting-->
     <color name="material_gray">#6A6A6A</color>
 
@@ -106,8 +104,6 @@
     <!-- Trip details colors -->
     <color name="trip_details_passed">@color/body_text_disabled</color>
     <color name="trip_details_not_passed">@color/body_text_2</color>
-    <color name="trip_details_background">@color/stop_info_arrival_list_background</color>
-
 
     <!-- Tutorials -->
     <color name="tutorial_background">#df4CAF50</color>

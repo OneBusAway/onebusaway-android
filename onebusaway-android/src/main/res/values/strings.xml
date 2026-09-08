@@ -1489,10 +1489,6 @@
     <string name="close_donation_card">Close donation card</string>
     <string name="map_option_zoom_out">Zoom out</string>
     <string name="map_option_zoom_in">Zoom in</string>
-    <string name="map_option_layers_close">Close Map Layers Button</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
-    <string name="map_option_layers">Maps Layers Button</string>
 
     <!-- Supported agencies screen -->
     <string name="agencies_title">Supported Agencies</string>

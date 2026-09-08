@@ -65,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -473,9 +474,9 @@ internal fun DirectionStopEtaStrip(
         routeLeg = routeLeg,
         reachStop = reachStop,
         session = session,
-        rowPadding = rowPadding,
         pillFocus = pillFocus,
-        modifier = modifier
+        modifier = modifier,
+        rowPadding = rowPadding
     )
 }
 
@@ -485,9 +486,10 @@ private fun DirectionStopEtaStripContent(
     routeLeg: RouteLegRef,
     reachStop: ReachStop?,
     session: ArrivalsSession,
-    rowPadding: Modifier,
     pillFocus: EtaPillFocus?,
-    modifier: Modifier
+    modifier: Modifier = Modifier,
+    // The shared per-row inset every branch below composes onto [modifier].
+    rowPadding: Modifier = Modifier
 ) {
     val state by session.viewModel.state.collectAsStateWithLifecycle()
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
@@ -552,13 +554,17 @@ private fun DirectionStopEtaStripContent(
  */
 @Composable
 private fun rememberReachStopMarker(reachStop: ReachStop): EtaStripMarker {
+    // The context is still needed for the *time* format (a device setting, not a resource); the
+    // resource read goes through LocalResources so it isn't stale after a configuration change
+    // (lint: LocalContextResourcesRead).
     val context = LocalContext.current
+    val resources = LocalResources.current
     val passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
-    return remember(reachStop, context, passedStateDescription) {
+    return remember(reachStop, context, resources, passedStateDescription) {
         EtaStripMarker(
             at = reachStop::resolvedAt,
             contentDescription = { at ->
-                context.getString(R.string.directions_stop_eta_reach_stop, DisplayFormat.formatTime(context, at.epochMs))
+                resources.getString(R.string.directions_stop_eta_reach_stop, DisplayFormat.formatTime(context, at.epochMs))
             },
             passedStateDescription = passedStateDescription
         )

@@ -53,6 +53,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.home.FocusTimeout
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
 import org.onebusaway.android.ui.settings.components.ListPreferenceItem
 import org.onebusaway.android.ui.settings.components.PreferenceCategory
@@ -136,6 +137,7 @@ fun SettingsRoute(
 
     val actions = SettingsActions(
         onArrivalDisplayDefault = viewModel::onArrivalDisplayDefaultChanged,
+        onFocusTimeout = viewModel::onFocusTimeoutChanged,
         onAutoSelectRegion = viewModel::onAutoSelectRegionChanged,
         onShowNegativeArrivals = viewModel::onShowNegativeArrivalsChanged,
         onHideAlerts = viewModel::onHideAlertsChanged,
@@ -175,6 +177,7 @@ fun SettingsRoute(
 /** All the user actions the [SettingsScreen] can fire, wired by [SettingsRoute]. */
 class SettingsActions(
     val onArrivalDisplayDefault: (ArrivalDisplayMode) -> Unit = {},
+    val onFocusTimeout: (FocusTimeout) -> Unit = {},
     val onAutoSelectRegion: (Boolean) -> Unit,
     val onShowNegativeArrivals: (Boolean) -> Unit,
     val onHideAlerts: (Boolean) -> Unit,
@@ -232,6 +235,16 @@ fun SettingsScreen(
                         onCheckedChange = actions.onAutoSelectRegion
                     )
                 }
+            }
+
+            PreferenceCategory(stringResource(R.string.preferences_category_behavior)) {
+                ListPreferenceItem(
+                    title = stringResource(R.string.preferences_focus_timeout_title),
+                    entries = FocusTimeout.entries.map { stringResource(it.labelRes) },
+                    entryValues = FocusTimeout.entries.map { it.value },
+                    selectedValue = state.focusTimeout.value,
+                    onValueSelected = { actions.onFocusTimeout(FocusTimeout.fromPreference(it)) }
+                )
             }
 
             PreferenceCategory(stringResource(R.string.preferences_category_display)) {

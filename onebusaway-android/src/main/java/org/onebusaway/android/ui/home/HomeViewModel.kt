@@ -45,9 +45,11 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -90,11 +92,14 @@ class HomeViewModel @Inject constructor(
     private val regionRepo: RegionRepository,
     // The last-known device location: the report-target fallback reads it here, so the
     // focused-stop-vs-location decision lives with the focused stop instead of in the activity.
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    // Read for the focus timeout ([FocusTimeout]) at each expiry check, so a settings change applies
+    // the next time the rider comes back rather than after a restart.
+    private val prefs: PreferencesRepository
 ) : ViewModel() {
 
-    // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
-    // SavedStateHandle-restored focus so a recreation reflects the restore by construction.
+    // The single source of truth, replaced atomically by replaceFocus(). Expired saved focus is
+    // cleared in init before callers can observe this ViewModel.
     private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
     val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
 
@@ -769,16 +774,7 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(MapDirective.ClearFocus)
     }
 
-    /**
-     * Clears the focus hierarchy *and* the undo history behind it, so nothing is left to go back to.
-     *
-     * For the scripted tour's teardown (#2164). Every step the tour drives — the demo stop, its route,
-     * the vehicle, the demo trip plan — goes through the same [pushFocus] a real tap does, and so leaves
-     * the same undo trail. [clearMapFocus] only pushes one more entry onto that trail, so the first Back
-     * press after the tour walked the rider back into a demo stop and a demo route, now resolved against
-     * their own region's server: a 404, an empty arrivals sheet, and a camera flying to Seattle. There
-     * is no rider-authored history to preserve here — the tour drove all of it.
-     */
+    /** Clears focus and its undo history after expiration or scripted-tour teardown. */
     fun clearMapFocusAndUndoHistory() {
         clearMapFocus()
         mapUndoHistory.clear()
@@ -1381,6 +1377,23 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /** Called before HomeActivity snapshots saved state, so the background timestamp is included. */
+    fun onSavingState() {
+        CurrentFocusPersistence.markActive(savedState, WallTime.now())
+    }
+
+    /** Expire focus and undo history on restoration or return from the background. */
+    fun onHomeForegrounded() {
+        // Closing the banner leaves undo history even when the current focus is already empty.
+        val now = WallTime.now()
+        val lastActive = CurrentFocusPersistence.readLastActive(savedState)
+        if (prefs.focusTimeout().hasExpired(lastActive, now)) {
+            clearMapFocusAndUndoHistory()
+            // Consume the expiration so onStart cannot clear a fresh link applied after restoration.
+            CurrentFocusPersistence.markActive(savedState, now)
+        }
+    }
+
     /**
      * Home was created. On the very first launch ever we defer the region check until the map's
      * location-permission result (so an auto-select has a location to work with); otherwise — or once
@@ -1404,6 +1417,13 @@ class HomeViewModel @Inject constructor(
             startupRepo.clearInitialStartup()
             refreshRegions()
         }
+    }
+
+    // Run after all fields are initialized: clearing focus also resets undo and directions state.
+    // The queued ClearFocus reaches MapFeature when it subscribes, clearing MapViewModel's separately
+    // restored route and vehicle polling before the rider resumes using the map.
+    init {
+        onHomeForegrounded()
     }
 }
 

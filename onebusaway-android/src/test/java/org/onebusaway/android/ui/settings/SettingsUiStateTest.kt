@@ -20,6 +20,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.ui.home.FocusTimeout
 
 /**
  * Pure-logic tests for the settings category-visibility and summary derivation — the branchy
@@ -49,7 +50,8 @@ class SettingsUiStateTest {
 
     private fun build(
         region: RegionSummaryInfo? = RegionSummaryInfo("Puget Sound", hasOtp = true),
-        env: SettingsEnvironment = env()
+        env: SettingsEnvironment = env(),
+        prefs: SettingsPrefSnapshot = this.prefs
     ) = buildSettingsUiState(prefs, region, env, customApiRegionSummary = "Custom API")
 
     @Test
@@ -150,6 +152,8 @@ class SettingsUiStateTest {
         val s = build()
         assertTrue(s.autoSelectRegion)
         assertEquals("System default", s.appTheme)
+        assertEquals(FocusTimeout.FOUR_HOURS, s.focusTimeout)
+        assertEquals(FocusTimeout.ALWAYS, build(prefs = prefs.copy(focusTimeout = FocusTimeout.ALWAYS)).focusTimeout)
     }
 
     // --- advanced settings ---

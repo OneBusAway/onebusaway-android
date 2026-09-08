@@ -215,6 +215,19 @@ class HomeActivity : AppCompatActivity() {
         onArrivalsLoaded = ::onArrivalsLoaded
     )
 
+    // The focus timeout's two lifecycle edges (#2294). The stamp goes in *before* super: ComponentActivity
+    // snapshots the ViewModels' SavedStateHandles inside super.onSaveInstanceState, and on API < 28 that
+    // snapshot is taken before onPause/onStop, so this is the one hook that precedes it on every level.
+    override fun onSaveInstanceState(outState: Bundle) {
+        viewModel.onSavingState()
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onHomeForegrounded()
+    }
+
     /**
      * A warm re-launch (singleTop) carrying an external screen intent — FCM CLEAR_TOP, the
      * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [launchIntentEffect]

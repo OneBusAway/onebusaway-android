@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.home
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.geoPointOrNull
 
 /** Mechanical SavedStateHandle encoding for [CurrentFocus], kept out of focus transition logic. */
@@ -38,6 +39,7 @@ internal object CurrentFocusPersistence {
     private const val KEY_ROUTE_LEG_NAMES = "home.currentFocus.route.legNames"
     private const val KEY_ROUTE_LEG_DIRECTIONS = "home.currentFocus.route.legDirections"
     private const val KEY_ROUTE_SELECTED_TRIP = "home.currentFocus.route.selectedTripId"
+    private const val KEY_LAST_ACTIVE = "home.currentFocus.lastActiveEpochMs"
 
     private const val FOCUS_NONE = "none"
     private const val FOCUS_STOP = "stop"
@@ -97,6 +99,14 @@ internal object CurrentFocusPersistence {
         // The drilled-into trip off whichever focus holds it (#2224) — one key, because the focus kinds
         // that can carry the rung are mutually exclusive and only the current one is ever written.
         state[KEY_ROUTE_SELECTED_TRIP] = focus.selectedTripId
+    }
+
+    /** Last recorded activity timestamp, or null if none has been recorded. */
+    fun readLastActive(state: SavedStateHandle): WallTime? = state.get<Long>(KEY_LAST_ACTIVE)?.let(::WallTime)
+
+    /** Persist beside the focus, using wall time so the timestamp remains valid across reboots. */
+    fun markActive(state: SavedStateHandle, now: WallTime) {
+        state[KEY_LAST_ACTIVE] = now.epochMs
     }
 
     private fun readLegacyFocus(state: SavedStateHandle, stop: FocusedStop?): CurrentFocus {

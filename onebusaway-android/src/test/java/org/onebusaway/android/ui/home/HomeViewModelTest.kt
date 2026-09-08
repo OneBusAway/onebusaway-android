@@ -16,6 +16,9 @@
 package org.onebusaway.android.ui.home
 
 import androidx.lifecycle.SavedStateHandle
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -42,7 +45,9 @@ import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
+import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripresults.AlternativeRouteRef
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
@@ -117,12 +122,14 @@ class HomeViewModelTest {
         startupRepo: FakeStartupPreferencesRepository = FakeStartupPreferencesRepository(),
         regionRepo: FakeRegionRepository = FakeRegionRepository().apply { refreshResult = regionStatus },
         savedState: SavedStateHandle = SavedStateHandle(),
-        locationRepo: FakeLocationRepository = FakeLocationRepository()
+        locationRepo: FakeLocationRepository = FakeLocationRepository(),
+        prefs: FakePreferencesRepository = FakePreferencesRepository()
     ) = HomeViewModel(
         savedState,
         startupRepo,
         regionRepo,
-        locationRepo
+        locationRepo,
+        prefs
     )
 
     // The raw stop payload onArrivalsLoaded forwards to the map; its identity is irrelevant to the
@@ -1022,6 +1029,107 @@ class HomeViewModelTest {
             FocusedStop("1", "Main St"),
             viewModel(savedState = handle).currentFocus.value.focusedStop
         )
+    }
+
+    // --- focus timeout (#2294) ---
+
+    /** A handle holding a focused stop the rider last left [ago] before now. */
+    private fun handleLeftAgo(ago: Duration): SavedStateHandle {
+        val handle = SavedStateHandle()
+        viewModel(savedState = handle).onStopFocused(FocusedStop("42", "Pike St"))
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - ago)
+        return handle
+    }
+
+    @Test
+    fun `a restored focus left longer ago than the timeout is not adopted`() = runTest {
+        val handle = handleLeftAgo(5.hours)
+        val vm = viewModel(savedState = handle)
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+        // Written back as None: a later recreation under a relaxed timeout must not resurrect it.
+        assertEquals(CurrentFocus.None, CurrentFocusPersistence.read(handle))
+    }
+
+    @Test
+    fun `a restored focus left more recently than the timeout is kept`() = runTest {
+        val handle = handleLeftAgo(30.minutes)
+
+        assertEquals(FocusedStop("42", "Pike St"), viewModel(savedState = handle).currentFocus.value.focusedStop)
+    }
+
+    @Test
+    fun `the focus timeout setting is honored on restore`() = runTest {
+        val always = FakePreferencesRepository().apply { setString(FocusTimeout.PREFERENCE_KEY, FocusTimeout.ALWAYS.value) }
+        val short = FakePreferencesRepository().apply { setString(FocusTimeout.PREFERENCE_KEY, FocusTimeout.THIRTY_MINUTES.value) }
+
+        assertEquals(FocusedStop("42", "Pike St"), viewModel(savedState = handleLeftAgo(5.hours), prefs = always).currentFocus.value.focusedStop)
+        assertEquals(CurrentFocus.None, viewModel(savedState = handleLeftAgo(1.hours), prefs = short).currentFocus.value)
+    }
+
+    @Test
+    fun `a restored focus with no last-active stamp is kept`() = runTest {
+        // A save from before the stamp existed: nothing has been measured, so nothing expires.
+        val handle = SavedStateHandle()
+        viewModel(savedState = handle).onStopFocused(FocusedStop("42", "Pike St"))
+
+        assertEquals(FocusedStop("42", "Pike St"), viewModel(savedState = handle).currentFocus.value.focusedStop)
+    }
+
+    @Test
+    fun `coming back to a focus left longer ago than the timeout forgets it`() = runTest {
+        // The process survived its hours in the background: the VM is still alive, so the check on
+        // return has to clear the live focus, its undo trail, and the map's marker.
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        vm.onStopFocused(FocusedStop("42", "Pike St", "577", GeoPoint(47.61, -122.34)))
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", directionStopId = "42", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown"
+        )
+        advanceUntilIdle()
+        assertTrue(vm.canUndoMapAction.value)
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - 5.hours)
+
+        vm.onHomeForegrounded()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+        assertEquals(1, map.clearFocusCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `coming back within the timeout keeps the focus`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        vm.onStopFocused(FocusedStop("42", "Pike St"))
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - 30.minutes)
+
+        vm.onHomeForegrounded()
+
+        assertEquals(FocusedStop("42", "Pike St"), vm.currentFocus.value.focusedStop)
+    }
+
+    @Test
+    fun `leaving the screen stamps the handle beside the focus`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        vm.onStopFocused(FocusedStop("42", "Pike St"))
+        assertNull(CurrentFocusPersistence.readLastActive(handle))
+
+        vm.onSavingState()
+
+        val stamp = CurrentFocusPersistence.readLastActive(handle)
+        assertTrue(stamp != null && WallTime.now() - stamp < 1.minutes)
+        // A fresh stamp reads as "just left": nothing to forget on the way back in.
+        vm.onHomeForegrounded()
+        assertEquals(FocusedStop("42", "Pike St"), vm.currentFocus.value.focusedStop)
     }
 
     // --- initial focus (restored vs intent deep-link) ---

@@ -683,6 +683,14 @@
 
     <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
     <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
+    <!-- Settings: how long the home screen keeps a selected stop after the rider last left it (#2294) -->
+    <string name="preferences_focus_timeout_title">Remember selected stop for</string>
+    <string name="preferences_focus_timeout_30_minutes">30 minutes</string>
+    <string name="preferences_focus_timeout_1_hour">1 hour</string>
+    <string name="preferences_focus_timeout_2_hours">2 hours</string>
+    <string name="preferences_focus_timeout_4_hours">4 hours</string>
+    <string name="preferences_focus_timeout_8_hours">8 hours</string>
+    <string name="preferences_focus_timeout_always">Always</string>
     <string name="preferences_compact_stop_icons_title">Compact stop icons</string>
     <string name="preferences_compact_stop_icons_summary">Use smaller stop markers without vehicle symbols</string>
     <string name="preferences_show_zoom_controls_title">Show zoom controls</string>

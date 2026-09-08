@@ -45,9 +45,11 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -90,13 +92,31 @@ class HomeViewModel @Inject constructor(
     private val regionRepo: RegionRepository,
     // The last-known device location: the report-target fallback reads it here, so the
     // focused-stop-vs-location decision lives with the focused stop instead of in the activity.
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    // Read for the focus timeout ([FocusTimeout]) at each expiry check, so a settings change applies
+    // the next time the rider comes back rather than after a restart.
+    private val prefs: PreferencesRepository
 ) : ViewModel() {
 
     // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
-    // SavedStateHandle-restored focus so a recreation reflects the restore by construction.
-    private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
+    // SavedStateHandle-restored focus so a recreation reflects the restore by construction — unless
+    // that focus has outlived its timeout, in which case it is never adopted (#2294).
+    private val _currentFocus = MutableStateFlow(restoreFocus())
     val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
+
+    /**
+     * The persisted focus, or [CurrentFocus.None] if the rider left it behind longer ago than the
+     * focus timeout allows. An expired focus is written back as None so a later recreation doesn't
+     * re-judge it under a since-relaxed timeout.
+     */
+    private fun restoreFocus(): CurrentFocus {
+        val restored = CurrentFocusPersistence.read(savedState)
+        if (restored == CurrentFocus.None || !focusHasExpired()) return restored
+        CurrentFocusPersistence.write(savedState, CurrentFocus.None)
+        return CurrentFocus.None
+    }
+
+    private fun focusHasExpired(): Boolean = prefs.focusTimeout().hasExpired(CurrentFocusPersistence.readLastActive(savedState), WallTime.now())
 
     // Semantic map actions live on HOME and keep a local undo history of their preceding focus and,
     // when the action moved the camera, viewport. Only current focus is persisted, so reconstruct its
@@ -771,13 +791,15 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Clears the focus hierarchy *and* the undo history behind it, so nothing is left to go back to.
+     * Also how an expired focus is forgotten ([onHomeForegrounded], #2294): the trail behind it is
+     * the same finished errand.
      *
-     * For the scripted tour's teardown (#2164). Every step the tour drives — the demo stop, its route,
-     * the vehicle, the demo trip plan — goes through the same [pushFocus] a real tap does, and so leaves
-     * the same undo trail. [clearMapFocus] only pushes one more entry onto that trail, so the first Back
-     * press after the tour walked the rider back into a demo stop and a demo route, now resolved against
-     * their own region's server: a 404, an empty arrivals sheet, and a camera flying to Seattle. There
-     * is no rider-authored history to preserve here — the tour drove all of it.
+     * Written for the scripted tour's teardown (#2164). Every step the tour drives — the demo stop,
+     * its route, the vehicle, the demo trip plan — goes through the same [pushFocus] a real tap does,
+     * and so leaves the same undo trail. [clearMapFocus] only pushes one more entry onto that trail, so
+     * the first Back press after the tour walked the rider back into a demo stop and a demo route, now
+     * resolved against their own region's server: a 404, an empty arrivals sheet, and a camera flying
+     * to Seattle. There is no rider-authored history to preserve here — the tour drove all of it.
      */
     fun clearMapFocusAndUndoHistory() {
         clearMapFocus()
@@ -1379,6 +1401,29 @@ class HomeViewModel @Inject constructor(
                 _analyticsEvents.tryEmit(HomeAnalyticsEvent.RegionSelected(status.region.name))
             }
         }
+    }
+
+    /**
+     * The host is about to snapshot its saved state — the rider is leaving the screen (a background,
+     * a screen-off, a task switch), which is where the focus timeout's clock starts. Stamped into the
+     * same handle as the focus so it rides along into the snapshot; the host must call this *before*
+     * the snapshot is taken (see HomeActivity.onSaveInstanceState), since on API < 28 the snapshot
+     * precedes onPause/onStop and a stamp from either of those would miss it.
+     */
+    fun onSavingState() {
+        CurrentFocusPersistence.markActive(savedState, WallTime.now())
+    }
+
+    /**
+     * The rider is back on the home screen. If the focus they left behind has outlived the focus
+     * timeout ([FocusTimeout], #2294), forget it — the errand it belonged to is over, and the map
+     * should open on nearby stops rather than yesterday's, with nothing stale to Back into. Covers the
+     * process that survived its hours in the background; a process that didn't is judged on restore
+     * ([restoreFocus]) and reaches here with nothing to expire.
+     */
+    fun onHomeForegrounded() {
+        if (_currentFocus.value == CurrentFocus.None) return
+        if (focusHasExpired()) clearMapFocusAndUndoHistory()
     }
 
     /**

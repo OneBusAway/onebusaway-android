@@ -40,6 +40,8 @@ import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.home.FocusTimeout
+import org.onebusaway.android.ui.home.focusTimeout
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ThemeUtils
 
@@ -92,6 +94,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun readSnapshot() = SettingsPrefSnapshot(
         arrivalDisplayDefault = prefs.arrivalDisplayDefault(),
+        focusTimeout = prefs.focusTimeout(),
         autoSelectRegion = prefs.getBoolean(R.string.preference_key_auto_select_region, true),
         showNegativeArrivals = prefs.getBoolean(R.string.preference_key_show_negative_arrivals, true),
         hideAlerts = prefs.getBoolean(R.string.preference_key_hide_alerts, false),
@@ -120,6 +123,10 @@ class SettingsViewModel @Inject constructor(
 
     fun onArrivalDisplayDefaultChanged(mode: ArrivalDisplayMode) {
         prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
+    }
+
+    fun onFocusTimeoutChanged(timeout: FocusTimeout) {
+        prefs.setString(FocusTimeout.PREFERENCE_KEY, timeout.value)
     }
 
     // region Toggle actions

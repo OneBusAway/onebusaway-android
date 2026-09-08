@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.settings
 
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.home.FocusTimeout
 
 /*
  * Pure (Android-free) state + derivation for the Compose settings screens. The ViewModels read the
@@ -49,7 +50,8 @@ data class SettingsPrefSnapshot(
     val preferredUnits: String?,
     val preferredTempUnits: String?,
     val appTheme: String?,
-    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE
+    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
+    val focusTimeout: FocusTimeout = FocusTimeout.DEFAULT
 )
 
 /** What the screen needs to know about the current region; null means no region (custom API). */
@@ -86,7 +88,8 @@ data class SettingsUiState(
     val preferredUnits: String?,
     val preferredTempUnits: String?,
     val appTheme: String?,
-    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE
+    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
+    val focusTimeout: FocusTimeout = FocusTimeout.DEFAULT
 ) {
     val showNotificationsCategory: Boolean
         get() = showLegacyNotificationControls || showTripPlanNotifications
@@ -126,7 +129,8 @@ fun buildSettingsUiState(
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,
     appTheme = prefs.appTheme,
-    arrivalDisplayDefault = prefs.arrivalDisplayDefault
+    arrivalDisplayDefault = prefs.arrivalDisplayDefault,
+    focusTimeout = prefs.focusTimeout
 )
 
 // ---------------------------------------------------------------------------------------------

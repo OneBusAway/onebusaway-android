@@ -345,11 +345,6 @@ object ExternalIntents {
             }
         }
 
-        val send = Intent(Intent.ACTION_SEND)
-        send.putExtra(
-            Intent.EXTRA_EMAIL,
-            arrayOf(email)
-        )
         // Show trip planner subject line if we have a trip planning URL
         val appName = context.getString(R.string.app_name)
         val subject: String
@@ -366,11 +361,17 @@ object ExternalIntents {
                 subject = context.getString(R.string.bug_report_subject_trip_plan, appName)
             }
         }
-        send.putExtra(Intent.EXTRA_SUBJECT, subject)
-        send.putExtra(Intent.EXTRA_TEXT, body)
-        send.setType("message/rfc822")
+        // SENDTO + mailto restricts feedback to email apps (#2296). Encode the draft in the URI
+        // as well as extras for clients that read only mailto fields, including reports with URLs.
+        val uri = "mailto:${Uri.encode(email, "@")}?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}".toUri()
+        val send = Intent(Intent.ACTION_SENDTO, uri).apply {
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, body)
+        }
         try {
-            context.startActivity(Intent.createChooser(send, subject))
+            // A chooser can open even without an email handler; launch directly to catch that case.
+            context.startActivity(send)
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(context, R.string.bug_report_error, Toast.LENGTH_LONG)
                 .show()

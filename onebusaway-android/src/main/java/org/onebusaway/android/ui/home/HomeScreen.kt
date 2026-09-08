@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -84,6 +84,7 @@ import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
@@ -672,7 +673,9 @@ fun HomeScreen(
                         BottomSheetScaffold(
                             modifier = Modifier.fillMaxSize(),
                             scaffoldState = scaffoldState,
-                            snackbarHost = { SnackbarHost(snackbarHostState) },
+                            snackbarHost = {
+                                SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
+                            },
                             // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
                             sheetPeekHeight = visiblePeekDp,
                             // Paint the sheet container (incl. the strip behind the drag handle) the same color
@@ -857,7 +860,7 @@ fun HomeScreen(
                                 } else {
                                     0.dp
                                 },
-                                navigationBarInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+                                navigationBarInset = navigationBarBottomPadding()
                             )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The

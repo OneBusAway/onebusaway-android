@@ -120,8 +120,8 @@ private const val MAX_TITLE_LINES = 2
 
 /**
  * The focused stop's overflow actions. They act on the stop's arrivals session — which HOME owns, not
- * the banner — so they arrive as one bundle rather than as two more lambdas on a banner that already
- * carries eight. Null hides the menu: there is no session to act on until a stop's arrivals are up.
+ * the banner — so they arrive as one bundle. Null hides the menu: there is no session to act on until
+ * a stop's arrivals are up.
  *
  * These outlived the standalone arrivals screen whose top bar used to hold them (#1898); the banner is
  * where a focused stop's actions live now. Its "show stop details" item did not: the banner itself
@@ -130,7 +130,9 @@ private const val MAX_TITLE_LINES = 2
  */
 data class StopFocusMenu(
     val onReportStopProblem: () -> Unit,
-    val onNightLight: () -> Unit
+    val onNightLight: () -> Unit,
+    val onCreateShortcut: () -> Unit,
+    val onShowArrivals: () -> Unit
 )
 
 /**
@@ -583,8 +585,8 @@ private fun HeaderIconButton(
 
 /**
  * The focused stop's overflow: the stop actions that are neither frequent enough for their own icon nor
- * expressible on the map — a problem report against the stop, and the night-light flasher a rider holds
- * up to a driver. Inherited from the retired standalone arrivals screen's top bar (#1898).
+ * expressible on the map: the mapless board, a home-screen shortcut, a problem report against the stop,
+ * and the night-light flasher a rider holds up to a driver.
  */
 @Composable
 private fun StopMenuAction(menu: StopFocusMenu) {
@@ -596,6 +598,14 @@ private fun StopMenuAction(menu: StopFocusMenu) {
             onClick = { expanded = true }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            MenuRow(R.string.view_arrivals_only) {
+                expanded = false
+                menu.onShowArrivals()
+            }
+            MenuRow(R.string.my_context_create_shortcut) {
+                expanded = false
+                menu.onCreateShortcut()
+            }
             MenuRow(R.string.stop_info_option_report_problem) {
                 expanded = false
                 menu.onReportStopProblem()

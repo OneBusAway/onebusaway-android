@@ -44,14 +44,23 @@ internal fun StopListItem.toStopReveal() = StopReveal(id, name, GeoPoint(lat, lo
 /**
  * A stop row's long-press actions; [removeLabel] is the only per-list delta.
  *
- * No "show on map" item: it is what tapping the row now does (#1898), and the search rows dropped
- * theirs for the same reason when they moved to map focus.
+ * Tapping the row opens arrivals; the map remains an explicit context action.
  */
 internal fun AppCompatActivity.stopActions(
     stop: StopListItem,
     @StringRes removeLabel: Int,
     onRemove: () -> Unit
 ): List<RowAction> = listOf(
+    RowAction(getString(R.string.my_context_showonmap)) {
+        startActivity(
+            android.content.Intent(this, org.onebusaway.android.ui.HomeActivity::class.java).apply {
+                putExtra(org.onebusaway.android.map.MapParams.STOP_ID, stop.id)
+                putExtra(org.onebusaway.android.map.MapParams.STOP_NAME, stop.name)
+                putExtra(org.onebusaway.android.map.MapParams.CENTER_LAT, stop.lat)
+                putExtra(org.onebusaway.android.map.MapParams.CENTER_LON, stop.lon)
+            }
+        )
+    },
     RowAction(getString(R.string.my_context_create_shortcut)) {
         Shortcuts.createStopShortcut(this, stop.name, stopLauncherBuilder(stop))
     },

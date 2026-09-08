@@ -78,7 +78,9 @@ import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.StopLauncher
 import org.onebusaway.android.ui.arrivals.components.etaPillFocus
+import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
@@ -183,7 +185,8 @@ class HomeCallbacks(
     // The focused stop's overflow "night light" item — the driver-flagging flasher screen.
     val onNightLight: () -> Unit,
     val onLearnMore: () -> Unit,
-    val onOpenSurvey: (url: String) -> Unit
+    val onOpenSurvey: (url: String) -> Unit,
+    val onShowArrivals: (FocusedStop) -> Unit = {}
 )
 
 /**
@@ -246,7 +249,8 @@ fun HomeScreen(
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     // All the screen's tap/UI lambdas, bundled (see [HomeCallbacks]); brought into scope below via
     // `with` so the body references them unqualified.
-    callbacks: HomeCallbacks
+    callbacks: HomeCallbacks,
+    onBackToArrivals: (() -> Unit)? = null
 ) {
     with(callbacks) {
         with(activityActions) {
@@ -636,7 +640,11 @@ fun HomeScreen(
                 // drawer consumes nothing — it's ambient, with nothing behind it to go back to — so back
                 // falls through to the system (see [sheetBackAction]).
                 val sheetExpanded = sheetShown && sheetState.currentValue == SheetValue.Expanded
-                BackHandler(enabled = canUndoMapAction || sheetExpanded) {
+                BackHandler(enabled = onBackToArrivals != null || canUndoMapAction || sheetExpanded) {
+                    if (onBackToArrivals != null) {
+                        onBackToArrivals()
+                        return@BackHandler
+                    }
                     val sheetAction = if (sheetShown) {
                         sheetBackAction(sheetState.currentValue.toArrivalsSheetState(), sheetContent)
                     } else {
@@ -920,7 +928,18 @@ fun HomeScreen(
                                                 stopMenu = arrivalsSession?.let { session ->
                                                     StopFocusMenu(
                                                         onReportStopProblem = session.handler::onReportStopProblem,
-                                                        onNightLight = callbacks.onNightLight
+                                                        onNightLight = callbacks.onNightLight,
+                                                        onCreateShortcut = {
+                                                            stopFocus?.stop?.let { stop ->
+                                                                val name = stop.name?.takeIf { it.isNotBlank() } ?: stop.id
+                                                                Shortcuts.createStopShortcut(
+                                                                    app,
+                                                                    name,
+                                                                    StopLauncher.Builder(app, stop.id).setStopName(stop.name)
+                                                                )
+                                                            }
+                                                        },
+                                                        onShowArrivals = { stopFocus?.stop?.let(callbacks.onShowArrivals) }
                                                     )
                                                 },
                                                 // The direction menu calls straight into the map VM (which

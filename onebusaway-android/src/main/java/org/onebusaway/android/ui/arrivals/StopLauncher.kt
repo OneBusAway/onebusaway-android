@@ -18,19 +18,13 @@ package org.onebusaway.android.ui.arrivals
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.DeepLinkUris
 
 /**
- * Opens the app on a stop: the map focused on it, with its real-time arrivals in the drawer.
- *
- * Not an Activity but a launcher facade that builds an explicit [HomeActivity] intent carrying the
- * stop's `content://…/stops/{id}` data URI (+ an optional name extra); `IntentRouteMapper` reads the
- * data URI back as a stop reveal and the host applies it to the map. The frozen class name
- * `org.onebusaway.android.ui.arrivals.ArrivalsListActivity` keeps resolving (for old pinned launcher
- * shortcuts) via an `<activity-alias>` → HomeActivity in the manifest, so the shortcut contract is
- * unchanged even though the standalone arrivals screen it once named is gone (#1898).
+ * Opens the mapless arrivals board for a stop. The stops data URI is shared with legacy pinned
+ * shortcuts, whose frozen activity aliases still target HomeActivity. IntentRouteMapper translates
+ * both old and new shortcuts into the same Compose destination.
  */
 object StopLauncher {
 
@@ -38,7 +32,7 @@ object StopLauncher {
 
         /** The built intent; Java callers see this as getIntent(). */
         val intent: Intent = Intent(context, HomeActivity::class.java).apply {
-            data = Uri.withAppendedPath(DeepLinkUris.STOPS, stopId)
+            data = DeepLinkUris.STOPS.buildUpon().appendPath(stopId).build()
         }
 
         fun setStopName(stopName: String?): Builder {

@@ -105,7 +105,9 @@ class ArrivalRowCallbacks(
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
-    val onShowAlert: (String) -> Unit
+    val onShowAlert: (String) -> Unit,
+    /** Ordinary row taps can open trip details on the mapless board. */
+    val onRowClick: (ArrivalInfo) -> Unit = onShowVehiclesOnMap
 )
 
 /**
@@ -417,7 +419,7 @@ fun RouteArrivalRow(
                     // map / schedule). The ETA pills remain independent children with their own
                     // trip-specific tap/long-press actions.
                     .combinedClickable(
-                        onClick = { callbacks.onShowVehiclesOnMap(representative) },
+                        onClick = { callbacks.onRowClick(representative) },
                         onLongClickLabel = routeMenuLabel,
                         onLongClick = { menuExpanded = true }
                     )

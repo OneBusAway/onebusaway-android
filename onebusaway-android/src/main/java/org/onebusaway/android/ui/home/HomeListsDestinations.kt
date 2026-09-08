@@ -31,6 +31,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -46,8 +47,9 @@ import org.onebusaway.android.ui.mylists.routeActions
 import org.onebusaway.android.ui.mylists.stopActions
 import org.onebusaway.android.ui.mylists.toStopReveal
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
+import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.tracking.badgeTracking
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -64,7 +66,11 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
         StarredListScaffold(
             title = R.string.navdrawer_item_starred_stops,
             clearLabel = R.string.my_option_clear_starred_stops,
-            onBack = { navController.popBackStack() },
+            onBack = {
+                // This screen uses its Up arrow as the map section selector, without a duplicate icon.
+                PreferencesEntryPoint.get(host).rememberHomeSection(NavRoutes.HOME)
+                navController.navigateFromHome(NavRoutes.HOME)
+            },
             onSort = {
                 host.chooseSortOrder(
                     PreferenceUtils.getStopSortOrderFromPreferences(host),
@@ -81,7 +87,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             StopListDestination(
                 vm,
                 emptyText = R.string.my_no_starred_stops,
-                onClick = { navController.revealStopOnMap(it.toStopReveal()) },
+                onClick = { navController.showArrivals(it.toStopReveal()) },
                 actions = {
                     host.stopActions(it, R.string.my_context_remove_star) { vm.remove(it.id) }
                 },
@@ -96,6 +102,10 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             title = R.string.navdrawer_item_starred_routes,
             clearLabel = R.string.my_option_clear_starred_routes,
             onBack = { navController.popBackStack() },
+            onMap = {
+                PreferencesEntryPoint.get(host).rememberHomeSection(NavRoutes.HOME)
+                navController.navigateFromHome(NavRoutes.HOME)
+            },
             onSort = {
                 host.chooseSortOrder(
                     PreferenceUtils.getStopSortOrderFromPreferences(host),
@@ -135,6 +145,7 @@ private fun StarredListScaffold(
     @StringRes title: Int,
     @StringRes clearLabel: Int,
     onBack: () -> Unit,
+    onMap: (() -> Unit)? = null,
     onSort: () -> Unit,
     onClear: () -> Unit,
     content: @Composable () -> Unit
@@ -143,6 +154,14 @@ private fun StarredListScaffold(
         Scaffold(
             topBar = {
                 ObaTopAppBar(title = stringResource(title), onBack = onBack) {
+                    onMap?.let { showMap ->
+                        IconButton(onClick = showMap) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_action_location_map),
+                                contentDescription = stringResource(R.string.home_map)
+                            )
+                        }
+                    }
                     IconButton(onClick = onSort) {
                         Icon(
                             painter = painterResource(R.drawable.ic_action_content_sort),

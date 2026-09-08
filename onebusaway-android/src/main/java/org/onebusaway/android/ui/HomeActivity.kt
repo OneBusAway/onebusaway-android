@@ -61,6 +61,7 @@ import org.onebusaway.android.ui.home.SettingsRehomeEffect
 import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
+import org.onebusaway.android.ui.home.launchDestination
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
@@ -93,13 +94,9 @@ class HomeActivity : AppCompatActivity() {
     @Inject
     lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
 
-    // The launch-intent channel: the OS delivers external entry points (deep links, FCM, launcher
-    // shortcuts) to this Activity before/around the composition, so they're surfaced here for the NavHost's
-    // [LaunchIntentEffect] to translate (via IntentRouteMapper) and open once composed. Seeded on a fresh
-    // launch only (onCreate), fed warm relaunches via onNewIntent — the in-app navigation no longer flows
-    // through here (it uses the NavController directly). A [LaunchIntentChannel] (UNLIMITED queue, not a
-    // latch) so a fresh-launch intent staged before the NavHost composes isn't lost, and so rapid, distinct
-    // back-to-back intents are each delivered exactly once rather than overwriting one another (#1582).
+    // Warm external launches queue until the NavHost is started, without dropping rapid, distinct
+    // intents (#1582). LaunchIntentEffect handles the cold intent separately, using its saved readiness
+    // state to retry after recreation if the Activity was saved before collection started.
     private val launchIntents = LaunchIntentChannel<Intent>()
 
     private val viewModel: HomeViewModel by viewModels()
@@ -143,18 +140,12 @@ class HomeActivity : AppCompatActivity() {
 
         val activityActions = buildActivityActions()
 
-        // Surface the launch intent for the NavHost's [LaunchIntentEffect] (it runs the side effects then
-        // opens the translated route once composed). Fresh launch only, so a rotation doesn't re-fire
-        // reminder deletes / URL applies.
-        if (savedInstanceState == null) {
-            launchIntents.submit(intent)
-        }
-
+        val initialIntent = intent
         setContent {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            LaunchIntentEffect(navController, launchIntents.items, ::applyLaunchIntentSideEffects)
+            val launchReady = LaunchIntentEffect(navController, initialIntent, launchIntents.items, ::applyLaunchIntentSideEffects)
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -164,6 +155,7 @@ class HomeActivity : AppCompatActivity() {
             Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                 HomeNavHost(
                     navController = navController,
+                    launchReady = launchReady,
                     home = HomeDestinationDeps(
                         homeViewModel = viewModel,
                         mapViewModel = mapViewModel,
@@ -199,7 +191,8 @@ class HomeActivity : AppCompatActivity() {
         // The VM owns the startup region-check decision (defer to the map's permission result on a first
         // launch without permission, else check now). The permission read needs a Context, so it stays here.
         viewModel.onHomeStarted(
-            PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS)
+            hasLocationPermission = PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS),
+            mapless = launchDestination(intent, org.onebusaway.android.app.di.PreferencesEntryPoint.get(this)) != NavRoutes.HOME
         )
     }
 
@@ -225,7 +218,7 @@ class HomeActivity : AppCompatActivity() {
     /**
      * A warm re-launch (singleTop) carrying an external screen intent — FCM CLEAR_TOP, the
      * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [LaunchIntentEffect]
-     * (cold launches are seeded in onCreate).
+     * (cold launches are handled from the Activity intent when composition starts).
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -242,8 +235,10 @@ class HomeActivity : AppCompatActivity() {
         applyIntentSideEffects(intent)
         maybeRestoreDirectionsFromIntent(intent)
         maybePlanToPlaceFromIntent(intent)
+        if (intent.readRouteReveal() == null) {
+            FocusedStop.fromIntent(intent)?.let { viewModel.revealStop(it) }
+        }
         maybeRevealTrackedRouteFromIntent(intent)
-        maybeRevealStopFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
@@ -270,21 +265,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * A launch that asks for a stop — an exported `oba://…/stops/{id}` deep link, an FCM arrival push,
-     * a pinned stop shortcut — focuses it on the map, with the arrivals drawer over it (#1898). Applied
-     * here, next to the other launch-intent focus changes, because this is where the [HomeViewModel] is;
-     * [IntentRouteMapper] stays a pure translator and correctly resolves these to no destination, since
-     * a stop is map state and not a screen.
-     *
-     * No animation: these arrive from outside the app, where the map is either not yet on screen or
-     * showing somewhere unrelated, so flying the camera would be a long pan from nowhere in particular.
-     */
-    private fun maybeRevealStopFromIntent(intent: Intent) {
-        val reveal = IntentRouteMapper.stopRevealForIntent(intent) ?: return
-        viewModel.revealStop(FocusedStop(reveal.stopId, reveal.name, point = reveal.point))
-    }
-
-    /**
      * Re-entry from a trip-plan monitor "your trip changed" notification (see
      * [org.onebusaway.android.directions.realtime.TripPlanMonitorService.notifyChange]): the intent
      * carries the simplified request bundle ([TripRequestBuilder.copyIntoBundleSimple]), the updated
@@ -293,9 +273,9 @@ class HomeActivity : AppCompatActivity() {
      * results from those extras — the itineraries are injected as-is (no re-plan). Restores the behavior
      * the retired standalone screen's `maybeRestoreFromIntent` used to provide (#1939).
      *
-     * No re-restore guard is needed: the launch-intent channel submits each real intent exactly once
-     * (cold `onCreate` seed gated on a null `savedInstanceState`, warm `onNewIntent`), so a config change
-     * doesn't re-fire this — and the activity-scoped [tripPlanViewModel] keeps the restored results.
+     * No re-restore guard is needed here: LaunchIntentEffect saves whether the cold intent was handled,
+     * and the channel submits each warm `onNewIntent` once, so a config change doesn't re-fire this —
+     * and the activity-scoped [tripPlanViewModel] keeps the restored results.
      */
     // UnwrappedClockValue: the trip-plan time defaults to device "now" only when the intent carries none.
     @Suppress("UnwrappedClockValue")

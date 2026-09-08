@@ -187,10 +187,12 @@ object NavRoutes {
     /** Builds a navigable [ROUTE_INFO] route, encoding the id (route ids can contain `/`, spaces). */
     fun routeInfo(routeId: String): String = "routeInfo/${Uri.encode(routeId)}"
 
-    // --- Stop nav-args ---
-    // A stop is no longer a destination of its own: showing one is map state (focus + the arrivals
-    // drawer), reached through `NavController.revealStopOnMap` rather than a route (#1898). These keys
-    // survive because the trip destinations below carry a stop alongside their trip.
+    // --- Mapless arrivals and shared stop nav-args ---
+    const val ARRIVALS = "arrivals/{stopId}?stopName={stopName}"
+
+    fun arrivals(stopId: String, stopName: String? = null): String = "arrivals/${Uri.encode(stopId)}" +
+        if (stopName != null) "?stopName=${Uri.encode(stopName)}" else ""
+
     const val ARG_STOP_ID = "stopId"
     const val ARG_STOP_NAME = "stopName"
 

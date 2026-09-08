@@ -89,9 +89,9 @@ class IntentRouteMapperTest {
     // --- FCM arrival payload (present-ness short-circuits) ---
 
     @Test
-    fun `an arrival payload with a parsed stop id focuses that stop on the map`() {
+    fun `an arrival payload with a parsed stop id opens that stop on the arrivals board`() {
         assertEquals(
-            RouteDecision.StopOnMap(StopReveal("1_75403")),
+            RouteDecision.Arrivals(StopReveal("1_75403")),
             decide(RouteIntent(hasArrivalPayload = true, arrivalStopId = "1_75403"))
         )
     }
@@ -155,7 +155,7 @@ class IntentRouteMapperTest {
     @Test
     fun `a stops data-URI focuses the stop, carrying the optional pre-load title`() {
         assertEquals(
-            RouteDecision.StopOnMap(StopReveal("1_75403", "Pike St & 3rd Ave")),
+            RouteDecision.Arrivals(StopReveal("1_75403", "Pike St & 3rd Ave")),
             decide(
                 RouteIntent(
                     pathSegments = listOf(DeepLinkUris.STOPS_PATH, "1_75403"),
@@ -184,9 +184,9 @@ class IntentRouteMapperTest {
     // --- cross-platform (iOS-parity) deep links; the URI parsing itself is ExternalDeepLinksTest ---
 
     @Test
-    fun `a view-stop deep link focuses that stop on the map`() {
+    fun `a view-stop deep link opens that stop on the arrivals board`() {
         assertEquals(
-            RouteDecision.StopOnMap(StopReveal("1_75403")),
+            RouteDecision.Arrivals(StopReveal("1_75403")),
             decide(RouteIntent(deepLink = ExternalDeepLinks.Target.Stop("1_75403")))
         )
     }
@@ -209,7 +209,7 @@ class IntentRouteMapperTest {
     @Test
     fun `a deep-link target beats the content data-URI path branches`() {
         assertEquals(
-            RouteDecision.StopOnMap(StopReveal("1_75403")),
+            RouteDecision.Arrivals(StopReveal("1_75403")),
             decide(
                 RouteIntent(
                     deepLink = ExternalDeepLinks.Target.Stop("1_75403"),

@@ -189,9 +189,9 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
-        <!-- A stop is shown on the HomeActivity map, with its arrivals in the drawer (#1898). These
-             frozen component names (old pinned launcher shortcuts) keep resolving via aliases →
-             HomeActivity, which reads the stop data URI and focuses it. Aliases inherit
+        <!-- Legacy pinned stop shortcuts open the mapless arrivals destination. These frozen
+             component names keep resolving via aliases → HomeActivity, which translates the stop
+             data URI into a Compose route. Aliases inherit
              launchMode/configChanges from HomeActivity. -->
         <activity-alias
             android:name="org.onebusaway.android.ui.ArrivalsListActivity"

@@ -496,29 +496,42 @@ class HomeViewModelTest {
         job.cancel()
     }
 
-    /**
-     * #2224: `restoreMapAfterBack` used to replay the sub-focus's stored request verbatim,
-     * `focusTripId` included — so returning to a leg re-flew the camera to the vehicle and re-pinged it.
-     */
     @Test
-    fun `back into a directions leg restores its vehicle without re-pinging it`() = runTest {
+    fun `back from a revealed stop restores itinerary context before the retained transit focus`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.tapLegVehicle()
-        advanceUntilIdle()
-
-        // Away to a stop, then back — the branch that has to redraw the route rather than just reselect.
+        vm.enterDirections()
+        val itinerary = TripItinerary()
+        val pins = ItineraryPins(start = false)
+        // Draw with the actual endpoint policy, then drill into the transit leg.
+        vm.showItineraryOnMap(itinerary, pins)
+        val leg = rideLeg()
+        vm.focusItineraryRouteLeg(leg, FocusedLeg(listOf(leg.board!!.point!!, leg.alight!!.point!!), setOf(1)))
+        vm.focusDirectionsRouteVehicleInFocusedLeg(
+            ShowRouteRequest(routeId = leg.routeId!!, directionStopId = "40_board", focusTripId = "tapped")
+        )
+        val retainedFocus = vm.currentFocus.value
         vm.revealStop(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         map.sent.clear()
 
         assertTrue(vm.navigateBackFocus())
         advanceUntilIdle()
-        assertEquals("tapped", vm.directionsRouteFocus()?.selectedTripId)
+        assertEquals(MapDirective.ShowItinerary(itinerary, pins), map.sent.first())
+        assertTrue(map.routeCommands.single().withinDirections)
+        assertEquals(vm.directionsRouteFocus()!!.request, map.routeRequests.single())
+        assertEquals(null, map.routeRequests.single().focusTripId)
         assertEquals(listOf("tapped"), map.vehicleSelections)
-        assertEquals(listOf<String?>(null), map.routeRequests.map { it.focusTripId })
+        assertEquals(retainedFocus, vm.currentFocus.value)
+        map.sent.clear()
+
+        // The sheet remount follows undo and must keep the route focus over the restored context.
+        vm.restoreItineraryOnMap(itinerary, pins)
+        advanceUntilIdle()
+        assertTrue(map.sent.isEmpty())
+        assertEquals(retainedFocus, vm.currentFocus.value)
         job.cancel()
     }
 

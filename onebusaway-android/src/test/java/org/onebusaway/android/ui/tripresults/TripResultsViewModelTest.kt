@@ -73,7 +73,7 @@ class TripResultsViewModelTest {
         val viewModel = TripResultsViewModel(repository)
         val start = ServerTime(1_700_000_000_000L)
 
-        viewModel.seedPlan(itineraries(2), initialIndex = 0, plannedStart = start)
+        viewModel.seedPlan(itineraries(2), resumeIndex = 0, plannedStart = start)
         advanceUntilIdle()
         viewModel.selectOption(1)
         advanceUntilIdle()
@@ -90,7 +90,7 @@ class TripResultsViewModelTest {
     @Test
     fun `seedPlan emits Success with the options and selected index`() = runTest {
         val viewModel = TripResultsViewModel(FakeTripResultsRepository(Result.success(options)))
-        viewModel.seedPlan(itineraries(2), initialIndex = 1)
+        viewModel.seedPlan(itineraries(2), resumeIndex = 1)
         advanceUntilIdle()
         val state = viewModel.state.value as TripResultsUiState.Success
         assertEquals(options, state.options)
@@ -100,18 +100,18 @@ class TripResultsViewModelTest {
     @Test
     fun `re-seeding the very same plan is refused and keeps the rider's selection`() = runTest {
         // The #2274 path: the sheet is re-mounted (HOME's composition rebuilt under the trip view a
-        // vehicle tap opened), so it re-runs its seed with the option to *open* on — which must not
-        // overwrite the option the rider picked while it was on screen.
+        // vehicle tap opened), so it re-runs its seed with no pending resume. This must not overwrite
+        // the option the rider picked while it was on screen.
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
         val plan = itineraries(2)
-        viewModel.seedPlan(plan, initialIndex = 0)
+        viewModel.seedPlan(plan, resumeIndex = 0)
         advanceUntilIdle()
         viewModel.selectOption(1)
         advanceUntilIdle()
         repository.directionsForCalls.clear()
 
-        val seeded = viewModel.seedPlan(plan, initialIndex = 0)
+        val seeded = viewModel.seedPlan(plan, resumeIndex = null)
         advanceUntilIdle()
 
         assertFalse(seeded)
@@ -120,16 +120,47 @@ class TripResultsViewModelTest {
     }
 
     @Test
+    fun `explicit resume of the cached plan restores its option and is accepted for consumption`() = runTest {
+        for (pinnedIndex in 0..1) {
+            val repository = FakeTripResultsRepository(Result.success(options))
+            val viewModel = TripResultsViewModel(repository)
+            val plan = itineraries(2)
+            viewModel.seedPlan(plan, resumeIndex = pinnedIndex)
+            advanceUntilIdle()
+            viewModel.selectOption(1 - pinnedIndex)
+            advanceUntilIdle()
+            repository.directionsForCalls.clear()
+
+            assertTrue(viewModel.seedPlan(plan, resumeIndex = pinnedIndex))
+            advanceUntilIdle()
+            assertEquals(pinnedIndex, (viewModel.state.value as TripResultsUiState.Success).selectedIndex)
+            assertTrue(viewModel.currentItinerary() === plan[pinnedIndex])
+            assertEquals(listOf(plan[pinnedIndex]), repository.directionsForCalls)
+
+            // Consuming the request recomposes the sheet with null, which must now be a no-op.
+            repository.directionsForCalls.clear()
+            assertFalse(viewModel.seedPlan(plan, resumeIndex = null))
+            advanceUntilIdle()
+            assertTrue(repository.directionsForCalls.isEmpty())
+
+            // A subsequent fresh plan has no lingering resume index.
+            assertTrue(viewModel.seedPlan(itineraries(2), resumeIndex = null))
+            advanceUntilIdle()
+            assertEquals(0, (viewModel.state.value as TripResultsUiState.Success).selectedIndex)
+        }
+    }
+
+    @Test
     fun `a new plan re-seeds even when its itineraries are equal to the old ones`() = runTest {
         // TripItinerary is a data class, so a re-plan can come back structurally equal to what is on
         // screen. It is still a new plan, and opens on the index it was given.
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
-        viewModel.seedPlan(itineraries(2), initialIndex = 1)
+        viewModel.seedPlan(itineraries(2), resumeIndex = 1)
         advanceUntilIdle()
 
         val replanned = itineraries(2)
-        val seeded = viewModel.seedPlan(replanned, initialIndex = 0)
+        val seeded = viewModel.seedPlan(replanned, resumeIndex = null)
         advanceUntilIdle()
 
         assertTrue(seeded)
@@ -137,9 +168,9 @@ class TripResultsViewModelTest {
     }
 
     @Test
-    fun `an out-of-range initial index is clamped`() = runTest {
+    fun `an out-of-range resume index is clamped`() = runTest {
         val viewModel = TripResultsViewModel(FakeTripResultsRepository(Result.success(options)))
-        viewModel.seedPlan(itineraries(2), initialIndex = 9)
+        viewModel.seedPlan(itineraries(2), resumeIndex = 9)
         advanceUntilIdle()
         assertEquals(1, (viewModel.state.value as TripResultsUiState.Success).selectedIndex)
     }
@@ -149,7 +180,7 @@ class TripResultsViewModelTest {
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
         val list = itineraries(2)
-        viewModel.seedPlan(list, initialIndex = 0)
+        viewModel.seedPlan(list, resumeIndex = 0)
         advanceUntilIdle()
         repository.directionsForCalls.clear()
 
@@ -164,7 +195,7 @@ class TripResultsViewModelTest {
     fun `selectOption ignores the current index and out-of-range indices`() = runTest {
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
-        viewModel.seedPlan(itineraries(2), initialIndex = 0)
+        viewModel.seedPlan(itineraries(2), resumeIndex = 0)
         advanceUntilIdle()
         repository.directionsForCalls.clear()
 
@@ -180,17 +211,18 @@ class TripResultsViewModelTest {
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
         val list = itineraries(2)
-        val emitted = mutableListOf<Int>()
+        val emitted = mutableListOf<TripItinerary>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.selectedItinerary.collect { emitted.add(it.first) }
+            viewModel.selectedItinerary.collect { emitted.add(it) }
         }
-        viewModel.seedPlan(list, initialIndex = 0)
+        viewModel.seedPlan(list, resumeIndex = 0)
         advanceUntilIdle()
 
         viewModel.selectOption(1)
         advanceUntilIdle()
 
-        assertEquals(listOf(1), emitted)
+        assertEquals(1, emitted.size)
+        assertTrue(emitted.single() === list[1])
     }
 
     @Test
@@ -198,7 +230,7 @@ class TripResultsViewModelTest {
         val viewModel = TripResultsViewModel(
             FakeTripResultsRepository(Result.failure(IOException("boom")))
         )
-        viewModel.seedPlan(itineraries(1), initialIndex = 0)
+        viewModel.seedPlan(itineraries(1), resumeIndex = 0)
         advanceUntilIdle()
 
         assertEquals(TripResultsUiState.Error("boom"), viewModel.state.value)

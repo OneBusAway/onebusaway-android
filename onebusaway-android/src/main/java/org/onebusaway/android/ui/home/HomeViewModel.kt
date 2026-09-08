@@ -832,15 +832,9 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Put [itinerary] back on the map unless directions is already on it — the results sheet's re-mount
-     * reconcile (#2274; [org.onebusaway.android.ui.tripresults.TripResultsViewModel.seedPlan] has the
-     * rule). [shownItinerary] is what tells the two kinds of re-mount apart: it is the trip *this* visit
-     * to directions drew, and a fresh entry clears it (see [enterDirections]), so re-entering directions
-     * redraws while returning from a pushed destination finds its own trip already there.
-     *
-     * Deliberately not folded into [showItineraryOnMap] as a guard there. That call means "the rider
-     * chose this option", and re-choosing the option already selected is exactly how they get the whole
-     * trip framed again after zooming into a leg — so it has to redraw even when nothing changed.
+     * Reconcile a remounted sheet without dropping its retained leg focus (#2274). A fresh directions
+     * entry clears [shownItinerary]; undo restores cleared map context in [restoreMapAfterBack].
+     * Explicit option taps use [showItineraryOnMap] to reframe even an unchanged itinerary.
      */
     fun restoreItineraryOnMap(itinerary: TripItinerary, pins: ItineraryPins = ItineraryPins()) {
         if (shownItinerary == MapDirective.ShowItinerary(itinerary, pins)) return
@@ -1364,16 +1358,20 @@ class HomeViewModel @Inject constructor(
                     frameRoute = frameFocus
                 )
                 is CurrentFocus.Directions -> when (val subFocus = target.subFocus) {
-                    // Back into a route sub-focus: re-show that leg's route on the map, over the trip
-                    // it belongs to (still drawn, or restored by the sheet's own reconcile), with
-                    // whichever vehicle was drilled into selected again. The stored request carries no
-                    // focusTripId, so this redraws without re-flying or re-pinging (#2224).
-                    is DirectionsSubFocus.Route -> showRoute(
-                        subFocus.request,
-                        subFocus.selectedTripId,
-                        frameRoute = frameFocus,
-                        withinDirections = true
-                    )
+                    // A stop or other focus outside directions cleared the itinerary. Restore it
+                    // before the route so the other legs and terminus pins remain beneath that focus.
+                    // Replaying directly preserves the selected leg and does not push an undo entry.
+                    is DirectionsSubFocus.Route -> {
+                        if (from !is CurrentFocus.Directions) {
+                            shownItinerary?.let { emitMapDirective(it) }
+                        }
+                        showRoute(
+                            subFocus.request,
+                            subFocus.selectedTripId,
+                            frameRoute = frameFocus,
+                            withinDirections = true
+                        )
+                    }
                     // Back into an on-street leg focus: re-apply it exactly as the drawer's tap does.
                     is DirectionsSubFocus.Leg -> applyLegFocus(subFocus.leg, from)
                     // Back to the itinerary overview: restore it over whatever the leg focus did.

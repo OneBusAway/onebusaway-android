@@ -284,10 +284,8 @@ fun DirectionsResultsSheet(
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
     // would otherwise type-check.
     rideBadgeTaps: Flow<Set<Int>>,
-    // The pinned-trip surface (#2053), required for the same reason as [rideBadgeTaps]: a defaulted 0
-    // for the option to open on is exactly the resume bug the index exists to prevent, and a defaulted
-    // `false` for [fromSnapshot] re-arms the change monitor for a trip that already departed.
-    initialOptionIndex: Int,
+    // A pending pinned-trip resume; null means a fresh plan or a remount (#2053, #2274).
+    resumeIndex: Int?,
     fromSnapshot: Boolean,
     pinnedOptionIndex: Int?,
     // Null when this plan carries no request to pin, so a card offers no long press rather than a menu
@@ -373,7 +371,7 @@ fun DirectionsResultsSheet(
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 stopEtaStrip = stopEtaStrip,
-                initialOptionIndex = initialOptionIndex,
+                resumeIndex = resumeIndex,
                 fromSnapshot = fromSnapshot,
                 pinnedOptionIndex = pinnedOptionIndex,
                 onTogglePin = onTogglePin,

@@ -43,9 +43,9 @@ class TripResultsViewModel @Inject constructor(
     private val _state = MutableStateFlow<TripResultsUiState>(TripResultsUiState.Loading)
     val state: StateFlow<TripResultsUiState> = _state.asStateFlow()
 
-    /** Emits the selected index (and its itinerary) so the screen can re-point the map. */
-    private val _selectedItinerary = MutableSharedFlow<Pair<Int, TripItinerary>>(extraBufferCapacity = 1)
-    val selectedItinerary: SharedFlow<Pair<Int, TripItinerary>> = _selectedItinerary.asSharedFlow()
+    /** Emits the chosen itinerary so the screen can re-point the map, including on a re-tap. */
+    private val _selectedItinerary = MutableSharedFlow<TripItinerary>(extraBufferCapacity = 1)
+    val selectedItinerary: SharedFlow<TripItinerary> = _selectedItinerary.asSharedFlow()
 
     // The plan being shown, or null before the first seed. Held by identity — see [seedPlan].
     private var plan: List<TripItinerary>? = null
@@ -53,30 +53,21 @@ class TripResultsViewModel @Inject constructor(
     private var plannedStart: ServerTime? = null
 
     /**
-     * Takes a completed plan, reporting whether it took it — hence `seed` rather than `set`: a plan this
-     * ViewModel is already holding is refused. [initialIndex] is the option to *open* on (a resumed
-     * trip's pinned one, else the first); [plannedStart] is
-     * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
+     * Seeds a new plan, or applies an explicit resume's [resumeIndex] even to the same cached plan.
+     * A null index means there is no resume to consume: a new plan opens on option zero, while a
+     * remounted sheet keeps the rider's selection. The return value tells the sheet to draw the chosen
+     * option and consume the resume.
      *
-     * **Seeding is per plan, not per mount of the sheet that calls this**, which is re-mounted every time
-     * HOME's composition is rebuilt — what pushing a destination over the map does (#2274). Nothing
-     * behind directions dies on that trip, so the rider returns to what they left, and re-seeding would
-     * be the only thing to take it away: it would answer "which option" with [initialIndex] again, over
-     * the selection they had made. Callers hang the rest of their seeding off the return value.
-     *
-     * "Already holding" is the identity of [plan], not its contents: [itineraries] arrives as the very
-     * `PlanResult.Success.itineraries` the trip-plan ViewModel holds, so the same object *is* the same
-     * plan, while a re-plan mints a new one — and does re-seed — even where it happens to come back with
-     * equal itineraries, which as data classes they can.
+     * Plans are compared by identity because a fresh plan can contain equal itineraries.
      */
     fun seedPlan(
         itineraries: List<TripItinerary>,
-        initialIndex: Int,
+        resumeIndex: Int?,
         plannedStart: ServerTime? = null
     ): Boolean {
-        if (itineraries === plan) return false
+        if (itineraries === plan && resumeIndex == null) return false
         plan = itineraries
-        selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
+        selectedIndex = (resumeIndex ?: 0).coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
         this.plannedStart = plannedStart
         load()
         return true
@@ -95,7 +86,7 @@ class TripResultsViewModel @Inject constructor(
         if (index !in itineraries.indices) return
         val changed = index != selectedIndex
         selectedIndex = index
-        _selectedItinerary.tryEmit(index to itineraries[index])
+        _selectedItinerary.tryEmit(itineraries[index])
         if (changed) load()
     }
 

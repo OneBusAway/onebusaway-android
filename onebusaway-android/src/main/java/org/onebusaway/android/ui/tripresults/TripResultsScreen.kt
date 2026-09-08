@@ -1070,12 +1070,10 @@ fun TripResultsSheet(
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
-    // Which option to open on, and whether these itineraries are a stored snapshot rather than a plan
-    // just made. Both are required rather than defaulted: a silently-defaulted 0 is precisely the resume
-    // bug this exists to prevent, and a silently-defaulted `false` re-arms the monitor for a departed
-    // trip (the [rideBadgeTaps] argument on DirectionsResultsSheet makes the same call for the same
-    // reason).
-    initialOptionIndex: Int,
+    // A non-null index is an explicit pinned-trip resume, consumed after selecting that option.
+    // Null preserves the selection on remount and opens a fresh plan on option zero.
+    // Stored snapshots must not re-arm the trip-update monitor for an already departed trip.
+    resumeIndex: Int?,
     fromSnapshot: Boolean,
     // Which option is pinned, and the long-press action that toggles it (#2053). Pinning is a long
     // press and nothing else — see [TripResultsHeader].
@@ -1089,16 +1087,11 @@ fun TripResultsSheet(
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
 
-    // Seed from the completed plan, then point the map at the option it settled on — read back from the
-    // ViewModel rather than re-derived here, so the picker can't highlight a trip the map isn't showing.
-    //
-    // This effect re-runs on every fresh composition, not only on a new plan, so the seed hangs off
-    // whether the ViewModel took the plan — see [TripResultsViewModel.seedPlan] (#2274). Drawing the
-    // trip, arming the change monitor and reporting the resume consumed all belong to that one-time
-    // seed. A refused plan means the sheet was merely re-mounted, and it owes the map only a re-assert
-    // of the rider's own option, since a fresh entry to directions keeps the results but not the drawing.
-    LaunchedEffect(itineraries) {
-        val seeded = resultsViewModel.seedPlan(itineraries, initialOptionIndex, params?.plannedStart)
+    // A new plan or explicit resume selects and frames an option. A remount only restores the map
+    // if needed, keeping the rider's selection and leg focus (#2274). Read the chosen itinerary from
+    // the ViewModel so the map and picker agree.
+    LaunchedEffect(itineraries, resumeIndex) {
+        val seeded = resultsViewModel.seedPlan(itineraries, resumeIndex, params?.plannedStart)
         val itinerary = resultsViewModel.currentItinerary()
         if (seeded) {
             itinerary?.let(showItinerary)
@@ -1109,15 +1102,11 @@ fun TripResultsSheet(
         }
     }
 
-    // Follow the selected option onto the map (the old observeSelection). Read [params] through
-    // rememberUpdatedState so the long-lived collector always sees the latest request — keying the effect
-    // on resultsViewModel alone would pin the first snapshot, so a later selection could arm trip updates
-    // with a stale one after new results arrive (selectedItinerary is a no-replay SharedFlow, so keeping
-    // one collector — rather than restarting it — also can't drop a concurrent emission).
+    // Keep one collector for the non-replaying selection flow, with the latest plan inputs.
     val currentParams by rememberUpdatedState(params)
     val currentFromSnapshot by rememberUpdatedState(fromSnapshot)
     LaunchedEffect(resultsViewModel) {
-        resultsViewModel.selectedItinerary.collect { (_, itinerary) ->
+        resultsViewModel.selectedItinerary.collect { itinerary ->
             showItinerary(itinerary)
             // Same gate as the seeding effect: picking a different option out of a *stored* plan is
             // still a stored plan, and none of its departures are any fresher for having been tapped.

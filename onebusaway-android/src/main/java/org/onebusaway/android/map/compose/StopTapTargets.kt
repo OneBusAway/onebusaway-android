@@ -43,3 +43,23 @@ internal fun stopChoicesAt(
     }
     .distinctBy { it.id }
     .sortedWith(compareBy<StopMarker, String>(ROUTE_NAME_ORDER) { it.stop.stopCode.orEmpty() }.thenBy { it.id })
+
+/**
+ * The stop whose anchor lies closest to [tap] inside the circular target of [targetRadiusPx], or null when none does.
+ * Provider layers without native marker hit testing (the MapLibre route-stop symbol layer) use it so their
+ * tap target is the same circle as [stopChoicesAt], not the rendered icon's bounds.
+ */
+internal fun nearestStopWithin(
+    tap: ScreenOffset,
+    stops: List<StopMarker>,
+    projector: MapProjector,
+    targetRadiusPx: Float
+): StopMarker? = stops
+    .mapNotNull { stop ->
+        val screen = projector.toScreen(stop.point) ?: return@mapNotNull null
+        val dx = screen.x - tap.x
+        val dy = screen.y - tap.y
+        (dx * dx + dy * dy).takeIf { it <= targetRadiusPx * targetRadiusPx }?.let { stop to it }
+    }
+    .minByOrNull { it.second }
+    ?.first

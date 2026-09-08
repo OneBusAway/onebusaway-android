@@ -37,11 +37,13 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
+import org.onebusaway.android.map.compose.nearestStopWithin
 import org.onebusaway.android.map.render.DETAIL_RAMP_END_ZOOM
 import org.onebusaway.android.map.render.DETAIL_RAMP_START_ZOOM
 import org.onebusaway.android.map.render.RouteStopCircles
 import org.onebusaway.android.map.render.RouteStopIconKey
 import org.onebusaway.android.map.render.STOP_FOCUS_ROUTE_MIN_SCALE
+import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.drawRouteStopBitmap
 import org.onebusaway.android.map.render.routeStopIconKey
@@ -127,17 +129,29 @@ internal class MapLibreRouteStopBitmapLayer(
         }
     }
 
+    /**
+     * The route stop nearest to [point] within the 48 dp circular stop tap target (docs/COLOCATED_STOPS.md).
+     * The symbol layer has no marker hit testing of its own, so the rendered-feature query only gathers
+     * candidates; the radial test against each stop's anchor decides, matching the shared stop chooser.
+     */
     fun stopAt(point: LatLng): StopMarker? {
-        val screen = map.projection.toScreenLocation(point)
-        val tapRadius = TAP_RADIUS_DP * density
+        val projection = map.projection
+        val screen = projection.toScreenLocation(point)
+        val tapRadius = TAP_TARGET_RADIUS_DP * density
         val hitBox = RectF(
             screen.x - tapRadius,
             screen.y - tapRadius,
             screen.x + tapRadius,
             screen.y + tapRadius
         )
-        val feature = map.queryRenderedFeatures(hitBox, LAYER_ID).firstOrNull()
-        return feature?.getStringProperty(STOP_ID_PROPERTY)?.let(stopById::get)
+        val candidates = map.queryRenderedFeatures(hitBox, LAYER_ID)
+            .mapNotNull { feature -> feature.getStringProperty(STOP_ID_PROPERTY)?.let(stopById::get) }
+        return nearestStopWithin(
+            ScreenOffset(screen.x, screen.y),
+            candidates,
+            { geo -> projection.toScreenLocation(LatLng(geo.latitude, geo.longitude)).let { ScreenOffset(it.x, it.y) } },
+            tapRadius
+        )
     }
 
     fun dispose() {
@@ -156,7 +170,7 @@ internal class MapLibreRouteStopBitmapLayer(
         const val IMAGE_PROPERTY = "image"
         const val MIN_SIZE_PROPERTY = "minSize"
         const val MAX_SIZE_PROPERTY = "maxSize"
-        const val TAP_RADIUS_DP = 12f
+        const val TAP_TARGET_RADIUS_DP = 24f
         const val REFERENCE_DENSITY = 3f
     }
 }

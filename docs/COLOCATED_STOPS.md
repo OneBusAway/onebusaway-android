@@ -18,6 +18,9 @@ coordinates differ. The live map projection makes this zoom-dependent: zooming i
 can separate two stops into independently selectable targets. A tap on empty map
 within a stop's target can select it too. Vehicle, rental, and route-badge taps
 retain the SDK's normal dispatch.
+MapLibre draws route stops in a symbol layer with no marker hit testing, so that
+layer applies the same 24 dp radial test itself and reports the nearest stop
+inside it; the map-click fallback then covers the rest of the target.
 
 The SDK's original marker hit is always included, even when the tap lands on its
 route label outside the target around its anchor. Exact overlapping anchors keep

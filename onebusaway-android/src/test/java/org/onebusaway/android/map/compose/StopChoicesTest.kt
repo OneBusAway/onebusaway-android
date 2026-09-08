@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.compose
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
@@ -121,5 +122,28 @@ class StopChoicesTest {
         val a = marker("a", "1")
         assertEquals(emptyList<StopMarker>(), stopChoicesAt(null, listOf(a), ScreenOffset(0f, 0f), MapProjector { null }, 24f))
         assertEquals(emptyList<StopMarker>(), stopChoicesAt(null, listOf(a), ScreenOffset(0f, 0f), MapProjector { ScreenOffset(100f, 100f) }, 24f))
+    }
+
+    @Test
+    fun `a provider layer picks the nearest stop inside the circular target`() {
+        val near = marker("a", "1")
+        val far = marker("b", "2").copy(point = GeoPoint(1.0, 1.0))
+        val outside = marker("c", "3").copy(point = GeoPoint(2.0, 2.0))
+        val tap = ScreenOffset(100f, 200f)
+        val screens = mapOf(near.point to ScreenOffset(110f, 205f), far.point to ScreenOffset(84f, 190f), outside.point to ScreenOffset(118f, 218f))
+        assertSame(near, nearestStopWithin(tap, listOf(outside, far, near), MapProjector(screens::get), 24f))
+    }
+
+    @Test
+    fun `a provider layer accepts the full 24 dp reach but not the square corners`() {
+        val stop = marker("a", "1")
+        val tap = ScreenOffset(100f, 200f)
+        for ((dx, dy) in listOf(24f to 0f, 0f to -24f, 14f to 19f)) {
+            assertSame("Offset ($dx, $dy)", stop, nearestStopWithin(tap, listOf(stop), MapProjector { ScreenOffset(tap.x + dx, tap.y + dy) }, 24f))
+        }
+        for ((dx, dy) in listOf(18f to 18f, -18f to -18f, 24.1f to 0f)) {
+            assertNull("Offset ($dx, $dy)", nearestStopWithin(tap, listOf(stop), MapProjector { ScreenOffset(tap.x + dx, tap.y + dy) }, 24f))
+        }
+        assertNull(nearestStopWithin(tap, listOf(stop), MapProjector { null }, 24f))
     }
 }

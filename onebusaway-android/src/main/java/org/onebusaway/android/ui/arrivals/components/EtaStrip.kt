@@ -611,7 +611,7 @@ internal fun EtaPill(
     val nowSize = 26.sp
     val labelSize = 14.sp
     val indicatorSize = 13.8.dp // 1.5× the base accent, then +15%; overlaid, so the extra size overlaps, not widens
-    val clockTimeSize = 10.sp
+    val clockTimeSize = 12.sp
     val topPadding = 3.dp
     val bottomPadding = 3.5.dp
     // Negative: tightLineStyle's trim gets the ETA row and clock-time line close but not flush (some

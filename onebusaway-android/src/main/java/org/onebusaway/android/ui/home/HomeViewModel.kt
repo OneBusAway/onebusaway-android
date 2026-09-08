@@ -98,6 +98,18 @@ class HomeViewModel @Inject constructor(
     private val prefs: PreferencesRepository
 ) : ViewModel() {
 
+    // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
+    // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
+    // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
+    // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
+    // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
+    // destination — must queue for the single consumer instead of vanishing. UNLIMITED (not a fixed
+    // capacity): the whole point is to never drop a queued directive, and trySend on a bounded channel
+    // fails silently once it fills — reviving the very drop bug this Channel replaced. Directives are
+    // tiny and low-frequency, so an unbounded buffer costs nothing in practice.
+    private val _mapDirectives = Channel<MapDirective>(capacity = Channel.UNLIMITED)
+    val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
+
     // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
     // SavedStateHandle-restored focus so a recreation reflects the restore by construction — unless
     // that focus has outlived its timeout, in which case it is never adopted (#2294).
@@ -113,6 +125,9 @@ class HomeViewModel @Inject constructor(
         val restored = CurrentFocusPersistence.read(savedState)
         if (restored == CurrentFocus.None || !focusHasExpired()) return restored
         CurrentFocusPersistence.write(savedState, CurrentFocus.None)
+        // MapViewModel restores its route from a separate handle. Queue the clear before MapFeature
+        // subscribes so that route and its vehicle polling expire along with the home focus.
+        emitMapDirective(MapDirective.ClearFocus)
         return CurrentFocus.None
     }
 
@@ -154,18 +169,6 @@ class HomeViewModel @Inject constructor(
     fun setDirectionsResultsInset(px: Int) {
         _directionsBottomInset.value = px
     }
-
-    // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
-    // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
-    // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
-    // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
-    // destination — must queue for the single consumer instead of vanishing. UNLIMITED (not a fixed
-    // capacity): the whole point is to never drop a queued directive, and trySend on a bounded channel
-    // fails silently once it fills — reviving the very drop bug this Channel replaced. Directives are
-    // tiny and low-frequency, so an unbounded buffer costs nothing in practice.
-    private val _mapDirectives = Channel<MapDirective>(capacity = Channel.UNLIMITED)
-    val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
 
     // Telemetry events the host's single HomeAnalyticsEffect reports (region auto-selects, nav/help menu
     // selections) — so the imperative ObaAnalytics calls live in one Compose effect, not scattered here.
@@ -1422,7 +1425,7 @@ class HomeViewModel @Inject constructor(
      * ([restoreFocus]) and reaches here with nothing to expire.
      */
     fun onHomeForegrounded() {
-        if (_currentFocus.value == CurrentFocus.None) return
+        // Closing the banner leaves undo history even when the current focus is already empty.
         if (focusHasExpired()) clearMapFocusAndUndoHistory()
     }
 

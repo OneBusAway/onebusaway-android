@@ -1053,6 +1053,28 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `an expired restored route queues a map clear before the map subscribes`() = runTest {
+        val handle = SavedStateHandle()
+        CurrentFocusPersistence.write(handle, CurrentFocus.Route(RouteTarget("65")))
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - 5.hours)
+        val vm = viewModel(savedState = handle)
+
+        // The map restores independently and subscribes after HomeViewModel is constructed.
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertEquals(CurrentFocus.None, CurrentFocusPersistence.read(handle))
+        assertFalse(vm.canUndoMapAction.value)
+        assertEquals(listOf(MapDirective.ClearFocus), map.sent)
+        vm.onHomeForegrounded()
+        advanceUntilIdle()
+        assertEquals(1, map.clearFocusCount)
+        job.cancel()
+    }
+
+    @Test
     fun `a restored focus left more recently than the timeout is kept`() = runTest {
         val handle = handleLeftAgo(30.minutes)
 
@@ -1102,6 +1124,40 @@ class HomeViewModelTest {
         assertFalse(vm.canUndoMapAction.value)
         assertEquals(1, map.clearFocusCount)
         job.cancel()
+    }
+
+    @Test
+    fun `coming back after the timeout clears undo history behind a closed banner`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        vm.onStopFocused(FocusedStop("42", "Pike St"))
+        vm.clearMapFocus()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertTrue(vm.canUndoMapAction.value)
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - 5.hours)
+
+        vm.onHomeForegrounded()
+
+        assertFalse(vm.canUndoMapAction.value)
+        assertFalse(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+    }
+
+    @Test
+    fun `coming back within the timeout keeps undo history behind a closed banner`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        val stop = FocusedStop("42", "Pike St")
+        vm.onStopFocused(stop)
+        vm.clearMapFocus()
+        CurrentFocusPersistence.markActive(handle, WallTime.now() - 30.minutes)
+
+        vm.onHomeForegrounded()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertTrue(vm.canUndoMapAction.value)
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(stop, vm.currentFocus.value.focusedStop)
     }
 
     @Test

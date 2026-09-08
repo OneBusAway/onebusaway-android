@@ -20,6 +20,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -208,6 +209,10 @@ class TripTrackingNotifications @Inject constructor(
         return builder
     }
 
+    // The gate is at the only call site (above), but lint doesn't carry an SDK_INT check across a
+    // method boundary — so the level is restated here rather than suppressed, which also keeps any
+    // future caller honest.
+    @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
     private fun metricStyle(card: TrackedRouteCard): NotificationCompat.MetricStyle = NotificationCompat.MetricStyle()
         .setMetrics(
             card.metrics.map { metric ->

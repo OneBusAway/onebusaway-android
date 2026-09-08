@@ -939,13 +939,10 @@
     <string name="remind_me_latter">Przypomnij mi później</string>
     <string name="map_option_zoom_out">Oddal</string>
     <string name="map_option_zoom_in">Przybliż</string>
-    <string name="map_option_layers_close">Zamknij przycisk warstw mapy</string>
 
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Tak, zostałem powiadomiony we właściwym czasie</string>
     <string name="feedback_dislike_button_description">Nie, nie zostałem powiadomiony we właściwym czasie</string>
-
-    <string name="map_option_layers">Przycisk warstw mapy</string>
 
     <!-- Ekran obsługiwanych przewoźników -->
     <string name="agencies_title">Obsługiwani przewoźnicy</string>

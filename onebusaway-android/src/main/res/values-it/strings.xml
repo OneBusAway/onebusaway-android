@@ -901,8 +901,4 @@
     <string name="my_option_clear_starred_routes_confirm">Questa operazione rimuoverà definitivamente tutti i percorsi contrassegnati con una stella.</string>
     <string name="map_option_zoom_out">Riduci</string>
     <string name="map_option_zoom_in">Ingrandisci</string>
-    <string name="map_option_layers_close">Chiudi pulsante livelli mappa</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
-    <string name="map_option_layers">Pulsante livelli mappa</string>
 </resources>

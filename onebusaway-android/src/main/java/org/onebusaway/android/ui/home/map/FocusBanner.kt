@@ -171,12 +171,12 @@ fun FocusBanner(
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
     onRecenterStop: () -> Unit,
-    stopMenu: StopFocusMenu? = null,
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
     onHeight: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    stopMenu: StopFocusMenu? = null
 ) {
     Surface(
         modifier = modifier.onSizeChanged { onHeight(it.height) },

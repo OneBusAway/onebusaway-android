@@ -53,7 +53,6 @@ import org.onebusaway.android.ui.home.HomeNavHost
 import org.onebusaway.android.ui.home.HomeScreen
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.LaunchIntentChannel
-import org.onebusaway.android.ui.home.LaunchIntentEffect
 import org.onebusaway.android.ui.home.PaymentWarningDialog
 import org.onebusaway.android.ui.home.RegionPickerHost
 import org.onebusaway.android.ui.home.ReportTarget
@@ -62,6 +61,7 @@ import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.launchDestination
+import org.onebusaway.android.ui.home.launchIntentEffect
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
@@ -95,7 +95,7 @@ class HomeActivity : AppCompatActivity() {
     lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
 
     // Warm external launches queue until the NavHost is started, without dropping rapid, distinct
-    // intents (#1582). LaunchIntentEffect handles the cold intent separately, using its saved readiness
+    // intents (#1582). launchIntentEffect handles the cold intent separately, using its saved readiness
     // state to retry after recreation if the Activity was saved before collection started.
     private val launchIntents = LaunchIntentChannel<Intent>()
 
@@ -145,7 +145,7 @@ class HomeActivity : AppCompatActivity() {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            val launchReady = LaunchIntentEffect(navController, initialIntent, launchIntents.items, ::applyLaunchIntentSideEffects)
+            val launchReady = launchIntentEffect(navController, initialIntent, launchIntents.items, ::applyLaunchIntentSideEffects)
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -217,7 +217,7 @@ class HomeActivity : AppCompatActivity() {
 
     /**
      * A warm re-launch (singleTop) carrying an external screen intent — FCM CLEAR_TOP, the
-     * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [LaunchIntentEffect]
+     * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [launchIntentEffect]
      * (cold launches are handled from the Activity intent when composition starts).
      */
     override fun onNewIntent(intent: Intent) {
@@ -227,7 +227,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * The domain mutations a launch intent implies, run by [LaunchIntentEffect] before it opens the
+     * The domain mutations a launch intent implies, run by [launchIntentEffect] before it opens the
      * translated route: the `add-region`/FCM side effects (see [applyIntentSideEffects]) and the
      * "show tutorials again" welcome re-request. Kept off [IntentRouteMapper] so it stays a pure translator.
      */
@@ -273,7 +273,7 @@ class HomeActivity : AppCompatActivity() {
      * results from those extras — the itineraries are injected as-is (no re-plan). Restores the behavior
      * the retired standalone screen's `maybeRestoreFromIntent` used to provide (#1939).
      *
-     * No re-restore guard is needed here: LaunchIntentEffect saves whether the cold intent was handled,
+     * No re-restore guard is needed here: launchIntentEffect saves whether the cold intent was handled,
      * and the channel submits each warm `onNewIntent` once, so a config change doesn't re-fire this —
      * and the activity-scoped [tripPlanViewModel] keeps the restored results.
      */
@@ -348,7 +348,7 @@ class HomeActivity : AppCompatActivity() {
         // The web intent-filter is necessarily broader than the parser (it can't see the query string,
         // and pathPattern globs span '/'), so we can be launched for a onebusaway.co URL that routes
         // nowhere. Give it back to the browser instead of stranding the user on the map. This activity
-        // deliberately stays alive behind it: the same call runs for warm relaunches (LaunchIntentEffect
+        // deliberately stays alive behind it: the same call runs for warm relaunches (launchIntentEffect
         // feeds it both cold and onNewIntent intents), and finishing there would tear down a session the
         // user is in the middle of. If no browser will take it we fall through and land on home/map.
         // `deepLink == null` short-circuits the check for anything that already routed — a link with a

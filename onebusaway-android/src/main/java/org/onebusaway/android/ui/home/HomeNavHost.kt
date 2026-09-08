@@ -294,7 +294,7 @@ fun HomeNavHost(
  * empty. Once handled, recreation restores navigation without replaying the launch's side effects.
  */
 @Composable
-internal fun LaunchIntentEffect(
+internal fun launchIntentEffect(
     navController: NavHostController,
     initialIntent: Intent,
     launchIntents: Flow<Intent>,

@@ -297,7 +297,6 @@ object VehicleBitmaps {
      * That rule: a vehicle without real-time reports nothing, whatever its status field says. It has no
      * observed occupancy, and a gray marker that grew a tab would be claiming data it doesn't have (#959).
      */
-    @VisibleForTesting
     internal fun occupancyBucket(vehicle: VehicleMarker): OccupancyBucket? = if (vehicle.isRealtime) OccupancyBucket.of(vehicle.status.occupancyStatus) else null
 
     /**

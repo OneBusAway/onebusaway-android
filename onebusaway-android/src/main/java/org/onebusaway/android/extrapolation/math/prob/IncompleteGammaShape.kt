@@ -143,7 +143,10 @@ internal object IncompleteGammaShape {
     /** [level]'s table, evicting round-robin on a miss. */
     private fun tableFor(level: Double): DoubleArray {
         for (slot in 0 until CACHE_SIZE) {
-            if (levels[slot] == level) return tables[slot]!!
+            // Read the table first and hit on the pair: a slot is only this level's when it is both
+            // keyed to it and filled, which is what [levels] and [tables] being written together means.
+            val table = tables[slot]
+            if (table != null && levels[slot] == level) return table
         }
         val fresh = DoubleArray(TABLE_SIZE) { Double.NaN }
         levels[nextSlot] = level

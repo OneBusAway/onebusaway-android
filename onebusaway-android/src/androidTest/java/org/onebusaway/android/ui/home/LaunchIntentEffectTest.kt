@@ -144,7 +144,7 @@ class LaunchIntentEffectTest {
         channel = remember { LaunchIntentChannel() }
         nav = rememberNavController()
         CompositionLocalProvider(LocalLifecycleOwner provides owner) {
-            val launchReady = LaunchIntentEffect(nav, intent, channel.items) { handled.add(it) }
+            val launchReady = launchIntentEffect(nav, intent, channel.items) { handled.add(it) }
             ready = launchReady
             NavHost(nav, startDestination = NavRoutes.HOME) {
                 composable(NavRoutes.HOME) {

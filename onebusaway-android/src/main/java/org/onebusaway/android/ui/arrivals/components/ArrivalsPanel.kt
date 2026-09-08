@@ -47,6 +47,7 @@ fun ArrivalsPanel(
     state: ArrivalsUiState,
     listState: LazyListState,
     handler: ArrivalActionHandler,
+    modifier: Modifier = Modifier,
     mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
     // The selected trip's band tint (#1990), or null when no vehicle is selected.
     selectedTripBandColor: Int? = null,
@@ -68,12 +69,13 @@ fun ArrivalsPanel(
 
     if (content == null) {
         // Reserve the available sheet space while the first response loads.
-        Box(Modifier.fillMaxSize()) {
+        Box(modifier.fillMaxSize()) {
             LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     } else {
         ArrivalsList(
             content = content,
+            modifier = modifier,
             displayMode = displayMode,
             onDisplayModeChange = onDisplayModeChange,
             modeSwitchModifier = modeSwitchModifier,

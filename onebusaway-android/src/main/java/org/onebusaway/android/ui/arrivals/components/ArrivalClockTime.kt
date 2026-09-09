@@ -85,6 +85,17 @@ internal fun arrivalClockOf(expected: String, scheduled: String): ArrivalClock =
  *  clearly the superseded one of the two. */
 private const val CORRECTED_ALPHA = 0.75f
 
+/** What separates the two times when they sit on one line — wide enough that the struck timetable time
+ *  reads as its own word rather than running into the time that replaced it. */
+private const val SIDE_BY_SIDE_SEPARATOR = "  "
+
+/**
+ * The side-by-side pair as plain text — the exact string [CorrectedClockTime]'s `sideBySide` layout
+ * renders (it styles the two halves separately, so it builds the same text as an AnnotatedString).
+ * The one place the join is spelled, so a test asserting on the rendered line can't drift from it.
+ */
+internal fun ArrivalClock.sideBySideText(): String = corrects?.let { it + SIDE_BY_SIDE_SEPARATOR + expected } ?: expected
+
 /**
  * A clock time, with the timetable time it corrects struck through directly above it when there is
  * one ([ArrivalClock.corrects]) — `~~10:42 AM~~` over `10:47 AM`. With nothing to correct this is
@@ -138,7 +149,7 @@ internal fun CorrectedClockTime(
                 withStyle(SpanStyle(color = color.copy(alpha = color.alpha * CORRECTED_ALPHA), textDecoration = TextDecoration.LineThrough)) {
                     append(corrects)
                 }
-                append("  ")
+                append(SIDE_BY_SIDE_SEPARATOR)
                 withStyle(SpanStyle(textDecoration = canceledDecoration)) {
                     append(clock.expected)
                 }

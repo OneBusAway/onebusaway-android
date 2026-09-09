@@ -446,6 +446,9 @@ fun RouteArrivalRow(
                         // The trailing padding is the gap to the divider — part of the badge section,
                         // so the TopEnd-aligned alert glyph sits flush against the divider.
                         modifier = Modifier.align(Alignment.Center).padding(end = 10.dp).then(anchors.badge),
+                        // A chronological row holds one departure, so its badge gets the step up
+                        // that row's lone ETA pill takes (EtaStrip's PillSizing.STANDALONE) — and
+                        // lands on the same 36.sp the flat arrival row badges at.
                         maxFontSize = if (chronological) 36.sp else 32.sp,
                         width = if (compoundBadge) 96.dp else 64.dp,
                         maxLines = if (compoundBadge) 1 else 2,
@@ -634,7 +637,7 @@ private val PillShape = RoundedCornerShape(6.dp)
 
 /** The lateness-colored status pill (white text on the deviation color), the legacy status badge. */
 @Composable
-private fun StatusPill(text: String, color: Color) {
+internal fun StatusPill(text: String, color: Color) {
     Surface(shape = PillShape, color = color) {
         Text(
             text = text,

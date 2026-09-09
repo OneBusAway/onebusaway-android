@@ -21,16 +21,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
@@ -57,25 +53,20 @@ internal fun ChronologicalArrivalContent(
     etaModifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val clock = remember(arrival, context) { arrival.arrivalClock(context) }
+    // Keyed on the two instants arrivalClock actually formats, not the whole arrival: every poll hands
+    // down a fresh ArrivalInfo whose serverNow has moved, which would re-run two DateUtils formats per
+    // row for strings that almost never change.
+    val clock = remember(arrival.displayTime, arrival.scheduledTime, context) { arrival.arrivalClock(context) }
     val description: @Composable () -> Unit = {
         val decoration = strikeThroughIf(arrival.status == Status.CANCELED)
         if (direction.isNotBlank()) {
             Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, textDecoration = decoration)
         }
         if (stopLabel != null) Text(stopLabel, style = MaterialTheme.typography.bodySmall)
-        if (arrival.statusText.isNotBlank()) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = colorResource(arrival.fillColor),
-                contentColor = Color.White
-            ) {
-                Text(
-                    arrival.statusText,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+        // The same pill the route-grouped row draws (StatusPill), so the two arrival surfaces
+        // don't render one badge two ways.
+        if (arrival.statusText.isNotEmpty()) {
+            StatusPill(arrival.statusText, colorResource(arrival.fillColor))
         }
         CorrectedClockTime(
             clock = clock,
@@ -93,7 +84,9 @@ internal fun ChronologicalArrivalContent(
             EtaPillWithMenu(
                 modifier = if (selected) Modifier.semantics { this.selected = true } else Modifier,
                 trip = arrival,
+                // The clock time is drawn in the description column above, not under the pill.
                 clock = null,
+                standalone = true,
                 liveNow = liveNow,
                 actions = actions,
                 callbacks = callbacks,

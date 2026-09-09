@@ -70,6 +70,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -494,8 +496,9 @@ private fun ReferencePillHeightFrame(
  *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
  *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta.
  *  [clock] is this trip's entry in the strip's once-per-poll formatted clock times (see EtaStrip),
- *  passed in rather than derived here because this composable recomposes every second. Null when
- *  the chronological row displays the clock alongside the pill instead. */
+ *  passed in rather than derived here because this composable recomposes every second. Null omits the
+ *  subline — the chronological row draws the clock in its description column instead, and says so with
+ *  [standalone] rather than by the absence of a clock (see [EtaPill]). */
 @Composable
 internal fun EtaPillWithMenu(
     trip: ArrivalInfo,
@@ -505,6 +508,7 @@ internal fun EtaPillWithMenu(
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
     routeBadge: RouteBadge? = null,
+    standalone: Boolean = false,
     outline: BorderStroke? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -522,7 +526,7 @@ internal fun EtaPillWithMenu(
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
             clock = clock,
-            standalone = clock == null,
+            standalone = standalone,
             routeBadge = routeBadge,
             outline = outline,
             onClick = { callbacks.onEtaClick(trip) },
@@ -571,6 +575,24 @@ internal fun TripActionsMenu(
 private val PILL_BADGE_MAX_WIDTH = 72.dp
 
 /**
+ * How a pill's countdown is sized. A pill in a strip shares the row with its neighbours; a
+ * [STANDALONE] one is the only pill in its row (the chronological arrival row), so it carries the row
+ * on its own and steps up to match — one step on both glyph sizes, plus the padding that keeps the
+ * bigger number sitting in the same proportion of pill it did before. The three move together; that's
+ * why they're one value rather than three ternaries at the use sites.
+ */
+private data class PillSizing(val number: TextUnit, val now: TextUnit, val extraVerticalPadding: Dp) {
+    companion object {
+        /** In a strip, beside other pills. */
+        val IN_STRIP = PillSizing(number = 28.sp, now = 26.sp, extraVerticalPadding = 0.dp)
+
+        /** Alone in its row. Kept in step with the chronological row's larger route badge
+         *  (RouteArrivalRow's `maxFontSize`) — the same "this row has one departure" decision. */
+        val STANDALONE = PillSizing(number = 32.sp, now = 30.sp, extraVerticalPadding = 6.dp)
+    }
+}
+
+/**
  * The prominent white-on-lateness ETA pill — one per trip in a route row's strip (and the Home legend
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
  * opens the trip menu; [canceled] strikes the text through. [clock] is the small "1:10pm"-style
@@ -597,7 +619,9 @@ internal fun EtaPill(
     onMap: Boolean = false,
     canceled: Boolean = false,
     clock: ArrivalClock? = null,
-    // Chronological rows display the clock separately: enlarge and pad their standalone countdown.
+    // This pill is alone in its row rather than one of a strip, so it carries the row by itself and
+    // renders a step up — see [PillSizing]. Independent of [clock]: a pill can legitimately have no
+    // clock time and still sit in a strip (the Home legend's illustrative pills).
     standalone: Boolean = false,
     // The row is drilled into this pill's trip (#2205): its card's selection border, drawn on the pill
     // too. Null is the ordinary unfocused pill.
@@ -607,18 +631,18 @@ internal fun EtaPill(
 ) {
     val decoration = strikeThroughIf(canceled)
     val shape = RoundedCornerShape(8.dp)
-    val numberSize = if (standalone) 32.sp else 28.sp
+    val sizing = if (standalone) PillSizing.STANDALONE else PillSizing.IN_STRIP
+    val numberSize = sizing.number
     // "NOW" reads a touch too urgent at the full number size, so its glyph is dialed back slightly —
     // still clearly dominant, just not shouting (#1805 unified it to numberSize; this softens it). The
     // pill has no clock subline, so it's shorter than its neighbours by content — the strip stretches
     // it back to their height via fillMaxHeight (see EtaStrip), and the label is centered within it.
-    val nowSize = if (standalone) 30.sp else 26.sp
+    val nowSize = sizing.now
     val labelSize = 14.sp
     val indicatorSize = 13.8.dp // 1.5× the base accent, then +15%; overlaid, so the extra size overlaps, not widens
     val clockTimeSize = 12.sp
     val topPadding = 3.dp
     val bottomPadding = 3.5.dp
-    val extraVerticalPadding = if (standalone) 6.dp else 0.dp
     // Negative: tightLineStyle's trim gets the ETA row and clock-time line close but not flush (some
     // residual line-box slack survives it), so this pulls them the rest of the way — tuned by eye
     // against a device screenshot, not derived from the other constants above.
@@ -659,8 +683,8 @@ internal fun EtaPill(
                     // roundel remains visually centered.
                     start = if (routeBadge == null) 6.dp else indicatorSize,
                     end = if (routeBadge == null) 6.dp else indicatorSize,
-                    top = topPadding + extraVerticalPadding,
-                    bottom = bottomPadding + extraVerticalPadding
+                    top = topPadding + sizing.extraVerticalPadding,
+                    bottom = bottomPadding + sizing.extraVerticalPadding
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(clockTimeGap)

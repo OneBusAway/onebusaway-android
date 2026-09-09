@@ -109,11 +109,28 @@ class HelpViewModelTest {
     }
 
     @Test
+    fun `last migration page offers tutorials when release notes were already read`() {
+        for (savedKey in listOf(SearchResultMode.PREFERENCE_KEY, ArrivalDisplayMode.PREFERENCE_KEY)) {
+            val prefs = FakePreferencesRepository().apply {
+                setInt("whatsNewVer", BuildConfig.VERSION_CODE)
+                setInt("search_workflow_migration_source_version", 153)
+                setInt("arrival_display_migration_source_version", 153)
+                setString(savedKey, if (savedKey == SearchResultMode.PREFERENCE_KEY) "map" else "route")
+            }
+            val vm = viewModel(prefs)
+            vm.maybeShowStartup()
+            assertEquals(1, vm.state.value.migrationPages.size)
+            vm.finishMigrationPage()
+            assertEquals(HelpDialog.TutorialOptOut, vm.state.value.dialog)
+        }
+    }
+
+    @Test
     fun `dismissed search choice remains owed after the release marker changes`() {
         val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 157) }
         val vm = viewModel(prefs)
         vm.maybeShowStartup()
-        vm.finishSearchWorkflowChoice()
+        vm.finishMigrationPage()
         assertEquals(null, prefs.getString(SearchResultMode.PREFERENCE_KEY, null))
         val nextLaunch = viewModel(prefs)
         nextLaunch.maybeShowStartup()
@@ -152,7 +169,7 @@ class HelpViewModelTest {
         val vm = viewModel(prefs)
         vm.maybeShowStartup()
         assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
-        vm.finishArrivalDisplayChoice()
+        vm.finishMigrationPage()
         assertEquals(null, prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null))
         prefs.setString(SearchResultMode.PREFERENCE_KEY, "map")
         prefs.setInt("whatsNewVer", 156)

@@ -95,19 +95,14 @@ class HelpViewModel @Inject constructor(
         startupPresented = true
         // This migration includes riders already on 26.2.x. Capture its own source marker:
         // reusing the arrival-ordering marker would exclude fresh installs of those releases.
-        val searchSource = prefs.getInt(SEARCH_WORKFLOW_SOURCE_VERSION, -1).takeUnless { it == -1 }
-            ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(SEARCH_WORKFLOW_SOURCE_VERSION, it) }
-        val arrivalSource = captureArrivalSource()
+        val searchSource = captureMigrationSource(SEARCH_WORKFLOW_SOURCE_VERSION)
+        val arrivalSource = captureMigrationSource(ARRIVAL_DISPLAY_SOURCE_VERSION)
         val pages = buildList {
             if (searchSource > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) add(HelpDialog.SearchWorkflow)
             if (arrivalSource in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) add(HelpDialog.ArrivalDisplay)
         }
-        _state.update { it.copy(migrationPages = pages) }
-        if (pages.isNotEmpty()) {
-            _state.update { it.copy(dialog = pages.first()) }
-        } else {
-            maybeAutoShowWhatsNew()
-        }
+        _state.update { it.copy(migrationPages = pages, dialog = pages.firstOrNull() ?: HelpDialog.None) }
+        if (pages.isEmpty()) maybeAutoShowWhatsNew()
     }
 
     fun previousMigrationPage() {
@@ -119,39 +114,28 @@ class HelpViewModel @Inject constructor(
 
     fun chooseSearchResultMode(mode: SearchResultMode) {
         prefs.setString(SearchResultMode.PREFERENCE_KEY, mode.value)
-        finishSearchWorkflowChoice()
-    }
-
-    /** Back defers this choice until the next launch, without changing either preference. */
-    fun finishSearchWorkflowChoice() {
-        dismiss()
-        maybeShowArrivalDisplayChoice()
-    }
-
-    private fun captureArrivalSource(): Int = prefs.getInt(ARRIVAL_DISPLAY_SOURCE_VERSION, -1).takeUnless { it == -1 }
-        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(ARRIVAL_DISPLAY_SOURCE_VERSION, it) }
-
-    private fun maybeShowArrivalDisplayChoice() {
-        // Capture the previous release before What's New advances its marker. Keep it across
-        // launches so dismissing the chooser neither loses eligibility nor opts a fresh install in.
-        val sourceVersion = captureArrivalSource()
-        if (sourceVersion in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) {
-            _state.update { it.copy(dialog = HelpDialog.ArrivalDisplay) }
-        } else {
-            maybeAutoShowWhatsNew()
-        }
+        finishMigrationPage()
     }
 
     fun chooseArrivalDisplayDefault(mode: ArrivalDisplayMode) {
         prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
-        finishArrivalDisplayChoice()
+        finishMigrationPage()
     }
 
-    /** Dismissing leaves the choice owed on next launch, and allows this launch to continue. */
-    fun finishArrivalDisplayChoice() {
-        dismiss()
-        if (!maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
+    /** Advance through the pages captured at startup; dismissing leaves an unsaved choice owed next launch. */
+    fun finishMigrationPage() {
+        val state = _state.value
+        val index = state.migrationPages.indexOf(state.dialog)
+        if (index < 0) return
+        val next = state.migrationPages.getOrNull(index + 1)
+        _state.update { it.copy(dialog = next ?: HelpDialog.None) }
+        if (next == null && !maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
     }
+
+    // Keep each source across launches before What's New advances its marker, so deferring a
+    // choice neither loses upgrade eligibility nor opts a fresh install in.
+    private fun captureMigrationSource(key: String): Int = prefs.getInt(key, -1).takeUnless { it == -1 }
+        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(key, it) }
 
     fun showWhatsNew() = _state.update { it.copy(dialog = HelpDialog.WhatsNew) }
 

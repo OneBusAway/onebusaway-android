@@ -69,7 +69,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
         ObaTheme {
             MyStopsDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
+                prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
                 onRevealStop = { navController.showArrivals(it) },
                 onSearchStop = { navController.openSearchStop(it, prefs.searchResultMode()) }
@@ -81,7 +81,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
         ObaTheme {
             MyRoutesDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
+                prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) },
                 onOpenRoute = { navController.openSearchRoute(it, prefs.searchResultMode()) }

@@ -137,3 +137,18 @@ On the Pixel 7 Pro, long-pressing route 8's banner opened the
 [new menu](oba-2309-route-menu.png); Show stop list opened its directions and stops.
 From the Denny Way & Westlake Ave mapless board, Map changed the saved zoom from
 13.0697 to exactly 16 and [centered stop 2255](oba-2309-stop-map-zoom.png).
+
+## Simplification review
+
+Three review passes consolidated migration completion around the startup page list,
+shared the choice-card layout, removed a forwarding-only preview function, and reused
+already-resolved preferences. The final pass found no further useful reductions.
+Both migration types now offer the tutorial invitation after the final page when
+release notes have already been read; a regression test covers this path.
+
+On the simplified implementation, 150 focused HelpViewModel/HomeViewModel/MapReveal
+unit tests and 30 migration/banner/navigation Pixel tests passed. Google app/test
+builds, MapLibre Kotlin compilation, and Spotless passed with warnings treated as
+errors. A live Pixel check verified both migration layouts, centered pips, default
+choices, retained selections through Back, and final Continue. Original device
+preferences and migration markers were restored after the check.

@@ -92,7 +92,7 @@ fun HelpFeature(
         HelpDialog.SearchWorkflow -> migrationState.SaveableStateProvider("search") {
             SearchWorkflowChoiceDialog(
                 onSave = viewModel::chooseSearchResultMode,
-                onDismiss = viewModel::finishSearchWorkflowChoice,
+                onDismiss = viewModel::finishMigrationPage,
                 page = migrationPage,
                 pageCount = state.migrationPages.size
             )
@@ -101,7 +101,7 @@ fun HelpFeature(
             ArrivalDisplayChoiceDialog(
                 initialMode = viewModel.arrivalDisplayDefault,
                 onSave = viewModel::chooseArrivalDisplayDefault,
-                onDismiss = viewModel::finishArrivalDisplayChoice,
+                onDismiss = viewModel::finishMigrationPage,
                 page = migrationPage,
                 pageCount = state.migrationPages.size,
                 onBack = if (migrationPage > 1) viewModel::previousMigrationPage else null

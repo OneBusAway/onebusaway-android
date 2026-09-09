@@ -15,32 +15,24 @@
  */
 package org.onebusaway.android.ui.home.help
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.components.MigrationChoice
 import org.onebusaway.android.ui.compose.components.MigrationDialog
 import org.onebusaway.android.ui.searchresults.SearchResultMode
 
@@ -67,30 +59,15 @@ internal fun SearchWorkflowChoiceDialog(
             ) {
                 Text(AnnotatedString.fromHtml(stringResource(R.string.search_result_mode_migration_body)))
                 listOf(SearchResultMode.LISTS, SearchResultMode.MAP).forEach { mode ->
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        border = BorderStroke(1.dp, if (selected == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                    MigrationChoice(
+                        title = stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_lists),
+                        description = stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map_description else R.string.search_result_mode_lists_description),
+                        previous = mode == SearchResultMode.LISTS,
+                        selected = selected == mode,
+                        onSelect = { selected = mode },
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Column(
-                            Modifier.selectable(selected == mode, role = Role.RadioButton, onClick = { selected = mode }).padding(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                RadioButton(selected = selected == mode, onClick = null)
-                                Column {
-                                    Text(
-                                        stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_lists),
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        stringResource(if (mode == SearchResultMode.LISTS) R.string.migration_previous_layout else R.string.migration_new_layout),
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                }
-                            }
-                            Text(stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map_description else R.string.search_result_mode_lists_description))
-                            SearchWorkflowPreview(mode, onSelect = { selected = mode })
-                        }
+                        SearchWorkflowPreview(mode, onSelect = { selected = mode })
                     }
                 }
             }

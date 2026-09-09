@@ -15,18 +15,12 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -35,11 +29,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 import java.time.ZoneId
@@ -50,6 +42,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.chronologicalArrivals
+import org.onebusaway.android.ui.compose.components.MigrationChoice
 import org.onebusaway.android.ui.compose.components.MigrationDialog
 import org.onebusaway.android.ui.compose.components.PhonePreview
 
@@ -75,38 +68,19 @@ internal fun ArrivalDisplayChoiceDialog(
             Column(Modifier.verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.arrival_display_choose_body))
                 ArrivalDisplayMode.entries.forEach { mode ->
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        border = BorderStroke(1.dp, if (selected == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                    MigrationChoice(
+                        title = stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time else R.string.arrival_display_route),
+                        description = stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time_description else R.string.arrival_display_route_description),
+                        previous = mode == ArrivalDisplayMode.TIME,
+                        selected = selected == mode,
+                        onSelect = { selected = mode }
                     ) {
-                        Column(Modifier.selectable(selected == mode, role = Role.RadioButton, onClick = { selected = mode }).padding(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                RadioButton(selected = selected == mode, onClick = null)
-                                Column {
-                                    Text(
-                                        stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time else R.string.arrival_display_route),
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.migration_previous_layout else R.string.migration_new_layout),
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                }
-                            }
-                            Text(stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time_description else R.string.arrival_display_route_description))
-                            ArrivalModePreview(mode, onSelect = { selected = mode })
-                        }
+                        PhonePreview(onSelect = { selected = mode }, Modifier.padding(top = 8.dp)) { SampleArrivalRows(mode) }
                     }
                 }
             }
         }
     )
-}
-
-/** Same departures rendered by the actual drawer rows, at a scaled phone width. */
-@Composable
-private fun ArrivalModePreview(mode: ArrivalDisplayMode, onSelect: () -> Unit) {
-    PhonePreview(onSelect, Modifier.padding(top = 8.dp)) { SampleArrivalRows(mode) }
 }
 
 /** Actual arrival rows with a fixed clock and sample departures, shared by both migration pages. */

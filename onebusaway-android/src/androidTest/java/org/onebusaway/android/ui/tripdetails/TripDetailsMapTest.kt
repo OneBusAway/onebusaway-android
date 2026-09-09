@@ -17,8 +17,11 @@ package org.onebusaway.android.ui.tripdetails
 
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -31,6 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Rule
@@ -89,10 +93,11 @@ class TripDetailsMapTest {
     }
 
     @Test
-    fun mapButtonPassesTheCurrentRequestAndBackReturnsToTripStatus() {
+    fun mapButtonPreservesContextAndBackReturnsFromDirectionsOrMap() {
         lateinit var nav: NavHostController
         lateinit var backDispatcher: OnBackPressedDispatcher
         var mapUndoCount = 0
+        var directionsBackCount = 0
         val content = mutableStateOf(content(details(active).mapRequest("origin_stop")))
         val mapLabel = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.stop_info_option_showonmap)
         compose.setContent {
@@ -124,10 +129,18 @@ class TripDetailsMapTest {
                         )
                     }
                     composable(NavRoutes.HOME) {
-                        Text("Map screen")
-                        // Exercise the production Back handler with map undo/sheet history available.
-                        HomeMapBackHandler(nav.mapReturnAction(), canGoBackWithinMap = true) {
+                        val directionsActive = remember { mutableStateOf(false) }
+                        Column {
+                            Text(if (directionsActive.value) "Directions screen" else "Map screen")
+                            Button(onClick = { directionsActive.value = true }) { Text("Directions") }
+                        }
+                        // Match HomeScreen's handler order: directions registers after map undo.
+                        val onBackToSource = nav.mapReturnAction()
+                        HomeMapBackHandler(onBackToSource, canGoBackWithinMap = true) {
                             mapUndoCount++
+                        }
+                        HomeMapBackHandler(onBackToSource, canGoBackWithinMap = directionsActive.value) {
+                            directionsBackCount++
                         }
                     }
                 }
@@ -136,11 +149,14 @@ class TripDetailsMapTest {
         val tripEntry = nav.currentBackStackEntry
         compose.onNodeWithContentDescription(mapLabel).assertIsDisplayed().performClick()
         compose.onNodeWithText("Map screen").assertIsDisplayed()
+        compose.onNodeWithText("Directions").performClick()
+        compose.onNodeWithText("Directions screen").assertIsDisplayed()
         compose.runOnIdle {
             assertSame(tripEntry, nav.previousBackStackEntry)
             assertEquals(details(active).mapRequest("origin_stop"), nav.currentBackStackEntry!!.savedStateHandle.consumeTripMapReveal())
             backDispatcher.onBackPressed()
             assertEquals(0, mapUndoCount)
+            assertEquals(0, directionsBackCount)
             assertSame(tripEntry, nav.currentBackStackEntry)
             // A refresh may replace live data with schedule-only data; the next tap must use it.
             content.value = content(details(null).mapRequest("origin_stop"))
@@ -150,7 +166,47 @@ class TripDetailsMapTest {
             assertEquals(details(null).mapRequest("origin_stop"), nav.currentBackStackEntry!!.savedStateHandle.consumeTripMapReveal())
             backDispatcher.onBackPressed()
             assertEquals(0, mapUndoCount)
+            assertEquals(0, directionsBackCount)
             assertSame(tripEntry, nav.currentBackStackEntry)
+        }
+    }
+
+    @Test
+    fun directionsWithoutASourceStillCancelsPicksAndUnwindsBeforeMapHistory() {
+        lateinit var backDispatcher: OnBackPressedDispatcher
+        val directionsActive = mutableStateOf(true)
+        val pickingEndpoint = mutableStateOf(true)
+        var directionsBackCount = 0
+        var mapUndoCount = 0
+        compose.setContent {
+            backDispatcher = requireNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            val nav = rememberNavController()
+            NavHost(nav, startDestination = NavRoutes.HOME) {
+                composable(NavRoutes.HOME) {
+                    Text("Directions screen")
+                    HomeMapBackHandler(onBackToSource = null, canGoBackWithinMap = true) { mapUndoCount++ }
+                    HomeMapBackHandler(onBackToSource = null, canGoBackWithinMap = directionsActive.value) {
+                        if (pickingEndpoint.value) pickingEndpoint.value = false else directionsBackCount++
+                    }
+                }
+            }
+        }
+        compose.onNodeWithText("Directions screen").assertIsDisplayed()
+        compose.runOnIdle {
+            backDispatcher.onBackPressed()
+            assertFalse(pickingEndpoint.value)
+            assertEquals(0, directionsBackCount)
+            assertEquals(0, mapUndoCount)
+        }
+        compose.runOnIdle {
+            backDispatcher.onBackPressed()
+            assertEquals(1, directionsBackCount)
+            assertEquals(0, mapUndoCount)
+            directionsActive.value = false
+        }
+        compose.runOnIdle {
+            backDispatcher.onBackPressed()
+            assertEquals(1, mapUndoCount)
         }
     }
 

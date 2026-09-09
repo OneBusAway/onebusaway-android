@@ -843,9 +843,9 @@ fun HomeScreen(
                             // Back cancels an in-progress map pick, then steps out of a drilled-into leg to
                             // the whole trip, and only from the itinerary overview exits directions focus
                             // (to nearby stops). This handler composes inside the undo one above, so it
-                            // registers later and wins every back press while directions is active — the
-                            // one-level walk it delegates to is what keeps that from stranding the trip.
-                            BackHandler(enabled = directionsActive) {
+                            // registers later. It must honor the same source-return priority as the map's
+                            // undo handler; without a source, directions still unwinds one level at a time.
+                            HomeMapBackHandler(onBackToSource, canGoBackWithinMap = directionsActive) {
                                 if (pickTarget != null) {
                                     pickTarget = null
                                 } else {

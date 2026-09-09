@@ -19,8 +19,14 @@
 #   public *;
 #}
 
-# Don't rename class names - this makes stack traces must easier to read/troubleshoot
--dontobfuscate
+# Release builds are obfuscated (Google Play's "App optimization" gate requires it, and it was
+# only ever turned off in 2015 to avoid having to save a mapping file). Readable stack traces now
+# come from the R8 mapping instead: the Crashlytics Gradle plugin uploads it on every release
+# assemble, it is embedded in the App Bundle for Play Console vitals, and the release workflow
+# archives build/outputs/mapping/<variant>/mapping.txt. Keep file + line attributes so those
+# retraced stack traces point at real lines.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
 # For Jackson, using for JSON data binding
 -dontwarn org.w3c.dom.bootstrap.DOMImplementationRegistry
@@ -32,9 +38,6 @@
 -keepclassmembers public final enum org.codehaus.jackson.annotate.JsonAutoDetect$Visibility {
  public static final org.codehaus.jackson.annotate.JsonAutoDetect$Visibility *; }
 
-# Keep all OneBusAway Android classes
--keep class org.onebusaway.android.** { *; }
-
 # Keep all Pelias POJO classes for geocoding
 -keep class edu.usf.cutr.pelias.** { *; }
 
@@ -42,12 +45,6 @@
 -keep class org.geojson.** { *; }
 -keepclassmembers class org.geojson.Feature** { *; }
 -keepclassmembers class org.geojson.jackson.LngLatAltDeserializer** { *; }
-
-# SearchView
--keep class android.support.v7.widget.SearchView { *; }
-
-# "About" activity - see #418
--keep public class * extends android.support.design.widget.CoordinatorLayout$Behavior { *; }
 
 # Below is required to do a release build as of Play Services 8.1 - see #342
 -dontwarn com.google.android.gms.ads.**
@@ -59,10 +56,12 @@
 # Keep Open311 library (needed for unit tests)
 -keep class edu.usf.cutr.open311client.** { *; }
 
-# for AndroidSlidingUpPanel (com.github.hannesa2:AndroidSlidingUpPanel) and compiling with API 28 (see https://github.com/OneBusAway/onebusaway-android/issues/944#issuecomment-446340531)
--dontwarn com.sothree.**
--keep class com.sothree.**
--keep interface com.sothree.**
+# GTFS-realtime bindings (org.mobilitydata:gtfs-realtime-bindings) are generated for the full
+# protobuf-java runtime, whose GeneratedMessage.FieldAccessorTable finds message accessors by name
+# via reflection (toString(), getField(), getDescriptorForType(), ...). Neither jar ships R8 rules,
+# so keep the generated message classes intact rather than let obfuscation rename their members.
+-keep class com.google.transit.realtime.** { *; }
+
 # Flavor-specific Compose map adapters are instantiated by reflection on
 # BuildConfig.MAP_COMPOSE_ADAPTER_CLASS (see ObaComposeMapAdapter.newInstance()), so keep each
 # adapter + its no-arg constructor from being stripped/renamed in release builds.

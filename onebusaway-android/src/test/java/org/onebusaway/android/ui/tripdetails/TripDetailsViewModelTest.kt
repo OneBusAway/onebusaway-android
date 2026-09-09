@@ -25,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
 
@@ -71,7 +72,8 @@ class TripDetailsViewModelTest {
         ),
         stops = emptyList(),
         scrollToIndex = -1,
-        lineColorArgb = 0
+        lineColorArgb = 0,
+        mapRequest = ShowRouteRequest("route", focusTripId = "t", initialDirectionId = 1)
     )
 
     @Test
@@ -90,6 +92,7 @@ class TripDetailsViewModelTest {
         val state = viewModel.state.value
         assertTrue(state is TripDetailsUiState.Content)
         assertEquals("Capitol Hill", (state as TripDetailsUiState.Content).header.headsign)
+        assertEquals(data().mapRequest, state.mapRequest)
     }
 
     @Test

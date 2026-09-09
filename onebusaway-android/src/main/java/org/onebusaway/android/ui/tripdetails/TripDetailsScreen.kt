@@ -70,6 +70,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.RealtimeIndicator
 import org.onebusaway.android.ui.compose.components.LineBadge
@@ -105,6 +106,7 @@ fun TripDetailsRoute(
     onStopClick: (stopId: String, name: String, direction: String?) -> Unit,
     /** Null when destination reminders are off, which removes the long-press affordance. */
     onSetDestinationReminder: ((stopIndex: Int) -> Unit)?,
+    onShowOnMap: (ShowRouteRequest) -> Unit,
     onShowTrajectory: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -117,6 +119,7 @@ fun TripDetailsRoute(
         onRefresh = viewModel::manualRefresh,
         onStopClick = onStopClick,
         onSetDestinationReminder = onSetDestinationReminder,
+        onShowOnMap = onShowOnMap,
         onShowTrajectory = onShowTrajectory
     )
 }
@@ -130,6 +133,7 @@ fun TripDetailsScreen(
     onRefresh: () -> Unit,
     onStopClick: (String, String, String?) -> Unit,
     onSetDestinationReminder: ((Int) -> Unit)?,
+    onShowOnMap: (ShowRouteRequest) -> Unit,
     onShowTrajectory: () -> Unit = {}
 ) {
     val content = state as? TripDetailsUiState.Content
@@ -137,6 +141,15 @@ fun TripDetailsScreen(
         topBar = {
             ObaTopAppBar(title = stringResource(R.string.trip_status), onBack = onBack) {
                 if (content != null) {
+                    content.mapRequest?.let { request ->
+                        IconButton(onClick = { onShowOnMap(request) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_action_location_map),
+                                contentDescription = stringResource(R.string.stop_info_option_showonmap),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                     IconButton(onClick = onRefresh, enabled = !refreshing) {
                         if (refreshing) {
                             CircularProgressIndicator(

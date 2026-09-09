@@ -37,6 +37,7 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.extrapolation.data.serviceDateOrNull
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
@@ -55,7 +56,8 @@ data class TripDetailsData(
     val header: TripHeader,
     val stops: List<TripStopItem>,
     val scrollToIndex: Int,
-    val lineColorArgb: Int
+    val lineColorArgb: Int,
+    val mapRequest: ShowRouteRequest?
 )
 
 /** Loads a trip's schedule + real-time status and projects it onto the UI model. */
@@ -213,7 +215,8 @@ class DefaultTripDetailsRepository @Inject constructor(
             header = buildHeader(td, trip, route, status, isRealtime),
             stops = stops,
             scrollToIndex = resolveScrollIndex(scrollMode, stopIndex, destinationIndex, nextStopIndex),
-            lineColorArgb = lineColorArgb
+            lineColorArgb = lineColorArgb,
+            mapRequest = td.mapRequest()
         )
     }
 
@@ -297,4 +300,19 @@ class DefaultTripDetailsRepository @Inject constructor(
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
+}
+
+/** Focus a running trip's vehicle; a trip without a current position opens the route overview. */
+internal fun TripDetails.mapRequest(): ShowRouteRequest? {
+    val trip = trip ?: return null
+    val routeId = trip.routeId.takeIf { it.isNotBlank() } ?: return null
+    // status is null when the vehicle is serving a different trip in this block. Predictions alone
+    // do not mean a vehicle is on the road (e.g. a delayed trip that has not pulled out yet).
+    val status = status
+    val hasVehicle = status != null && status.status != Status.CANCELED && status.position != null
+    return ShowRouteRequest(
+        routeId = routeId,
+        focusTripId = tripId.takeIf { hasVehicle && it.isNotBlank() },
+        initialDirectionId = trip.directionId.takeIf { hasVehicle }
+    )
 }

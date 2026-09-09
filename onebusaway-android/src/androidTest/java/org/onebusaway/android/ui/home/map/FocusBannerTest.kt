@@ -16,10 +16,7 @@
 package org.onebusaway.android.ui.home.map
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -74,6 +71,7 @@ class FocusBannerTest {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
         }
@@ -111,6 +109,7 @@ class FocusBannerTest {
     private fun setRouteBanner(
         scheduleUrl: String? = null,
         onShowSchedule: (String) -> Unit = {},
+        onShowStopList: (String) -> Unit = {},
         onFrameRoute: () -> Unit = {},
         directions: List<RouteMapDirection> = emptyList(),
         currentDirectionId: Int? = null,
@@ -138,6 +137,7 @@ class FocusBannerTest {
                 onSelectDirection = onSelectDirection,
                 onFrameRoute = onFrameRoute,
                 onShowSchedule = onShowSchedule,
+                onShowStopList = onShowStopList,
                 onHeight = {}
             )
         }
@@ -218,7 +218,8 @@ class FocusBannerTest {
     @Test
     fun longPressingRouteBannerOpensTheSchedule() {
         var opened: String? = null
-        setRouteBanner(scheduleUrl = SCHEDULE_URL, onShowSchedule = { opened = it })
+        var stopListRouteId: String? = null
+        setRouteBanner(scheduleUrl = SCHEDULE_URL, onShowSchedule = { opened = it }, onShowStopList = { stopListRouteId = it })
 
         composeRule.onNodeWithText(ROUTE_LONG_NAME).performTouchInput { longClick() }
 
@@ -227,18 +228,26 @@ class FocusBannerTest {
         ).performClick()
 
         assertEquals(SCHEDULE_URL, opened)
+        composeRule.onNodeWithText(ROUTE_LONG_NAME).performTouchInput { longClick() }
+        composeRule.onNodeWithText(context.getString(R.string.bus_options_menu_show_stop_list)).performClick()
+        assertEquals("1_40", stopListRouteId)
+        composeRule.onNodeWithText(context.getString(R.string.bus_options_menu_show_stop_list)).assertDoesNotExist()
     }
 
-    /** Tapping still frames the route, but with no schedule page there is nothing to long-press for. */
+    /** The stop list remains available without a schedule; ordinary taps still frame the route. */
     @Test
-    fun routeBannerHasNoLongPressWithoutASchedule() {
+    fun routeBannerOpensStopListWithoutASchedule() {
         var framed = false
-        setRouteBanner(onFrameRoute = { framed = true })
+        var stopListRouteId: String? = null
+        setRouteBanner(onFrameRoute = { framed = true }, onShowStopList = { stopListRouteId = it })
 
         val row = composeRule.onNodeWithText(ROUTE_LONG_NAME)
-        row.assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
         row.performClick()
         assertTrue(framed)
+        row.performTouchInput { longClick() }
+        composeRule.onNodeWithText(context.getString(R.string.bus_options_menu_show_route_schedule)).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.bus_options_menu_show_stop_list)).performClick()
+        assertEquals("1_40", stopListRouteId)
     }
 
     /**
@@ -291,6 +300,7 @@ class FocusBannerTest {
                     onSelectDirection = {},
                     onFrameRoute = {},
                     onShowSchedule = {},
+                    onShowStopList = {},
                     onHeight = {}
                 )
                 FocusBanner(
@@ -311,6 +321,7 @@ class FocusBannerTest {
                     onSelectDirection = {},
                     onFrameRoute = {},
                     onShowSchedule = {},
+                    onShowStopList = {},
                     onHeight = {}
                 )
             }

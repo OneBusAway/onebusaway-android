@@ -403,7 +403,8 @@ fun MapFeature(
                         directive.routes,
                         directive.overlayExpanded,
                         directive.recenter,
-                        directive.animate
+                        directive.animate,
+                        directive.useDefaultZoom
                     )
                 is MapDirective.ShowItinerary ->
                     mapViewModel.showItinerary(directive.itinerary, directive.pins)

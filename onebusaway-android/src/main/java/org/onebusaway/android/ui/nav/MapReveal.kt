@@ -58,7 +58,7 @@ fun NavController.showArrivals(reveal: StopReveal) = navigate(NavRoutes.arrivals
 /** Push the map above the board so Back returns to its existing state. */
 fun NavController.showStopMapFromArrivals(reveal: StopReveal) {
     navigate(NavRoutes.HOME)
-    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal)
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal.copy(useDefaultZoom = true))
 }
 
 fun NavController.showRouteMapFromArrivals(request: ShowRouteRequest) {
@@ -96,6 +96,7 @@ const val RESULT_MAP_STOP_ID = "mapReveal.stopId"
 const val RESULT_MAP_STOP_NAME = "mapReveal.stopName"
 const val RESULT_MAP_STOP_LAT = "mapReveal.stopLat"
 const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
+private const val RESULT_MAP_STOP_DEFAULT_ZOOM = "mapReveal.stopDefaultZoom"
 
 /**
  * Reveal the map in route mode for [request], popping back to HOME. The [ShowRouteRequest] is serialized
@@ -151,7 +152,9 @@ fun SavedStateHandle.consumeRouteReveal(): ShowRouteRequest? {
 data class StopReveal(
     val stopId: String,
     val name: String? = null,
-    val point: GeoPoint? = null
+    val point: GeoPoint? = null,
+    /** A deliberate map visit from a board should frame the stop at street level. */
+    val useDefaultZoom: Boolean = false
 )
 
 /** Reveal the map focused on [reveal]'s stop, popping back to HOME. */
@@ -165,6 +168,7 @@ internal fun SavedStateHandle.putStopReveal(reveal: StopReveal) {
     set(RESULT_MAP_STOP_NAME, reveal.name)
     set(RESULT_MAP_STOP_LAT, reveal.point?.latitude)
     set(RESULT_MAP_STOP_LON, reveal.point?.longitude)
+    set(RESULT_MAP_STOP_DEFAULT_ZOOM, reveal.useDefaultZoom)
 }
 
 /** Reveal the stop [stopId] on the map, knowing nothing else about it. */
@@ -183,11 +187,13 @@ fun SavedStateHandle.consumeStopReveal(): StopReveal? {
     val name = get<String>(RESULT_MAP_STOP_NAME)
     val lat = get<Double>(RESULT_MAP_STOP_LAT)
     val lon = get<Double>(RESULT_MAP_STOP_LON)
+    val useDefaultZoom = get<Boolean>(RESULT_MAP_STOP_DEFAULT_ZOOM) ?: false
     set(RESULT_MAP_STOP_ID, null)
     set(RESULT_MAP_STOP_NAME, null)
     set(RESULT_MAP_STOP_LAT, null)
     set(RESULT_MAP_STOP_LON, null)
-    return stopId?.let { StopReveal(it, name, geoPointOrNull(lat, lon)) }
+    set(RESULT_MAP_STOP_DEFAULT_ZOOM, null)
+    return stopId?.let { StopReveal(it, name, geoPointOrNull(lat, lon), useDefaultZoom) }
 }
 
 /**

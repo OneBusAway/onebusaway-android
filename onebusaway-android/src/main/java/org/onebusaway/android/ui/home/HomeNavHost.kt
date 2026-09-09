@@ -196,7 +196,8 @@ fun HomeNavHost(
                 // camera over to the stop rather than jump, since the map is already on screen.
                 home.homeViewModel.revealStop(
                     FocusedStop(reveal.stopId, reveal.name, point = reveal.point),
-                    animate = true
+                    animate = true,
+                    useDefaultZoom = reveal.useDefaultZoom
                 )
             }
             val currentFocus by home.homeViewModel.currentFocus.collectAsStateWithLifecycle()

@@ -116,3 +116,24 @@ failure; this is not an all-green full-suite claim.
 [Arrival-display migration](oba-2309-arrival-migration.png) ·
 [Map-mode stop search](oba-2309-map-stop-search.png) ·
 [Map-mode route search](oba-2309-map-route-search.png)
+
+## Stop map zoom and route banner follow-up
+
+The mapless stop board's Map action now centers the stop at the existing street-level
+zoom (16), including when its coordinates arrive after navigation. Ordinary viewport
+restoration keeps its previous behavior. A retained route selection does not frame
+the whole route over this explicit stop zoom.
+
+The map's route banner long-press menu now offers **Show stop list** alongside
+**Show route schedule**. The stop list remains available without a schedule URL and
+opens the route's directions regardless of the search-layout preference.
+
+Validation: 133 focused HomeViewModel/MapReveal unit tests and 21 Pixel instrumented
+FocusBanner/ArrivalsNavigation/SearchWorkflowNavigation tests passed. Google debug
+app and test APK builds, MapLibre debug Kotlin compilation, and Spotless passed with
+compiler warnings treated as errors.
+
+On the Pixel 7 Pro, long-pressing route 8's banner opened the
+[new menu](oba-2309-route-menu.png); Show stop list opened its directions and stops.
+From the Denny Way & Westlake Ave mapless board, Map changed the saved zoom from
+13.0697 to exactly 16 and [centered stop 2255](oba-2309-stop-map-zoom.png).

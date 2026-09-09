@@ -134,6 +134,7 @@ import org.onebusaway.android.ui.mylists.SearchRecentsRepository
 import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.routeinfo.RouteInfoLauncher
 import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.PlanResult
@@ -1398,6 +1399,7 @@ private fun BoxScope.HomeMapOverlays(
             // Same destination as the arrivals drawer's route menu, wired locally rather than through
             // HomeActivityActions — the browser hand-off needs nothing but a Context.
             onShowSchedule = { url -> ExternalIntents.goToUrl(context, url) },
+            onShowStopList = { routeId -> RouteInfoLauncher.start(context, routeId) },
             onHeight = { h -> onFocusBannerBottom(h + focusBannerTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)

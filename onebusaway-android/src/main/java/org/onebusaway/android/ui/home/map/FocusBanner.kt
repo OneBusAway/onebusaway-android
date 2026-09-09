@@ -174,6 +174,7 @@ fun FocusBanner(
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
+    onShowStopList: (String) -> Unit,
     onHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
     stopMenu: StopFocusMenu? = null
@@ -208,6 +209,7 @@ fun FocusBanner(
                         onSelectDirection = onSelectDirection,
                         onFrameRoute = onFrameRoute,
                         onShowSchedule = onShowSchedule,
+                        onShowStopList = onShowStopList,
                         onClose = onClose
                     )
                 }
@@ -374,12 +376,14 @@ private fun RouteFocusBanner(
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
+    onShowStopList: (String) -> Unit,
     onClose: () -> Unit
 ) {
     val header = state.header
     val scheduleUrl = header.scheduleUrl
     var menuExpanded by remember { mutableStateOf(false) }
-    val scheduleLabel = stringResource(R.string.bus_options_menu_show_route_schedule)
+    val menuLabel = stringResource(R.string.bus_options_menu_show_stop_list)
+    val hasMenu = header.routeId != null || scheduleUrl != null
     // The loading spinner needs more breathing room from the card edges than the laid-out header
     // does, but the leading gap is the star's and stays fixed either way.
     val edgePadding = if (header.loading) 8.dp else 4.dp
@@ -407,13 +411,12 @@ private fun RouteFocusBanner(
                 Modifier
                     .weight(1f)
                     // Tap frames the route; long press opens the route menu — the same gesture
-                    // pairing the arrivals drawer's route rows use. A route with no schedule page
-                    // has nothing to put in the menu, so it stays tap-only.
+                    // pairing the arrivals drawer's route rows use.
                     .combinedClickable(
                         onClickLabel = stringResource(R.string.route_header_frame_route),
                         role = Role.Button,
-                        onLongClickLabel = if (scheduleUrl != null) scheduleLabel else null,
-                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
+                        onLongClickLabel = if (hasMenu) menuLabel else null,
+                        onLongClick = if (hasMenu) ({ menuExpanded = true }) else null,
                         onClick = onFrameRoute
                     ),
                 verticalAlignment = Alignment.CenterVertically
@@ -444,7 +447,7 @@ private fun RouteFocusBanner(
                     // The direction line states the menu's current value; the chevron beside it is the
                     // control that changes it. Deliberately not a trigger itself — it sits inside the
                     // banner body, whose tap reframes the route and whose long press opens the
-                    // schedule, and a nested clickable would consume both on this line.
+                    // route menu, and a nested clickable would consume both on this line.
                     if (directionLabel != null) {
                         // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
                         // the headsign reads identically on both surfaces (#1823).
@@ -474,14 +477,22 @@ private fun RouteFocusBanner(
             onClick = onClose
         )
     }
-    if (scheduleUrl != null) {
+    if (hasMenu) {
         CenteredLongPressMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false }
         ) {
-            MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
-                menuExpanded = false
-                onShowSchedule(scheduleUrl)
+            header.routeId?.let { routeId ->
+                MenuRow(R.string.bus_options_menu_show_stop_list, MaterialSymbols.TripStatus) {
+                    menuExpanded = false
+                    onShowStopList(routeId)
+                }
+            }
+            if (scheduleUrl != null) {
+                MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
+                    menuExpanded = false
+                    onShowSchedule(scheduleUrl)
+                }
             }
         }
     }
@@ -705,6 +716,7 @@ private fun FocusBannerPreview() {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -731,6 +743,7 @@ private fun FocusBannerPreview() {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -757,6 +770,7 @@ private fun FocusBannerPreview() {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
         }

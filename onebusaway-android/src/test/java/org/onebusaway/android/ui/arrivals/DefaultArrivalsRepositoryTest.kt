@@ -291,6 +291,74 @@ class DefaultArrivalsRepositoryTest {
     }
 
     @Test
+    fun `a fresh load with all scheduled arrivals for an agency flags realtime outage`() = runTest {
+        val dataSource = FakeStopArrivalsDataSource()
+        val arrivals = listOf(
+            ArrivalDeparture(
+                routeId = "route-1",
+                tripId = "trip-1",
+                stopId = STOP_ID,
+                stopSequence = 3,
+                scheduledArrivalTime = T0 + 10 * 60_000L,
+                scheduledDepartureTime = T0 + 10 * 60_000L,
+                predicted = false
+            ),
+            ArrivalDeparture(
+                routeId = "route-1",
+                tripId = "trip-2",
+                stopId = STOP_ID,
+                stopSequence = 3,
+                scheduledArrivalTime = T0 + 20 * 60_000L,
+                scheduledDepartureTime = T0 + 20 * 60_000L,
+                predicted = false
+            ),
+            ArrivalDeparture(
+                routeId = "route-1",
+                tripId = "trip-3",
+                stopId = STOP_ID,
+                stopSequence = 3,
+                scheduledArrivalTime = T0 + 30 * 60_000L,
+                scheduledDepartureTime = T0 + 30 * 60_000L,
+                predicted = false
+            )
+        )
+        val snapshotWithOutage = StopArrivals(
+            data = EntryWithReferences(
+                entry = ArrivalsForStop(
+                    stopId = STOP_ID,
+                    arrivalsAndDepartures = arrivals
+                ),
+                references = References(
+                    agencies = listOf(AgencyReference(id = "agency-1", name = "Metro")),
+                    stops = listOf(
+                        StopReference(
+                            id = STOP_ID,
+                            name = "Pine St & 3rd Ave",
+                            lat = 47.61,
+                            lon = -122.33,
+                            routeIds = listOf("route-1")
+                        )
+                    ),
+                    routes = listOf(RouteReference(id = "route-1", shortName = "5", agencyId = "agency-1")),
+                    trips = listOf(
+                        TripReference(id = "trip-1", routeId = "route-1", shapeId = "shape-1", directionId = "0"),
+                        TripReference(id = "trip-2", routeId = "route-1", shapeId = "shape-1", directionId = "0"),
+                        TripReference(id = "trip-3", routeId = "route-1", shapeId = "shape-1", directionId = "0")
+                    )
+                )
+            ),
+            currentTime = T0,
+            minutesAfter = 65
+        )
+        dataSource.respond = { Result.success(snapshotWithOutage) }
+        val repository = repository(dataSource)
+
+        val data = repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(listOf(RealtimeOutage("Metro")), data.realtimeOutages)
+    }
+
+    @Test
     fun `the empty-window widen loop grows the window until arrivals appear`() = runTest {
         val dataSource = FakeStopArrivalsDataSource()
         dataSource.respond = { minutes ->

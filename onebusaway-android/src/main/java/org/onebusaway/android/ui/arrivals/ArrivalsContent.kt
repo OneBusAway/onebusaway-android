@@ -74,6 +74,7 @@ import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.AlertSurface
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
@@ -222,8 +223,10 @@ internal fun ArrivalsList(
         hadSelection = effectiveSelectedRowKey != null
         if (displayMode == ArrivalDisplayMode.ROUTE && (effectiveSelectedRowKey != null || wasSelected)) {
             val alertsBeforeRoutes = content.hasAlerts && showAlerts
+            val outagesBeforeRoutes = content.realtimeOutages.isNotEmpty()
             val directionBeforeRoutes = showDirection && content.header.direction != null
             val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
+                (if (outagesBeforeRoutes) 1 else 0) +
                 (if (directionBeforeRoutes) 1 else 0) +
                 (if (onDisplayModeChange != null) 1 else 0)
             listState.scrollToItem(firstRouteIndex)
@@ -246,6 +249,14 @@ internal fun ArrivalsList(
                     onShowAlert = onShowAlert,
                     onHideAlert = onHideAlert,
                     onShowHiddenAlerts = onShowHiddenAlerts,
+                    modifier = Modifier.animateItem()
+                )
+            }
+        }
+        if (content.realtimeOutages.isNotEmpty()) {
+            item(key = "realtime_outages") {
+                RealtimeOutageBanner(
+                    outages = content.realtimeOutages,
                     modifier = Modifier.animateItem()
                 )
             }
@@ -465,6 +476,39 @@ private fun AlertRow(alert: AlertItem, onClick: () -> Unit) {
             )
             Spacer(Modifier.width(12.dp))
             Text(text = alert.summary, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/**
+ * A compact, nonblocking banner shown when an agency's realtime predictions are unavailable
+ * at the stop being viewed (issue #2301). Renders an info-severity alert card per affected agency.
+ */
+@Composable
+internal fun RealtimeOutageBanner(
+    outages: List<RealtimeOutage>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        for (outage in outages) {
+            RealtimeOutageRow(outage = outage)
+        }
+    }
+}
+
+@Composable
+private fun RealtimeOutageRow(outage: RealtimeOutage) {
+    AlertSurface(severity = AlertSeverity.INFO) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(R.drawable.baseline_warning_24),
+                contentDescription = null
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.realtime_outage_banner, outage.agencyName),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

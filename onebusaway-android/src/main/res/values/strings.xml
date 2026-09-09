@@ -1085,6 +1085,8 @@
     <string name="service_alert_severity_info">Information</string>
     <string name="service_alert_severity_warning">Warning</string>
     <string name="service_alert_severity_severe">Severe</string>
+    <!-- Realtime outage banner shown on arrivals screen when an agency has an established realtime outage (#2301) -->
+    <string name="realtime_outage_banner">Realtime predictions for %s are currently unavailable. Showing scheduled times.</string>
     <!-- Read after a leg's symbol on an itinerary option card when a service alert affects that leg.
          %1$s is the localized severity label, announced in place so it reads e.g.
          "1 Line, Severe service alert". -->

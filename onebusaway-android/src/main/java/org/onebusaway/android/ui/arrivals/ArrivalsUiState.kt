@@ -105,7 +105,8 @@ sealed interface ArrivalsUiState {
         val hiddenAlertCount: Int = 0,
         val stopCode: String? = null,
         val stopLat: Double = 0.0,
-        val stopLon: Double = 0.0
+        val stopLon: Double = 0.0,
+        val realtimeOutages: List<RealtimeOutage> = emptyList()
     ) : ArrivalsUiState {
         /** True when the stop has any service alert at all — shown *or* hidden — so the header keeps
          *  its alert icon even after the rider hides every alert. */

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -26,18 +27,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -46,14 +51,27 @@ import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayChoiceDialog
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
+import org.onebusaway.android.ui.arrivals.components.arrivalClock
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.components.sideBySideText
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class ArrivalDisplayModeTest {
     @get:Rule val composeRule = createUnconfinedComposeRule()
+
+    private val context: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
+
+    /** The node drawing [arrival]'s scheduled/expected pair on one line, asserted to be the only one —
+     *  a second would mean the pill is still printing its own clock subline underneath. */
+    private fun soleClockNode(arrival: ArrivalInfo): SemanticsNodeInteraction {
+        val times = arrival.arrivalClock(context).sideBySideText()
+        composeRule.onAllNodesWithText(times, useUnmergedTree = true).assertCountEquals(1)
+        return composeRule.onNodeWithText(times, useUnmergedTree = true).assertIsDisplayed()
+    }
 
     @Test
     fun temporarySwitchSurvivesRefreshAndStateRestorationButNewStopUsesDefault() {
@@ -80,7 +98,7 @@ class ArrivalDisplayModeTest {
 
     @Test
     fun switchProjectsLoadedTripsChronologicallyWithoutFavoritePromotion() {
-        val early = previewArrival("40", "Forty", 3, tripId = "forty")
+        val early = previewArrival("40", "Forty", 3, scheduleDeviationMinutes = 2, tripId = "forty", context = context)
         val middle = previewArrival("8", "Eight", 5, tripId = "eight-first")
         val late = previewArrival("8", "Eight", 12, tripId = "eight-second")
         val content = ArrivalsUiState.Content(
@@ -107,7 +125,12 @@ class ArrivalDisplayModeTest {
         composeRule.onAllNodesWithText("Eight").assertCountEquals(1)
         composeRule.onNodeWithText("Time").performClick()
         composeRule.onAllNodesWithText("Eight").assertCountEquals(2)
+        composeRule.onNodeWithText(early.statusText, useUnmergedTree = true).assertIsDisplayed()
         assertTrue(composeRule.onNodeWithText("Forty").getUnclippedBoundsInRoot().top < composeRule.onAllNodesWithText("Eight")[0].getUnclippedBoundsInRoot().top)
+        val directionBounds = composeRule.onNodeWithText("Forty", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val timeNode = soleClockNode(early)
+        assertEquals(directionBounds.left, timeNode.getUnclippedBoundsInRoot().left)
+        assertTrue(timeNode.getUnclippedBoundsInRoot().top >= directionBounds.bottom)
         composeRule.runOnIdle { state = content.copy(isStale = true) }
         composeRule.onNodeWithText("Time").assertIsSelected()
         composeRule.onAllNodesWithText("Eight").assertCountEquals(2)
@@ -118,7 +141,7 @@ class ArrivalDisplayModeTest {
     @Test
     fun chronologicalRowRetainsRouteActionsAtLargeTextInDarkTheme() {
         var openedSchedule: String? = null
-        val arrival = previewArrival("40", "Downtown via Main Street", 5)
+        val arrival = previewArrival("40", "Downtown via Main Street", 5, scheduleDeviationMinutes = 3, context = context)
         val actions = ArrivalActions("trip", arrival.routeId, "40", null, scheduleUrl = "https://example.com/schedule", agencyName = null, blockId = null)
         composeRule.setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
@@ -130,6 +153,7 @@ class ArrivalDisplayModeTest {
                             isFavorite = true,
                             callbacks = previewRowCallbacks(onShowRouteSchedule = { openedSchedule = it }),
                             chronological = true,
+                            anchors = ArrivalRowAnchors(eta = Modifier.testTag("eta")),
                             stopLabel = "Main St (Northbound)"
                         )
                     }
@@ -138,6 +162,9 @@ class ArrivalDisplayModeTest {
         }
         composeRule.onNodeWithText("Downtown via Main Street").assertIsDisplayed()
         composeRule.onNodeWithText("Main St (Northbound)").assertIsDisplayed()
+        composeRule.onNodeWithText(arrival.statusText, useUnmergedTree = true).assertIsDisplayed()
+        val etaBounds = composeRule.onNodeWithTag("eta", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertTrue(soleClockNode(arrival).getUnclippedBoundsInRoot().bottom <= etaBounds.top)
         composeRule.onNodeWithText("Downtown via Main Street").performSemanticsAction(SemanticsActions.OnLongClick)
         composeRule.onNodeWithText("Show route schedule").performClick()
         composeRule.runOnIdle { assertEquals("https://example.com/schedule", openedSchedule) }

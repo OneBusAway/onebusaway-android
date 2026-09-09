@@ -52,24 +52,41 @@ internal fun ChronologicalArrivalContent(
     // A spotlight anchor for the ETA pill, threaded down from the host (see ArrivalRowAnchors).
     etaModifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    // Keyed on the two instants arrivalClock actually formats, not the whole arrival: every poll hands
+    // down a fresh ArrivalInfo whose serverNow has moved, which would re-run two DateUtils formats per
+    // row for strings that almost never change.
+    val clock = remember(arrival.displayTime, arrival.scheduledTime, context) { arrival.arrivalClock(context) }
     val description: @Composable () -> Unit = {
         val decoration = strikeThroughIf(arrival.status == Status.CANCELED)
         if (direction.isNotBlank()) {
             Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, textDecoration = decoration)
         }
         if (stopLabel != null) Text(stopLabel, style = MaterialTheme.typography.bodySmall)
-        Text(arrival.statusText, style = MaterialTheme.typography.bodySmall, color = colorResource(arrival.deviationStatus.textColorRes))
+        // The same pill the route-grouped row draws (StatusPill), so the two arrival surfaces
+        // don't render one badge two ways.
+        if (arrival.statusText.isNotEmpty()) {
+            StatusPill(arrival.statusText, colorResource(arrival.fillColor))
+        }
+        CorrectedClockTime(
+            clock = clock,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+            style = MaterialTheme.typography.bodyMedium,
+            canceled = arrival.status == Status.CANCELED,
+            sideBySide = true
+        )
     }
     val eta: @Composable () -> Unit = {
-        val context = LocalContext.current
-        val clock = remember(arrival, context) { arrival.arrivalClock(context) }
         val liveNow = rememberLiveServerTime(arrival.serverNow)
         val selected = focus?.tripId == arrival.tripId
         Box(etaModifier.height(IntrinsicSize.Min)) {
             EtaPillWithMenu(
                 modifier = if (selected) Modifier.semantics { this.selected = true } else Modifier,
                 trip = arrival,
-                clock = clock,
+                // The clock time is drawn in the description column above, not under the pill.
+                clock = null,
+                standalone = true,
                 liveNow = liveNow,
                 actions = actions,
                 callbacks = callbacks,

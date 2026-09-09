@@ -27,8 +27,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
@@ -82,10 +85,23 @@ internal fun arrivalClockOf(expected: String, scheduled: String): ArrivalClock =
  *  clearly the superseded one of the two. */
 private const val CORRECTED_ALPHA = 0.75f
 
+/** What separates the two times when they sit on one line — wide enough that the struck timetable time
+ *  reads as its own word rather than running into the time that replaced it. */
+private const val SIDE_BY_SIDE_SEPARATOR = "  "
+
+/**
+ * The side-by-side pair as plain text — the exact string [CorrectedClockTime]'s `sideBySide` layout
+ * renders (it styles the two halves separately, so it builds the same text as an AnnotatedString).
+ * The one place the join is spelled, so a test asserting on the rendered line can't drift from it.
+ */
+internal fun ArrivalClock.sideBySideText(): String = corrects?.let { it + SIDE_BY_SIDE_SEPARATOR + expected } ?: expected
+
 /**
  * A clock time, with the timetable time it corrects struck through directly above it when there is
  * one ([ArrivalClock.corrects]) — `~~10:42 AM~~` over `10:47 AM`. With nothing to correct this is
  * exactly the plain single [Text] it replaced, adding no layout node of its own.
+ * [sideBySide] puts the corrected pair in one text line for chronological rows, wrapping when needed
+ * at large text sizes.
  *
  * A strikethrough is inaudible, so the corrected pair merges into one spoken phrase — "Scheduled
  * 10:42 AM, now expected 10:47 AM" — rather than leaving a screen reader to read two bare times in a
@@ -102,7 +118,8 @@ internal fun CorrectedClockTime(
     fontSize: TextUnit,
     style: TextStyle,
     modifier: Modifier = Modifier,
-    canceled: Boolean = false
+    canceled: Boolean = false,
+    sideBySide: Boolean = false
 ) {
     val canceledDecoration = strikeThroughIf(canceled)
     val corrects = clock.corrects
@@ -125,10 +142,29 @@ internal fun CorrectedClockTime(
     val spoken = remember(clock, resources) {
         resources.getString(R.string.stop_info_clock_corrected, corrects, clock.expected)
     }
+    val spokenModifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken }
+    if (sideBySide) {
+        Text(
+            text = buildAnnotatedString {
+                withStyle(SpanStyle(color = color.copy(alpha = color.alpha * CORRECTED_ALPHA), textDecoration = TextDecoration.LineThrough)) {
+                    append(corrects)
+                }
+                append(SIDE_BY_SIDE_SEPARATOR)
+                withStyle(SpanStyle(textDecoration = canceledDecoration)) {
+                    append(clock.expected)
+                }
+            },
+            modifier = spokenModifier,
+            color = color,
+            fontSize = fontSize,
+            style = style
+        )
+        return
+    }
     // No verticalArrangement: [style]'s trimmed line boxes already sit flush, which is what these two
     // want — they are one reading, not two lines of text.
     Column(
-        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
+        modifier = spokenModifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(

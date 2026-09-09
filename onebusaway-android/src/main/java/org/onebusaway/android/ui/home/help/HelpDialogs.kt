@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayChoiceDialog
 import org.onebusaway.android.ui.arrivals.components.ArrivalLegend
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -48,7 +49,7 @@ enum class HelpAction { TUTORIALS, LEGEND, WHATS_NEW, AGENCIES, TWITTER, CONTACT
 
 /**
  * Self-rendering help feature module: draws the help menu / what's-new / legend dialogs from
- * [HelpViewModel] state, and auto-shows "What's New" once a region has resolved ([regionReady]). Legend
+ * [HelpViewModel] state, and auto-shows "What's New" once a region has resolved (including custom API endpoints). Legend
  * + what's-new taps transition the VM's dialog; the other menu actions (reset tutorials, agencies,
  * Twitter, contact us) are genuine Activity operations, forwarded through [onHelpAction]. The
  * tutorial opt-out's "yes" path shows the welcome tutorial via [onShowWelcomeTutorial].
@@ -60,7 +61,8 @@ fun HelpFeature(
     onShowWelcomeTutorial: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val regionReady by viewModel.regionReady.collectAsStateWithLifecycle()
+    val regionState by viewModel.regionState.collectAsStateWithLifecycle()
+    val regionReady = regionState is RegionState.Active
     // Start after region resolution and retry when another dialog or tutorial finishes.
     // The ViewModel admits this sequence only once per launch.
     val tutorialActive = LocalTutorialState.current?.active == true
@@ -83,6 +85,10 @@ fun HelpFeature(
                 }
             },
             onDismiss = viewModel::dismiss
+        )
+        HelpDialog.SearchWorkflow -> SearchWorkflowChoiceDialog(
+            onSave = viewModel::chooseSearchResultMode,
+            onDismiss = viewModel::finishSearchWorkflowChoice
         )
         HelpDialog.ArrivalDisplay -> ArrivalDisplayChoiceDialog(
             initialMode = viewModel.arrivalDisplayDefault,

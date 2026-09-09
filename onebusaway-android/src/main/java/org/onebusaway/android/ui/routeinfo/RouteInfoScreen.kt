@@ -37,8 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -136,18 +137,18 @@ private fun RouteInfoContent(
     onStopClick: (RouteStopItem) -> Unit
 ) {
     // Direction names are unique within a route, so they key the expand/collapse state
-    val expanded = remember { mutableStateMapOf<String, Boolean>() }
+    var expanded by rememberSaveable(route.id) { mutableStateOf(emptyList<String>()) }
     LazyColumn(Modifier.fillMaxSize()) {
         if (route.longName != null || route.agencyName != null) {
             item(key = "header") { RouteHeader(route) }
         }
         route.directions.forEach { direction ->
-            val isExpanded = expanded[direction.name] == true
+            val isExpanded = direction.name in expanded
             item(key = "group:${direction.name}") {
                 DirectionHeader(
                     name = direction.name,
                     expanded = isExpanded,
-                    onClick = { expanded[direction.name] = !isExpanded }
+                    onClick = { expanded = if (isExpanded) expanded - direction.name else expanded + direction.name }
                 )
             }
             if (isExpanded) {
@@ -237,11 +238,7 @@ private fun DirectionHeaderPreview() {
     }
 }
 
-/**
- * A single tap, no long-press menu: the menu's two items — "get stop info" and "show on map" — became
- * the same gesture once a stop's arrivals moved onto the map (#1898), and a menu offering one action
- * twice is worse than no menu. Same collapse the stop-search rows made.
- */
+/** A stop tap opens the destination selected in the search workflow preference. */
 @Composable
 private fun StopRow(stop: RouteStopItem, onStopClick: (RouteStopItem) -> Unit) {
     // Route info stops are never favorites here, and the start padding indents them under

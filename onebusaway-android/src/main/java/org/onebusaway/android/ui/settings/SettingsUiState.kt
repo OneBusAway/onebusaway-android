@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.settings
 
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.home.FocusTimeout
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 
 /*
  * Pure (Android-free) state + derivation for the Compose settings screens. The ViewModels read the
@@ -50,6 +51,7 @@ data class SettingsPrefSnapshot(
     val preferredUnits: String?,
     val preferredTempUnits: String?,
     val appTheme: String?,
+    val searchResultMode: SearchResultMode = SearchResultMode.MAP,
     val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
     val focusTimeout: FocusTimeout = FocusTimeout.DEFAULT
 )
@@ -88,6 +90,7 @@ data class SettingsUiState(
     val preferredUnits: String?,
     val preferredTempUnits: String?,
     val appTheme: String?,
+    val searchResultMode: SearchResultMode = SearchResultMode.MAP,
     val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
     val focusTimeout: FocusTimeout = FocusTimeout.DEFAULT
 ) {
@@ -129,6 +132,7 @@ fun buildSettingsUiState(
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,
     appTheme = prefs.appTheme,
+    searchResultMode = prefs.searchResultMode,
     arrivalDisplayDefault = prefs.arrivalDisplayDefault,
     focusTimeout = prefs.focusTimeout
 )

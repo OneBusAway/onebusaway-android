@@ -28,6 +28,8 @@ import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpViewModel
+import org.onebusaway.android.ui.searchresults.SearchResultMode
+import org.onebusaway.android.ui.searchresults.searchResultMode
 
 /**
  * Unit tests for [HelpViewModel]'s dialog-state transitions (migrated from HomeViewModelTest when help
@@ -36,8 +38,56 @@ import org.onebusaway.android.ui.home.help.HelpViewModel
 class HelpViewModelTest {
 
     @Test
+    fun `search migration includes March and 26_2_1 upgrades independently of arrival ordering`() {
+        for (version in listOf(153, 154, 156, 157)) {
+            val prefs = FakePreferencesRepository().apply {
+                setInt("whatsNewVer", version)
+                // A rider who installed 26.2.x fresh has this legacy-only source recorded as zero.
+                setInt("arrival_display_migration_source_version", 0)
+                setString(ArrivalDisplayMode.PREFERENCE_KEY, "time")
+            }
+            val vm = viewModel(prefs)
+            vm.maybeShowStartup()
+            assertEquals(HelpDialog.SearchWorkflow, vm.state.value.dialog)
+            assertEquals(SearchResultMode.MAP, prefs.searchResultMode())
+            vm.chooseSearchResultMode(SearchResultMode.LISTS)
+            assertEquals(SearchResultMode.LISTS, prefs.searchResultMode())
+            assertEquals(ArrivalDisplayMode.TIME, prefs.arrivalDisplayDefault())
+            val nextLaunch = viewModel(prefs)
+            nextLaunch.maybeShowStartup()
+            assertFalse(nextLaunch.state.value.dialog == HelpDialog.SearchWorkflow)
+        }
+    }
+
+    @Test
+    fun `search choice precedes arrival choice and does not choose arrival ordering`() {
+        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 153) }
+        val vm = viewModel(prefs)
+        vm.maybeShowStartup()
+        assertEquals(HelpDialog.SearchWorkflow, vm.state.value.dialog)
+        vm.chooseSearchResultMode(SearchResultMode.MAP)
+        assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
+        assertEquals(null, prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null))
+    }
+
+    @Test
+    fun `dismissed search choice remains owed after the release marker changes`() {
+        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 157) }
+        val vm = viewModel(prefs)
+        vm.maybeShowStartup()
+        vm.finishSearchWorkflowChoice()
+        assertEquals(null, prefs.getString(SearchResultMode.PREFERENCE_KEY, null))
+        val nextLaunch = viewModel(prefs)
+        nextLaunch.maybeShowStartup()
+        assertEquals(HelpDialog.SearchWorkflow, nextLaunch.state.value.dialog)
+    }
+
+    @Test
     fun `migration choice precedes release notes and persists the selected default`() {
-        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 1) }
+        val prefs = FakePreferencesRepository().apply {
+            setString(SearchResultMode.PREFERENCE_KEY, "map")
+            setInt("whatsNewVer", 1)
+        }
         val vm = viewModel(prefs)
         vm.maybeShowStartup()
         assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
@@ -57,12 +107,16 @@ class HelpViewModelTest {
 
     @Test
     fun `dismissed migration stays eligible after release notes advance the version marker`() {
-        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 154) }
+        val prefs = FakePreferencesRepository().apply {
+            setString(SearchResultMode.PREFERENCE_KEY, "map")
+            setInt("whatsNewVer", 154)
+        }
         val vm = viewModel(prefs)
         vm.maybeShowStartup()
         assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
         vm.finishArrivalDisplayChoice()
         assertEquals(null, prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null))
+        prefs.setString(SearchResultMode.PREFERENCE_KEY, "map")
         prefs.setInt("whatsNewVer", 156)
         val nextLaunch = viewModel(prefs)
         nextLaunch.maybeShowStartup()
@@ -72,7 +126,10 @@ class HelpViewModelTest {
     @Test
     fun `only recorded releases through 26_1 are eligible`() {
         for (version in listOf(1, 153, 154, 155, 156, 157)) {
-            val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", version) }
+            val prefs = FakePreferencesRepository().apply {
+                setString(SearchResultMode.PREFERENCE_KEY, "map")
+                setInt("whatsNewVer", version)
+            }
             val vm = viewModel(prefs)
             vm.maybeShowStartup()
             assertEquals("Previous version $version", version <= 154, vm.state.value.dialog == HelpDialog.ArrivalDisplay)
@@ -96,6 +153,7 @@ class HelpViewModelTest {
     @Test
     fun `a default chosen in settings suppresses migration and existing dialogs are respected`() {
         val prefs = FakePreferencesRepository().apply {
+            setString(SearchResultMode.PREFERENCE_KEY, "map")
             setInt("whatsNewVer", 1)
             setString(ArrivalDisplayMode.PREFERENCE_KEY, "time")
         }

@@ -54,6 +54,7 @@ import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.home.FocusTimeout
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
 import org.onebusaway.android.ui.settings.components.ListPreferenceItem
 import org.onebusaway.android.ui.settings.components.PreferenceCategory
@@ -136,6 +137,7 @@ fun SettingsRoute(
     }
 
     val actions = SettingsActions(
+        onSearchResultMode = viewModel::onSearchResultModeChanged,
         onArrivalDisplayDefault = viewModel::onArrivalDisplayDefaultChanged,
         onFocusTimeout = viewModel::onFocusTimeoutChanged,
         onAutoSelectRegion = viewModel::onAutoSelectRegionChanged,
@@ -176,6 +178,7 @@ fun SettingsRoute(
 
 /** All the user actions the [SettingsScreen] can fire, wired by [SettingsRoute]. */
 class SettingsActions(
+    val onSearchResultMode: (SearchResultMode) -> Unit = {},
     val onArrivalDisplayDefault: (ArrivalDisplayMode) -> Unit = {},
     val onFocusTimeout: (FocusTimeout) -> Unit = {},
     val onAutoSelectRegion: (Boolean) -> Unit,
@@ -238,6 +241,13 @@ fun SettingsScreen(
             }
 
             PreferenceCategory(stringResource(R.string.preferences_category_behavior)) {
+                ListPreferenceItem(
+                    title = stringResource(R.string.search_result_mode_title),
+                    entries = listOf(stringResource(R.string.search_result_mode_map), stringResource(R.string.search_result_mode_lists)),
+                    entryValues = SearchResultMode.entries.map { it.value },
+                    selectedValue = state.searchResultMode.value,
+                    onValueSelected = { actions.onSearchResultMode(SearchResultMode.fromPreference(it)) }
+                )
                 ListPreferenceItem(
                     title = stringResource(R.string.preferences_focus_timeout_title),
                     entries = FocusTimeout.entries.map { stringResource(it.labelRes) },

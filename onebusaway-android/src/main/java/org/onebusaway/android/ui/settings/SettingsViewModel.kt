@@ -42,6 +42,8 @@ import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.home.FocusTimeout
 import org.onebusaway.android.ui.home.focusTimeout
+import org.onebusaway.android.ui.searchresults.SearchResultMode
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ThemeUtils
 
@@ -93,6 +95,7 @@ class SettingsViewModel @Inject constructor(
     )
 
     private fun readSnapshot() = SettingsPrefSnapshot(
+        searchResultMode = prefs.searchResultMode(),
         arrivalDisplayDefault = prefs.arrivalDisplayDefault(),
         focusTimeout = prefs.focusTimeout(),
         autoSelectRegion = prefs.getBoolean(R.string.preference_key_auto_select_region, true),
@@ -120,6 +123,10 @@ class SettingsViewModel @Inject constructor(
             context.getString(R.string.preferences_app_theme_option_system_default)
         )
     )
+
+    fun onSearchResultModeChanged(mode: SearchResultMode) {
+        prefs.setString(SearchResultMode.PREFERENCE_KEY, mode.value)
+    }
 
     fun onArrivalDisplayDefaultChanged(mode: ArrivalDisplayMode) {
         prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)

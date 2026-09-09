@@ -29,16 +29,19 @@ import androidx.navigation.navArgument
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.DonationsEntryPoint
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.donation.DonationLearnMoreScreen
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.openSearchRoute
+import org.onebusaway.android.ui.nav.openSearchStop
 import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.nightlight.NightLightRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsViewModel
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.ui.survey.SurveyWebViewScreen
 
 /**
@@ -93,7 +96,7 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
         }
     }
     // Search results (system ACTION_SEARCH + the home top-bar search field). The query is a
-    // nav-arg; tapping a result reveals it on the map. Re-search when the query arg changes
+    // nav-arg; route and stop taps follow the saved search workflow. Re-search when the query arg changes
     // (a fresh search reuses this entry).
     composable(
         NavRoutes.SEARCH,
@@ -120,9 +123,9 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                 onRouteShowOnMap = { route ->
                     DatabaseEntryPoint.get(activity).routeRecorder()
                         .recordDetails(route.id, route.shortName, route.longName, route.url)
-                    navController.revealRouteOnMap(route.id)
+                    navController.openSearchRoute(route.id, PreferencesEntryPoint.get(activity).searchResultMode())
                 },
-                onRevealStop = { navController.revealStopOnMap(it) },
+                onRevealStop = { navController.openSearchStop(it, PreferencesEntryPoint.get(activity).searchResultMode()) },
                 // A coach-number hit drills into the ride that vehicle is running — the same
                 // route-mode-with-a-focused-vehicle view an arrivals ETA-pill tap opens.
                 onVehicleShowOnMap = { ride ->

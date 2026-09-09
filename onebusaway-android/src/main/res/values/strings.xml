@@ -1543,4 +1543,14 @@
     <string name="home_map">Map</string>
     <string name="stop_add_star">Add star to stop</string>
     <string name="stop_remove_star">Remove star from stop</string>
+    <string name="search_result_mode_title">Open search results in</string>
+    <string name="search_result_mode_map">Map</string>
+    <string name="search_result_mode_lists">Lists and arrivals</string>
+    <string name="search_result_mode_migration_body">Choose how to open routes and stops from search. You can change this later in Settings.</string>
+    <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>
+    <string name="search_result_mode_lists_description">Choose a direction and stop from lists, then read arrivals without using a map.</string>
+    <string name="search_result_mode_continue">Continue</string>
+    <string name="search_result_mode_sample_direction">Downtown ▾</string>
+    <string name="search_result_mode_sample_stop">Denny Way &amp; Westlake Ave N</string>
+    <string name="search_result_mode_sample_eta">3 min</string>
 </resources>

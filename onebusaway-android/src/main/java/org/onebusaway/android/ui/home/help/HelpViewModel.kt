@@ -26,14 +26,17 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 /** Which help dialog is showing — the dialog state this help feature module owns. */
 sealed interface HelpDialog {
     object None : HelpDialog
     object Menu : HelpDialog
+    object SearchWorkflow : HelpDialog
     object ArrivalDisplay : HelpDialog
     object WhatsNew : HelpDialog
     object Legend : HelpDialog
@@ -59,10 +62,8 @@ class HelpViewModel @Inject constructor(
     private val _state = MutableStateFlow(HelpUiState())
     val state: StateFlow<HelpUiState> = _state.asStateFlow()
 
-    // Whether a region has resolved — gates the auto-show of "What's New". The repository owns this hot
-    // predicate ([RegionRepository.regionPresent]); [HelpFeature] reads it. Re-exposed verbatim (no local
-    // mirror needed).
-    val regionReady: StateFlow<Boolean> get() = regionRepository.regionPresent
+    // Active(null) is a resolved custom API endpoint and must receive migration choices too.
+    val regionState: StateFlow<RegionState> get() = regionRepository.state
 
     /**
      * The Twitter/X URL to open from the help menu: the current region's own Twitter URL when it has
@@ -88,10 +89,36 @@ class HelpViewModel @Inject constructor(
     fun maybeShowStartup() {
         if (startupPresented || _state.value.dialog != HelpDialog.None) return
         startupPresented = true
+        // This migration includes riders already on 26.2.x. Capture its own source marker:
+        // reusing the arrival-ordering marker would exclude fresh installs of those releases.
+        val searchSource = prefs.getInt(SEARCH_WORKFLOW_SOURCE_VERSION, -1).takeUnless { it == -1 }
+            ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(SEARCH_WORKFLOW_SOURCE_VERSION, it) }
+        captureArrivalSource()
+        if (searchSource > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) {
+            _state.update { it.copy(dialog = HelpDialog.SearchWorkflow) }
+        } else {
+            maybeShowArrivalDisplayChoice()
+        }
+    }
+
+    fun chooseSearchResultMode(mode: SearchResultMode) {
+        prefs.setString(SearchResultMode.PREFERENCE_KEY, mode.value)
+        finishSearchWorkflowChoice()
+    }
+
+    /** Back defers this choice until the next launch, without changing either preference. */
+    fun finishSearchWorkflowChoice() {
+        dismiss()
+        maybeShowArrivalDisplayChoice()
+    }
+
+    private fun captureArrivalSource(): Int = prefs.getInt(ARRIVAL_DISPLAY_SOURCE_VERSION, -1).takeUnless { it == -1 }
+        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(ARRIVAL_DISPLAY_SOURCE_VERSION, it) }
+
+    private fun maybeShowArrivalDisplayChoice() {
         // Capture the previous release before What's New advances its marker. Keep it across
         // launches so dismissing the chooser neither loses eligibility nor opts a fresh install in.
-        val sourceVersion = prefs.getInt(ARRIVAL_DISPLAY_SOURCE_VERSION, -1).takeUnless { it == -1 }
-            ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(ARRIVAL_DISPLAY_SOURCE_VERSION, it) }
+        val sourceVersion = captureArrivalSource()
         if (sourceVersion in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) {
             _state.update { it.copy(dialog = HelpDialog.ArrivalDisplay) }
         } else {
@@ -150,6 +177,7 @@ class HelpViewModel @Inject constructor(
         const val TWITTER_URL = "http://mobile.twitter.com/onebusaway"
 
         private const val WHATS_NEW_VER = "whatsNewVer"
+        private const val SEARCH_WORKFLOW_SOURCE_VERSION = "search_workflow_migration_source_version"
         private const val ARRIVAL_DISPLAY_SOURCE_VERSION = "arrival_display_migration_source_version"
 
         // Published release boundary: 26.1.0 = 154; 155 was the later 27.0.0 alpha,

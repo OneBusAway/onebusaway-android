@@ -63,7 +63,7 @@ import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
 import org.onebusaway.android.ui.common.Shortcuts
-import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.SearchableTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.FocusedStop
@@ -155,8 +155,9 @@ private fun ArrivalsBoard(stopId: String, initialName: String?, navController: N
         modifier = Modifier.testTag("arrivals_board"),
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            ObaTopAppBar(
+            SearchableTopAppBar(
                 title = title,
+                onSearch = { navController.navigate(NavRoutes.search(it)) },
                 onBack = { navController.navigateUpFromArrivals(prefs.homeStartDestination()) }
             ) {
                 IconButton(

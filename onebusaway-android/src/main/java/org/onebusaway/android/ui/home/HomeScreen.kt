@@ -250,6 +250,7 @@ fun HomeScreen(
     // All the screen's tap/UI lambdas, bundled (see [HomeCallbacks]); brought into scope below via
     // `with` so the body references them unqualified.
     callbacks: HomeCallbacks,
+    showHelpDialogs: Boolean = true,
     onBackToArrivals: (() -> Unit)? = null
 ) {
     with(callbacks) {
@@ -1200,11 +1201,13 @@ fun HomeScreen(
                     // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
                     // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
                     // opt-out are forwarded to the host).
-                    HelpFeature(
-                        viewModel = helpViewModel,
-                        onHelpAction = onHelpAction,
-                        onShowWelcomeTutorial = onShowWelcomeTutorial
-                    )
+                    if (showHelpDialogs) {
+                        HelpFeature(
+                            viewModel = helpViewModel,
+                            onHelpAction = onHelpAction,
+                            onShowWelcomeTutorial = onShowWelcomeTutorial
+                        )
+                    }
 
                     // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
                     // as the last sibling so it sits on top; renders nothing while no tutorial is active.

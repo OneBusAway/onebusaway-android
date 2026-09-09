@@ -1527,8 +1527,8 @@
     <string name="arrival_display_time">Time</string>
     <string name="arrival_display_route">Route</string>
     <string name="arrival_display_default">Arrival display default</string>
-    <string name="arrival_display_choose_title">How would you like to see arrivals?</string>
-    <string name="arrival_display_choose_body">Change the default any time in Settings</string>
+    <string name="arrival_display_choose_title">Group arrivals by route?</string>
+    <string name="arrival_display_choose_body">Choose whether to group arrivals by route. You can change this later in Settings.</string>
     <string name="arrival_display_time_description">Each departure in time order, across all routes.</string>
     <string name="arrival_display_route_description">Departures grouped by route and direction.</string>
     <string name="tutorial_scripted_arrival_time_title">See what comes next</string>
@@ -1543,7 +1543,8 @@
     <string name="search_result_mode_title">Open search results in</string>
     <string name="search_result_mode_map">Map</string>
     <string name="search_result_mode_lists">Lists and arrivals</string>
-    <string name="search_result_mode_migration_body">Choose how to open routes and stops from search. You can change this later in Settings.</string>
+    <string name="search_result_mode_migration_title">Use a map for search?</string>
+    <string name="search_result_mode_migration_body">Choose whether to use a &lt;b&gt;map&lt;/b&gt; or &lt;b&gt;list&lt;/b&gt; to select stops and routes. You can change this later in Settings.</string>
     <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>
     <string name="search_result_mode_lists_description">Choose a direction and stop from lists, then read arrivals without using a map.</string>
     <string name="migration_back">Back</string>

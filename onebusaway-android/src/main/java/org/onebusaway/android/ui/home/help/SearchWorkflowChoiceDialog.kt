@@ -48,6 +48,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.components.LineBadge
@@ -64,7 +66,7 @@ internal fun SearchWorkflowChoiceDialog(
 ) {
     var selected by rememberSaveable { mutableStateOf(SearchResultMode.MAP) }
     MigrationDialog(
-        title = stringResource(R.string.search_result_mode_title),
+        title = stringResource(R.string.search_result_mode_migration_title),
         page = page,
         pageCount = pageCount,
         onContinue = { onSave(selected) },
@@ -75,7 +77,7 @@ internal fun SearchWorkflowChoiceDialog(
                 Modifier.verticalScroll(rememberScrollState()).selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(stringResource(R.string.search_result_mode_migration_body))
+                Text(AnnotatedString.fromHtml(stringResource(R.string.search_result_mode_migration_body)))
                 listOf(SearchResultMode.LISTS, SearchResultMode.MAP).forEach { mode ->
                     Surface(
                         shape = MaterialTheme.shapes.medium,

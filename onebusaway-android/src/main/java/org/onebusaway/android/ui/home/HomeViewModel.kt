@@ -50,6 +50,7 @@ import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.nav.TripMapReveal
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -546,6 +547,27 @@ class HomeViewModel @Inject constructor(
         val focus = CurrentFocus.Route(request.toRouteTarget(), selectedTripId = request.focusTripId)
         pushFocus(focus, undoViewport)
         showRoute(request, focus.selectedTripId)
+    }
+
+    /** Return from trip status at the stop → route → trip level, keeping its arrivals drawer. */
+    fun revealTripOnMap(reveal: TripMapReveal, undoViewport: MapViewport? = null) {
+        val request = reveal.routeRequest()
+        val stopId = reveal.stopId
+        if (stopId == null) {
+            focusStandaloneRoute(request, undoViewport)
+            return
+        }
+        val stop = _currentFocus.value.focusedStop?.takeIf { it.id == stopId } ?: FocusedStop(stopId)
+        val selection = StopRouteSelection(
+            originHeadsign = reveal.headsign,
+            legs = listOf(RouteLeg(reveal.routeId, reveal.shortName, reveal.directionId)),
+            selectedTripId = reveal.tripId
+        )
+        // The newly composed arrivals session restores the stop marker. Its first load must not
+        // replace this action's vehicle/route framing with a stop recenter or another route fit.
+        markPendingMapFocus(preserveViewport = true)
+        pushFocus(CurrentFocus.Stop(stop, selection), undoViewport)
+        showStopRoute(stopId, selection, request)
     }
 
     /** Persist a direction chosen from the standalone route banner (null = the whole route). */

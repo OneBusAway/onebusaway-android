@@ -31,6 +31,17 @@ import org.onebusaway.android.util.GeoPoint
 class MapRevealTest {
 
     @Test
+    fun `trip reveal retains stop and row identity and is consumed once`() {
+        val handle = SavedStateHandle()
+        val reveal = TripMapReveal("trip", "route", "65", "Downtown / Center", 1, "stop", true)
+        handle.putTripMapReveal(reveal)
+        // A restored handle must read only the saved representation, not a retained object.
+        val restored = SavedStateHandle(mapOf(RESULT_MAP_TRIP to handle.get<String>(RESULT_MAP_TRIP)))
+        assertEquals(reveal, restored.consumeTripMapReveal())
+        assertNull(restored.consumeTripMapReveal())
+    }
+
+    @Test
     fun `route reveal round-trips every ShowRouteRequest field`() {
         val handle = SavedStateHandle()
         val request = ShowRouteRequest(

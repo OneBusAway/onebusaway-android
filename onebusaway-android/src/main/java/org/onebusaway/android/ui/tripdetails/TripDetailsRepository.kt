@@ -45,6 +45,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.ServiceDate
+import org.onebusaway.android.ui.nav.TripMapReveal
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -55,7 +56,8 @@ data class TripDetailsData(
     val header: TripHeader,
     val stops: List<TripStopItem>,
     val scrollToIndex: Int,
-    val lineColorArgb: Int
+    val lineColorArgb: Int,
+    val mapRequest: TripMapReveal?
 )
 
 /** Loads a trip's schedule + real-time status and projects it onto the UI model. */
@@ -213,7 +215,8 @@ class DefaultTripDetailsRepository @Inject constructor(
             header = buildHeader(td, trip, route, status, isRealtime),
             stops = stops,
             scrollToIndex = resolveScrollIndex(scrollMode, stopIndex, destinationIndex, nextStopIndex),
-            lineColorArgb = lineColorArgb
+            lineColorArgb = lineColorArgb,
+            mapRequest = td.mapRequest(stopId)
         )
     }
 
@@ -297,4 +300,23 @@ class DefaultTripDetailsRepository @Inject constructor(
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
+}
+
+/** Focus a running trip's vehicle; a trip without a current position opens the route overview. */
+internal fun TripDetails.mapRequest(stopId: String? = null): TripMapReveal? {
+    val trip = trip ?: return null
+    val routeId = trip.routeId.takeIf { it.isNotBlank() } ?: return null
+    // status is null when the vehicle is serving a different trip in this block. Predictions alone
+    // do not mean a vehicle is on the road (e.g. a delayed trip that has not pulled out yet).
+    val status = status
+    val hasVehicle = status != null && status.status != Status.CANCELED && status.position != null
+    return TripMapReveal(
+        tripId = tripId,
+        routeId = routeId,
+        shortName = route?.shortName.orEmpty().ifBlank { routeId },
+        headsign = trip.headsign,
+        directionId = trip.directionId,
+        stopId = stopId?.takeIf { it.isNotBlank() },
+        hasVehicle = hasVehicle
+    )
 }

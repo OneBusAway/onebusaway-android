@@ -252,7 +252,7 @@ fun HomeScreen(
     // `with` so the body references them unqualified.
     callbacks: HomeCallbacks,
     showHelpDialogs: Boolean = true,
-    onBackToArrivals: (() -> Unit)? = null
+    onBackToSource: (() -> Unit)? = null
 ) {
     with(callbacks) {
         with(activityActions) {
@@ -635,6 +635,7 @@ fun HomeScreen(
 
                 // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
                 // collapses first; every other back gesture restores the preceding focus and viewport.
+                // An explicit map visit returns to its source page before either local action.
                 //
                 // The expansion term is what makes this work for the nearby drawer (#2107), which shows
                 // with *no* focus and so usually has no undo history behind it: without it, back from a
@@ -642,11 +643,7 @@ fun HomeScreen(
                 // drawer consumes nothing — it's ambient, with nothing behind it to go back to — so back
                 // falls through to the system (see [sheetBackAction]).
                 val sheetExpanded = sheetShown && sheetState.currentValue == SheetValue.Expanded
-                BackHandler(enabled = onBackToArrivals != null || canUndoMapAction || sheetExpanded) {
-                    if (onBackToArrivals != null) {
-                        onBackToArrivals()
-                        return@BackHandler
-                    }
+                HomeMapBackHandler(onBackToSource, canUndoMapAction || sheetExpanded) {
                     val sheetAction = if (sheetShown) {
                         sheetBackAction(sheetState.currentValue.toArrivalsSheetState(), sheetContent)
                     } else {
@@ -846,9 +843,9 @@ fun HomeScreen(
                             // Back cancels an in-progress map pick, then steps out of a drilled-into leg to
                             // the whole trip, and only from the itinerary overview exits directions focus
                             // (to nearby stops). This handler composes inside the undo one above, so it
-                            // registers later and wins every back press while directions is active — the
-                            // one-level walk it delegates to is what keeps that from stranding the trip.
-                            BackHandler(enabled = directionsActive) {
+                            // registers later. It must honor the same source-return priority as the map's
+                            // undo handler; without a source, directions still unwinds one level at a time.
+                            HomeMapBackHandler(onBackToSource, canGoBackWithinMap = directionsActive) {
                                 if (pickTarget != null) {
                                     pickTarget = null
                                 } else {

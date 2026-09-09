@@ -27,6 +27,7 @@ import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.TripMapReveal
 
 private class FakeTripDetailsRepository(
     var result: Result<TripDetailsData>
@@ -71,7 +72,8 @@ class TripDetailsViewModelTest {
         ),
         stops = emptyList(),
         scrollToIndex = -1,
-        lineColorArgb = 0
+        lineColorArgb = 0,
+        mapRequest = TripMapReveal("t", "route", "8", "Capitol Hill", 1, "stop", true)
     )
 
     @Test
@@ -90,6 +92,7 @@ class TripDetailsViewModelTest {
         val state = viewModel.state.value
         assertTrue(state is TripDetailsUiState.Content)
         assertEquals("Capitol Hill", (state as TripDetailsUiState.Content).header.headsign)
+        assertEquals(data().mapRequest, state.mapRequest)
     }
 
     @Test

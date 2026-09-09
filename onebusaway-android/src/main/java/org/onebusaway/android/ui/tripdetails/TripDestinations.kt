@@ -38,6 +38,7 @@ import org.onebusaway.android.ui.dataview.TripTrajectoryViewModel
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.nav.revealStopOnMap
+import org.onebusaway.android.ui.nav.showTripOnMap
 import org.onebusaway.android.ui.tripinfo.TripInfoEvent
 import org.onebusaway.android.ui.tripinfo.TripInfoRoute
 import org.onebusaway.android.ui.tripinfo.TripInfoViewModel
@@ -94,6 +95,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                         stopId = tripStopId
                     )
                 },
+                onShowOnMap = navController::showTripOnMap,
                 onShowTrajectory = { navController.navigate(NavRoutes.tripTrajectory(tripId)) }
             )
         }

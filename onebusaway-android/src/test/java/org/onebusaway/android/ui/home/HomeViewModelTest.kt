@@ -39,6 +39,7 @@ import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.WheelchairBoarding
@@ -48,6 +49,9 @@ import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.arrivals.routeRowKey
+import org.onebusaway.android.ui.home.arrivals.selectedArrivalRowKey
+import org.onebusaway.android.ui.nav.TripMapReveal
 import org.onebusaway.android.ui.tripresults.AlternativeRouteRef
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
@@ -1466,6 +1470,76 @@ class HomeViewModelTest {
 
         assertEquals((0 until count).map { "route-$it" }, map.routesShown)
         mapJob.cancel()
+    }
+
+    @Test
+    fun `trip map reveal keeps the stop drawer and selects its route and trip`() = runTest {
+        val savedState = SavedStateHandle()
+        val vm = viewModel(savedState = savedState)
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.revealTripOnMap(TripMapReveal("trip", "65", "65", "Downtown", 1, "1", true))
+        advanceUntilIdle()
+
+        val focus = vm.currentFocus.value as CurrentFocus.Stop
+        assertEquals(stop, focus.stop)
+        assertEquals(HomeSheetContent.Stop("1"), homeSheetContent(focus, StopBand.DOT, false))
+        assertEquals("trip", focus.selectedRoute?.selectedTripId)
+        assertEquals(routeRowKey("65", 1, "Downtown"), focus.selectedRoute?.selectedArrivalRowKey())
+        assertEquals(ShowRouteRequest("65", "1", "trip", 1), map.routeRequests.single())
+        assertTrue(map.routeCommands.single().stopScoped)
+        assertEquals("trip", map.routeCommands.single().selectedTripId)
+        assertEquals(focus, viewModel(savedState = savedState).currentFocus.value)
+
+        map.sent.clear()
+        vm.onArrivalsLoaded(obaStop, emptyList())
+        advanceUntilIdle()
+        assertFalse(map.focusStops.single().recenter)
+        assertNull(map.routeRequests.single().focusTripId)
+        assertFalse(map.routeCommands.single().frameRoute)
+        assertEquals("trip", map.routeCommands.single().selectedTripId)
+        job.cancel()
+    }
+
+    @Test
+    fun `trip map reveal establishes its originating stop when another or no stop is focused`() = runTest {
+        for (initialStop in listOf(null, FocusedStop("other", "Other stop"))) {
+            val vm = viewModel()
+            initialStop?.let(vm::onStopFocused)
+            vm.revealTripOnMap(TripMapReveal("trip", "65", "65", "Downtown", 1, "1", true))
+            val focus = vm.currentFocus.value as CurrentFocus.Stop
+            assertEquals(FocusedStop("1"), focus.stop)
+            assertEquals("trip", focus.selectedRoute?.selectedTripId)
+            vm.onArrivalsLoaded(obaStop, emptyList())
+            assertEquals("Main St", vm.currentFocus.value.focusedStop?.name)
+        }
+    }
+
+    @Test
+    fun `scheduled trip keeps its drawer focus while framing the route instead of a vehicle`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        vm.revealTripOnMap(TripMapReveal("trip", "65", "65", "Downtown", 1, "1", false))
+        advanceUntilIdle()
+        assertEquals("trip", (vm.currentFocus.value as CurrentFocus.Stop).selectedRoute?.selectedTripId)
+        assertNull(map.routeRequests.single().focusTripId)
+        assertTrue(map.routeCommands.single().frameRoute)
+        assertTrue(map.routeCommands.single().stopScoped)
+        job.cancel()
+    }
+
+    @Test
+    fun `trip without an originating stop still opens a standalone route`() = runTest {
+        val vm = viewModel()
+        vm.onStopFocused(FocusedStop("unrelated"))
+        vm.revealTripOnMap(TripMapReveal("trip", "65", "65", "Downtown", 1, null, true))
+        assertEquals(CurrentFocus.Route(RouteTarget("65", directionId = 1), "trip"), vm.currentFocus.value)
     }
 
     @Test

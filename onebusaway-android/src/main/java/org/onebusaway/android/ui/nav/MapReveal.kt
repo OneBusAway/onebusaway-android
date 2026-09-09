@@ -50,6 +50,13 @@ fun NavController.navigateUpFromArrivals(parentRoute: String) {
     }
 }
 
+/** An explicit map visit returns to its source page before undoing map gestures. */
+internal fun NavController.mapReturnAction(): (() -> Unit)? = if (previousBackStackEntry?.destination?.route in setOf(NavRoutes.ARRIVALS, NavRoutes.ROUTE_INFO, NavRoutes.TRIP_DETAILS)) {
+    { popBackStack() }
+} else {
+    null
+}
+
 /** Open a board without discarding the list that led to it. */
 fun NavController.showArrivals(reveal: StopReveal) = navigate(NavRoutes.arrivals(reveal.stopId, reveal.name)) {
     launchSingleTop = true

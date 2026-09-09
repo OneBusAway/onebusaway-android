@@ -44,7 +44,11 @@ sealed interface HelpDialog {
 }
 
 /** The help feature's state: which dialog is up + whether the menu offers "contact us". */
-data class HelpUiState(val dialog: HelpDialog = HelpDialog.None, val showContactUs: Boolean = true)
+data class HelpUiState(
+    val dialog: HelpDialog = HelpDialog.None,
+    val showContactUs: Boolean = true,
+    val migrationPages: List<HelpDialog> = emptyList()
+)
 
 /**
  * Owns the help / what's-new / legend dialogs as a feature module (mirrors the other home feature
@@ -93,11 +97,23 @@ class HelpViewModel @Inject constructor(
         // reusing the arrival-ordering marker would exclude fresh installs of those releases.
         val searchSource = prefs.getInt(SEARCH_WORKFLOW_SOURCE_VERSION, -1).takeUnless { it == -1 }
             ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(SEARCH_WORKFLOW_SOURCE_VERSION, it) }
-        captureArrivalSource()
-        if (searchSource > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) {
-            _state.update { it.copy(dialog = HelpDialog.SearchWorkflow) }
+        val arrivalSource = captureArrivalSource()
+        val pages = buildList {
+            if (searchSource > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) add(HelpDialog.SearchWorkflow)
+            if (arrivalSource in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) add(HelpDialog.ArrivalDisplay)
+        }
+        _state.update { it.copy(migrationPages = pages) }
+        if (pages.isNotEmpty()) {
+            _state.update { it.copy(dialog = pages.first()) }
         } else {
-            maybeShowArrivalDisplayChoice()
+            maybeAutoShowWhatsNew()
+        }
+    }
+
+    fun previousMigrationPage() {
+        _state.update { state ->
+            val previous = state.migrationPages.getOrNull(state.migrationPages.indexOf(state.dialog) - 1)
+            if (previous == null) state else state.copy(dialog = previous)
         }
     }
 

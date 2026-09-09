@@ -48,9 +48,17 @@ No replacement gesture, form, or map interpretation is introduced.
 
 Both graphical migration dialogs place the Previous layout first (Lists and
 arrivals / Time), followed by the selected New layout (Map / Route). Each has a
-single Continue button. Both previews and Continue fit on the Pixel screen.
-The six focused arrival-display and search-workflow tests passed after this
-update, including option order, default selection, and saving with Continue. Chose Lists and arrivals, restarted, and
+shared footer with page dots centered above the Back and Continue buttons.
+Back is disabled on the first page;
+the second page returns to the first while preserving both selections. The page
+count includes only the choices owed at startup (one or two). A filled circle
+marks the current page; the other circle is outlined. Screen readers announce
+“Page 1 of 2” or “Page 2 of 2”.
+
+The 16 migration unit tests and seven focused arrival-display/search-choice
+device tests passed. The phone check verified button Back and system Back,
+retention of both selections, and page indicators centered above the buttons.
+Both previews and the footer fit on the Pixel screen. Chose Lists and arrivals, restarted, and
 confirmed the prompt did not return. Starred stops restored with toolbar Search.
 From that section, entered `8`, selected the Seattle route, expanded Mount Baker
 Transit Center, scrolled, and selected Denny Way & Westlake Ave. The live mapless

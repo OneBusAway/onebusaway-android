@@ -29,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -71,6 +72,8 @@ fun HelpFeature(
             viewModel.maybeShowStartup()
         }
     }
+    val migrationState = rememberSaveableStateHolder()
+    val migrationPage = state.migrationPages.indexOf(state.dialog) + 1
     when (state.dialog) {
         HelpDialog.Menu -> HelpMenuDialog(
             showContactUs = state.showContactUs,
@@ -86,15 +89,24 @@ fun HelpFeature(
             },
             onDismiss = viewModel::dismiss
         )
-        HelpDialog.SearchWorkflow -> SearchWorkflowChoiceDialog(
-            onSave = viewModel::chooseSearchResultMode,
-            onDismiss = viewModel::finishSearchWorkflowChoice
-        )
-        HelpDialog.ArrivalDisplay -> ArrivalDisplayChoiceDialog(
-            initialMode = viewModel.arrivalDisplayDefault,
-            onSave = viewModel::chooseArrivalDisplayDefault,
-            onDismiss = viewModel::finishArrivalDisplayChoice
-        )
+        HelpDialog.SearchWorkflow -> migrationState.SaveableStateProvider("search") {
+            SearchWorkflowChoiceDialog(
+                onSave = viewModel::chooseSearchResultMode,
+                onDismiss = viewModel::finishSearchWorkflowChoice,
+                page = migrationPage,
+                pageCount = state.migrationPages.size
+            )
+        }
+        HelpDialog.ArrivalDisplay -> migrationState.SaveableStateProvider("arrivals") {
+            ArrivalDisplayChoiceDialog(
+                initialMode = viewModel.arrivalDisplayDefault,
+                onSave = viewModel::chooseArrivalDisplayDefault,
+                onDismiss = viewModel::finishArrivalDisplayChoice,
+                page = migrationPage,
+                pageCount = state.migrationPages.size,
+                onBack = if (migrationPage > 1) viewModel::previousMigrationPage else null
+            )
+        }
         HelpDialog.WhatsNew -> WhatsNewDialog(
             onDismiss = {
                 viewModel.dismiss()

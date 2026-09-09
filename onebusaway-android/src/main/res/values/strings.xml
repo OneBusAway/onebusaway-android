@@ -1546,6 +1546,8 @@
     <string name="search_result_mode_migration_body">Choose how to open routes and stops from search. You can change this later in Settings.</string>
     <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>
     <string name="search_result_mode_lists_description">Choose a direction and stop from lists, then read arrivals without using a map.</string>
+    <string name="migration_back">Back</string>
+    <string name="migration_page">Page %1$d of %2$d</string>
     <string name="migration_continue">Continue</string>
     <string name="migration_previous_layout">Previous layout</string>
     <string name="migration_new_layout">New layout</string>

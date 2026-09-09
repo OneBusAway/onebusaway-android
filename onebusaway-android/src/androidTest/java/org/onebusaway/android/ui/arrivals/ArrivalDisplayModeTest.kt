@@ -32,6 +32,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
@@ -158,5 +159,28 @@ class ArrivalDisplayModeTest {
         composeRule.runOnIdle { assertEquals(null, saved) }
         composeRule.onNodeWithText("Continue").performClick()
         composeRule.runOnIdle { assertEquals(ArrivalDisplayMode.TIME, saved) }
+    }
+
+    @Test
+    fun migrationBackDoesNotSaveAnUnconfirmedChoice() {
+        var saved: ArrivalDisplayMode? = null
+        var backCount = 0
+        composeRule.setContent {
+            ArrivalDisplayChoiceDialog(
+                ArrivalDisplayMode.ROUTE,
+                onSave = { saved = it },
+                onDismiss = {},
+                page = 2,
+                pageCount = 2,
+                onBack = { backCount++ }
+            )
+        }
+        composeRule.onNodeWithContentDescription("Page 2 of 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Time").performClick()
+        composeRule.onNodeWithText("Back").performClick()
+        composeRule.runOnIdle {
+            assertEquals(1, backCount)
+            assertEquals(null, saved)
+        }
     }
 }

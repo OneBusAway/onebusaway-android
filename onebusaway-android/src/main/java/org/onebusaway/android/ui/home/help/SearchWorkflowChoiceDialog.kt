@@ -29,13 +29,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,16 +51,26 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.components.LineBadge
+import org.onebusaway.android.ui.compose.components.MigrationDialog
 import org.onebusaway.android.ui.searchresults.SearchResultMode
 
 /** Offline illustrations show the two search destinations without requesting tiles or transit data. */
 @Composable
-internal fun SearchWorkflowChoiceDialog(onSave: (SearchResultMode) -> Unit, onDismiss: () -> Unit) {
+internal fun SearchWorkflowChoiceDialog(
+    onSave: (SearchResultMode) -> Unit,
+    onDismiss: () -> Unit,
+    page: Int = 1,
+    pageCount: Int = 1
+) {
     var selected by rememberSaveable { mutableStateOf(SearchResultMode.MAP) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.search_result_mode_title)) },
-        text = {
+    MigrationDialog(
+        title = stringResource(R.string.search_result_mode_title),
+        page = page,
+        pageCount = pageCount,
+        onContinue = { onSave(selected) },
+        onDismiss = onDismiss,
+        onBack = null,
+        content = {
             Column(
                 Modifier.verticalScroll(rememberScrollState()).selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -96,8 +104,7 @@ internal fun SearchWorkflowChoiceDialog(onSave: (SearchResultMode) -> Unit, onDi
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = { onSave(selected) }) { Text(stringResource(R.string.migration_continue)) } }
+        }
     )
 }
 

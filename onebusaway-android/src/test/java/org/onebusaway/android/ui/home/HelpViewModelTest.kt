@@ -65,9 +65,47 @@ class HelpViewModelTest {
         val vm = viewModel(prefs)
         vm.maybeShowStartup()
         assertEquals(HelpDialog.SearchWorkflow, vm.state.value.dialog)
+        assertEquals(listOf(HelpDialog.SearchWorkflow, HelpDialog.ArrivalDisplay), vm.state.value.migrationPages)
         vm.chooseSearchResultMode(SearchResultMode.MAP)
         assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
         assertEquals(null, prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null))
+    }
+
+    @Test
+    fun `back revisits the search choice without completing arrival migration`() {
+        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 1) }
+        val vm = viewModel(prefs)
+        vm.maybeShowStartup()
+        vm.previousMigrationPage()
+        assertEquals(HelpDialog.SearchWorkflow, vm.state.value.dialog)
+        vm.chooseSearchResultMode(SearchResultMode.LISTS)
+        vm.previousMigrationPage()
+        assertEquals(HelpDialog.SearchWorkflow, vm.state.value.dialog)
+        assertEquals(SearchResultMode.LISTS, prefs.searchResultMode())
+        assertEquals(null, prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null))
+        vm.chooseSearchResultMode(SearchResultMode.MAP)
+        assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
+        assertEquals(2, vm.state.value.migrationPages.size)
+        vm.chooseArrivalDisplayDefault(ArrivalDisplayMode.TIME)
+        assertEquals(HelpDialog.WhatsNew, vm.state.value.dialog)
+        assertEquals(SearchResultMode.MAP, prefs.searchResultMode())
+        assertEquals(ArrivalDisplayMode.TIME, prefs.arrivalDisplayDefault())
+    }
+
+    @Test
+    fun `migration pages include only the choices owed at startup`() {
+        for (savedKey in listOf(SearchResultMode.PREFERENCE_KEY, ArrivalDisplayMode.PREFERENCE_KEY)) {
+            val prefs = FakePreferencesRepository().apply {
+                setInt("whatsNewVer", 153)
+                setString(savedKey, if (savedKey == SearchResultMode.PREFERENCE_KEY) "map" else "route")
+            }
+            val vm = viewModel(prefs)
+            vm.maybeShowStartup()
+            val expected = if (savedKey == SearchResultMode.PREFERENCE_KEY) HelpDialog.ArrivalDisplay else HelpDialog.SearchWorkflow
+            assertEquals(listOf(expected), vm.state.value.migrationPages)
+            vm.previousMigrationPage()
+            assertEquals(expected, vm.state.value.dialog)
+        }
     }
 
     @Test

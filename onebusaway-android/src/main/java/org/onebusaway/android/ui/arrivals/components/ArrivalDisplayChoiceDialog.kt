@@ -27,12 +27,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -60,19 +58,27 @@ import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.chronologicalArrivals
+import org.onebusaway.android.ui.compose.components.MigrationDialog
 
 /** Illustrations are fixed sample departures, so this choice also works offline or out of service. */
 @Composable
 internal fun ArrivalDisplayChoiceDialog(
     initialMode: ArrivalDisplayMode,
     onSave: (ArrivalDisplayMode) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    page: Int = 1,
+    pageCount: Int = 1,
+    onBack: (() -> Unit)? = null
 ) {
     var selected by rememberSaveable { mutableStateOf(initialMode) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.arrival_display_choose_title)) },
-        text = {
+    MigrationDialog(
+        title = stringResource(R.string.arrival_display_choose_title),
+        page = page,
+        pageCount = pageCount,
+        onContinue = { onSave(selected) },
+        onDismiss = onDismiss,
+        onBack = onBack,
+        content = {
             Column(Modifier.verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.arrival_display_choose_body))
                 ArrivalDisplayMode.entries.forEach { mode ->
@@ -100,8 +106,7 @@ internal fun ArrivalDisplayChoiceDialog(
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = { onSave(selected) }) { Text(stringResource(R.string.migration_continue)) } }
+        }
     )
 }
 

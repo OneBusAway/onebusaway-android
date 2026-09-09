@@ -446,7 +446,7 @@ fun RouteArrivalRow(
                         // The trailing padding is the gap to the divider — part of the badge section,
                         // so the TopEnd-aligned alert glyph sits flush against the divider.
                         modifier = Modifier.align(Alignment.Center).padding(end = 10.dp).then(anchors.badge),
-                        maxFontSize = 32.sp,
+                        maxFontSize = if (chronological) 36.sp else 32.sp,
                         width = if (compoundBadge) 96.dp else 64.dp,
                         maxLines = if (compoundBadge) 1 else 2,
                         color = badgeContent,

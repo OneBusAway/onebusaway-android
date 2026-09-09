@@ -494,11 +494,12 @@ private fun ReferencePillHeightFrame(
  *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
  *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta.
  *  [clock] is this trip's entry in the strip's once-per-poll formatted clock times (see EtaStrip),
- *  passed in rather than derived here because this composable recomposes every second. */
+ *  passed in rather than derived here because this composable recomposes every second. Null when
+ *  the chronological row displays the clock alongside the pill instead. */
 @Composable
 internal fun EtaPillWithMenu(
     trip: ArrivalInfo,
-    clock: ArrivalClock,
+    clock: ArrivalClock?,
     liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,

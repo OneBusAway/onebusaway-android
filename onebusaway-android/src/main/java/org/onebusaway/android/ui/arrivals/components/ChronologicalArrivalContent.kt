@@ -52,6 +52,8 @@ internal fun ChronologicalArrivalContent(
     // A spotlight anchor for the ETA pill, threaded down from the host (see ArrivalRowAnchors).
     etaModifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val clock = remember(arrival, context) { arrival.arrivalClock(context) }
     val description: @Composable () -> Unit = {
         val decoration = strikeThroughIf(arrival.status == Status.CANCELED)
         if (direction.isNotBlank()) {
@@ -59,17 +61,22 @@ internal fun ChronologicalArrivalContent(
         }
         if (stopLabel != null) Text(stopLabel, style = MaterialTheme.typography.bodySmall)
         Text(arrival.statusText, style = MaterialTheme.typography.bodySmall, color = colorResource(arrival.deviationStatus.textColorRes))
+        CorrectedClockTime(
+            clock = clock,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+            style = MaterialTheme.typography.bodyMedium,
+            canceled = arrival.status == Status.CANCELED
+        )
     }
     val eta: @Composable () -> Unit = {
-        val context = LocalContext.current
-        val clock = remember(arrival, context) { arrival.arrivalClock(context) }
         val liveNow = rememberLiveServerTime(arrival.serverNow)
         val selected = focus?.tripId == arrival.tripId
         Box(etaModifier.height(IntrinsicSize.Min)) {
             EtaPillWithMenu(
                 modifier = if (selected) Modifier.semantics { this.selected = true } else Modifier,
                 trip = arrival,
-                clock = clock,
+                clock = null,
                 liveNow = liveNow,
                 actions = actions,
                 callbacks = callbacks,

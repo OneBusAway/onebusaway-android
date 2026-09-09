@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,11 +34,13 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -46,7 +49,9 @@ import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayChoiceDialog
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
+import org.onebusaway.android.ui.arrivals.components.arrivalClock
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
@@ -80,7 +85,7 @@ class ArrivalDisplayModeTest {
 
     @Test
     fun switchProjectsLoadedTripsChronologicallyWithoutFavoritePromotion() {
-        val early = previewArrival("40", "Forty", 3, tripId = "forty")
+        val early = previewArrival("40", "Forty", 3, scheduleDeviationMinutes = 2, tripId = "forty")
         val middle = previewArrival("8", "Eight", 5, tripId = "eight-first")
         val late = previewArrival("8", "Eight", 12, tripId = "eight-second")
         val content = ArrivalsUiState.Content(
@@ -108,6 +113,14 @@ class ArrivalDisplayModeTest {
         composeRule.onNodeWithText("Time").performClick()
         composeRule.onAllNodesWithText("Eight").assertCountEquals(2)
         assertTrue(composeRule.onNodeWithText("Forty").getUnclippedBoundsInRoot().top < composeRule.onAllNodesWithText("Eight")[0].getUnclippedBoundsInRoot().top)
+        val clock = early.arrivalClock(InstrumentationRegistry.getInstrumentation().targetContext)
+        val directionBounds = composeRule.onNodeWithText("Forty", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        listOfNotNull(clock.corrects, clock.expected).forEach { time ->
+            composeRule.onAllNodesWithText(time, useUnmergedTree = true).assertCountEquals(1)
+            val timeNode = composeRule.onNodeWithText(time, useUnmergedTree = true).assertIsDisplayed()
+            assertEquals(directionBounds.left, timeNode.getUnclippedBoundsInRoot().left)
+            assertTrue(timeNode.getUnclippedBoundsInRoot().top >= directionBounds.bottom)
+        }
         composeRule.runOnIdle { state = content.copy(isStale = true) }
         composeRule.onNodeWithText("Time").assertIsSelected()
         composeRule.onAllNodesWithText("Eight").assertCountEquals(2)
@@ -118,7 +131,7 @@ class ArrivalDisplayModeTest {
     @Test
     fun chronologicalRowRetainsRouteActionsAtLargeTextInDarkTheme() {
         var openedSchedule: String? = null
-        val arrival = previewArrival("40", "Downtown via Main Street", 5)
+        val arrival = previewArrival("40", "Downtown via Main Street", 5, scheduleDeviationMinutes = 3)
         val actions = ArrivalActions("trip", arrival.routeId, "40", null, scheduleUrl = "https://example.com/schedule", agencyName = null, blockId = null)
         composeRule.setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
@@ -130,6 +143,7 @@ class ArrivalDisplayModeTest {
                             isFavorite = true,
                             callbacks = previewRowCallbacks(onShowRouteSchedule = { openedSchedule = it }),
                             chronological = true,
+                            anchors = ArrivalRowAnchors(eta = Modifier.testTag("eta")),
                             stopLabel = "Main St (Northbound)"
                         )
                     }
@@ -138,6 +152,13 @@ class ArrivalDisplayModeTest {
         }
         composeRule.onNodeWithText("Downtown via Main Street").assertIsDisplayed()
         composeRule.onNodeWithText("Main St (Northbound)").assertIsDisplayed()
+        val clock = arrival.arrivalClock(InstrumentationRegistry.getInstrumentation().targetContext)
+        val etaBounds = composeRule.onNodeWithTag("eta", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        listOfNotNull(clock.corrects, clock.expected).forEach { time ->
+            composeRule.onAllNodesWithText(time, useUnmergedTree = true).assertCountEquals(1)
+            val timeNode = composeRule.onNodeWithText(time, useUnmergedTree = true).assertIsDisplayed()
+            assertTrue(timeNode.getUnclippedBoundsInRoot().bottom <= etaBounds.top)
+        }
         composeRule.onNodeWithText("Downtown via Main Street").performSemanticsAction(SemanticsActions.OnLongClick)
         composeRule.onNodeWithText("Show route schedule").performClick()
         composeRule.runOnIdle { assertEquals("https://example.com/schedule", openedSchedule) }

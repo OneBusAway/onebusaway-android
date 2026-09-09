@@ -70,7 +70,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -523,8 +522,7 @@ internal fun EtaPillWithMenu(
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
             clock = clock,
-            // Give the chronological countdown breathing room where the clock lines used to sit.
-            extraVerticalPadding = if (clock == null) 6.dp else 0.dp,
+            standalone = clock == null,
             routeBadge = routeBadge,
             outline = outline,
             onClick = { callbacks.onEtaClick(trip) },
@@ -599,7 +597,8 @@ internal fun EtaPill(
     onMap: Boolean = false,
     canceled: Boolean = false,
     clock: ArrivalClock? = null,
-    extraVerticalPadding: Dp = 0.dp,
+    // Chronological rows display the clock separately: enlarge and pad their standalone countdown.
+    standalone: Boolean = false,
     // The row is drilled into this pill's trip (#2205): its card's selection border, drawn on the pill
     // too. Null is the ordinary unfocused pill.
     outline: BorderStroke? = null,
@@ -608,17 +607,18 @@ internal fun EtaPill(
 ) {
     val decoration = strikeThroughIf(canceled)
     val shape = RoundedCornerShape(8.dp)
-    val numberSize = 28.sp
+    val numberSize = if (standalone) 32.sp else 28.sp
     // "NOW" reads a touch too urgent at the full number size, so its glyph is dialed back slightly —
     // still clearly dominant, just not shouting (#1805 unified it to numberSize; this softens it). The
     // pill has no clock subline, so it's shorter than its neighbours by content — the strip stretches
     // it back to their height via fillMaxHeight (see EtaStrip), and the label is centered within it.
-    val nowSize = 26.sp
+    val nowSize = if (standalone) 30.sp else 26.sp
     val labelSize = 14.sp
     val indicatorSize = 13.8.dp // 1.5× the base accent, then +15%; overlaid, so the extra size overlaps, not widens
     val clockTimeSize = 12.sp
     val topPadding = 3.dp
     val bottomPadding = 3.5.dp
+    val extraVerticalPadding = if (standalone) 6.dp else 0.dp
     // Negative: tightLineStyle's trim gets the ETA row and clock-time line close but not flush (some
     // residual line-box slack survives it), so this pulls them the rest of the way — tuned by eye
     // against a device screenshot, not derived from the other constants above.

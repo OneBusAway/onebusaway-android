@@ -70,6 +70,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -522,6 +523,8 @@ internal fun EtaPillWithMenu(
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
             clock = clock,
+            // Give the chronological countdown breathing room where the clock lines used to sit.
+            extraVerticalPadding = if (clock == null) 6.dp else 0.dp,
             routeBadge = routeBadge,
             outline = outline,
             onClick = { callbacks.onEtaClick(trip) },
@@ -596,6 +599,7 @@ internal fun EtaPill(
     onMap: Boolean = false,
     canceled: Boolean = false,
     clock: ArrivalClock? = null,
+    extraVerticalPadding: Dp = 0.dp,
     // The row is drilled into this pill's trip (#2205): its card's selection border, drawn on the pill
     // too. Null is the ordinary unfocused pill.
     outline: BorderStroke? = null,
@@ -655,8 +659,8 @@ internal fun EtaPill(
                     // roundel remains visually centered.
                     start = if (routeBadge == null) 6.dp else indicatorSize,
                     end = if (routeBadge == null) 6.dp else indicatorSize,
-                    top = topPadding,
-                    bottom = bottomPadding
+                    top = topPadding + extraVerticalPadding,
+                    bottom = bottomPadding + extraVerticalPadding
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(clockTimeGap)

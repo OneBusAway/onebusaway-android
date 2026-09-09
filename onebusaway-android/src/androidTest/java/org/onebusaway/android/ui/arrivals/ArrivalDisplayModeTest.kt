@@ -85,7 +85,7 @@ class ArrivalDisplayModeTest {
 
     @Test
     fun switchProjectsLoadedTripsChronologicallyWithoutFavoritePromotion() {
-        val early = previewArrival("40", "Forty", 3, scheduleDeviationMinutes = 2, tripId = "forty")
+        val early = previewArrival("40", "Forty", 3, scheduleDeviationMinutes = 2, tripId = "forty", context = InstrumentationRegistry.getInstrumentation().targetContext)
         val middle = previewArrival("8", "Eight", 5, tripId = "eight-first")
         val late = previewArrival("8", "Eight", 12, tripId = "eight-second")
         val content = ArrivalsUiState.Content(
@@ -112,6 +112,7 @@ class ArrivalDisplayModeTest {
         composeRule.onAllNodesWithText("Eight").assertCountEquals(1)
         composeRule.onNodeWithText("Time").performClick()
         composeRule.onAllNodesWithText("Eight").assertCountEquals(2)
+        composeRule.onNodeWithText(early.statusText, useUnmergedTree = true).assertIsDisplayed()
         assertTrue(composeRule.onNodeWithText("Forty").getUnclippedBoundsInRoot().top < composeRule.onAllNodesWithText("Eight")[0].getUnclippedBoundsInRoot().top)
         val clock = early.arrivalClock(InstrumentationRegistry.getInstrumentation().targetContext)
         val directionBounds = composeRule.onNodeWithText("Forty", useUnmergedTree = true).getUnclippedBoundsInRoot()
@@ -130,7 +131,7 @@ class ArrivalDisplayModeTest {
     @Test
     fun chronologicalRowRetainsRouteActionsAtLargeTextInDarkTheme() {
         var openedSchedule: String? = null
-        val arrival = previewArrival("40", "Downtown via Main Street", 5, scheduleDeviationMinutes = 3)
+        val arrival = previewArrival("40", "Downtown via Main Street", 5, scheduleDeviationMinutes = 3, context = InstrumentationRegistry.getInstrumentation().targetContext)
         val actions = ArrivalActions("trip", arrival.routeId, "40", null, scheduleUrl = "https://example.com/schedule", agencyName = null, blockId = null)
         composeRule.setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
@@ -151,6 +152,7 @@ class ArrivalDisplayModeTest {
         }
         composeRule.onNodeWithText("Downtown via Main Street").assertIsDisplayed()
         composeRule.onNodeWithText("Main St (Northbound)").assertIsDisplayed()
+        composeRule.onNodeWithText(arrival.statusText, useUnmergedTree = true).assertIsDisplayed()
         val clock = arrival.arrivalClock(InstrumentationRegistry.getInstrumentation().targetContext)
         val etaBounds = composeRule.onNodeWithTag("eta", useUnmergedTree = true).getUnclippedBoundsInRoot()
         val times = "${clock.corrects}  ${clock.expected}"

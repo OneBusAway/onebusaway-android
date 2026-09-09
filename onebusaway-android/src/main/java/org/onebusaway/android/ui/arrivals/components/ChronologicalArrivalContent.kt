@@ -21,12 +21,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
@@ -60,7 +64,19 @@ internal fun ChronologicalArrivalContent(
             Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, textDecoration = decoration)
         }
         if (stopLabel != null) Text(stopLabel, style = MaterialTheme.typography.bodySmall)
-        Text(arrival.statusText, style = MaterialTheme.typography.bodySmall, color = colorResource(arrival.deviationStatus.textColorRes))
+        if (arrival.statusText.isNotBlank()) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = colorResource(arrival.fillColor),
+                contentColor = Color.White
+            ) {
+                Text(
+                    arrival.statusText,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
         CorrectedClockTime(
             clock = clock,
             color = MaterialTheme.colorScheme.onSurface,

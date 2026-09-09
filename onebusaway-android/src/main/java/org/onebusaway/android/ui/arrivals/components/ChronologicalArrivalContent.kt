@@ -66,7 +66,8 @@ internal fun ChronologicalArrivalContent(
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = MaterialTheme.typography.bodyMedium.fontSize,
             style = MaterialTheme.typography.bodyMedium,
-            canceled = arrival.status == Status.CANCELED
+            canceled = arrival.status == Status.CANCELED,
+            sideBySide = true
         )
     }
     val eta: @Composable () -> Unit = {

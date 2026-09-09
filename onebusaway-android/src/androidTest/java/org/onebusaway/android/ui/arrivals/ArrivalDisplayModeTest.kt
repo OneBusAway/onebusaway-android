@@ -115,12 +115,11 @@ class ArrivalDisplayModeTest {
         assertTrue(composeRule.onNodeWithText("Forty").getUnclippedBoundsInRoot().top < composeRule.onAllNodesWithText("Eight")[0].getUnclippedBoundsInRoot().top)
         val clock = early.arrivalClock(InstrumentationRegistry.getInstrumentation().targetContext)
         val directionBounds = composeRule.onNodeWithText("Forty", useUnmergedTree = true).getUnclippedBoundsInRoot()
-        listOfNotNull(clock.corrects, clock.expected).forEach { time ->
-            composeRule.onAllNodesWithText(time, useUnmergedTree = true).assertCountEquals(1)
-            val timeNode = composeRule.onNodeWithText(time, useUnmergedTree = true).assertIsDisplayed()
-            assertEquals(directionBounds.left, timeNode.getUnclippedBoundsInRoot().left)
-            assertTrue(timeNode.getUnclippedBoundsInRoot().top >= directionBounds.bottom)
-        }
+        val times = "${clock.corrects}  ${clock.expected}"
+        composeRule.onAllNodesWithText(times, useUnmergedTree = true).assertCountEquals(1)
+        val timeNode = composeRule.onNodeWithText(times, useUnmergedTree = true).assertIsDisplayed()
+        assertEquals(directionBounds.left, timeNode.getUnclippedBoundsInRoot().left)
+        assertTrue(timeNode.getUnclippedBoundsInRoot().top >= directionBounds.bottom)
         composeRule.runOnIdle { state = content.copy(isStale = true) }
         composeRule.onNodeWithText("Time").assertIsSelected()
         composeRule.onAllNodesWithText("Eight").assertCountEquals(2)
@@ -154,11 +153,10 @@ class ArrivalDisplayModeTest {
         composeRule.onNodeWithText("Main St (Northbound)").assertIsDisplayed()
         val clock = arrival.arrivalClock(InstrumentationRegistry.getInstrumentation().targetContext)
         val etaBounds = composeRule.onNodeWithTag("eta", useUnmergedTree = true).getUnclippedBoundsInRoot()
-        listOfNotNull(clock.corrects, clock.expected).forEach { time ->
-            composeRule.onAllNodesWithText(time, useUnmergedTree = true).assertCountEquals(1)
-            val timeNode = composeRule.onNodeWithText(time, useUnmergedTree = true).assertIsDisplayed()
-            assertTrue(timeNode.getUnclippedBoundsInRoot().bottom <= etaBounds.top)
-        }
+        val times = "${clock.corrects}  ${clock.expected}"
+        composeRule.onAllNodesWithText(times, useUnmergedTree = true).assertCountEquals(1)
+        val timeNode = composeRule.onNodeWithText(times, useUnmergedTree = true).assertIsDisplayed()
+        assertTrue(timeNode.getUnclippedBoundsInRoot().bottom <= etaBounds.top)
         composeRule.onNodeWithText("Downtown via Main Street").performSemanticsAction(SemanticsActions.OnLongClick)
         composeRule.onNodeWithText("Show route schedule").performClick()
         composeRule.runOnIdle { assertEquals("https://example.com/schedule", openedSchedule) }

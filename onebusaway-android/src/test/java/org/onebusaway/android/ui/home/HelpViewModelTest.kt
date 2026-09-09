@@ -113,8 +113,7 @@ class HelpViewModelTest {
         for (savedKey in listOf(SearchResultMode.PREFERENCE_KEY, ArrivalDisplayMode.PREFERENCE_KEY)) {
             val prefs = FakePreferencesRepository().apply {
                 setInt("whatsNewVer", BuildConfig.VERSION_CODE)
-                setInt("search_workflow_migration_source_version", 153)
-                setInt("arrival_display_migration_source_version", 153)
+                setInt("post_26_2_1_layout_migration_source_version", 153)
                 setString(savedKey, if (savedKey == SearchResultMode.PREFERENCE_KEY) "map" else "route")
             }
             val vm = viewModel(prefs)
@@ -179,15 +178,20 @@ class HelpViewModelTest {
     }
 
     @Test
-    fun `only recorded releases through 26_1 are eligible`() {
+    fun `both migration pages include all existing releases through 26_2_1`() {
         for (version in listOf(1, 153, 154, 155, 156, 157)) {
             val prefs = FakePreferencesRepository().apply {
-                setString(SearchResultMode.PREFERENCE_KEY, "map")
                 setInt("whatsNewVer", version)
+                // An older migration decision must not exclude 26.2.x installations.
+                setInt("arrival_display_migration_source_version", 0)
             }
             val vm = viewModel(prefs)
             vm.maybeShowStartup()
-            assertEquals("Previous version $version", version <= 154, vm.state.value.dialog == HelpDialog.ArrivalDisplay)
+            assertEquals(
+                "Previous version $version",
+                listOf(HelpDialog.SearchWorkflow, HelpDialog.ArrivalDisplay),
+                vm.state.value.migrationPages
+            )
         }
     }
 
@@ -198,6 +202,9 @@ class HelpViewModelTest {
         vm.maybeShowStartup()
         assertEquals(HelpDialog.WhatsNew, vm.state.value.dialog)
         assertEquals(BuildConfig.VERSION_CODE, prefs.getInt("whatsNewVer", 0))
+        assertTrue(vm.state.value.migrationPages.isEmpty())
+        assertEquals(SearchResultMode.MAP, prefs.searchResultMode())
+        assertEquals(ArrivalDisplayMode.ROUTE, prefs.arrivalDisplayDefault())
 
         // Debug builds reuse an old versionCode; the recorded source must still exclude them.
         val nextLaunch = viewModel(prefs)

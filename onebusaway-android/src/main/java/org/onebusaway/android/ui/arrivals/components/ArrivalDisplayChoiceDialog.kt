@@ -49,14 +49,13 @@ import org.onebusaway.android.ui.compose.components.PhonePreview
 /** Illustrations are fixed sample departures, so this choice also works offline or out of service. */
 @Composable
 internal fun ArrivalDisplayChoiceDialog(
-    initialMode: ArrivalDisplayMode,
     onSave: (ArrivalDisplayMode) -> Unit,
     onDismiss: () -> Unit,
     page: Int = 1,
     pageCount: Int = 1,
     onBack: (() -> Unit)? = null
 ) {
-    var selected by rememberSaveable { mutableStateOf(initialMode) }
+    var selected by rememberSaveable { mutableStateOf(ArrivalDisplayMode.TIME) }
     MigrationDialog(
         title = stringResource(R.string.arrival_display_choose_title),
         page = page,

@@ -39,29 +39,29 @@ class SearchWorkflowChoiceTest {
     @get:Rule val compose = createUnconfinedComposeRule()
 
     @Test
-    fun continueSavesThePreselectedMapChoice() {
+    fun continueSavesThePreselectedListsChoice() {
         var saved: SearchResultMode? = null
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
         compose.onNodeWithContentDescription("Page 1 of 1").assertIsDisplayed()
         compose.onNodeWithText("Back").assertIsNotEnabled()
-        compose.onNodeWithText("Map").assertIsSelected()
+        compose.onNodeWithText("Lists and arrivals").assertIsSelected()
         assertTrue(
             compose.onNodeWithText("Lists and arrivals").getUnclippedBoundsInRoot().top <
                 compose.onNodeWithText("Map").getUnclippedBoundsInRoot().top
         )
         compose.onNodeWithText("Continue").performClick()
-        compose.runOnIdle { assertEquals(SearchResultMode.MAP, saved) }
+        compose.runOnIdle { assertEquals(SearchResultMode.LISTS, saved) }
     }
 
     @Test
-    fun listsChoiceSurvivesRecreationBeforeContinue() {
+    fun mapChoiceSurvivesRecreationBeforeContinue() {
         var saved: SearchResultMode? = null
         val restoration = StateRestorationTester(compose)
         restoration.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
-        compose.onNodeWithText("Lists and arrivals").performScrollTo().performClick()
+        compose.onNodeWithText("Map").performScrollTo().performClick()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("Continue").performClick()
-        compose.runOnIdle { assertEquals(SearchResultMode.LISTS, saved) }
+        compose.runOnIdle { assertEquals(SearchResultMode.MAP, saved) }
     }
 
     @Test

@@ -28,7 +28,6 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
-import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
@@ -87,19 +86,16 @@ class HelpViewModel @Inject constructor(
 
     private var startupPresented = false
 
-    val arrivalDisplayDefault: ArrivalDisplayMode get() = prefs.arrivalDisplayDefault()
-
     /** One startup sequence: default chooser, release notes, then the tutorial invitation. */
     fun maybeShowStartup() {
         if (startupPresented || _state.value.dialog != HelpDialog.None) return
         startupPresented = true
-        // This migration includes riders already on 26.2.x. Capture its own source marker:
-        // reusing the arrival-ordering marker would exclude fresh installs of those releases.
-        val searchSource = captureMigrationSource(SEARCH_WORKFLOW_SOURCE_VERSION)
-        val arrivalSource = captureMigrationSource(ARRIVAL_DISPLAY_SOURCE_VERSION)
+        // Both choices ship after 26.2.1 and apply to every existing installation, including
+        // fresh installs of 26.2.x. Do not reuse the earlier legacy-only migration marker.
+        val sourceVersion = captureMigrationSource()
         val pages = buildList {
-            if (searchSource > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) add(HelpDialog.SearchWorkflow)
-            if (arrivalSource in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) add(HelpDialog.ArrivalDisplay)
+            if (sourceVersion > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) add(HelpDialog.SearchWorkflow)
+            if (sourceVersion > 0 && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) add(HelpDialog.ArrivalDisplay)
         }
         _state.update { it.copy(migrationPages = pages, dialog = pages.firstOrNull() ?: HelpDialog.None) }
         if (pages.isEmpty()) maybeAutoShowWhatsNew()
@@ -132,10 +128,10 @@ class HelpViewModel @Inject constructor(
         if (next == null && !maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
     }
 
-    // Keep each source across launches before What's New advances its marker, so deferring a
+    // Keep the source across launches before What's New advances its marker, so deferring a
     // choice neither loses upgrade eligibility nor opts a fresh install in.
-    private fun captureMigrationSource(key: String): Int = prefs.getInt(key, -1).takeUnless { it == -1 }
-        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(key, it) }
+    private fun captureMigrationSource(): Int = prefs.getInt(LAYOUT_MIGRATION_SOURCE_VERSION, -1).takeUnless { it == -1 }
+        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(LAYOUT_MIGRATION_SOURCE_VERSION, it) }
 
     fun showWhatsNew() = _state.update { it.copy(dialog = HelpDialog.WhatsNew) }
 
@@ -177,11 +173,6 @@ class HelpViewModel @Inject constructor(
         const val TWITTER_URL = "http://mobile.twitter.com/onebusaway"
 
         private const val WHATS_NEW_VER = "whatsNewVer"
-        private const val SEARCH_WORKFLOW_SOURCE_VERSION = "search_workflow_migration_source_version"
-        private const val ARRIVAL_DISPLAY_SOURCE_VERSION = "arrival_display_migration_source_version"
-
-        // Published release boundary: 26.1.0 = 154; 155 was the later 27.0.0 alpha,
-        // followed by 26.2.0 = 156. See docs/RELEASING.md and commit eddb081a6 (#2261).
-        private const val LAST_LEGACY_ARRIVALS_VERSION = 154
+        private const val LAYOUT_MIGRATION_SOURCE_VERSION = "post_26_2_1_layout_migration_source_version"
     }
 }

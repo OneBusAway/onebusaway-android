@@ -39,7 +39,7 @@ No replacement gesture, form, or map interpretation is introduced.
 - 12 focused tests passed on the Pixel 7 Pro: real Navigation Compose back-stack
   behavior, the actual route list's expanded direction and scroll restoration
   across arrivals and saved-state recreation, map reveals, and graphical chooser
-  selection/recreation with Map preselected.
+  selection/recreation with Map preselected in the earlier implementation (changed below).
 - Google app and instrumentation APK builds and MapLibre Kotlin compilation passed
   with `-PwarningsAsErrors=true`.
 - `spotlessCheck` passed.
@@ -47,7 +47,8 @@ No replacement gesture, form, or map interpretation is introduced.
 ## Updated-app device observations
 
 Both graphical migration dialogs place the Previous layout first (Lists and
-arrivals / Time), followed by the selected New layout (Map / Route). Each has a
+arrivals / Time), followed by the New layout (Map / Route). The earlier screenshots preselect the
+new layout; the post-26.2.1 revision described below preselects the previous layout. Each has a
 shared footer with page dots centered above the Back and Continue buttons.
 Back is disabled on the first page;
 the second page returns to the first while preserving both selections. The page
@@ -152,3 +153,23 @@ builds, MapLibre Kotlin compilation, and Spotless passed with warnings treated a
 errors. A live Pixel check verified both migration layouts, centered pips, default
 choices, retained selections through Back, and final Continue. Original device
 preferences and migration markers were restored after the check.
+
+## Post-26.2.1 migration revision
+
+Both migration pages now apply to existing installations, including users who
+installed 26.2.0 or 26.2.1 fresh. They share a new source marker captured before
+What's New advances its version marker; the old March-only arrival migration
+marker cannot exclude those users. Confirmed choices remain saved independently,
+and deferred choices remain available on the next launch. Fresh installs of the
+updated app receive no upgrade prompt and retain Map / Route defaults.
+
+The migration dialogs now preselect **Lists and arrivals** and **Time**. Continuing
+without changing the selections saves the previous workflows. The earlier
+migration screenshots above show the superseded Map / Route preselection.
+
+Validation of this revision: all 17 `HelpViewModelTest` unit tests and all eight
+`SearchWorkflowChoiceTest` / `ArrivalDisplayModeTest` tests passed on the USB Pixel
+7 Pro. The device checks confirm Continue saves Lists and arrivals / Time without
+a selection change, and an explicit Map selection survives state restoration.
+Google app/test APK builds and `spotlessCheck` passed with warnings treated as
+errors. The full unit and connected suites were not rerun for this revision.

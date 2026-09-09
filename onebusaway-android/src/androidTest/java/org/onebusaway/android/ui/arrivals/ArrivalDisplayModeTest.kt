@@ -144,18 +144,17 @@ class ArrivalDisplayModeTest {
     }
 
     @Test
-    fun migrationOnlySavesTheExplicitlyConfirmedChoice() {
+    fun migrationContinueSavesThePreselectedTimeChoice() {
         var saved: ArrivalDisplayMode? = null
         composeRule.setContent {
-            ArrivalDisplayChoiceDialog(ArrivalDisplayMode.ROUTE, onSave = { saved = it }, onDismiss = {})
+            ArrivalDisplayChoiceDialog(onSave = { saved = it }, onDismiss = {})
         }
-        composeRule.onNodeWithText("Route").assertIsSelected()
+        composeRule.onNodeWithText("Time").assertIsSelected()
         assertTrue(
             composeRule.onNodeWithText("Time").getUnclippedBoundsInRoot().top <
                 composeRule.onNodeWithText("Route").getUnclippedBoundsInRoot().top
         )
         composeRule.onNodeWithText("Cancel").assertDoesNotExist()
-        composeRule.onNodeWithText("Time").performClick()
         composeRule.runOnIdle { assertEquals(null, saved) }
         composeRule.onNodeWithText("Continue").performClick()
         composeRule.runOnIdle { assertEquals(ArrivalDisplayMode.TIME, saved) }
@@ -167,7 +166,6 @@ class ArrivalDisplayModeTest {
         var backCount = 0
         composeRule.setContent {
             ArrivalDisplayChoiceDialog(
-                ArrivalDisplayMode.ROUTE,
                 onSave = { saved = it },
                 onDismiss = {},
                 page = 2,
@@ -176,7 +174,7 @@ class ArrivalDisplayModeTest {
             )
         }
         composeRule.onNodeWithContentDescription("Page 2 of 2").assertIsDisplayed()
-        composeRule.onNodeWithText("Time").performClick()
+        composeRule.onNodeWithText("Route").performClick()
         composeRule.onNodeWithText("Back").performClick()
         composeRule.runOnIdle {
             assertEquals(1, backCount)

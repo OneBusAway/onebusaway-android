@@ -99,7 +99,6 @@ fun HelpFeature(
         }
         HelpDialog.ArrivalDisplay -> migrationState.SaveableStateProvider("arrivals") {
             ArrivalDisplayChoiceDialog(
-                initialMode = viewModel.arrivalDisplayDefault,
                 onSave = viewModel::chooseArrivalDisplayDefault,
                 onDismiss = viewModel::finishMigrationPage,
                 page = migrationPage,

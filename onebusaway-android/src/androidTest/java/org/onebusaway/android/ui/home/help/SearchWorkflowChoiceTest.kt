@@ -15,22 +15,33 @@
  */
 package org.onebusaway.android.ui.home.help
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.ui.compose.components.MigrationChoice
+import org.onebusaway.android.ui.compose.components.PhonePreview
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.searchresults.SearchResultMode
@@ -44,7 +55,8 @@ class SearchWorkflowChoiceTest {
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
         compose.onNodeWithContentDescription("Page 1 of 1").assertIsDisplayed()
         compose.onNodeWithText("Back").assertIsNotEnabled()
-        compose.onNodeWithText("Lists and arrivals").assertIsSelected()
+        compose.onNode(hasText("Lists and arrivals") and hasText("Previous layout")).assertIsSelected()
+        compose.onNode(hasText("Map") and hasText("New layout")).assertIsDisplayed()
         assertTrue(
             compose.onNodeWithText("Lists and arrivals").getUnclippedBoundsInRoot().top <
                 compose.onNodeWithText("Map").getUnclippedBoundsInRoot().top
@@ -65,9 +77,39 @@ class SearchWorkflowChoiceTest {
     }
 
     @Test
+    fun previewCallbackHandlesTapWithoutParentOrSampleActions() {
+        var previewTaps = 0
+        var parentTaps = 0
+        var sampleTaps = 0
+        compose.setContent {
+            ObaTheme {
+                MigrationChoice(
+                    title = "Choice",
+                    description = "Preview tap target",
+                    previous = true,
+                    selected = false,
+                    onSelect = { parentTaps++ }
+                ) {
+                    PhonePreview(onSelect = { previewTaps++ }, modifier = Modifier.testTag("phone-preview")) {
+                        Box(Modifier.fillMaxWidth().height(120.dp).clickable { sampleTaps++ })
+                    }
+                }
+            }
+        }
+        // Target physical preview bounds: performClick would invoke semantics instead of hit testing.
+        compose.onNodeWithTag("phone-preview", useUnmergedTree = true).performTouchInput { click(center) }
+        compose.runOnIdle {
+            assertEquals(1, previewTaps)
+            assertEquals(0, parentTaps)
+            assertEquals(0, sampleTaps)
+        }
+    }
+
+    @Test
     fun previewTapSelectsOnlyTheEnclosingChoice() {
         var saved: SearchResultMode? = null
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
+        compose.onNodeWithText("Map").performScrollTo().performClick()
         compose.onNodeWithText("Lists and arrivals").performScrollTo().performTouchInput {
             click(Offset(center.x, height * .8f))
         }

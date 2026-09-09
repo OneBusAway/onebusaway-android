@@ -173,3 +173,16 @@ Validation of this revision: all 17 `HelpViewModelTest` unit tests and all eight
 a selection change, and an explicit Map selection survives state restoration.
 Google app/test APK builds and `spotlessCheck` passed with warnings treated as
 errors. The full unit and connected suites were not rerun for this revision.
+
+## Review follow-up
+
+The preview regression test now targets the actual `PhonePreview` bounds inside
+a selectable migration choice and observes separate preview, parent, and sample
+callbacks. A tap must invoke only the preview callback. The full-dialog test also
+starts on Map before tapping the Lists preview, so it verifies a selection change.
+Migration-label assertions retain Lists as Previous layout and Map as New layout,
+matching the March baseline and the intended restored workflow.
+
+All four `SearchWorkflowChoiceTest` cases passed on the Pixel 7 Pro with the
+matching PR app/test APKs. The test APK build (warnings as errors),
+`spotlessCheck`, and `git diff --check` passed.

@@ -1552,7 +1552,10 @@
     <string name="migration_continue">Continue</string>
     <string name="migration_previous_layout">Previous layout</string>
     <string name="migration_new_layout">New layout</string>
-    <string name="search_result_mode_sample_direction">Downtown ▾</string>
-    <string name="search_result_mode_sample_stop">Denny Way &amp; Westlake Ave N</string>
-    <string name="search_result_mode_sample_eta">3 min</string>
+    <string name="search_result_mode_sample_direction">Mount Baker Transit Center</string>
+    <string name="search_result_mode_sample_first_stop">Denny Way &amp; Dexter Ave</string>
+    <string name="search_result_mode_sample_street">Denny Way</string>
+    <string name="search_result_mode_sample_avenue">Westlake Ave</string>
+    <string name="search_result_mode_sample_water">Lake Union</string>
+    <string name="search_result_mode_sample_stop">Denny Way &amp; Westlake Ave</string>
 </resources>

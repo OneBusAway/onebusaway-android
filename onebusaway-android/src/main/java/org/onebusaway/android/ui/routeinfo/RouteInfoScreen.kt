@@ -201,7 +201,7 @@ private fun RouteHeaderPreview() {
 }
 
 @Composable
-private fun DirectionHeader(name: String, expanded: Boolean, onClick: () -> Unit) {
+internal fun DirectionHeader(name: String, expanded: Boolean, onClick: () -> Unit) {
     HorizontalDivider()
     Row(
         modifier = Modifier

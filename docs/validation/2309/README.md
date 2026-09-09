@@ -55,10 +55,15 @@ count includes only the choices owed at startup (one or two). A filled circle
 marks the current page; the other circle is outlined. Screen readers announce
 “Page 1 of 2” or “Page 2 of 2”.
 
-The 16 migration unit tests and seven focused arrival-display/search-choice
+The 16 migration unit tests and eight focused arrival-display/search-choice
 device tests passed. The phone check verified button Back and system Back,
 retention of both selections, and page indicators centered above the buttons.
-Both previews and the footer fit on the Pixel screen. Chose Lists and arrivals, restarted, and
+Both previews and the footer fit on the Pixel screen.
+
+Search previews render the actual direction header, stop rows, and arrival cards
+at scaled phone proportions. The offline map illustration adds labeled streets,
+a shoreline, route stops, and the app's bus glyph, with light/dark colors.
+Preview taps select the enclosing option; sample controls never open trip actions. Chose Lists and arrivals, restarted, and
 confirmed the prompt did not return. Starred stops restored with toolbar Search.
 From that section, entered `8`, selected the Seattle route, expanded Mount Baker
 Transit Center, scrolled, and selected Denny Way & Westlake Ave. The live mapless

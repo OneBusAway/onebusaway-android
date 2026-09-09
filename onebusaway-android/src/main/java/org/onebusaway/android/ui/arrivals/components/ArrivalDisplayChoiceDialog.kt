@@ -16,12 +16,9 @@
 package org.onebusaway.android.ui.arrivals.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -40,17 +37,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 import java.time.ZoneId
-import kotlin.math.roundToInt
 import org.onebusaway.android.R
 import org.onebusaway.android.time.LocalIllustrationTime
 import org.onebusaway.android.time.ServerTime
@@ -59,6 +51,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.chronologicalArrivals
 import org.onebusaway.android.ui.compose.components.MigrationDialog
+import org.onebusaway.android.ui.compose.components.PhonePreview
 
 /** Illustrations are fixed sample departures, so this choice also works offline or out of service. */
 @Composable
@@ -113,18 +106,24 @@ internal fun ArrivalDisplayChoiceDialog(
 /** Same departures rendered by the actual drawer rows, at a scaled phone width. */
 @Composable
 private fun ArrivalModePreview(mode: ArrivalDisplayMode, onSelect: () -> Unit) {
+    PhonePreview(onSelect, Modifier.padding(top = 8.dp)) { SampleArrivalRows(mode) }
+}
+
+/** Actual arrival rows with a fixed clock and sample departures, shared by both migration pages. */
+@Composable
+internal fun SampleArrivalRows(mode: ArrivalDisplayMode, singleRoute: Boolean = false) {
     val context = LocalContext.current
     val downtown = stringResource(R.string.arrival_display_sample_downtown)
     val northgate = stringResource(R.string.arrival_display_sample_northgate)
     val now = remember {
         ServerTime(LocalDate.of(2026, 1, 1).atTime(12, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
     }
-    val arrivals = remember(context, downtown, northgate, now) {
+    val arrivals = remember(context, downtown, northgate, now, singleRoute) {
         listOf(
             previewArrival("8", downtown, 3, tripId = "sample-eight-first", context = context, now = now),
             previewArrival("40", northgate, 5, predicted = false, tripId = "sample-forty", context = context, now = now),
             previewArrival("8", downtown, 12, scheduleDeviationMinutes = 2, tripId = "sample-eight-second", context = context, now = now)
-        )
+        ).filter { !singleRoute || it.shortName == "8" }
     }
     val groups = remember(arrivals, mode) {
         if (mode == ArrivalDisplayMode.TIME) {
@@ -148,37 +147,17 @@ private fun ArrivalModePreview(mode: ArrivalDisplayMode, onSelect: () -> Unit) {
         }
     }
     val callbacks = remember { previewRowCallbacks() }
-    Box(Modifier.fillMaxWidth().padding(top = 8.dp).clearAndSetSemantics { }) {
-        CompositionLocalProvider(LocalIllustrationTime provides now) {
-            Column(Modifier.phonePreviewScale()) {
-                groups.forEach { group ->
-                    RouteArrivalRow(
-                        group = group,
-                        actionsFor = { actions[it.tripId] },
-                        isFavorite = group.routeId == "route_8",
-                        callbacks = callbacks,
-                        chronological = mode == ArrivalDisplayMode.TIME
-                    )
-                }
+    CompositionLocalProvider(LocalIllustrationTime provides now) {
+        Column {
+            groups.forEach { group ->
+                RouteArrivalRow(
+                    group = group,
+                    actionsFor = { actions[it.tripId] },
+                    isFavorite = group.routeId == "route_8",
+                    callbacks = callbacks,
+                    chronological = mode == ArrivalDisplayMode.TIME
+                )
             }
-        }
-        // Cover the illustration's route/ETA/star touch targets. Every tap selects this option;
-        // long presses and swipes must never open sample-trip menus or scroll a sample ETA strip.
-        Box(Modifier.matchParentSize().clickable(interactionSource = null, indication = null, onClick = onSelect))
-    }
-}
-
-/** Preserve the drawer's real proportions instead of squeezing its columns into a dialog card. */
-private fun Modifier.phonePreviewScale(): Modifier = layout { measurable, constraints ->
-    val phoneWidth = 360.dp.roundToPx()
-    val width = minOf(phoneWidth, constraints.maxWidth)
-    val scale = width.toFloat() / phoneWidth
-    val placeable = measurable.measure(Constraints.fixedWidth(phoneWidth))
-    layout(width, (placeable.height * scale).roundToInt()) {
-        placeable.placeWithLayer(0, 0) {
-            scaleX = scale
-            scaleY = scale
-            transformOrigin = TransformOrigin(0f, 0f)
         }
     }
 }

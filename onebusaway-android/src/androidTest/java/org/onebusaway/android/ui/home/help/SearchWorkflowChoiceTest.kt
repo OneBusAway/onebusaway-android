@@ -15,15 +15,18 @@
  */
 package org.onebusaway.android.ui.home.help
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -57,6 +60,19 @@ class SearchWorkflowChoiceTest {
         restoration.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
         compose.onNodeWithText("Lists and arrivals").performScrollTo().performClick()
         restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithText("Continue").performClick()
+        compose.runOnIdle { assertEquals(SearchResultMode.LISTS, saved) }
+    }
+
+    @Test
+    fun previewTapSelectsOnlyTheEnclosingChoice() {
+        var saved: SearchResultMode? = null
+        compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
+        compose.onNodeWithText("Lists and arrivals").performScrollTo().performTouchInput {
+            click(Offset(center.x, height * .8f))
+        }
+        compose.onNodeWithText("Lists and arrivals").assertIsSelected()
+        compose.runOnIdle { assertEquals(null, saved) }
         compose.onNodeWithText("Continue").performClick()
         compose.runOnIdle { assertEquals(SearchResultMode.LISTS, saved) }
     }

@@ -16,20 +16,14 @@
 package org.onebusaway.android.ui.home.help
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -41,18 +35,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.MigrationDialog
 import org.onebusaway.android.ui.searchresults.SearchResultMode
 
@@ -101,58 +89,11 @@ internal fun SearchWorkflowChoiceDialog(
                                 }
                             }
                             Text(stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map_description else R.string.search_result_mode_lists_description))
-                            SearchWorkflowPreview(mode)
+                            SearchWorkflowPreview(mode, onSelect = { selected = mode })
                         }
                     }
                 }
             }
         }
     )
-}
-
-@Composable
-private fun SearchWorkflowPreview(mode: SearchResultMode) {
-    Column(Modifier.fillMaxWidth().clearAndSetSemantics { }.background(MaterialTheme.colorScheme.surfaceContainerLow)) {
-        if (mode == SearchResultMode.MAP) {
-            val street = MaterialTheme.colorScheme.outlineVariant
-            val route = MaterialTheme.colorScheme.primary
-            val stop = MaterialTheme.colorScheme.surface
-            Canvas(Modifier.fillMaxWidth().height(86.dp)) {
-                for (i in 1..4) {
-                    val x = size.width * i / 5
-                    drawLine(street, Offset(x, 0f), Offset(x, size.height), 5.dp.toPx())
-                }
-                for (i in 1..2) {
-                    val y = size.height * i / 3
-                    drawLine(street, Offset(0f, y), Offset(size.width, y), 5.dp.toPx())
-                }
-                val path = Path().apply {
-                    moveTo(size.width * .2f, size.height)
-                    lineTo(size.width * .2f, size.height / 3)
-                    lineTo(size.width * .8f, size.height / 3)
-                    lineTo(size.width * .8f, 0f)
-                }
-                drawPath(path, route, style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round))
-                for (x in listOf(.2f, .5f, .8f)) {
-                    drawCircle(route, 6.dp.toPx(), Offset(size.width * x, size.height / 3))
-                    drawCircle(stop, 3.dp.toPx(), Offset(size.width * x, size.height / 3))
-                }
-            }
-        } else {
-            Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LineBadge("8")
-                Text(stringResource(R.string.search_result_mode_sample_direction), style = MaterialTheme.typography.labelLarge)
-            }
-            HorizontalDivider()
-            Text(stringResource(R.string.search_result_mode_sample_stop), Modifier.padding(start = 24.dp, top = 8.dp, bottom = 8.dp), style = MaterialTheme.typography.bodySmall)
-            HorizontalDivider()
-        }
-        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            LineBadge("8")
-            Text(stringResource(R.string.arrival_display_sample_downtown), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-            Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.small) {
-                Text(stringResource(R.string.search_result_mode_sample_eta), Modifier.padding(6.dp), style = MaterialTheme.typography.labelLarge)
-            }
-        }
-    }
 }

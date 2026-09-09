@@ -25,9 +25,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.TripMapReveal
 
 private class FakeTripDetailsRepository(
     var result: Result<TripDetailsData>
@@ -73,7 +73,7 @@ class TripDetailsViewModelTest {
         stops = emptyList(),
         scrollToIndex = -1,
         lineColorArgb = 0,
-        mapRequest = ShowRouteRequest("route", focusTripId = "t", initialDirectionId = 1)
+        mapRequest = TripMapReveal("t", "route", "8", "Capitol Hill", 1, "stop", true)
     )
 
     @Test

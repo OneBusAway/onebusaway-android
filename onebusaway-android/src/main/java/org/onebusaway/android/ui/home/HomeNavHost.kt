@@ -77,11 +77,13 @@ import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
+import org.onebusaway.android.ui.nav.RESULT_MAP_TRIP
 import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.nav.arrivalsMapEnterTransition
 import org.onebusaway.android.ui.nav.arrivalsMapExitTransition
 import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
+import org.onebusaway.android.ui.nav.consumeTripMapReveal
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.openSearchRoute
@@ -175,6 +177,12 @@ fun HomeNavHost(
             // re-fires on recomposition nor survives a later route-focus exit + process death. The
             // HomeViewModel adopts the result as the focus authority and directs the map VM from there.
             val handle = entry.savedStateHandle
+            val revealTrip by handle.getStateFlow<String?>(RESULT_MAP_TRIP, null)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(revealTrip) {
+                val reveal = handle.consumeTripMapReveal() ?: return@LaunchedEffect
+                home.homeViewModel.revealTripOnMap(reveal, home.mapViewModel.viewport)
+            }
             val revealRouteId by handle.getStateFlow<String?>(RESULT_MAP_ROUTE_ID, null)
                 .collectAsStateWithLifecycle()
             val revealStopId by handle.getStateFlow<String?>(RESULT_MAP_STOP_ID, null)

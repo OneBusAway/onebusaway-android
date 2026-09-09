@@ -16,7 +16,7 @@
 package org.onebusaway.android.ui.tripdetails
 
 import androidx.annotation.ColorRes
-import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.nav.TripMapReveal
 
 /** Where a stop's dot sits on the trip's vertical transit line. */
 enum class LinePosition { FIRST, MIDDLE, LAST }
@@ -72,7 +72,7 @@ sealed interface TripDetailsUiState {
         val stops: List<TripStopItem>,
         val scrollToIndex: Int,
         val lineColorArgb: Int,
-        val mapRequest: ShowRouteRequest?
+        val mapRequest: TripMapReveal?
     ) : TripDetailsUiState
 
     data class Error(val message: String) : TripDetailsUiState

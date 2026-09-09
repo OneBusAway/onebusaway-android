@@ -37,7 +37,6 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.extrapolation.data.serviceDateOrNull
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
@@ -46,6 +45,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.ServiceDate
+import org.onebusaway.android.ui.nav.TripMapReveal
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -57,7 +57,7 @@ data class TripDetailsData(
     val stops: List<TripStopItem>,
     val scrollToIndex: Int,
     val lineColorArgb: Int,
-    val mapRequest: ShowRouteRequest?
+    val mapRequest: TripMapReveal?
 )
 
 /** Loads a trip's schedule + real-time status and projects it onto the UI model. */
@@ -216,7 +216,7 @@ class DefaultTripDetailsRepository @Inject constructor(
             stops = stops,
             scrollToIndex = resolveScrollIndex(scrollMode, stopIndex, destinationIndex, nextStopIndex),
             lineColorArgb = lineColorArgb,
-            mapRequest = td.mapRequest()
+            mapRequest = td.mapRequest(stopId)
         )
     }
 
@@ -303,16 +303,20 @@ class DefaultTripDetailsRepository @Inject constructor(
 }
 
 /** Focus a running trip's vehicle; a trip without a current position opens the route overview. */
-internal fun TripDetails.mapRequest(): ShowRouteRequest? {
+internal fun TripDetails.mapRequest(stopId: String? = null): TripMapReveal? {
     val trip = trip ?: return null
     val routeId = trip.routeId.takeIf { it.isNotBlank() } ?: return null
     // status is null when the vehicle is serving a different trip in this block. Predictions alone
     // do not mean a vehicle is on the road (e.g. a delayed trip that has not pulled out yet).
     val status = status
     val hasVehicle = status != null && status.status != Status.CANCELED && status.position != null
-    return ShowRouteRequest(
+    return TripMapReveal(
+        tripId = tripId,
         routeId = routeId,
-        focusTripId = tripId.takeIf { hasVehicle && it.isNotBlank() },
-        initialDirectionId = trip.directionId.takeIf { hasVehicle }
+        shortName = route?.shortName.orEmpty().ifBlank { routeId },
+        headsign = trip.headsign,
+        directionId = trip.directionId,
+        stopId = stopId?.takeIf { it.isNotBlank() },
+        hasVehicle = hasVehicle
     )
 }

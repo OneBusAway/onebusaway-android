@@ -43,8 +43,9 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.nav.consumeRouteReveal
-import org.onebusaway.android.ui.nav.showRouteMapFromArrivals
+import org.onebusaway.android.ui.nav.TripMapReveal
+import org.onebusaway.android.ui.nav.consumeTripMapReveal
+import org.onebusaway.android.ui.nav.showTripOnMap
 
 class TripDetailsMapTest {
     @get:Rule val compose = createUnconfinedComposeRule()
@@ -67,7 +68,7 @@ class TripDetailsMapTest {
     fun runningTripFocusesItsVehicleWithoutTheOriginatingStop() {
         assertEquals(
             ShowRouteRequest("route", focusTripId = "trip", initialDirectionId = 1),
-            details(active).mapRequest()
+            details(active).mapRequest()?.routeRequest()
         )
         // Scheduled positions are also drawn by the map; prediction availability is not motion.
         assertEquals(details(active).mapRequest(), details(active.copy(predicted = false)).mapRequest())
@@ -76,7 +77,7 @@ class TripDetailsMapTest {
     @Test
     fun tripsWithoutACurrentVehicleOpenTheUnscopedRoute() {
         for (status in listOf(null, active.copy(position = null), active.copy(activeTripId = "previous_trip"), active.copy(status = "CANCELED"))) {
-            assertEquals(ShowRouteRequest("route"), details(status).mapRequest())
+            assertEquals(ShowRouteRequest("route"), details(status).mapRequest()?.routeRequest())
         }
         assertNull(details(active, routeId = "").mapRequest())
     }
@@ -84,7 +85,7 @@ class TripDetailsMapTest {
     @Test
     fun mapButtonPassesTheCurrentRequestAndBackReturnsToTripStatus() {
         lateinit var nav: NavHostController
-        val content = mutableStateOf(content(details(active).mapRequest()))
+        val content = mutableStateOf(content(details(active).mapRequest("origin_stop")))
         val mapLabel = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.stop_info_option_showonmap)
         compose.setContent {
             nav = rememberNavController()
@@ -97,7 +98,7 @@ class TripDetailsMapTest {
                             onRefresh = {},
                             onStopClick = { _, _, _ -> },
                             onSetDestinationReminder = null,
-                            onShowOnMap = nav::showRouteMapFromArrivals
+                            onShowOnMap = nav::showTripOnMap
                         )
                     }
                     composable(NavRoutes.HOME) { Text("Map screen") }
@@ -109,14 +110,14 @@ class TripDetailsMapTest {
         compose.onNodeWithText("Map screen").assertIsDisplayed()
         compose.runOnIdle {
             assertSame(tripEntry, nav.previousBackStackEntry)
-            assertEquals(details(active).mapRequest(), nav.currentBackStackEntry!!.savedStateHandle.consumeRouteReveal())
+            assertEquals(details(active).mapRequest("origin_stop"), nav.currentBackStackEntry!!.savedStateHandle.consumeTripMapReveal())
             nav.popBackStack()
             // A refresh may replace live data with schedule-only data; the next tap must use it.
-            content.value = content(details(null).mapRequest())
+            content.value = content(details(null).mapRequest("origin_stop"))
         }
         compose.onNodeWithContentDescription(mapLabel).assertIsDisplayed().performClick()
         compose.runOnIdle {
-            assertEquals(ShowRouteRequest("route"), nav.currentBackStackEntry!!.savedStateHandle.consumeRouteReveal())
+            assertEquals(details(null).mapRequest("origin_stop"), nav.currentBackStackEntry!!.savedStateHandle.consumeTripMapReveal())
         }
     }
 
@@ -136,7 +137,7 @@ class TripDetailsMapTest {
         compose.onNodeWithContentDescription(mapLabel).assertDoesNotExist()
     }
 
-    private fun content(request: ShowRouteRequest?) = TripDetailsUiState.Content(
+    private fun content(request: TripMapReveal?) = TripDetailsUiState.Content(
         header = TripHeader("8", "Capitol Hill", null, "Metro Transit", null, "Scheduled", R.color.stop_info_scheduled_time, false),
         stops = emptyList(),
         scrollToIndex = -1,

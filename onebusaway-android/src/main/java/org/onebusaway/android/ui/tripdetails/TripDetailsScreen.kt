@@ -70,7 +70,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.RealtimeIndicator
 import org.onebusaway.android.ui.compose.components.LineBadge
@@ -78,6 +77,7 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
+import org.onebusaway.android.ui.nav.TripMapReveal
 
 /** Refresh interval matching the legacy TripDetailsListFragment (fixed 60s). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -106,7 +106,7 @@ fun TripDetailsRoute(
     onStopClick: (stopId: String, name: String, direction: String?) -> Unit,
     /** Null when destination reminders are off, which removes the long-press affordance. */
     onSetDestinationReminder: ((stopIndex: Int) -> Unit)?,
-    onShowOnMap: (ShowRouteRequest) -> Unit,
+    onShowOnMap: (TripMapReveal) -> Unit,
     onShowTrajectory: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -133,7 +133,7 @@ fun TripDetailsScreen(
     onRefresh: () -> Unit,
     onStopClick: (String, String, String?) -> Unit,
     onSetDestinationReminder: ((Int) -> Unit)?,
-    onShowOnMap: (ShowRouteRequest) -> Unit,
+    onShowOnMap: (TripMapReveal) -> Unit,
     onShowTrajectory: () -> Unit = {}
 ) {
     val content = state as? TripDetailsUiState.Content

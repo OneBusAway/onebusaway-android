@@ -52,7 +52,9 @@ class FocusBannerTest {
         hasAlerts: Boolean = true,
         favoriteEnabled: Boolean = true,
         direction: String? = "N",
-        stopCode: String? = "12345"
+        stopCode: String? = "12345",
+        stopMenu: StopFocusMenu? = null,
+        onRecenter: () -> Unit = {}
     ) {
         composeRule.setContent {
             FocusBanner(
@@ -67,14 +69,50 @@ class FocusBannerTest {
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
-                onRecenterStop = {},
+                onRecenterStop = onRecenter,
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
                 onShowStopList = {},
-                onHeight = {}
+                onHeight = {},
+                stopMenu = stopMenu
             )
         }
+    }
+
+    @Test
+    fun stopBannerLongPressAndOverflowOpenTheSameMenu() {
+        var recentered = 0
+        var openedArrivals = 0
+        setStopBanner(
+            onRecenter = { recentered++ },
+            stopMenu = StopFocusMenu(
+                onReportStopProblem = {},
+                onNightLight = {},
+                onCreateShortcut = {},
+                onShowArrivals = { openedArrivals++ }
+            )
+        )
+        val banner = composeRule.onNodeWithText(STOP_NAME)
+        banner.performClick()
+        assertEquals(1, recentered)
+        banner.performTouchInput { longClick() }
+        val menuItems = listOf(
+            R.string.view_arrivals_only,
+            R.string.my_context_create_shortcut,
+            R.string.stop_info_option_report_problem,
+            R.string.stop_info_option_night_light
+        )
+        menuItems.forEach { composeRule.onNodeWithText(context.getString(it)).assertIsDisplayed() }
+        composeRule.onNodeWithText(context.getString(R.string.view_arrivals_only)).performClick()
+        assertEquals(1, openedArrivals)
+        assertEquals(1, recentered)
+        composeRule.onNodeWithText(context.getString(R.string.view_arrivals_only)).assertDoesNotExist()
+
+        composeRule.onNodeWithContentDescription(context.getString(R.string.stop_info_item_options_title)).performClick()
+        menuItems.forEach { composeRule.onNodeWithText(context.getString(it)).assertIsDisplayed() }
+        composeRule.onNodeWithText(context.getString(R.string.view_arrivals_only)).performClick()
+        assertEquals(2, openedArrivals)
     }
 
     /**

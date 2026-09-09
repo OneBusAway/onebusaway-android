@@ -253,6 +253,7 @@ private fun FavoriteRail(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StopFocusBanner(
     state: FocusBannerState.Stop,
@@ -261,6 +262,7 @@ private fun StopFocusBanner(
     stopMenu: StopFocusMenu?,
     onClose: () -> Unit
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
     Row(
         Modifier
             .fillMaxSize()
@@ -274,9 +276,11 @@ private fun StopFocusBanner(
     ) {
         val subtitle = DisplayFormat.stopSubtitleText(LocalContext.current, state.stopCode, state.direction)
         Column(
-            modifier = Modifier.weight(1f).clickable(
+            modifier = Modifier.weight(1f).combinedClickable(
                 onClickLabel = stringResource(R.string.stop_info_recenter),
                 role = Role.Button,
+                onLongClickLabel = if (stopMenu != null) stringResource(R.string.stop_info_item_options_title) else null,
+                onLongClick = if (stopMenu != null) ({ menuExpanded = true }) else null,
                 onClick = onRecenter
             )
         ) {
@@ -308,7 +312,7 @@ private fun StopFocusBanner(
             BannerAlertAction(onClick = onShowAlerts)
         }
         if (stopMenu != null) {
-            StopMenuAction(stopMenu)
+            StopMenuAction(stopMenu, expanded = menuExpanded, onExpandedChange = { menuExpanded = it })
         }
         HeaderIconButton(
             painter = painterResource(R.drawable.ic_navigation_close),
@@ -600,29 +604,28 @@ private fun HeaderIconButton(
  * and the night-light flasher a rider holds up to a driver.
  */
 @Composable
-private fun StopMenuAction(menu: StopFocusMenu) {
-    var expanded by remember { mutableStateOf(false) }
+private fun StopMenuAction(menu: StopFocusMenu, expanded: Boolean, onExpandedChange: (Boolean) -> Unit) {
     Box {
         HeaderIconButton(
             painter = painterResource(R.drawable.more_vert),
             contentDescription = stringResource(R.string.stop_info_item_options_title),
-            onClick = { expanded = true }
+            onClick = { onExpandedChange(true) }
         )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
             MenuRow(R.string.view_arrivals_only) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onShowArrivals()
             }
             MenuRow(R.string.my_context_create_shortcut) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onCreateShortcut()
             }
             MenuRow(R.string.stop_info_option_report_problem) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onReportStopProblem()
             }
             MenuRow(R.string.stop_info_option_night_light) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onNightLight()
             }
         }

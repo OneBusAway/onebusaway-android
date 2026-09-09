@@ -26,14 +26,16 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
-import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 /** Which help dialog is showing — the dialog state this help feature module owns. */
 sealed interface HelpDialog {
     object None : HelpDialog
     object Menu : HelpDialog
+    object SearchWorkflow : HelpDialog
     object ArrivalDisplay : HelpDialog
     object WhatsNew : HelpDialog
     object Legend : HelpDialog
@@ -41,7 +43,11 @@ sealed interface HelpDialog {
 }
 
 /** The help feature's state: which dialog is up + whether the menu offers "contact us". */
-data class HelpUiState(val dialog: HelpDialog = HelpDialog.None, val showContactUs: Boolean = true)
+data class HelpUiState(
+    val dialog: HelpDialog = HelpDialog.None,
+    val showContactUs: Boolean = true,
+    val migrationPages: List<HelpDialog> = emptyList()
+)
 
 /**
  * Owns the help / what's-new / legend dialogs as a feature module (mirrors the other home feature
@@ -59,10 +65,8 @@ class HelpViewModel @Inject constructor(
     private val _state = MutableStateFlow(HelpUiState())
     val state: StateFlow<HelpUiState> = _state.asStateFlow()
 
-    // Whether a region has resolved — gates the auto-show of "What's New". The repository owns this hot
-    // predicate ([RegionRepository.regionPresent]); [HelpFeature] reads it. Re-exposed verbatim (no local
-    // mirror needed).
-    val regionReady: StateFlow<Boolean> get() = regionRepository.regionPresent
+    // Active(null) is a resolved custom API endpoint and must receive migration choices too.
+    val regionState: StateFlow<RegionState> get() = regionRepository.state
 
     /**
      * The Twitter/X URL to open from the help menu: the current region's own Twitter URL when it has
@@ -82,33 +86,52 @@ class HelpViewModel @Inject constructor(
 
     private var startupPresented = false
 
-    val arrivalDisplayDefault: ArrivalDisplayMode get() = prefs.arrivalDisplayDefault()
-
     /** One startup sequence: default chooser, release notes, then the tutorial invitation. */
     fun maybeShowStartup() {
         if (startupPresented || _state.value.dialog != HelpDialog.None) return
         startupPresented = true
-        // Capture the previous release before What's New advances its marker. Keep it across
-        // launches so dismissing the chooser neither loses eligibility nor opts a fresh install in.
-        val sourceVersion = prefs.getInt(ARRIVAL_DISPLAY_SOURCE_VERSION, -1).takeUnless { it == -1 }
-            ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(ARRIVAL_DISPLAY_SOURCE_VERSION, it) }
-        if (sourceVersion in 1..LAST_LEGACY_ARRIVALS_VERSION && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) {
-            _state.update { it.copy(dialog = HelpDialog.ArrivalDisplay) }
-        } else {
-            maybeAutoShowWhatsNew()
+        // Both choices ship after 26.2.1 and apply to every existing installation, including
+        // fresh installs of 26.2.x. Do not reuse the earlier legacy-only migration marker.
+        val sourceVersion = captureMigrationSource()
+        val pages = buildList {
+            if (sourceVersion > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) add(HelpDialog.SearchWorkflow)
+            if (sourceVersion > 0 && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) add(HelpDialog.ArrivalDisplay)
         }
+        _state.update { it.copy(migrationPages = pages, dialog = pages.firstOrNull() ?: HelpDialog.None) }
+        if (pages.isEmpty()) maybeAutoShowWhatsNew()
+    }
+
+    fun previousMigrationPage() {
+        _state.update { state ->
+            val previous = state.migrationPages.getOrNull(state.migrationPages.indexOf(state.dialog) - 1)
+            if (previous == null) state else state.copy(dialog = previous)
+        }
+    }
+
+    fun chooseSearchResultMode(mode: SearchResultMode) {
+        prefs.setString(SearchResultMode.PREFERENCE_KEY, mode.value)
+        finishMigrationPage()
     }
 
     fun chooseArrivalDisplayDefault(mode: ArrivalDisplayMode) {
         prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
-        finishArrivalDisplayChoice()
+        finishMigrationPage()
     }
 
-    /** Dismissing leaves the choice owed on next launch, and allows this launch to continue. */
-    fun finishArrivalDisplayChoice() {
-        dismiss()
-        if (!maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
+    /** Advance through the pages captured at startup; dismissing leaves an unsaved choice owed next launch. */
+    fun finishMigrationPage() {
+        val state = _state.value
+        val index = state.migrationPages.indexOf(state.dialog)
+        if (index < 0) return
+        val next = state.migrationPages.getOrNull(index + 1)
+        _state.update { it.copy(dialog = next ?: HelpDialog.None) }
+        if (next == null && !maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
     }
+
+    // Keep the source across launches before What's New advances its marker, so deferring a
+    // choice neither loses upgrade eligibility nor opts a fresh install in.
+    private fun captureMigrationSource(): Int = prefs.getInt(LAYOUT_MIGRATION_SOURCE_VERSION, -1).takeUnless { it == -1 }
+        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(LAYOUT_MIGRATION_SOURCE_VERSION, it) }
 
     fun showWhatsNew() = _state.update { it.copy(dialog = HelpDialog.WhatsNew) }
 
@@ -150,10 +173,6 @@ class HelpViewModel @Inject constructor(
         const val TWITTER_URL = "http://mobile.twitter.com/onebusaway"
 
         private const val WHATS_NEW_VER = "whatsNewVer"
-        private const val ARRIVAL_DISPLAY_SOURCE_VERSION = "arrival_display_migration_source_version"
-
-        // Published release boundary: 26.1.0 = 154; 155 was the later 27.0.0 alpha,
-        // followed by 26.2.0 = 156. See docs/RELEASING.md and commit eddb081a6 (#2261).
-        private const val LAST_LEGACY_ARRIVALS_VERSION = 154
+        private const val LAYOUT_MIGRATION_SOURCE_VERSION = "post_26_2_1_layout_migration_source_version"
     }
 }

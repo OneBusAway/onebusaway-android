@@ -92,7 +92,7 @@ class ArrivalsNavigationTest {
         compose.runOnIdle {
             assertEquals(NavRoutes.HOME, nav.currentDestination?.route)
             assertSame(board, nav.previousBackStackEntry)
-            assertEquals(StopReveal("stop/1", "My stop", GeoPoint(0.0, 0.0)), nav.currentBackStackEntry!!.savedStateHandle.consumeStopReveal())
+            assertEquals(StopReveal("stop/1", "My stop", GeoPoint(0.0, 0.0), useDefaultZoom = true), nav.currentBackStackEntry!!.savedStateHandle.consumeStopReveal())
             nav.popBackStack()
         }
         compose.onNodeWithText("Route selected").assertIsDisplayed()

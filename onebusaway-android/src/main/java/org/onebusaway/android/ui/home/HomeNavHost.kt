@@ -84,10 +84,11 @@ import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
-import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.openSearchRoute
 import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.report.reportGraph
 import org.onebusaway.android.ui.routeinfo.routeInfoGraph
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -140,6 +141,23 @@ fun HomeNavHost(
         val launchRoot by entry.savedStateHandle.getStateFlow(LAUNCH_ROOT, false).collectAsStateWithLifecycle()
         BackHandler(enabled = launchRoot) { navController.navigateBackOrFinish() }
     }
+    // HOME renders help inside its tutorial scope. Restored lists and boards need the same
+    // startup sequence even when the map has never been composed.
+    if (launchReady && currentEntry != null && currentEntry?.destination?.route != NavRoutes.HOME) {
+        ObaTheme {
+            org.onebusaway.android.ui.home.help.HelpFeature(
+                viewModel = home.helpViewModel,
+                onHelpAction = { action ->
+                    if (action == HelpAction.AGENCIES) {
+                        navController.navigate(NavRoutes.AGENCIES)
+                    } else {
+                        home.activityActions.onHelpActionExternal(action)
+                    }
+                },
+                onShowWelcomeTutorial = home.activityActions.onShowWelcomeTutorial
+            )
+        }
+    }
     NavHost(navController = navController, startDestination = NavRoutes.HOME) {
         composable(
             NavRoutes.HOME,
@@ -178,7 +196,8 @@ fun HomeNavHost(
                 // camera over to the stop rather than jump, since the map is already on screen.
                 home.homeViewModel.revealStop(
                     FocusedStop(reveal.stopId, reveal.name, point = reveal.point),
-                    animate = true
+                    animate = true,
+                    useDefaultZoom = reveal.useDefaultZoom
                 )
             }
             val currentFocus by home.homeViewModel.currentFocus.collectAsStateWithLifecycle()
@@ -211,9 +230,9 @@ fun HomeNavHost(
                     onSettings = { menuNav(NavRoutes.SETTINGS, R.string.analytics_label_button_press_settings) },
                     onSearch = { query -> navController.navigateFromHome(NavRoutes.search(query)) },
                     onRecentStopsRoutes = { navController.navigateFromHome(NavRoutes.myRecent()) },
-                    // Recent stops open arrivals; routes still open on the map.
+                    // Recent stops open arrivals; search suggestions for routes follow the search preference.
                     onRecentStop = { navController.showArrivals(it) },
-                    onRecentRoute = { routeId -> navController.revealRouteOnMap(routeId) },
+                    onRecentRoute = { routeId -> navController.openSearchRoute(routeId, PreferencesEntryPoint.get(context).searchResultMode()) },
                     onHelpAction = { action ->
                         if (action == HelpAction.AGENCIES) {
                             navController.navigateFromHome(NavRoutes.AGENCIES)
@@ -255,7 +274,8 @@ fun HomeNavHost(
                 pinnedTripViewModel = home.pinnedTripViewModel,
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
                 callbacks = callbacks,
-                onBackToArrivals = if (navController.previousBackStackEntry?.destination?.route == NavRoutes.ARRIVALS) {
+                showHelpDialogs = currentEntry?.id == entry.id,
+                onBackToArrivals = if (navController.previousBackStackEntry?.destination?.route in setOf(NavRoutes.ARRIVALS, NavRoutes.ROUTE_INFO)) {
                     { navController.popBackStack() }
                 } else {
                     null

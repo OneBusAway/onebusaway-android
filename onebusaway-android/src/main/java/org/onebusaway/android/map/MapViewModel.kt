@@ -492,8 +492,9 @@ class MapViewModel @Inject constructor(
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
-        animate: Boolean = false
-    ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter, animate)
+        animate: Boolean = false,
+        useDefaultZoom: Boolean = false
+    ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter, animate, useDefaultZoom)
 
     /**
      * Draw the exact trips with upcoming arrivals at [stopId] without moving the camera. The stop must

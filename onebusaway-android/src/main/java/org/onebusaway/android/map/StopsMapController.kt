@@ -407,15 +407,17 @@ class StopsMapController(
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
-        animate: Boolean = false
+        animate: Boolean = false,
+        useDefaultZoom: Boolean = false
     ) {
         if (recenter) {
+            val point = stop.location.toGeoPoint()
             host.dispatchGesture(
-                CameraCommand.Recenter(
-                    stop.location.toGeoPoint(),
-                    animate = animate,
-                    applyRouteBias = routeActive() && overlayExpanded
-                )
+                if (useDefaultZoom) {
+                    CameraCommand.MoveToLocation(point, useDefaultZoom = true, animate = animate)
+                } else {
+                    CameraCommand.Recenter(point, animate = animate, applyRouteBias = routeActive() && overlayExpanded)
+                }
             )
         }
         setFocusStop(stop, routes)

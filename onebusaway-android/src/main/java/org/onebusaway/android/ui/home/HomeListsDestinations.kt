@@ -32,7 +32,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.SearchableTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.mylists.RouteListDestination
@@ -65,6 +65,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
         val vm = rememberListVm("home.starredStops") { StarredStopsRepository(host.applicationContext) }
         StarredListScaffold(
             title = R.string.navdrawer_item_starred_stops,
+            onSearch = { navController.navigate(NavRoutes.search(it)) },
             clearLabel = R.string.my_option_clear_starred_stops,
             onBack = {
                 // This screen uses its Up arrow as the map section selector, without a duplicate icon.
@@ -100,6 +101,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
         val vm = rememberListVm("home.starredRoutes") { StarredRoutesRepository(host.applicationContext) }
         StarredListScaffold(
             title = R.string.navdrawer_item_starred_routes,
+            onSearch = { navController.navigate(NavRoutes.search(it)) },
             clearLabel = R.string.my_option_clear_starred_routes,
             onBack = { navController.popBackStack() },
             onMap = {
@@ -145,6 +147,7 @@ private fun StarredListScaffold(
     @StringRes title: Int,
     @StringRes clearLabel: Int,
     onBack: () -> Unit,
+    onSearch: (String) -> Unit,
     onMap: (() -> Unit)? = null,
     onSort: () -> Unit,
     onClear: () -> Unit,
@@ -153,7 +156,7 @@ private fun StarredListScaffold(
     ObaTheme {
         Scaffold(
             topBar = {
-                ObaTopAppBar(title = stringResource(title), onBack = onBack) {
+                SearchableTopAppBar(title = stringResource(title), onBack = onBack, onSearch = onSearch) {
                     onMap?.let { showMap ->
                         IconButton(onClick = showMap) {
                             Icon(

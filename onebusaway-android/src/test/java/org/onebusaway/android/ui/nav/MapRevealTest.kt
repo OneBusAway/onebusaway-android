@@ -90,6 +90,17 @@ class MapRevealTest {
     }
 
     @Test
+    fun `stop zoom request survives the navigation handoff and is consumed with it`() {
+        val handle = SavedStateHandle()
+        val reveal = StopReveal("stop_1", useDefaultZoom = true)
+        handle.putStopReveal(reveal)
+        assertEquals(reveal, handle.consumeStopReveal())
+        assertNull(handle.consumeStopReveal())
+        handle[RESULT_MAP_STOP_ID] = "stop_2"
+        assertEquals(StopReveal("stop_2"), handle.consumeStopReveal())
+    }
+
+    @Test
     fun `reads an id-only reveal, which is all an external launch carries`() {
         // A deep link / FCM push / pinned shortcut knows the stop id and nothing else; the arrivals
         // load resolves the rest, so this is a complete reveal rather than a dropped one.

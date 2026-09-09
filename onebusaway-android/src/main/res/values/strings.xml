@@ -156,6 +156,7 @@
     <string name="bus_options_menu_show_trip_details">Show trip status</string>
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
     <string name="bus_options_menu_show_route_on_map">Show route on map</string>
+    <string name="bus_options_menu_show_stop_list">Show stop list</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
     <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
@@ -1527,13 +1528,10 @@
     <string name="arrival_display_time">Time</string>
     <string name="arrival_display_route">Route</string>
     <string name="arrival_display_default">Arrival display default</string>
-    <string name="arrival_display_choose_title">How would you like to see arrivals?</string>
-    <string name="arrival_display_choose_body">Change the default any time in Settings</string>
-    <string name="arrival_display_time_migration_title">Time - old way</string>
-    <string name="arrival_display_route_migration_title">Route - new option</string>
+    <string name="arrival_display_choose_title">Group arrivals by route?</string>
+    <string name="arrival_display_choose_body">Choose whether to group arrivals by route. You can change this later in Settings.</string>
     <string name="arrival_display_time_description">Each departure in time order, across all routes.</string>
     <string name="arrival_display_route_description">Departures grouped by route and direction.</string>
-    <string name="arrival_display_save_default">Save default</string>
     <string name="tutorial_scripted_arrival_time_title">See what comes next</string>
     <string name="tutorial_scripted_arrival_time_text">Time shows one departure per row, with the earliest first. Use Time and Route to switch views whenever you like. Settings controls which view new drawers open in.</string>
     <string name="arrival_display_sample_downtown">Downtown</string>
@@ -1543,4 +1541,22 @@
     <string name="home_map">Map</string>
     <string name="stop_add_star">Add star to stop</string>
     <string name="stop_remove_star">Remove star from stop</string>
+    <string name="search_result_mode_title">Open search results in</string>
+    <string name="search_result_mode_map">Map</string>
+    <string name="search_result_mode_lists">Lists and arrivals</string>
+    <string name="search_result_mode_migration_title">Use a map for search?</string>
+    <string name="search_result_mode_migration_body">Choose whether to use a &lt;b&gt;map&lt;/b&gt; or &lt;b&gt;list&lt;/b&gt; to select stops and routes. You can change this later in Settings.</string>
+    <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>
+    <string name="search_result_mode_lists_description">Choose a direction and stop from lists, then read arrivals without using a map.</string>
+    <string name="migration_back">Back</string>
+    <string name="migration_page">Page %1$d of %2$d</string>
+    <string name="migration_continue">Continue</string>
+    <string name="migration_previous_layout">Previous layout</string>
+    <string name="migration_new_layout">New layout</string>
+    <string name="search_result_mode_sample_direction">Mount Baker Transit Center</string>
+    <string name="search_result_mode_sample_first_stop">Denny Way &amp; Dexter Ave</string>
+    <string name="search_result_mode_sample_street">Denny Way</string>
+    <string name="search_result_mode_sample_avenue">Westlake Ave</string>
+    <string name="search_result_mode_sample_water">Lake Union</string>
+    <string name="search_result_mode_sample_stop">Denny Way &amp; Westlake Ave</string>
 </resources>

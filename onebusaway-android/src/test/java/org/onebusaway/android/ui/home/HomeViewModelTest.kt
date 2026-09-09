@@ -1296,6 +1296,48 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `board map zoom waits for stop coordinates and is applied only once`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        vm.revealStop(FocusedStop("1"), animate = true, useDefaultZoom = true)
+        advanceUntilIdle()
+        assertTrue(map.focusStops.isEmpty())
+        vm.onArrivalsLoaded(obaStop, null)
+        advanceUntilIdle()
+        assertTrue(map.focusStops.single().useDefaultZoom)
+        assertTrue(map.focusStops.single().animate)
+        assertEquals(obaStop, map.focusStops.single().stop)
+        vm.onArrivalsLoaded(obaStop, null)
+        advanceUntilIdle()
+        assertEquals(1, map.focusStops.size)
+        vm.markPendingMapFocus(preserveViewport = true)
+        vm.onArrivalsLoaded(obaStop, null)
+        advanceUntilIdle()
+        assertFalse(map.focusStops.last().useDefaultZoom)
+        assertFalse(map.focusStops.last().recenter)
+        job.cancel()
+    }
+
+    @Test
+    fun `board map zoom is not overridden by a previously selected route`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        val stop = FocusedStop("1", "Main St", point = GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        vm.selectArrivalRoute(ShowRouteRequest("65", directionStopId = "1"), shortName = "65", headsign = "Downtown")
+        advanceUntilIdle()
+        map.sent.clear()
+        vm.revealStop(stop, useDefaultZoom = true)
+        vm.onArrivalsLoaded(obaStop, null)
+        advanceUntilIdle()
+        assertTrue(map.focusStops.single().useDefaultZoom)
+        assertFalse(map.routeCommands.single().frameRoute)
+        job.cancel()
+    }
+
+    @Test
     fun `arrivals load with no pending focus dispatches nothing`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

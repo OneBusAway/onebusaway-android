@@ -134,6 +134,7 @@ import org.onebusaway.android.ui.mylists.SearchRecentsRepository
 import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.routeinfo.RouteInfoLauncher
 import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.PlanResult
@@ -250,6 +251,7 @@ fun HomeScreen(
     // All the screen's tap/UI lambdas, bundled (see [HomeCallbacks]); brought into scope below via
     // `with` so the body references them unqualified.
     callbacks: HomeCallbacks,
+    showHelpDialogs: Boolean = true,
     onBackToArrivals: (() -> Unit)? = null
 ) {
     with(callbacks) {
@@ -1200,11 +1202,13 @@ fun HomeScreen(
                     // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
                     // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
                     // opt-out are forwarded to the host).
-                    HelpFeature(
-                        viewModel = helpViewModel,
-                        onHelpAction = onHelpAction,
-                        onShowWelcomeTutorial = onShowWelcomeTutorial
-                    )
+                    if (showHelpDialogs) {
+                        HelpFeature(
+                            viewModel = helpViewModel,
+                            onHelpAction = onHelpAction,
+                            onShowWelcomeTutorial = onShowWelcomeTutorial
+                        )
+                    }
 
                     // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
                     // as the last sibling so it sits on top; renders nothing while no tutorial is active.
@@ -1395,6 +1399,7 @@ private fun BoxScope.HomeMapOverlays(
             // Same destination as the arrivals drawer's route menu, wired locally rather than through
             // HomeActivityActions — the browser hand-off needs nothing but a Context.
             onShowSchedule = { url -> ExternalIntents.goToUrl(context, url) },
+            onShowStopList = { routeId -> RouteInfoLauncher.start(context, routeId) },
             onHeight = { h -> onFocusBannerBottom(h + focusBannerTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)

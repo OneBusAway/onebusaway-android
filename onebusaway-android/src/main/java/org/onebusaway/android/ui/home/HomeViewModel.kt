@@ -191,7 +191,8 @@ class HomeViewModel @Inject constructor(
         // Whether the pending focus should animate the camera over to the stop (an in-session reveal —
         // a search/recents tap) rather than jump to it (a cold-start restore, where flying from a
         // default camera position would look wrong).
-        val animate: Boolean = false
+        val animate: Boolean = false,
+        val useDefaultZoom: Boolean = false
     )
     private var pendingFocus: PendingFocus? = null
 
@@ -276,10 +277,10 @@ class HomeViewModel @Inject constructor(
      * in-session reveal (a search/recents tap while the map is already on screen) passes [animate] so
      * the camera pans over to the stop instead of jumping; a cold-start restore leaves it false.
      */
-    fun revealStop(stop: FocusedStop, animate: Boolean = false) {
+    fun revealStop(stop: FocusedStop, animate: Boolean = false, useDefaultZoom: Boolean = false) {
         emitMapDirective(MapDirective.ClearFocus)
         focusStop(stop)
-        markPendingMapFocus(animate)
+        markPendingMapFocus(animate, useDefaultZoom = useDefaultZoom)
     }
 
     /**
@@ -363,8 +364,8 @@ class HomeViewModel @Inject constructor(
      * stop, so it does not call this. [preserveViewport] keeps the current camera instead of recentering
      * on completion (a back-restore returning to a stop with no saved viewport of its own).
      */
-    fun markPendingMapFocus(animate: Boolean = false, preserveViewport: Boolean = false) {
-        pendingFocus = PendingFocus(preserveViewport = preserveViewport, animate = animate)
+    fun markPendingMapFocus(animate: Boolean = false, preserveViewport: Boolean = false, useDefaultZoom: Boolean = false) {
+        pendingFocus = PendingFocus(preserveViewport = preserveViewport, animate = animate, useDefaultZoom = useDefaultZoom)
     }
 
     /**
@@ -401,7 +402,7 @@ class HomeViewModel @Inject constructor(
         // Frame the selected route only when this load is the initial (restore/deep-link) focus
         // establishment; an ordinary arrivals poll must refresh the presentation without reframing the
         // camera to the whole route (#1895). A restore carrying a saved viewport already declines to frame.
-        val frameSelectedRoute = pending != null && !preserveViewport
+        val frameSelectedRoute = pending != null && !preserveViewport && !pending.useDefaultZoom
         if (pending != null) {
             pendingFocus = null
             emitMapDirective(
@@ -410,7 +411,8 @@ class HomeViewModel @Inject constructor(
                     routes,
                     settledSheet == ArrivalsSheetState.Expanded,
                     recenter = !preserveViewport,
-                    animate = pending.animate
+                    animate = pending.animate,
+                    useDefaultZoom = pending.useDefaultZoom
                 )
             )
         }
@@ -1526,7 +1528,8 @@ sealed interface MapDirective {
         val routes: List<ObaRoute>?,
         val overlayExpanded: Boolean,
         val recenter: Boolean = true,
-        val animate: Boolean = false
+        val animate: Boolean = false,
+        val useDefaultZoom: Boolean = false
     ) : MapDirective
 
     /** Draw [itinerary]'s legs + start/end pins on the home map (trip-plan directions focus). */

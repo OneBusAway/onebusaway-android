@@ -174,6 +174,7 @@ fun FocusBanner(
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
+    onShowStopList: (String) -> Unit,
     onHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
     stopMenu: StopFocusMenu? = null
@@ -208,6 +209,7 @@ fun FocusBanner(
                         onSelectDirection = onSelectDirection,
                         onFrameRoute = onFrameRoute,
                         onShowSchedule = onShowSchedule,
+                        onShowStopList = onShowStopList,
                         onClose = onClose
                     )
                 }
@@ -251,6 +253,7 @@ private fun FavoriteRail(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StopFocusBanner(
     state: FocusBannerState.Stop,
@@ -259,6 +262,7 @@ private fun StopFocusBanner(
     stopMenu: StopFocusMenu?,
     onClose: () -> Unit
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
     Row(
         Modifier
             .fillMaxSize()
@@ -272,9 +276,11 @@ private fun StopFocusBanner(
     ) {
         val subtitle = DisplayFormat.stopSubtitleText(LocalContext.current, state.stopCode, state.direction)
         Column(
-            modifier = Modifier.weight(1f).clickable(
+            modifier = Modifier.weight(1f).combinedClickable(
                 onClickLabel = stringResource(R.string.stop_info_recenter),
                 role = Role.Button,
+                onLongClickLabel = if (stopMenu != null) stringResource(R.string.stop_info_item_options_title) else null,
+                onLongClick = if (stopMenu != null) ({ menuExpanded = true }) else null,
                 onClick = onRecenter
             )
         ) {
@@ -306,7 +312,7 @@ private fun StopFocusBanner(
             BannerAlertAction(onClick = onShowAlerts)
         }
         if (stopMenu != null) {
-            StopMenuAction(stopMenu)
+            StopMenuAction(stopMenu, expanded = menuExpanded, onExpandedChange = { menuExpanded = it })
         }
         HeaderIconButton(
             painter = painterResource(R.drawable.ic_navigation_close),
@@ -374,12 +380,14 @@ private fun RouteFocusBanner(
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
+    onShowStopList: (String) -> Unit,
     onClose: () -> Unit
 ) {
     val header = state.header
     val scheduleUrl = header.scheduleUrl
     var menuExpanded by remember { mutableStateOf(false) }
-    val scheduleLabel = stringResource(R.string.bus_options_menu_show_route_schedule)
+    val menuLabel = stringResource(R.string.bus_options_menu_show_stop_list)
+    val hasMenu = header.routeId != null || scheduleUrl != null
     // The loading spinner needs more breathing room from the card edges than the laid-out header
     // does, but the leading gap is the star's and stays fixed either way.
     val edgePadding = if (header.loading) 8.dp else 4.dp
@@ -407,13 +415,12 @@ private fun RouteFocusBanner(
                 Modifier
                     .weight(1f)
                     // Tap frames the route; long press opens the route menu — the same gesture
-                    // pairing the arrivals drawer's route rows use. A route with no schedule page
-                    // has nothing to put in the menu, so it stays tap-only.
+                    // pairing the arrivals drawer's route rows use.
                     .combinedClickable(
                         onClickLabel = stringResource(R.string.route_header_frame_route),
                         role = Role.Button,
-                        onLongClickLabel = if (scheduleUrl != null) scheduleLabel else null,
-                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
+                        onLongClickLabel = if (hasMenu) menuLabel else null,
+                        onLongClick = if (hasMenu) ({ menuExpanded = true }) else null,
                         onClick = onFrameRoute
                     ),
                 verticalAlignment = Alignment.CenterVertically
@@ -444,7 +451,7 @@ private fun RouteFocusBanner(
                     // The direction line states the menu's current value; the chevron beside it is the
                     // control that changes it. Deliberately not a trigger itself — it sits inside the
                     // banner body, whose tap reframes the route and whose long press opens the
-                    // schedule, and a nested clickable would consume both on this line.
+                    // route menu, and a nested clickable would consume both on this line.
                     if (directionLabel != null) {
                         // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
                         // the headsign reads identically on both surfaces (#1823).
@@ -474,14 +481,22 @@ private fun RouteFocusBanner(
             onClick = onClose
         )
     }
-    if (scheduleUrl != null) {
+    if (hasMenu) {
         CenteredLongPressMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false }
         ) {
-            MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
-                menuExpanded = false
-                onShowSchedule(scheduleUrl)
+            header.routeId?.let { routeId ->
+                MenuRow(R.string.bus_options_menu_show_stop_list, MaterialSymbols.TripStatus) {
+                    menuExpanded = false
+                    onShowStopList(routeId)
+                }
+            }
+            if (scheduleUrl != null) {
+                MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
+                    menuExpanded = false
+                    onShowSchedule(scheduleUrl)
+                }
             }
         }
     }
@@ -589,29 +604,28 @@ private fun HeaderIconButton(
  * and the night-light flasher a rider holds up to a driver.
  */
 @Composable
-private fun StopMenuAction(menu: StopFocusMenu) {
-    var expanded by remember { mutableStateOf(false) }
+private fun StopMenuAction(menu: StopFocusMenu, expanded: Boolean, onExpandedChange: (Boolean) -> Unit) {
     Box {
         HeaderIconButton(
             painter = painterResource(R.drawable.more_vert),
             contentDescription = stringResource(R.string.stop_info_item_options_title),
-            onClick = { expanded = true }
+            onClick = { onExpandedChange(true) }
         )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
             MenuRow(R.string.view_arrivals_only) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onShowArrivals()
             }
             MenuRow(R.string.my_context_create_shortcut) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onCreateShortcut()
             }
             MenuRow(R.string.stop_info_option_report_problem) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onReportStopProblem()
             }
             MenuRow(R.string.stop_info_option_night_light) {
-                expanded = false
+                onExpandedChange(false)
                 menu.onNightLight()
             }
         }
@@ -705,6 +719,7 @@ private fun FocusBannerPreview() {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -731,6 +746,7 @@ private fun FocusBannerPreview() {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -757,6 +773,7 @@ private fun FocusBannerPreview() {
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
         }

@@ -179,7 +179,8 @@ fun MyStopsDestination(
     initialTag: String?,
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
-    onRevealStop: (StopReveal) -> Unit
+    onRevealStop: (StopReveal) -> Unit,
+    onSearchStop: (StopReveal) -> Unit = onRevealStop
 ) {
     val activity = LocalContext.current.findActivity()
     val app = activity.applicationContext
@@ -206,7 +207,7 @@ fun MyStopsDestination(
                 onRevealStop
             ),
             activity.starredStopsTab(starred, onRevealStop),
-            stopSearchTab(search, onRevealStop)
+            stopSearchTab(search, onSearchStop)
         )
     )
 }

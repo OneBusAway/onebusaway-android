@@ -46,8 +46,11 @@ No replacement gesture, form, or map interpretation is introduced.
 
 ## Updated-app device observations
 
-The Map option is preselected in the graphical migration dialog; both previews
-and Continue fit on the Pixel screen. Chose Lists and arrivals, restarted, and
+Both graphical migration dialogs place the Previous layout first (Lists and
+arrivals / Time), followed by the selected New layout (Map / Route). Each has a
+single Continue button. Both previews and Continue fit on the Pixel screen.
+The six focused arrival-display and search-workflow tests passed after this
+update, including option order, default selection, and saving with Continue. Chose Lists and arrivals, restarted, and
 confirmed the prompt did not return. Starred stops restored with toolbar Search.
 From that section, entered `8`, selected the Seattle route, expanded Mount Baker
 Transit Center, scrolled, and selected Denny Way & Westlake Ave. The live mapless
@@ -96,6 +99,7 @@ failure; this is not an all-green full-suite claim.
 | Mapless arrivals | [Before](oba-2309-march-arrivals.png) | [After](oba-2309-new-arrivals.png) |
 | Direct stop result | [Old choice dialog](oba-2309-march-stop-choice.png) | [New result](oba-2309-new-stop-search.png) |
 
-[Graphical migration](oba-2309-new-migration.png) ·
+[Search migration](oba-2309-new-migration.png) ·
+[Arrival-display migration](oba-2309-arrival-migration.png) ·
 [Map-mode stop search](oba-2309-map-stop-search.png) ·
 [Map-mode route search](oba-2309-map-route-search.png)

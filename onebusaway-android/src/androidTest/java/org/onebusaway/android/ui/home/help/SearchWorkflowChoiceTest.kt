@@ -15,11 +15,14 @@
  */
 package org.onebusaway.android.ui.home.help
 
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
@@ -33,6 +36,11 @@ class SearchWorkflowChoiceTest {
     fun continueSavesThePreselectedMapChoice() {
         var saved: SearchResultMode? = null
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
+        compose.onNodeWithText("Map").assertIsSelected()
+        assertTrue(
+            compose.onNodeWithText("Lists and arrivals").getUnclippedBoundsInRoot().top <
+                compose.onNodeWithText("Map").getUnclippedBoundsInRoot().top
+        )
         compose.onNodeWithText("Continue").performClick()
         compose.runOnIdle { assertEquals(SearchResultMode.MAP, saved) }
     }

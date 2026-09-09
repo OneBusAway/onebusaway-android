@@ -68,7 +68,7 @@ internal fun SearchWorkflowChoiceDialog(onSave: (SearchResultMode) -> Unit, onDi
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(stringResource(R.string.search_result_mode_migration_body))
-                SearchResultMode.entries.forEach { mode ->
+                listOf(SearchResultMode.LISTS, SearchResultMode.MAP).forEach { mode ->
                     Surface(
                         shape = MaterialTheme.shapes.medium,
                         border = BorderStroke(1.dp, if (selected == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
@@ -79,10 +79,16 @@ internal fun SearchWorkflowChoiceDialog(onSave: (SearchResultMode) -> Unit, onDi
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 RadioButton(selected = selected == mode, onClick = null)
-                                Text(
-                                    stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_lists),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                                Column {
+                                    Text(
+                                        stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_lists),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        stringResource(if (mode == SearchResultMode.LISTS) R.string.migration_previous_layout else R.string.migration_new_layout),
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
                             }
                             Text(stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map_description else R.string.search_result_mode_lists_description))
                             SearchWorkflowPreview(mode)
@@ -91,7 +97,7 @@ internal fun SearchWorkflowChoiceDialog(onSave: (SearchResultMode) -> Unit, onDi
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(selected) }) { Text(stringResource(R.string.search_result_mode_continue)) } }
+        confirmButton = { TextButton(onClick = { onSave(selected) }) { Text(stringResource(R.string.migration_continue)) } }
     )
 }
 

@@ -83,10 +83,16 @@ internal fun ArrivalDisplayChoiceDialog(
                         Column(Modifier.selectable(selected == mode, role = Role.RadioButton, onClick = { selected = mode }).padding(10.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 RadioButton(selected = selected == mode, onClick = null)
-                                Text(
-                                    stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time_migration_title else R.string.arrival_display_route_migration_title),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                                Column {
+                                    Text(
+                                        stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time else R.string.arrival_display_route),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.migration_previous_layout else R.string.migration_new_layout),
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
                             }
                             Text(stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time_description else R.string.arrival_display_route_description))
                             ArrivalModePreview(mode, onSelect = { selected = mode })
@@ -95,8 +101,7 @@ internal fun ArrivalDisplayChoiceDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(selected) }) { Text(stringResource(R.string.arrival_display_save_default)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } }
+        confirmButton = { TextButton(onClick = { onSave(selected) }) { Text(stringResource(R.string.migration_continue)) } }
     )
 }
 

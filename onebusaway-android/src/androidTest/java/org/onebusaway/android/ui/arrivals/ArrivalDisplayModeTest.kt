@@ -148,9 +148,15 @@ class ArrivalDisplayModeTest {
         composeRule.setContent {
             ArrivalDisplayChoiceDialog(ArrivalDisplayMode.ROUTE, onSave = { saved = it }, onDismiss = {})
         }
-        composeRule.onNodeWithText("Time - old way").performClick()
+        composeRule.onNodeWithText("Route").assertIsSelected()
+        assertTrue(
+            composeRule.onNodeWithText("Time").getUnclippedBoundsInRoot().top <
+                composeRule.onNodeWithText("Route").getUnclippedBoundsInRoot().top
+        )
+        composeRule.onNodeWithText("Cancel").assertDoesNotExist()
+        composeRule.onNodeWithText("Time").performClick()
         composeRule.runOnIdle { assertEquals(null, saved) }
-        composeRule.onNodeWithText("Save default").performClick()
+        composeRule.onNodeWithText("Continue").performClick()
         composeRule.runOnIdle { assertEquals(ArrivalDisplayMode.TIME, saved) }
     }
 }

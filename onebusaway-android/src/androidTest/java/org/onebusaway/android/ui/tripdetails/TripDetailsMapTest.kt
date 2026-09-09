@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.tripdetails
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
@@ -22,9 +24,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -42,9 +46,11 @@ import org.onebusaway.android.api.data.TripDetails
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.home.HomeMapBackHandler
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.TripMapReveal
 import org.onebusaway.android.ui.nav.consumeTripMapReveal
+import org.onebusaway.android.ui.nav.mapReturnAction
 import org.onebusaway.android.ui.nav.showTripOnMap
 
 class TripDetailsMapTest {
@@ -85,13 +91,29 @@ class TripDetailsMapTest {
     @Test
     fun mapButtonPassesTheCurrentRequestAndBackReturnsToTripStatus() {
         lateinit var nav: NavHostController
+        lateinit var backDispatcher: OnBackPressedDispatcher
+        var mapUndoCount = 0
         val content = mutableStateOf(content(details(active).mapRequest("origin_stop")))
         val mapLabel = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.stop_info_option_showonmap)
         compose.setContent {
             nav = rememberNavController()
+            backDispatcher = requireNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
             ObaTheme {
-                NavHost(nav, startDestination = "trip_status") {
-                    composable("trip_status") {
+                NavHost(nav, startDestination = NavRoutes.tripDetails("trip", "origin_stop")) {
+                    composable(
+                        NavRoutes.TRIP_DETAILS,
+                        arguments = listOf(
+                            navArgument(NavRoutes.ARG_TRIP_ID) { type = NavType.StringType },
+                            navArgument(NavRoutes.ARG_STOP_ID) {
+                                type = NavType.StringType
+                                nullable = true
+                            },
+                            navArgument(NavRoutes.ARG_SCROLL_MODE) {
+                                type = NavType.StringType
+                                nullable = true
+                            }
+                        )
+                    ) {
                         TripDetailsScreen(
                             state = content.value,
                             onBack = { nav.popBackStack() },
@@ -101,7 +123,13 @@ class TripDetailsMapTest {
                             onShowOnMap = nav::showTripOnMap
                         )
                     }
-                    composable(NavRoutes.HOME) { Text("Map screen") }
+                    composable(NavRoutes.HOME) {
+                        Text("Map screen")
+                        // Exercise the production Back handler with map undo/sheet history available.
+                        HomeMapBackHandler(nav.mapReturnAction(), canGoBackWithinMap = true) {
+                            mapUndoCount++
+                        }
+                    }
                 }
             }
         }
@@ -111,13 +139,18 @@ class TripDetailsMapTest {
         compose.runOnIdle {
             assertSame(tripEntry, nav.previousBackStackEntry)
             assertEquals(details(active).mapRequest("origin_stop"), nav.currentBackStackEntry!!.savedStateHandle.consumeTripMapReveal())
-            nav.popBackStack()
+            backDispatcher.onBackPressed()
+            assertEquals(0, mapUndoCount)
+            assertSame(tripEntry, nav.currentBackStackEntry)
             // A refresh may replace live data with schedule-only data; the next tap must use it.
             content.value = content(details(null).mapRequest("origin_stop"))
         }
         compose.onNodeWithContentDescription(mapLabel).assertIsDisplayed().performClick()
         compose.runOnIdle {
             assertEquals(details(null).mapRequest("origin_stop"), nav.currentBackStackEntry!!.savedStateHandle.consumeTripMapReveal())
+            backDispatcher.onBackPressed()
+            assertEquals(0, mapUndoCount)
+            assertSame(tripEntry, nav.currentBackStackEntry)
         }
     }
 

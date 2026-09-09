@@ -84,6 +84,7 @@ import org.onebusaway.android.ui.nav.arrivalsMapExitTransition
 import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.consumeTripMapReveal
+import org.onebusaway.android.ui.nav.mapReturnAction
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.openSearchRoute
@@ -283,11 +284,7 @@ fun HomeNavHost(
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
                 callbacks = callbacks,
                 showHelpDialogs = currentEntry?.id == entry.id,
-                onBackToArrivals = if (navController.previousBackStackEntry?.destination?.route in setOf(NavRoutes.ARRIVALS, NavRoutes.ROUTE_INFO)) {
-                    { navController.popBackStack() }
-                } else {
-                    null
-                }
+                onBackToSource = navController.mapReturnAction()
             )
         }
         // The rest of the graph, grouped by feature (each a NavGraphBuilder extension near its

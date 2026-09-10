@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -818,34 +817,29 @@ fun HomeScreen(
                                 )
                             }
                             // HOME's one Back handler. The whole decision — whether HOME claims the press
-                            // at all, and what it does — is [homeBackAction], so `enabled` and the action
-                            // are the same value read in the same composition. Composed here, before the
-                            // top chrome and the overlays, so the search field, the navigate-here bubble
-                            // and the tutorial still register later and take Back ahead of it; the
-                            // directions safety notice is its own window and needs no such ordering.
-                            val backAction = homeBackAction(
-                                returnsToSource = onBackToSource != null,
-                                directionsActive = directionsActive,
-                                pickingEndpoint = pickTarget != null,
-                                sheet = if (sheetShown) {
-                                    sheetState.currentValue.toArrivalsSheetState()
-                                } else {
-                                    ArrivalsSheetState.Hidden
-                                },
-                                canUndoMapAction = canUndoMapAction
+                            // at all, and what it does — is [homeBackAction]; [HomeBackHandler] enables
+                            // and dispatches on that one value. Composed here, before the top chrome and
+                            // the overlays, so the search field, the navigate-here bubble and the tutorial
+                            // still register later and take Back ahead of it; the directions safety
+                            // notice is its own window and needs no such ordering.
+                            HomeBackHandler(
+                                action = homeBackAction(
+                                    returnsToSource = onBackToSource != null,
+                                    directionsActive = directionsActive,
+                                    pickingEndpoint = pickTarget != null,
+                                    sheet = if (sheetShown) {
+                                        sheetState.currentValue.toArrivalsSheetState()
+                                    } else {
+                                        ArrivalsSheetState.Hidden
+                                    },
+                                    canUndoMapAction = canUndoMapAction
+                                ),
+                                onReturnToSource = { onBackToSource?.invoke() },
+                                onCancelEndpointPick = { pickTarget = null },
+                                onNavigateBackInDirections = homeViewModel::navigateBackInDirections,
+                                onCollapseSheet = { scope.launch { runCatching { sheetState.partialExpand() } } },
+                                onUndoMapAction = { homeViewModel.navigateBackFocus() }
                             )
-                            BackHandler(enabled = backAction != HomeBackAction.NONE) {
-                                when (backAction) {
-                                    HomeBackAction.RETURN_TO_SOURCE -> onBackToSource?.invoke()
-                                    HomeBackAction.CANCEL_ENDPOINT_PICK -> pickTarget = null
-                                    HomeBackAction.NAVIGATE_BACK_IN_DIRECTIONS ->
-                                        homeViewModel.navigateBackInDirections()
-                                    HomeBackAction.COLLAPSE_SHEET ->
-                                        scope.launch { runCatching { sheetState.partialExpand() } }
-                                    HomeBackAction.UNDO_MAP_ACTION -> homeViewModel.navigateBackFocus()
-                                    HomeBackAction.NONE -> Unit
-                                }
-                            }
 
                             // Lift the FABs above whichever sheet is resting over the map — the collapsed arrivals
                             // peek, or in directions the results drawer (whose settled height the map inset above

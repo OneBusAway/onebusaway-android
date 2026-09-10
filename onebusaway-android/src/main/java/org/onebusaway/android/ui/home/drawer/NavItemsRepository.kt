@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.home.drawer
 import android.text.TextUtils
 import javax.inject.Inject
 import org.onebusaway.android.R
+import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.push.FirebaseMessagingManager
 import org.onebusaway.android.region.RegionRepository
@@ -42,8 +43,8 @@ interface NavItemsRepository {
 
 /**
  * Default implementation reading the app-global region + reminder preference (the static reads lifted
- * out of HomeActivity.refreshDrawerItems). Trip-planning needs a region OTP url (or a custom one); fare
- * payment needs the region's payment app id; reminders follow the preference.
+ * out of HomeActivity.refreshDrawerItems). Trip-planning needs an OTP server to ask (the region's or a
+ * custom one); fare payment needs the region's payment app id; reminders follow the preference.
  */
 class DefaultNavItemsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
@@ -55,11 +56,14 @@ class DefaultNavItemsRepository @Inject constructor(
         val region = regionRepository.region.value
         return NavItemAvailability(
             showReminders = firebaseMessagingManager.hasPushToken(),
-            planTripAvailable = region != null &&
-                (
-                    !TextUtils.isEmpty(region.otpBaseUrl) ||
-                        !TextUtils.isEmpty(prefs.getString(R.string.preference_key_otp_api_url, null))
-                    ),
+            // Asks [OtpTarget] rather than restating "has an otpBaseUrl or a custom url": that check
+            // never learned about OTP2 regions, so a region publishing only an `otpBaseGraphqlUrl`
+            // would have had its drawer row hidden while a plan against it would have worked (#2264).
+            planTripAvailable = OtpTarget.resolve(
+                customUrl = OtpTarget.customOtpApiUrl(prefs),
+                customUrlUsesOtp2 = prefs.getBoolean(R.string.preference_key_otp_api_url_is_graphql, false),
+                region = region
+            ).isAvailable,
             payFareAvailable = region != null && !TextUtils.isEmpty(region.paymentAndroidAppId)
         )
     }

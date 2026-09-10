@@ -132,11 +132,11 @@ sealed interface RentalSource {
  * Mirrors [org.onebusaway.android.directions.util.OtpTarget.resolve]'s branch exactly — a custom
  * server wins over the region, and the protocol is always an explicit setting (the custom URL's own
  * `..._is_graphql` preference, or a region publishing an `otpBaseGraphqlUrl`) rather than anything
- * sniffed from the URL. It is a separate function rather than a call into `OtpTarget` because that
- * one resolves through `Context` EntryPoints, while this repository already holds the injected region
- * and preference seams — and because the rental layer asks a question trip planning doesn't: a region
- * can speak OTP2 while publishing **no** rental data over it, in which case there is still an OTP1
- * server with rentals to fall back to.
+ * sniffed from the URL. It is a separate function rather than a call into `OtpTarget.resolve` — which
+ * since #2264 has a `Context`-free overload this repository's injected seams could feed — because the
+ * rental layer asks a question trip planning doesn't: a region can speak OTP2 while publishing **no**
+ * rental data over it, in which case there is still an OTP1 server with rentals to fall back to. That
+ * fallback is the whole difference, and it is why the two answers must be allowed to differ.
  *
  * Pure, so `RentalSourceTest` can cover the grid without a device.
  */

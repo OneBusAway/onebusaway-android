@@ -1178,6 +1178,13 @@ class HomeViewModel @Inject constructor(
      * step behind the very press that left directions: the next Back walks back in, the one after that
      * leaves again, and map and directions trade places forever. It unwinds the entry [enterDirections]
      * pushed instead, which restores the focus and camera the rider had before they started planning.
+     *
+     * Every step taken *inside* directions is discarded on the way to that entry. Forward moves within
+     * the trip — a leg drilled into, a background tap back out of it, a reframe — each record the
+     * directions focus they left, above the entry; unwinding only the topmost would land the rider back
+     * on one of those sub-focuses, still in directions, after they had just been asked whether to leave
+     * (#2140) and said yes. Once the trip is left it is left whole.
+     *
      * With no history left to unwind (a directions focus restored from saved state after process death)
      * it still clears, just without recording.
      */
@@ -1186,7 +1193,11 @@ class HomeViewModel @Inject constructor(
             clearMapFocus()
             return
         }
+        while (mapUndoHistory.lastOrNull()?.focus is CurrentFocus.Directions) mapUndoHistory.removeLast()
         if (navigateBackFocus()) return
+        // navigateBackFocus only recomputes this once it has popped; with the discards above having
+        // emptied the history, it must be settled here.
+        _canUndoMapAction.value = false
         clearMapFocus(recordUndo = false)
     }
 

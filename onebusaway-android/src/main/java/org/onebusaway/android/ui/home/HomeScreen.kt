@@ -1047,17 +1047,15 @@ fun HomeScreen(
                                 // when a plan produced itineraries, else an error / no-route message; a plan in
                                 // flight shows a top progress line. The results selection drives the drawn itinerary.
                                 if (directionsActive && pickTarget == null) {
+                                    val pins = directionsResults?.params.itineraryPins()
                                     when {
                                         directionsResults != null -> DirectionsResultsSheet(
                                             resultsViewModel = tripResultsViewModel,
+                                            planGeneration = directionsResults.generation,
                                             itineraries = directionsResults.itineraries,
                                             params = directionsResults.params,
-                                            showItinerary = { itinerary ->
-                                                homeViewModel.showItineraryOnMap(
-                                                    itinerary,
-                                                    directionsResults.params.itineraryPins()
-                                                )
-                                            },
+                                            showItinerary = { homeViewModel.showItineraryOnMap(it, pins) },
+                                            restoreItinerary = { homeViewModel.restoreItineraryOnMap(it, pins) },
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
@@ -1102,7 +1100,7 @@ fun HomeScreen(
                                             rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps,
                                             // A resume opens on the option the rider pinned; every other
                                             // plan opens on the first, as it always has.
-                                            initialOptionIndex = pendingResumeIndex ?: 0,
+                                            resumeIndex = pendingResumeIndex,
                                             fromSnapshot = directionsResults.fromSnapshot,
                                             pinnedOptionIndex = pinnedTrip
                                                 ?.selectedIndex

@@ -76,7 +76,10 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -1057,20 +1060,23 @@ fun TripResultsList(
  */
 @Composable
 fun TripResultsSheet(
+    // Which plan [itineraries] are (`PlanResult.Success.generation`): the seeding effect keys on this,
+    // not on the list, so an equal re-plan still seeds and a rebuilt composition still doesn't.
+    planGeneration: Long,
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    // The re-mount half of [showItinerary] — see `HomeViewModel.restoreItineraryOnMap`.
+    restoreItinerary: (TripItinerary) -> Unit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
-    // Which option to open on, and whether these itineraries are a stored snapshot rather than a plan
-    // just made. Both are required rather than defaulted: a silently-defaulted 0 is precisely the resume
-    // bug this exists to prevent, and a silently-defaulted `false` re-arms the monitor for a departed
-    // trip (the [rideBadgeTaps] argument on DirectionsResultsSheet makes the same call for the same
-    // reason).
-    initialOptionIndex: Int,
+    // A non-null index is an explicit pinned-trip resume, consumed after selecting that option.
+    // Null preserves the selection on remount and opens a fresh plan on option zero.
+    // Stored snapshots must not re-arm the trip-update monitor for an already departed trip.
+    resumeIndex: Int?,
     fromSnapshot: Boolean,
     // Which option is pinned, and the long-press action that toggles it (#2053). Pinning is a long
     // press and nothing else — see [TripResultsHeader].
@@ -1084,33 +1090,31 @@ fun TripResultsSheet(
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
 
-    // Seed from the completed plan + point the map at its chosen itinerary (the old bindResults). All
-    // three reads take the same index: seeding one option while drawing another would leave the picker
-    // highlighting a trip the map isn't showing.
-    LaunchedEffect(itineraries) {
-        val index = initialOptionIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        resultsViewModel.setItineraries(itineraries, initialIndex = index, plannedStart = params?.plannedStart)
-        itineraries.getOrNull(index)?.let { showItinerary(it) }
-        if (!fromSnapshot) maybeStartTripUpdates(activity, params, itineraries, index)
-        onOptionsSeeded()
+    // A new plan or explicit resume selects and frames an option. A remount only restores the map
+    // if needed, keeping the rider's selection and leg focus (#2274). Read the chosen itinerary from
+    // the ViewModel so the map and picker agree.
+    LaunchedEffect(planGeneration, resumeIndex) {
+        val seeded = resultsViewModel.seedPlan(planGeneration, itineraries, resumeIndex, params?.plannedStart)
+        val itinerary = resultsViewModel.currentItinerary()
+        if (seeded) {
+            itinerary?.let(showItinerary)
+            if (!fromSnapshot) maybeStartTripUpdates(activity, params, itinerary)
+            onOptionsSeeded()
+        } else {
+            itinerary?.let(restoreItinerary)
+        }
     }
 
-    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] and
-    // [params] through rememberUpdatedState so the long-lived collector always sees the latest plan —
-    // keying the effect on resultsViewModel alone would pin the first snapshot, so a later selection
-    // could arm trip updates with a stale itinerary list *or* a stale request after new results arrive
-    // (selectedItinerary is a no-replay SharedFlow, so keeping one collector — rather than restarting it
-    // — also can't drop a concurrent emission).
-    val currentItineraries by rememberUpdatedState(itineraries)
+    // Keep one collector for the non-replaying selection flow, with the latest plan inputs.
     val currentParams by rememberUpdatedState(params)
     val currentFromSnapshot by rememberUpdatedState(fromSnapshot)
     LaunchedEffect(resultsViewModel) {
-        resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
+        resultsViewModel.selectedItinerary.collect { itinerary ->
             showItinerary(itinerary)
             // Same gate as the seeding effect: picking a different option out of a *stored* plan is
             // still a stored plan, and none of its departures are any fresher for having been tapped.
             if (!currentFromSnapshot) {
-                maybeStartTripUpdates(activity, currentParams, currentItineraries, index)
+                maybeStartTripUpdates(activity, currentParams, itinerary)
             }
         }
     }
@@ -1150,18 +1154,17 @@ fun TripResultsSheet(
 }
 
 /**
- * Arms the trip-plan-change monitor ([TripPlanMonitor]) for the selected itinerary when trip-update
- * notifications are enabled. [params] is the request that produced [itineraries]; it's null when the
- * results were restored from a notification re-entry (the request isn't reconstructed there), in which
- * case there is nothing to re-plan, so monitoring isn't re-armed.
+ * Arms the trip-plan-change monitor ([TripPlanMonitor]) for [itinerary] when trip-update notifications
+ * are enabled. [params] is the request that produced it; it's null when the results were restored from a
+ * notification re-entry (the request isn't reconstructed there), in which case there is nothing to
+ * re-plan, so monitoring isn't re-armed.
  */
 private fun maybeStartTripUpdates(
     activity: Activity,
     params: TripPlanParams?,
-    itineraries: List<TripItinerary>,
-    index: Int
+    itinerary: TripItinerary?
 ) {
-    val itinerary = itineraries.getOrNull(index) ?: return
+    if (itinerary == null) return
     if (params == null) return
     if (!TripPlanNotifications.isEnabled(activity)) return
 
@@ -1249,6 +1252,15 @@ private fun timelineScale(): Float = LocalDensity.current.fontScale.coerceIn(1f,
 private fun railSplit(): Dp = RAIL_SPLIT * timelineScale()
 
 /**
+ * Persists [TripLogList]'s set of opened legs — plain leg indices, so the whole set is a saveable
+ * `List<Int>`.
+ */
+private val EXPANDED_LEGS_SAVER = listSaver<SnapshotStateSet<Int>, Int>(
+    save = { it.toList() },
+    restore = { saved -> mutableStateSetOf<Int>().apply { addAll(saved) } }
+)
+
+/**
  * The itinerary as one continuous timeline, one lazy list row per event. Expansion is per-leg state,
  * keyed on the entries so a new plan resets it. The spine's per-node connector colours and each leg's
  * band are derived up front by [flattenLog] from the entry sequence; the rows themselves compose lazily,
@@ -1270,7 +1282,10 @@ private fun TripLogList(
     reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
-    val expanded = remember(entries) { mutableStateSetOf<Int>() }
+    // Which legs the rider has opened inline. Saved, not merely remembered, so it survives HOME's
+    // composition being rebuilt under a pushed destination (#2274) instead of silently re-collapsing.
+    // Still keyed on [entries], so a different plan's log starts collapsed.
+    val expanded = rememberSaveable(entries, saver = EXPANDED_LEGS_SAVER) { mutableStateSetOf<Int>() }
     val onToggle: (Int) -> Unit = remember(expanded) { { i -> if (!expanded.add(i)) expanded.remove(i) } }
     // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
     // what makes a toggle recompose this list.

@@ -354,8 +354,14 @@ sealed interface PlanResult {
      * window (`departure - now <= window`) admits a past departure, which would raise a foreground
      * service for a bus that has already gone. This states the fact — where these itineraries came
      * from — rather than inferring staleness from their timestamps. A Refresh re-plans and re-arms.
+     *
+     * [generation] numbers each plan the ViewModel publishes, so a re-plan that comes back
+     * structurally equal to the one on screen (a Refresh within the same minute, say) is still a new
+     * plan to whoever keys on it. `TripItinerary` is a data class, so [itineraries] alone can't tell
+     * the two apart, and Compose compares effect keys structurally.
      */
     data class Success(
+        val generation: Long,
         val itineraries: List<TripItinerary>,
         val params: TripPlanParams? = null,
         val fromSnapshot: Boolean = false

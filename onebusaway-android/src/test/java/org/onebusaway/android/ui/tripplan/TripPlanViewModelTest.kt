@@ -807,6 +807,31 @@ class TripPlanViewModelTest {
     }
 
     /**
+     * A refresh that comes back with the very same itineraries is still a new plan: the results sheet
+     * keys its seeding on `generation`, so an equal re-plan that kept its number would never re-seed
+     * (the case CodeRabbit raised on #2277). Every publish, wire or snapshot, must advance it.
+     */
+    @Test
+    fun `every published plan carries a new generation, equal results included`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan, clock = FakeClock(0L))
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        val first = vm.planState.value as PlanResult.Success
+
+        vm.refreshPlan()
+        advanceUntilIdle()
+        val refreshed = vm.planState.value as PlanResult.Success
+
+        vm.restorePinned(pinnedParams(), departNow = false, itineraries = listOf(TripItinerary()))
+        val resumed = vm.planState.value as PlanResult.Success
+
+        assertEquals(first.itineraries, refreshed.itineraries)
+        assertTrue(refreshed.generation > first.generation)
+        assertTrue(resumed.generation > refreshed.generation)
+    }
+
+    /**
      * Refresh on a form that names only one end has no trip to re-plan. The button is disabled there,
      * so this pins the ViewModel's own half: it must not issue a request for an incomplete form.
      */

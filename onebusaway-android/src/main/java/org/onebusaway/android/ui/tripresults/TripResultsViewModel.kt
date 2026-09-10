@@ -43,24 +43,44 @@ class TripResultsViewModel @Inject constructor(
     private val _state = MutableStateFlow<TripResultsUiState>(TripResultsUiState.Loading)
     val state: StateFlow<TripResultsUiState> = _state.asStateFlow()
 
-    /** Emits the selected index (and its itinerary) so the screen can re-point the map. */
-    private val _selectedItinerary = MutableSharedFlow<Pair<Int, TripItinerary>>(extraBufferCapacity = 1)
-    val selectedItinerary: SharedFlow<Pair<Int, TripItinerary>> = _selectedItinerary.asSharedFlow()
+    /** Emits the chosen itinerary so the screen can re-point the map, including on a re-tap. */
+    private val _selectedItinerary = MutableSharedFlow<TripItinerary>(extraBufferCapacity = 1)
+    val selectedItinerary: SharedFlow<TripItinerary> = _selectedItinerary.asSharedFlow()
 
-    private var itineraries: List<TripItinerary> = emptyList()
+    // The plan being shown, or null before the first seed, and the generation it was seeded from —
+    // see [seedPlan].
+    private var plan: List<TripItinerary>? = null
+    private var seededGeneration: Long? = null
     private var selectedIndex: Int = 0
     private var plannedStart: ServerTime? = null
 
     /**
-     * Seeds the results from a completed plan. [initialIndex] restores the prior option selection;
-     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart].
+     * Seeds a new plan, or applies an explicit resume's [resumeIndex] even to the plan already seeded.
+     * A null index means there is no resume to consume: a new plan opens on option zero, while a
+     * remounted sheet keeps the rider's selection. The return value tells the sheet to draw the chosen
+     * option and consume the resume.
+     *
+     * "New" is judged by [generation] (`PlanResult.Success.generation`), never by the itineraries: a
+     * re-plan can come back structurally equal to what is on screen and is still a new plan, while
+     * the same plan re-offered by a rebuilt composition (#2274) is not.
      */
-    fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int, plannedStart: ServerTime? = null) {
-        this.itineraries = itineraries
-        this.selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
+    fun seedPlan(
+        generation: Long,
+        itineraries: List<TripItinerary>,
+        resumeIndex: Int?,
+        plannedStart: ServerTime? = null
+    ): Boolean {
+        if (generation == seededGeneration && resumeIndex == null) return false
+        seededGeneration = generation
+        plan = itineraries
+        selectedIndex = (resumeIndex ?: 0).coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
         this.plannedStart = plannedStart
         load()
+        return true
     }
+
+    /** The itinerary of the option currently selected, or null before any plan is seeded. */
+    fun currentItinerary(): TripItinerary? = plan?.getOrNull(selectedIndex)
 
     /**
      * Tapping an option card re-points the map at its itinerary (framing the whole trip) — even when
@@ -68,18 +88,19 @@ class TripResultsViewModel @Inject constructor(
      * a *change* of option reloads its directions.
      */
     fun selectOption(index: Int) {
+        val itineraries = plan ?: return
         if (index !in itineraries.indices) return
         val changed = index != selectedIndex
         selectedIndex = index
-        itineraries.getOrNull(index)?.let { _selectedItinerary.tryEmit(index to it) }
+        _selectedItinerary.tryEmit(itineraries[index])
         if (changed) load()
     }
 
     private fun load() {
         viewModelScope.launch {
-            repository.summarize(itineraries).fold(
+            repository.summarize(plan.orEmpty()).fold(
                 onSuccess = { options ->
-                    val selected = itineraries.getOrNull(selectedIndex)
+                    val selected = currentItinerary()
                     val directions = selected
                         ?.let { repository.directionsFor(it, plannedStart).getOrDefault(emptyList()) }
                         .orEmpty()

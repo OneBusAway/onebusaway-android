@@ -633,29 +633,6 @@ fun HomeScreen(
                     drawerState = drawerState
                 )
 
-                // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
-                // collapses first; every other back gesture restores the preceding focus and viewport.
-                // An explicit map visit returns to its source page before either local action.
-                //
-                // The expansion term is what makes this work for the nearby drawer (#2107), which shows
-                // with *no* focus and so usually has no undo history behind it: without it, back from a
-                // full-height nearby list would leave the app instead of collapsing it. At peek that
-                // drawer consumes nothing — it's ambient, with nothing behind it to go back to — so back
-                // falls through to the system (see [sheetBackAction]).
-                val sheetExpanded = sheetShown && sheetState.currentValue == SheetValue.Expanded
-                HomeMapBackHandler(onBackToSource, canUndoMapAction || sheetExpanded) {
-                    val sheetAction = if (sheetShown) {
-                        sheetBackAction(sheetState.currentValue.toArrivalsSheetState(), sheetContent)
-                    } else {
-                        SheetBackAction.NONE
-                    }
-                    when (sheetAction) {
-                        SheetBackAction.COLLAPSE -> scope.launch { runCatching { sheetState.partialExpand() } }
-                        SheetBackAction.NAVIGATE_BACK, SheetBackAction.NONE ->
-                            homeViewModel.navigateBackFocus()
-                    }
-                }
-
                 // Provide the tutorial state to the whole screen — the drawer sheet included, since the
                 // scripted tour spotlights its starred rows (#2164) — so every anchor registers;
                 // [TutorialOverlay] below draws from the same state.
@@ -840,16 +817,33 @@ fun HomeScreen(
                                     if (showResultsSheet) directionsSheetHeightPx else 0
                                 )
                             }
-                            // Back cancels an in-progress map pick, then steps out of a drilled-into leg to
-                            // the whole trip, and only from the itinerary overview exits directions focus
-                            // (to nearby stops). This handler composes inside the undo one above, so it
-                            // registers later. It must honor the same source-return priority as the map's
-                            // undo handler; without a source, directions still unwinds one level at a time.
-                            HomeMapBackHandler(onBackToSource, canGoBackWithinMap = directionsActive) {
-                                if (pickTarget != null) {
-                                    pickTarget = null
+                            // HOME's one Back handler. The whole decision — whether HOME claims the press
+                            // at all, and what it does — is [homeBackAction], so `enabled` and the action
+                            // are the same value read in the same composition. Composed here, before the
+                            // top chrome and the overlays, so the search field, the navigate-here bubble
+                            // and the tutorial still register later and take Back ahead of it; the
+                            // directions safety notice is its own window and needs no such ordering.
+                            val backAction = homeBackAction(
+                                returnsToSource = onBackToSource != null,
+                                directionsActive = directionsActive,
+                                pickingEndpoint = pickTarget != null,
+                                sheet = if (sheetShown) {
+                                    sheetState.currentValue.toArrivalsSheetState()
                                 } else {
-                                    homeViewModel.navigateBackInDirections()
+                                    ArrivalsSheetState.Hidden
+                                },
+                                canUndoMapAction = canUndoMapAction
+                            )
+                            BackHandler(enabled = backAction != HomeBackAction.NONE) {
+                                when (backAction) {
+                                    HomeBackAction.RETURN_TO_SOURCE -> onBackToSource?.invoke()
+                                    HomeBackAction.CANCEL_ENDPOINT_PICK -> pickTarget = null
+                                    HomeBackAction.NAVIGATE_BACK_IN_DIRECTIONS ->
+                                        homeViewModel.navigateBackInDirections()
+                                    HomeBackAction.COLLAPSE_SHEET ->
+                                        scope.launch { runCatching { sheetState.partialExpand() } }
+                                    HomeBackAction.UNDO_MAP_ACTION -> homeViewModel.navigateBackFocus()
+                                    HomeBackAction.NONE -> Unit
                                 }
                             }
 

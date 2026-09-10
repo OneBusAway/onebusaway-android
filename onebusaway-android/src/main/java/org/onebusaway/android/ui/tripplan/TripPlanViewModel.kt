@@ -152,8 +152,9 @@ class TripPlanViewModel @Inject constructor(
                             // trip-plan-change monitor to re-plan it (see PlanResult.Success.params).
                             onSuccess = { itineraries ->
                                 _planState.value = PlanResult.Success(
-                                    itineraries.withTerminalPlaceNames(origin.await(), destination.await()),
-                                    params
+                                    generation = nextPlanGeneration(),
+                                    itineraries = itineraries.withTerminalPlaceNames(origin.await(), destination.await()),
+                                    params = params
                                 )
                             },
                             onFailure = {
@@ -495,8 +496,14 @@ class TripPlanViewModel @Inject constructor(
         fromSnapshot: Boolean
     ) {
         if (itineraries.isEmpty()) return
-        _planState.value = PlanResult.Success(itineraries, params, fromSnapshot = fromSnapshot)
+        _planState.value = PlanResult.Success(nextPlanGeneration(), itineraries, params, fromSnapshot = fromSnapshot)
     }
+
+    // Numbers every published [PlanResult.Success] — see its `generation`. Confined to the main
+    // thread like every other write to [_planState].
+    private var planGeneration = 0L
+
+    private fun nextPlanGeneration(): Long = ++planGeneration
 
     /**
      * Submits the form as it now stands: hand the latest plan inputs to the [planInputs] pipeline, which

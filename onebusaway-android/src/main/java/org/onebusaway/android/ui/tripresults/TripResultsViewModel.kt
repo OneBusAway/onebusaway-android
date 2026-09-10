@@ -47,25 +47,31 @@ class TripResultsViewModel @Inject constructor(
     private val _selectedItinerary = MutableSharedFlow<TripItinerary>(extraBufferCapacity = 1)
     val selectedItinerary: SharedFlow<TripItinerary> = _selectedItinerary.asSharedFlow()
 
-    // The plan being shown, or null before the first seed. Held by identity — see [seedPlan].
+    // The plan being shown, or null before the first seed, and the generation it was seeded from —
+    // see [seedPlan].
     private var plan: List<TripItinerary>? = null
+    private var seededGeneration: Long? = null
     private var selectedIndex: Int = 0
     private var plannedStart: ServerTime? = null
 
     /**
-     * Seeds a new plan, or applies an explicit resume's [resumeIndex] even to the same cached plan.
+     * Seeds a new plan, or applies an explicit resume's [resumeIndex] even to the plan already seeded.
      * A null index means there is no resume to consume: a new plan opens on option zero, while a
      * remounted sheet keeps the rider's selection. The return value tells the sheet to draw the chosen
      * option and consume the resume.
      *
-     * Plans are compared by identity because a fresh plan can contain equal itineraries.
+     * "New" is judged by [generation] (`PlanResult.Success.generation`), never by the itineraries: a
+     * re-plan can come back structurally equal to what is on screen and is still a new plan, while
+     * the same plan re-offered by a rebuilt composition (#2274) is not.
      */
     fun seedPlan(
+        generation: Long,
         itineraries: List<TripItinerary>,
         resumeIndex: Int?,
         plannedStart: ServerTime? = null
     ): Boolean {
-        if (itineraries === plan && resumeIndex == null) return false
+        if (generation == seededGeneration && resumeIndex == null) return false
+        seededGeneration = generation
         plan = itineraries
         selectedIndex = (resumeIndex ?: 0).coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
         this.plannedStart = plannedStart

@@ -1023,6 +1023,7 @@ fun HomeScreen(
                                     when {
                                         directionsResults != null -> DirectionsResultsSheet(
                                             resultsViewModel = tripResultsViewModel,
+                                            planGeneration = directionsResults.generation,
                                             itineraries = directionsResults.itineraries,
                                             params = directionsResults.params,
                                             showItinerary = { homeViewModel.showItineraryOnMap(it, pins) },

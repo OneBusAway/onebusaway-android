@@ -271,6 +271,7 @@ private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.4f
 @Composable
 fun DirectionsResultsSheet(
     resultsViewModel: TripResultsViewModel,
+    planGeneration: Long,
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     showItinerary: (TripItinerary) -> Unit,
@@ -362,6 +363,7 @@ fun DirectionsResultsSheet(
             // Non-negative by construction: fullHeight is floored at the peek, which is this same
             // handle band plus navBottom, so the subtraction leaves at least the nav padding below.
             TripResultsSheet(
+                planGeneration = planGeneration,
                 itineraries = itineraries,
                 params = params,
                 resultsViewModel = resultsViewModel,

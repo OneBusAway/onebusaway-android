@@ -1060,6 +1060,9 @@ fun TripResultsList(
  */
 @Composable
 fun TripResultsSheet(
+    // Which plan [itineraries] are (`PlanResult.Success.generation`): the seeding effect keys on this,
+    // not on the list, so an equal re-plan still seeds and a rebuilt composition still doesn't.
+    planGeneration: Long,
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
@@ -1090,8 +1093,8 @@ fun TripResultsSheet(
     // A new plan or explicit resume selects and frames an option. A remount only restores the map
     // if needed, keeping the rider's selection and leg focus (#2274). Read the chosen itinerary from
     // the ViewModel so the map and picker agree.
-    LaunchedEffect(itineraries, resumeIndex) {
-        val seeded = resultsViewModel.seedPlan(itineraries, resumeIndex, params?.plannedStart)
+    LaunchedEffect(planGeneration, resumeIndex) {
+        val seeded = resultsViewModel.seedPlan(planGeneration, itineraries, resumeIndex, params?.plannedStart)
         val itinerary = resultsViewModel.currentItinerary()
         if (seeded) {
             itinerary?.let(showItinerary)

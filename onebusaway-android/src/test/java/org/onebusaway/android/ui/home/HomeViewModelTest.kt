@@ -709,6 +709,131 @@ class HomeViewModelTest {
     @Test
     fun `tapping off an unplanned form leaves directions outright`() = assertLeavesUnplannedDirectionsOutright(HomeViewModel::unfocusMapOneLevel)
 
+    /**
+     * #2317: leaving directions recorded the focus it left, Back included — so the press that had just
+     * left put a step back *into* directions behind itself. The next Back walked in, the one after that
+     * left again, and the rider could not get past the map: directions → map → directions → map, for
+     * ever. A backward gesture must not grow the history it is walking.
+     */
+    @Test
+    fun `back out of directions leaves no step back into it`() = runTest {
+        val vm = viewModel()
+        vm.enterDirections()
+        advanceUntilIdle()
+
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse("Back out of directions must not put directions back on the undo history", vm.canUndoMapAction.value)
+    }
+
+    /**
+     * The entry Back unwinds is the one [HomeViewModel.enterDirections] pushed, so leaving directions
+     * lands the rider back where they started planning from rather than dumping them on the bare map.
+     */
+    @Test
+    fun `back out of directions returns to the focus it was entered from`() = runTest {
+        val vm = viewModel()
+        vm.revealStop(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        advanceUntilIdle()
+        vm.enterDirections()
+        advanceUntilIdle()
+
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+
+        assertEquals("stop", (vm.currentFocus.value as? CurrentFocus.Stop)?.stop?.id)
+    }
+
+    /**
+     * The forward exit keeps recording: a map-background tap is a move like any other, and backing into
+     * the directions focus it dropped is what puts the trip back on the map.
+     */
+    @Test
+    fun `tapping off a drawn trip still leaves a step back into it`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        advanceUntilIdle()
+
+        vm.unfocusMapOneLevel()
+        vm.confirmExitDirections()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertTrue(vm.canUndoMapAction.value)
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+    }
+
+    /**
+     * Moves *inside* the trip record history too — a leg drilled into, then a background tap back to the
+     * overview, leaves the leg as the topmost entry. The backward exit must unwind past all of it: Back
+     * from the overview asked whether to leave (#2140), and a "yes" that lands on the leg — still in
+     * directions — is not leaving.
+     */
+    @Test
+    fun `confirmed back out of directions unwinds past the legs visited inside it`() = runTest {
+        val vm = viewModel()
+        vm.revealStop(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        advanceUntilIdle()
+        vm.enterDirectionsShowing()
+        vm.focusItineraryLegOnMap(walkLeg(0))
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+
+        vm.navigateBackInDirections()
+        assertTrue(vm.pendingDirectionsExit.value)
+        vm.confirmExitDirections()
+        advanceUntilIdle()
+
+        assertEquals("stop", (vm.currentFocus.value as? CurrentFocus.Stop)?.stop?.id)
+        // Beneath the stop lies only the bare map it was revealed from: every directions entry is gone.
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+    }
+
+    /** The same unwind with nothing beneath directions ends on the bare map, with the history spent. */
+    @Test
+    fun `back out of directions entered from the bare map discards the legs visited inside it`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        vm.focusItineraryLegOnMap(walkLeg(0))
+        vm.unfocusMapOneLevel()
+        vm.focusItineraryLegOnMap(walkLeg(1))
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+
+        vm.navigateBackInDirections()
+        vm.confirmExitDirections()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+    }
+
+    /** And the way back out of *that* return still terminates, which is the whole of #2317. */
+    @Test
+    fun `backing into directions and out again ends on the map`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        vm.unfocusMapOneLevel()
+        vm.confirmExitDirections()
+        advanceUntilIdle()
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+
+        vm.navigateBackInDirections()
+        vm.confirmExitDirections()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+    }
+
     @Test
     fun `a trip cleared off the map no longer guards the way out`() = runTest {
         val vm = viewModel()

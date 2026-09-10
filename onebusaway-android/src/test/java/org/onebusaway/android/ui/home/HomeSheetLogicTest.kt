@@ -263,38 +263,4 @@ class HomeSheetLogicTest {
         assertEquals(ArrivalsSheetState.Expanded, toggleSheetTarget(ArrivalsSheetState.Collapsed))
         assertEquals(ArrivalsSheetState.Expanded, toggleSheetTarget(ArrivalsSheetState.Hidden))
     }
-
-    // --- sheetBackAction ---
-
-    @Test
-    fun `back collapses a full sheet, clears focus from peek, and passes through when hidden`() {
-        assertEquals(SheetBackAction.COLLAPSE, sheetBackAction(ArrivalsSheetState.Expanded))
-        assertEquals(SheetBackAction.NAVIGATE_BACK, sheetBackAction(ArrivalsSheetState.Collapsed))
-        assertEquals(SheetBackAction.NONE, sheetBackAction(ArrivalsSheetState.Hidden))
-    }
-
-    /** An expanded sheet collapses to peek whatever it holds — including the nearby list. */
-    @Test
-    fun `back collapses an expanded nearby list`() {
-        assertEquals(
-            SheetBackAction.COLLAPSE,
-            sheetBackAction(ArrivalsSheetState.Expanded, HomeSheetContent.NearbyRoutes)
-        )
-    }
-
-    /**
-     * The nearby drawer is ambient, not a focus: at peek there is nothing behind it to go back to, so
-     * back must reach the system rather than being swallowed into a focus pop.
-     */
-    @Test
-    fun `back at peek passes through for the nearby list but pops a focused stop`() {
-        assertEquals(
-            SheetBackAction.NONE,
-            sheetBackAction(ArrivalsSheetState.Collapsed, HomeSheetContent.NearbyRoutes)
-        )
-        assertEquals(
-            SheetBackAction.NAVIGATE_BACK,
-            sheetBackAction(ArrivalsSheetState.Collapsed, HomeSheetContent.Stop("1"))
-        )
-    }
 }

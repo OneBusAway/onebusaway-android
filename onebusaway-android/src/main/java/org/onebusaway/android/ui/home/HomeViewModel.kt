@@ -759,7 +759,7 @@ class HomeViewModel @Inject constructor(
         val target = focus.peeledOneLevel() ?: return
         // A stray background tap is the cheapest gesture on the map; where it would take a planned trip
         // off it, it asks first (#2140) — judged on the transition the `when` above just decided.
-        if (stageDirectionsExitConfirmation(focus, target)) return
+        if (stageDirectionsExitConfirmation(focus, target, backward = false)) return
         pushFocus(target)
         when {
             // Peeled the trip only: the route is still drawn, so drop the vehicle selection (and with it
@@ -789,9 +789,14 @@ class HomeViewModel @Inject constructor(
     }
 
     /** Clears the complete focus hierarchy. Used by the focus banner's explicit close control. */
-    fun clearMapFocus() {
+    fun clearMapFocus() = clearMapFocus(recordUndo = true)
+
+    // A clear that is itself a *backward* step passes recordUndo = false: it is unwinding history, so
+    // it must not add to it. Only [exitDirections] does, and only as its no-history-left fallback —
+    // every forward clear records, so Back returns to what it cleared.
+    private fun clearMapFocus(recordUndo: Boolean) {
         if (_currentFocus.value == CurrentFocus.None) return
-        pushFocus(CurrentFocus.None)
+        if (recordUndo) pushFocus(CurrentFocus.None) else replaceFocus(CurrentFocus.None)
         // Drop any pending restore/deep-link latch too; otherwise a stop closed before its arrivals
         // load leaves it set, and the next stop's onArrivalsLoaded would consume it and recenter.
         pendingFocus = null
@@ -1158,19 +1163,55 @@ class HomeViewModel @Inject constructor(
     /** Show the resolved From/To endpoints as green/red pins (before a plan); a null endpoint drops it. */
     fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) = emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
 
-    // Leave directions focus, returning the map to nearby stops. Private: the only way out is
-    // [navigateBackInDirections]'s last step, so a control can't jump straight out of a focused leg —
-    // exactly the behaviour #2075 removed.
-    // [shownItinerary] deliberately survives this: backing *into* the directions focus we just left has to
-    // put the trip back on the map. A later fresh entry resets it (see [enterDirections]).
-    private fun exitDirections() = clearMapFocus()
+    /**
+     * Leave directions focus. Private: the only way out is [navigateBackInDirections]'s last step, so a
+     * control can't jump straight out of a focused leg — exactly the behaviour #2075 removed.
+     *
+     * [backward] says which way the gesture travels, and that is what decides the undo history.
+     *
+     * A **forward** exit — a map-background tap dropping the last attention layer — is a move like any
+     * other: it records the directions focus it left, so Back returns to the trip. That is why
+     * [shownItinerary] deliberately survives an exit: backing *into* the directions focus we just left
+     * has to put the trip back on the map. (A later fresh entry resets it; see [enterDirections].)
+     *
+     * A **backward** exit — Back itself — must not record anything, or it puts a "return to directions"
+     * step behind the very press that left directions: the next Back walks back in, the one after that
+     * leaves again, and map and directions trade places forever. It unwinds the entry [enterDirections]
+     * pushed instead, which restores the focus and camera the rider had before they started planning.
+     *
+     * Every step taken *inside* directions is discarded on the way to that entry. Forward moves within
+     * the trip — a leg drilled into, a background tap back out of it, a reframe — each record the
+     * directions focus they left, above the entry; unwinding only the topmost would land the rider back
+     * on one of those sub-focuses, still in directions, after they had just been asked whether to leave
+     * (#2140) and said yes. Once the trip is left it is left whole.
+     *
+     * With no history left to unwind (a directions focus restored from saved state after process death)
+     * it still clears, just without recording.
+     */
+    private fun exitDirections(backward: Boolean) {
+        if (!backward) {
+            clearMapFocus()
+            return
+        }
+        while (mapUndoHistory.lastOrNull()?.focus is CurrentFocus.Directions) mapUndoHistory.removeLast()
+        if (navigateBackFocus()) return
+        // navigateBackFocus only recomputes this once it has popped; with the discards above having
+        // emptied the history, it must be settled here.
+        _canUndoMapAction.value = false
+        clearMapFocus(recordUndo = false)
+    }
 
     // Whether a gesture that would leave directions is waiting on the rider's confirmation. Set only by
     // [stageDirectionsExitConfirmation]; the host shows a modal dialog off it and answers with
-    // [confirmExitDirections] / [dismissDirectionsExit]. It carries no "which gesture asked", because
-    // there is only one answer to give: every gesture that reaches it wants the same exit.
+    // [confirmExitDirections] / [dismissDirectionsExit].
     private val _pendingDirectionsExit = MutableStateFlow(false)
     val pendingDirectionsExit: StateFlow<Boolean> = _pendingDirectionsExit.asStateFlow()
+
+    // Which way the staged gesture travels, remembered because the confirmed exit is not the same exit
+    // for both: a background tap moves forward and leaves a step back into the trip, while Back is
+    // unwinding and must not (see [exitDirections]). Written on every stage and read only while
+    // [_pendingDirectionsExit] is set, so it cannot be read stale.
+    private var stagedExitIsBackward = false
 
     /**
      * Intercept a focus change that would take a drawn trip off the map, staging a confirmation instead
@@ -1182,12 +1223,20 @@ class HomeViewModel @Inject constructor(
      * rider their whole plan; every move that stays inside it, such as stepping back out of a
      * drilled-into leg, costs them nothing. An unplanned form has no trip to lose, so it leaves free —
      * and so does a *recoverable* one, which is what pinning makes a trip ([setDrawnTripRecoverable]).
+     *
+     * *Whether* to ask is judged on the transition alone; [backward] is carried through untouched, for
+     * the exit the answer performs rather than for the question.
      */
-    private fun stageDirectionsExitConfirmation(from: CurrentFocus, to: CurrentFocus): Boolean {
+    private fun stageDirectionsExitConfirmation(
+        from: CurrentFocus,
+        to: CurrentFocus,
+        backward: Boolean
+    ): Boolean {
         val leavesDrawnTrip = from is CurrentFocus.Directions &&
             to !is CurrentFocus.Directions &&
             shownItinerary != null
         if (!leavesDrawnTrip || drawnTripRecoverable) return false
+        stagedExitIsBackward = backward
         _pendingDirectionsExit.value = true
         return true
     }
@@ -1227,7 +1276,7 @@ class HomeViewModel @Inject constructor(
      */
     fun confirmExitDirections() {
         if (!_pendingDirectionsExit.value) return
-        exitDirections()
+        exitDirections(backward = stagedExitIsBackward)
     }
 
     /** The rider declined the staged exit (or dismissed the dialog): stay on the trip. */
@@ -1247,7 +1296,7 @@ class HomeViewModel @Inject constructor(
      * Unlike [confirmExitDirections] this needs no staged-exit guard: it isn't a control on the trip
      * surface (#2075) but the dismissal of a modal that is itself the only thing on screen.
      */
-    fun leaveDirections() = exitDirections()
+    fun leaveDirections() = exitDirections(backward = true)
 
     /**
      * The system Back gesture while in directions. A leg the user drilled into — its route, or an
@@ -1262,8 +1311,8 @@ class HomeViewModel @Inject constructor(
         // The false guard is belt-and-braces: reaching a leg sub-focus always pushed the overview it was
         // entered from, so there is history to pop.
         if (directionsSubFocus != null && navigateBackFocus()) return
-        if (stageDirectionsExitConfirmation(_currentFocus.value, CurrentFocus.None)) return
-        exitDirections()
+        if (stageDirectionsExitConfirmation(_currentFocus.value, CurrentFocus.None, backward = true)) return
+        exitDirections(backward = true)
     }
 
     /** Reframe the focused route as one undoable camera action. */

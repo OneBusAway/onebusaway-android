@@ -22,13 +22,13 @@ import org.onebusaway.android.map.render.showsNearbyArrivals
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 
 /**
- * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`
- * /`BackHandler` so the parity-sensitive behavior (the part that can't be exercised in a JVM test
- * from inside a `@Composable`) is unit-testable. [HomeScreen] does the Compose plumbing — keying the
- * effect, reading the live `SheetState`, animating — and defers every *decision* to these functions.
+ * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`s
+ * so the parity-sensitive behavior (the part that can't be exercised in a JVM test from inside a
+ * `@Composable`) is unit-testable. [HomeScreen] does the Compose plumbing — keying the effect, reading
+ * the live `SheetState`, animating — and defers every *decision* to these functions.
  *
  * The model: **visibility is business state** ([homeSheetContent]); **expansion is ephemeral UI**
- * toggled by [toggleSheetTarget] and unwound by [sheetBackAction].
+ * toggled by [toggleSheetTarget] and unwound by Back ([homeBackAction]).
  */
 
 /** The arrivals sheet's resting position, reported from the screen back to the activity and the state
@@ -176,28 +176,3 @@ internal fun mapControlsBottomInset(
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState = if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
-
-/** Whether the sheet consumes back by collapsing before focus navigation proceeds. */
-enum class SheetBackAction { COLLAPSE, NAVIGATE_BACK, NONE }
-
-/**
- * Back's effect given the sheet's resting position and what it is showing.
- *
- * An expanded sheet always collapses to peek first, whatever it holds. From peek it depends: a focused
- * stop is a focus to step out of, but the **nearby list is not** — it is ambient, the thing that shows
- * when nothing is focused, and there is nothing behind it to go back to. Swallowing Back there would
- * strand the rider on a screen they can't leave, so it passes to the system.
- */
-internal fun sheetBackAction(
-    current: ArrivalsSheetState,
-    content: HomeSheetContent = HomeSheetContent.None
-): SheetBackAction = when (current) {
-    ArrivalsSheetState.Expanded -> SheetBackAction.COLLAPSE // full -> peek
-    ArrivalsSheetState.Collapsed ->
-        if (content == HomeSheetContent.NearbyRoutes) {
-            SheetBackAction.NONE
-        } else {
-            SheetBackAction.NAVIGATE_BACK
-        }
-    ArrivalsSheetState.Hidden -> SheetBackAction.NONE // let the system handle back
-}

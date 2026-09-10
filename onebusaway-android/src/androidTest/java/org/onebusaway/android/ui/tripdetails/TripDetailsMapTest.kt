@@ -37,6 +37,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
@@ -50,7 +51,9 @@ import org.onebusaway.android.api.data.TripDetails
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.ui.home.HomeMapBackHandler
+import org.onebusaway.android.ui.home.ArrivalsSheetState
+import org.onebusaway.android.ui.home.HomeBackHandler
+import org.onebusaway.android.ui.home.homeBackAction
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.TripMapReveal
 import org.onebusaway.android.ui.nav.consumeTripMapReveal
@@ -134,14 +137,22 @@ class TripDetailsMapTest {
                             Text(if (directionsActive.value) "Directions screen" else "Map screen")
                             Button(onClick = { directionsActive.value = true }) { Text("Directions") }
                         }
-                        // Match HomeScreen's handler order: directions registers after map undo.
+                        // HomeScreen's one Back handler, with the source-page return at the top of it.
                         val onBackToSource = nav.mapReturnAction()
-                        HomeMapBackHandler(onBackToSource, canGoBackWithinMap = true) {
-                            mapUndoCount++
-                        }
-                        HomeMapBackHandler(onBackToSource, canGoBackWithinMap = directionsActive.value) {
-                            directionsBackCount++
-                        }
+                        HomeBackHandler(
+                            action = homeBackAction(
+                                returnsToSource = onBackToSource != null,
+                                directionsActive = directionsActive.value,
+                                pickingEndpoint = false,
+                                sheet = ArrivalsSheetState.Hidden,
+                                canUndoMapAction = true
+                            ),
+                            onReturnToSource = { onBackToSource?.invoke() },
+                            onCancelEndpointPick = {},
+                            onNavigateBackInDirections = { directionsBackCount++ },
+                            onCollapseSheet = {},
+                            onUndoMapAction = { mapUndoCount++ }
+                        )
                     }
                 }
             }
@@ -171,8 +182,13 @@ class TripDetailsMapTest {
         }
     }
 
+    /**
+     * With no page beneath the map, the same handler dispatches the local rungs through the real
+     * dispatcher: a pick is cancelled first, then directions unwinds, then map history. The ordering
+     * itself is pinned on the JVM by `HomeBackActionTest`; this checks the composable delivers it.
+     */
     @Test
-    fun directionsWithoutASourceStillCancelsPicksAndUnwindsBeforeMapHistory() {
+    fun withoutASourceBackCancelsThePickThenUnwindsDirectionsThenMapHistory() {
         lateinit var backDispatcher: OnBackPressedDispatcher
         val directionsActive = mutableStateOf(true)
         val pickingEndpoint = mutableStateOf(true)
@@ -183,15 +199,25 @@ class TripDetailsMapTest {
             val nav = rememberNavController()
             NavHost(nav, startDestination = NavRoutes.HOME) {
                 composable(NavRoutes.HOME) {
-                    Text("Directions screen")
-                    HomeMapBackHandler(onBackToSource = null, canGoBackWithinMap = true) { mapUndoCount++ }
-                    HomeMapBackHandler(onBackToSource = null, canGoBackWithinMap = directionsActive.value) {
-                        if (pickingEndpoint.value) pickingEndpoint.value = false else directionsBackCount++
-                    }
+                    Text("Home screen")
+                    HomeBackHandler(
+                        action = homeBackAction(
+                            returnsToSource = nav.mapReturnAction() != null,
+                            directionsActive = directionsActive.value,
+                            pickingEndpoint = pickingEndpoint.value,
+                            sheet = ArrivalsSheetState.Hidden,
+                            canUndoMapAction = true
+                        ),
+                        onReturnToSource = { fail("no page beneath the map to return to") },
+                        onCancelEndpointPick = { pickingEndpoint.value = false },
+                        onNavigateBackInDirections = { directionsBackCount++ },
+                        onCollapseSheet = {},
+                        onUndoMapAction = { mapUndoCount++ }
+                    )
                 }
             }
         }
-        compose.onNodeWithText("Directions screen").assertIsDisplayed()
+        compose.onNodeWithText("Home screen").assertIsDisplayed()
         compose.runOnIdle {
             backDispatcher.onBackPressed()
             assertFalse(pickingEndpoint.value)
@@ -206,6 +232,7 @@ class TripDetailsMapTest {
         }
         compose.runOnIdle {
             backDispatcher.onBackPressed()
+            assertEquals(1, directionsBackCount)
             assertEquals(1, mapUndoCount)
         }
     }

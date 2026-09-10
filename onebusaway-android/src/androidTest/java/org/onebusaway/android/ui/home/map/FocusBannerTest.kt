@@ -80,6 +80,10 @@ class FocusBannerTest {
         }
     }
 
+    private fun openStopMenu() = composeRule.onNodeWithContentDescription(
+        context.getString(R.string.stop_info_item_options_title)
+    ).performClick()
+
     @Test
     fun stopBannerLongPressAndOverflowOpenTheSameMenu() {
         var recentered = 0
@@ -90,7 +94,8 @@ class FocusBannerTest {
                 onReportStopProblem = {},
                 onNightLight = {},
                 onCreateShortcut = {},
-                onShowArrivals = { openedArrivals++ }
+                onShowArrivals = { openedArrivals++ },
+                onNavigateHere = {}
             )
         )
         val banner = composeRule.onNodeWithText(STOP_NAME)
@@ -98,6 +103,7 @@ class FocusBannerTest {
         assertEquals(1, recentered)
         banner.performTouchInput { longClick() }
         val menuItems = listOf(
+            R.string.map_navigate_here,
             R.string.view_arrivals_only,
             R.string.my_context_create_shortcut,
             R.string.stop_info_option_report_problem,
@@ -109,10 +115,58 @@ class FocusBannerTest {
         assertEquals(1, recentered)
         composeRule.onNodeWithText(context.getString(R.string.view_arrivals_only)).assertDoesNotExist()
 
-        composeRule.onNodeWithContentDescription(context.getString(R.string.stop_info_item_options_title)).performClick()
+        openStopMenu()
         menuItems.forEach { composeRule.onNodeWithText(context.getString(it)).assertIsDisplayed() }
         composeRule.onNodeWithText(context.getString(R.string.view_arrivals_only)).performClick()
         assertEquals(2, openedArrivals)
+    }
+
+    /**
+     * #2272: a rider looking at a stop can plan a trip to it from the stop's own overflow, without
+     * having to leave and long-press the map at a place they can already see is focused.
+     */
+    @Test
+    fun stopMenuOffersATripToTheFocusedStop() {
+        var navigated = 0
+        setStopBanner(
+            stopMenu = StopFocusMenu(
+                onReportStopProblem = {},
+                onNightLight = {},
+                onCreateShortcut = {},
+                onShowArrivals = {},
+                onNavigateHere = { navigated++ }
+            )
+        )
+
+        openStopMenu()
+        composeRule.onNodeWithText(context.getString(R.string.map_navigate_here))
+            .assertIsDisplayed()
+            .performClick()
+
+        assertEquals(1, navigated)
+    }
+
+    /**
+     * A stop whose own location hasn't landed yet has nothing to route to, so the offer is withheld
+     * rather than made and then failed. The rest of the menu still stands.
+     */
+    @Test
+    fun stopMenuWithholdsTheTripWhenTheStopHasNoLocation() {
+        setStopBanner(
+            stopMenu = StopFocusMenu(
+                onReportStopProblem = {},
+                onNightLight = {},
+                onCreateShortcut = {},
+                onShowArrivals = {},
+                onNavigateHere = null
+            )
+        )
+
+        openStopMenu()
+        composeRule.onNodeWithText(context.getString(R.string.map_navigate_here))
+            .assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.stop_info_option_report_problem))
+            .assertIsDisplayed()
     }
 
     /**

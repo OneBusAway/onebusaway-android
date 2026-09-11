@@ -1551,9 +1551,9 @@
     <string name="home_map">Map</string>
     <string name="stop_add_star">Add star to stop</string>
     <string name="stop_remove_star">Remove star from stop</string>
-    <string name="search_result_mode_title">Open search results in</string>
+    <string name="search_result_mode_title">Open stop/route info in</string>
     <string name="search_result_mode_map">Map</string>
-    <string name="search_result_mode_lists">Lists and arrivals</string>
+    <string name="search_result_mode_list">List</string>
     <string name="search_result_mode_migration_title">Map-first navigation?</string>
     <string name="search_result_mode_migration_body">When you tap on a stop or a route, do you want to see it represented as a &lt;b&gt;list&lt;/b&gt; or as a &lt;b&gt;map&lt;/b&gt;? You can change this later in Settings.</string>
     <string name="search_result_mode_migration_map">Map navigation</string>

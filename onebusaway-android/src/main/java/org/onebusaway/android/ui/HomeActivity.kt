@@ -35,6 +35,7 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.toTripItineraries
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
@@ -62,6 +63,7 @@ import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.launchDestination
 import org.onebusaway.android.ui.home.launchIntentEffect
+import org.onebusaway.android.ui.home.trackedStopOnBoard
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
@@ -193,7 +195,7 @@ class HomeActivity : AppCompatActivity() {
         // launch without permission, else check now). The permission read needs a Context, so it stays here.
         viewModel.onHomeStarted(
             hasLocationPermission = PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS),
-            mapless = launchDestination(intent, org.onebusaway.android.app.di.PreferencesEntryPoint.get(this)) != NavRoutes.HOME
+            mapless = launchDestination(intent, PreferencesEntryPoint.get(this)) != NavRoutes.HOME
         )
     }
 
@@ -271,6 +273,8 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun maybeRevealTrackedRouteFromIntent(intent: Intent) {
         val route = intent.readRouteReveal() ?: return
+        // Lists mode sends this launch to the board instead (launchDestination); no map focus to set.
+        if (intent.trackedStopOnBoard(PreferencesEntryPoint.get(this)) != null) return
         // The stop half through the app's one reader of it, rather than a second parse of the same
         // keys — which is also how the stop's code survives the trip.
         val stop = FocusedStop.fromIntent(intent) ?: return

@@ -87,7 +87,7 @@ import org.onebusaway.android.ui.nav.consumeTripMapReveal
 import org.onebusaway.android.ui.nav.mapReturnAction
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
-import org.onebusaway.android.ui.nav.openSearchRoute
+import org.onebusaway.android.ui.nav.openRoute
 import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.report.reportGraph
 import org.onebusaway.android.ui.routeinfo.routeInfoGraph
@@ -241,7 +241,7 @@ fun HomeNavHost(
                     onRecentStopsRoutes = { navController.navigateFromHome(NavRoutes.myRecent()) },
                     // Recent stops open arrivals; search suggestions for routes follow the search preference.
                     onRecentStop = { navController.showArrivals(it) },
-                    onRecentRoute = { routeId -> navController.openSearchRoute(routeId, PreferencesEntryPoint.get(context).searchResultMode()) },
+                    onRecentRoute = { routeId -> navController.openRoute(routeId, PreferencesEntryPoint.get(context).searchResultMode(), prefersMap = true) },
                     onHelpAction = { action ->
                         if (action == HelpAction.AGENCIES) {
                             navController.navigateFromHome(NavRoutes.AGENCIES)

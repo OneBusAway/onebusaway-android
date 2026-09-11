@@ -29,7 +29,7 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.StopReveal
-import org.onebusaway.android.ui.nav.openSearchStop
+import org.onebusaway.android.ui.nav.openStop
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.showRouteMapFromArrivals
 import org.onebusaway.android.ui.searchresults.SearchResultMode
@@ -66,9 +66,10 @@ fun NavGraphBuilder.routeInfoGraph(navController: NavHostController) {
                     }
                 },
                 onStopClick = { stop ->
-                    navController.openSearchStop(
+                    navController.openStop(
                         StopReveal(stop.id, stop.name, GeoPoint(stop.latitude, stop.longitude)),
-                        prefs.searchResultMode()
+                        prefs.searchResultMode(),
+                        prefersMap = true
                     )
                 }
             )

@@ -55,7 +55,7 @@ class SearchWorkflowChoiceTest {
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
         compose.onNodeWithContentDescription("Page 1 of 1").assertIsDisplayed()
         compose.onNodeWithText("Back").assertIsNotEnabled()
-        compose.onNode(hasText("Lists and arrivals") and hasText("Previous layout")).assertIsSelected()
+        compose.onNode(hasText("Lists and arrivals") and hasText("Classic layout")).assertIsSelected()
         compose.onNode(hasText("Map") and hasText("New layout")).assertIsDisplayed()
         assertTrue(
             compose.onNodeWithText("Lists and arrivals").getUnclippedBoundsInRoot().top <

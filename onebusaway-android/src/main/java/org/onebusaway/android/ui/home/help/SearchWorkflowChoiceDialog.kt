@@ -42,9 +42,10 @@ internal fun SearchWorkflowChoiceDialog(
     onSave: (SearchResultMode) -> Unit,
     onDismiss: () -> Unit,
     page: Int = 1,
-    pageCount: Int = 1
+    pageCount: Int = 1,
+    initial: SearchResultMode = SearchResultMode.LISTS
 ) {
-    var selected by rememberSaveable { mutableStateOf(SearchResultMode.LISTS) }
+    var selected by rememberSaveable(initial) { mutableStateOf(initial) }
     MigrationDialog(
         title = stringResource(R.string.search_result_mode_migration_title),
         page = page,

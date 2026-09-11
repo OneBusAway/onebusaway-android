@@ -46,7 +46,8 @@ import org.onebusaway.android.ui.tutorial.LocalTutorialState
  * (legend / what's-new) are handled by [HelpViewModel]; the rest are Activity operations the host
  * carries out via the `onHelpAction` callback.
  */
-enum class HelpAction { TUTORIALS, LEGEND, WHATS_NEW, AGENCIES, TWITTER, CONTACT_US }
+/** Menu rows, in the order of `R.array.main_help_options` — the array is indexed by ordinal. */
+enum class HelpAction { TUTORIALS, LEGEND, WHATS_NEW, LAYOUT, AGENCIES, TWITTER, CONTACT_US }
 
 /**
  * Self-rendering help feature module: draws the help menu / what's-new / legend dialogs from
@@ -81,6 +82,7 @@ fun HelpFeature(
                 when (action) {
                     HelpAction.LEGEND -> viewModel.showLegend()
                     HelpAction.WHATS_NEW -> viewModel.showWhatsNew()
+                    HelpAction.LAYOUT -> viewModel.showLayoutChoices()
                     else -> {
                         viewModel.dismiss()
                         onHelpAction(action)
@@ -91,6 +93,7 @@ fun HelpFeature(
         )
         HelpDialog.SearchWorkflow -> migrationState.SaveableStateProvider("search") {
             SearchWorkflowChoiceDialog(
+                initial = viewModel.searchWorkflowStart(),
                 onSave = viewModel::chooseSearchResultMode,
                 onDismiss = viewModel::finishMigrationPage,
                 page = migrationPage,
@@ -99,6 +102,7 @@ fun HelpFeature(
         }
         HelpDialog.ArrivalDisplay -> migrationState.SaveableStateProvider("arrivals") {
             ArrivalDisplayChoiceDialog(
+                initial = viewModel.arrivalDisplayStart(),
                 onSave = viewModel::chooseArrivalDisplayDefault,
                 onDismiss = viewModel::finishMigrationPage,
                 page = migrationPage,

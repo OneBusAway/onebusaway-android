@@ -53,9 +53,10 @@ internal fun ArrivalDisplayChoiceDialog(
     onDismiss: () -> Unit,
     page: Int = 1,
     pageCount: Int = 1,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    initial: ArrivalDisplayMode = ArrivalDisplayMode.TIME
 ) {
-    var selected by rememberSaveable { mutableStateOf(ArrivalDisplayMode.TIME) }
+    var selected by rememberSaveable(initial) { mutableStateOf(initial) }
     MigrationDialog(
         title = stringResource(R.string.arrival_display_choose_title),
         page = page,

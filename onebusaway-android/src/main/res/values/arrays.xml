@@ -19,6 +19,7 @@
         <item>Show Tutorial</item>
         <item>Legend</item>
         <item>What’s New?</item>
+        <item>Choose Your Layout</item>
         <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
         <item>Contact Us</item>
@@ -27,6 +28,7 @@
         <item>Show Tutorial</item>
         <item>Legend</item>
         <item>What’s New?</item>
+        <item>Choose Your Layout</item>
         <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
     </string-array>

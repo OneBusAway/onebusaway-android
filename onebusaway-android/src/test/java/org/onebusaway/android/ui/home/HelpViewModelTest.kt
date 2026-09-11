@@ -30,6 +30,7 @@ import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.searchresults.searchResultMode
+import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 /**
  * Unit tests for [HelpViewModel]'s dialog-state transitions (migrated from HomeViewModelTest when help
@@ -226,6 +227,56 @@ class HelpViewModelTest {
         vm.dismiss()
         vm.maybeShowStartup()
         assertEquals(HelpDialog.WhatsNew, vm.state.value.dialog)
+    }
+
+    @Test
+    fun `choose your layout reopens both pages whatever is saved and finishing owes nothing`() {
+        val prefs = FakePreferencesRepository().apply {
+            setString(SearchResultMode.PREFERENCE_KEY, "lists")
+            setString(ArrivalDisplayMode.PREFERENCE_KEY, "time")
+            // Release notes unread and the tutorial offer still owed: neither may follow a revisit.
+            setInt("whatsNewVer", 0)
+        }
+        val vm = viewModel(prefs)
+        vm.showMenu()
+        vm.showLayoutChoices()
+        assertEquals(listOf(HelpDialog.SearchWorkflow, HelpDialog.ArrivalDisplay), vm.state.value.migrationPages)
+        assertEquals(HelpDialog.SearchWorkflow, vm.state.value.dialog)
+        vm.chooseSearchResultMode(SearchResultMode.MAP)
+        assertEquals(HelpDialog.ArrivalDisplay, vm.state.value.dialog)
+        vm.chooseArrivalDisplayDefault(ArrivalDisplayMode.ROUTE)
+        assertEquals(HelpDialog.None, vm.state.value.dialog)
+        assertEquals(SearchResultMode.MAP, prefs.searchResultMode())
+        assertEquals(ArrivalDisplayMode.ROUTE, prefs.arrivalDisplayDefault())
+        assertEquals(0, prefs.getInt("whatsNewVer", 0))
+        assertTrue(prefs.getBoolean(TutorialPrefs.TUTORIAL_OPT_OUT_DIALOG, true))
+    }
+
+    @Test
+    fun `a dismissed revisit closes without a release-notes or tutorial follow-up`() {
+        val prefs = FakePreferencesRepository().apply { setInt("whatsNewVer", 0) }
+        val vm = viewModel(prefs)
+        vm.showLayoutChoices()
+        vm.finishMigrationPage()
+        vm.finishMigrationPage()
+        assertEquals(HelpDialog.None, vm.state.value.dialog)
+        assertFalse(vm.state.value.revisitingLayout)
+        assertEquals(null, prefs.getString(SearchResultMode.PREFERENCE_KEY, null))
+    }
+
+    @Test
+    fun `pages start on the saved choice and otherwise on the classic layout`() {
+        val unsaved = viewModel(FakePreferencesRepository())
+        assertEquals(SearchResultMode.LISTS, unsaved.searchWorkflowStart())
+        assertEquals(ArrivalDisplayMode.TIME, unsaved.arrivalDisplayStart())
+        val saved = viewModel(
+            FakePreferencesRepository().apply {
+                setString(SearchResultMode.PREFERENCE_KEY, "map")
+                setString(ArrivalDisplayMode.PREFERENCE_KEY, "route")
+            }
+        )
+        assertEquals(SearchResultMode.MAP, saved.searchWorkflowStart())
+        assertEquals(ArrivalDisplayMode.ROUTE, saved.arrivalDisplayStart())
     }
 
     private fun viewModel(

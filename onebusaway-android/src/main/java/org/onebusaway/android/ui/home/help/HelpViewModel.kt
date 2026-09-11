@@ -28,7 +28,9 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.searchresults.SearchResultMode
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 /** Which help dialog is showing — the dialog state this help feature module owns. */
@@ -46,7 +48,9 @@ sealed interface HelpDialog {
 data class HelpUiState(
     val dialog: HelpDialog = HelpDialog.None,
     val showContactUs: Boolean = true,
-    val migrationPages: List<HelpDialog> = emptyList()
+    val migrationPages: List<HelpDialog> = emptyList(),
+    /** The pages were reopened from Help, so finishing them owes no release notes or tutorial offer. */
+    val revisitingLayout: Boolean = false
 )
 
 /**
@@ -124,9 +128,29 @@ class HelpViewModel @Inject constructor(
         val index = state.migrationPages.indexOf(state.dialog)
         if (index < 0) return
         val next = state.migrationPages.getOrNull(index + 1)
-        _state.update { it.copy(dialog = next ?: HelpDialog.None) }
-        if (next == null && !maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
+        _state.update { it.copy(dialog = next ?: HelpDialog.None, revisitingLayout = next != null && it.revisitingLayout) }
+        if (next == null && !state.revisitingLayout && !maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
     }
+
+    /**
+     * "Choose Your Layout" from the Help menu: walk both layout pages again, whatever is saved. The
+     * upgrade sequence shows a page only while its choice is unsaved, so a rider who dismissed it,
+     * picked in a hurry, or installed fresh has no other way back to the illustrated comparison.
+     */
+    fun showLayoutChoices() {
+        _state.update {
+            it.copy(
+                migrationPages = listOf(HelpDialog.SearchWorkflow, HelpDialog.ArrivalDisplay),
+                dialog = HelpDialog.SearchWorkflow,
+                revisitingLayout = true
+            )
+        }
+    }
+
+    /** A page starts on the saved choice; unsaved, it starts on the classic layout, the safer answer for an upgrade. */
+    fun searchWorkflowStart(): SearchResultMode = if (prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) SearchResultMode.LISTS else prefs.searchResultMode()
+
+    fun arrivalDisplayStart(): ArrivalDisplayMode = if (prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) ArrivalDisplayMode.TIME else prefs.arrivalDisplayDefault()
 
     // Keep the source across launches before What's New advances its marker, so deferring a
     // choice neither loses upgrade eligibility nor opts a fresh install in.

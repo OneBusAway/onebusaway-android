@@ -1561,7 +1561,7 @@
     <string name="migration_back">Back</string>
     <string name="migration_page">Page %1$d of %2$d</string>
     <string name="migration_continue">Continue</string>
-    <string name="migration_previous_layout">Previous layout</string>
+    <string name="migration_previous_layout">Classic layout</string>
     <string name="migration_new_layout">New layout</string>
     <string name="search_result_mode_sample_direction">Mount Baker Transit Center</string>
     <string name="search_result_mode_sample_first_stop">Denny Way &amp; Dexter Ave</string>

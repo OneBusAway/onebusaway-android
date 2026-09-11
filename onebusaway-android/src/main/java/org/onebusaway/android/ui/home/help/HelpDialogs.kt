@@ -73,8 +73,14 @@ fun HelpFeature(
             viewModel.maybeShowStartup()
         }
     }
+    // Keeps each page's unsaved pick across Back and recreation within one pass through the pages.
+    // Once the pass ends, forget it: a later visit from Help must start on the saved choice, not on
+    // one the rider abandoned by dismissing (rememberSaveable restores regardless of its inputs).
     val migrationState = rememberSaveableStateHolder()
     val migrationPage = state.migrationPages.indexOf(state.dialog) + 1
+    LaunchedEffect(migrationPage > 0) {
+        if (migrationPage == 0) listOf("search", "arrivals").forEach(migrationState::removeState)
+    }
     when (state.dialog) {
         HelpDialog.Menu -> HelpMenuDialog(
             showContactUs = state.showContactUs,

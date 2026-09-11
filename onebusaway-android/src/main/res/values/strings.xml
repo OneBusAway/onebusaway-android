@@ -1539,7 +1539,7 @@
     <string name="arrival_display_route">Route</string>
     <string name="arrival_display_default">Arrival display default</string>
     <string name="arrival_display_choose_title">Group arrivals by route?</string>
-    <string name="arrival_display_choose_body">Choose whether to group arrivals by route. You can change this later in Settings.</string>
+    <string name="arrival_display_choose_body">Do you want to see the arrivals for a stop grouped together by &lt;b&gt;route&lt;/b&gt; or ordered by &lt;b&gt;time&lt;/b&gt;? You can change this later in Settings.</string>
     <string name="arrival_display_time_description">Each departure in time order, across all routes.</string>
     <string name="arrival_display_route_description">Departures grouped by route and direction.</string>
     <string name="tutorial_scripted_arrival_time_title">See what comes next</string>

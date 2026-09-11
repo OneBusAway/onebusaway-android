@@ -32,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 import java.time.ZoneId
@@ -66,7 +68,7 @@ internal fun ArrivalDisplayChoiceDialog(
         onBack = onBack,
         content = {
             Column(Modifier.verticalScroll(rememberScrollState()).selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.arrival_display_choose_body))
+                Text(AnnotatedString.fromHtml(stringResource(R.string.arrival_display_choose_body)))
                 ArrivalDisplayMode.entries.forEach { mode ->
                     MigrationChoice(
                         title = stringResource(if (mode == ArrivalDisplayMode.TIME) R.string.arrival_display_time else R.string.arrival_display_route),

@@ -55,11 +55,11 @@ class SearchWorkflowChoiceTest {
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
         compose.onNodeWithContentDescription("Page 1 of 1").assertIsDisplayed()
         compose.onNodeWithText("Back").assertIsNotEnabled()
-        compose.onNode(hasText("Lists and arrivals") and hasText("Classic layout")).assertIsSelected()
-        compose.onNode(hasText("Map") and hasText("New layout")).assertIsDisplayed()
+        compose.onNode(hasText("List navigation") and hasText("Classic layout")).assertIsSelected()
+        compose.onNode(hasText("Map navigation") and hasText("New layout")).assertIsDisplayed()
         assertTrue(
-            compose.onNodeWithText("Lists and arrivals").getUnclippedBoundsInRoot().top <
-                compose.onNodeWithText("Map").getUnclippedBoundsInRoot().top
+            compose.onNodeWithText("List navigation").getUnclippedBoundsInRoot().top <
+                compose.onNodeWithText("Map navigation").getUnclippedBoundsInRoot().top
         )
         compose.onNodeWithText("Continue").performClick()
         compose.runOnIdle { assertEquals(SearchResultMode.LISTS, saved) }
@@ -70,7 +70,7 @@ class SearchWorkflowChoiceTest {
         var saved: SearchResultMode? = null
         val restoration = StateRestorationTester(compose)
         restoration.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
-        compose.onNodeWithText("Map").performScrollTo().performClick()
+        compose.onNodeWithText("Map navigation").performScrollTo().performClick()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("Continue").performClick()
         compose.runOnIdle { assertEquals(SearchResultMode.MAP, saved) }
@@ -109,11 +109,11 @@ class SearchWorkflowChoiceTest {
     fun previewTapSelectsOnlyTheEnclosingChoice() {
         var saved: SearchResultMode? = null
         compose.setContent { ObaTheme { SearchWorkflowChoiceDialog({ saved = it }, {}) } }
-        compose.onNodeWithText("Map").performScrollTo().performClick()
-        compose.onNodeWithText("Lists and arrivals").performScrollTo().performTouchInput {
+        compose.onNodeWithText("Map navigation").performScrollTo().performClick()
+        compose.onNodeWithText("List navigation").performScrollTo().performTouchInput {
             click(Offset(center.x, height * .8f))
         }
-        compose.onNodeWithText("Lists and arrivals").assertIsSelected()
+        compose.onNodeWithText("List navigation").assertIsSelected()
         compose.runOnIdle { assertEquals(null, saved) }
         compose.onNodeWithText("Continue").performClick()
         compose.runOnIdle { assertEquals(SearchResultMode.LISTS, saved) }

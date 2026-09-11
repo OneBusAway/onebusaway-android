@@ -1554,8 +1554,10 @@
     <string name="search_result_mode_title">Open search results in</string>
     <string name="search_result_mode_map">Map</string>
     <string name="search_result_mode_lists">Lists and arrivals</string>
-    <string name="search_result_mode_migration_title">Use a map for search?</string>
-    <string name="search_result_mode_migration_body">Choose whether to use a &lt;b&gt;map&lt;/b&gt; or &lt;b&gt;list&lt;/b&gt; to select stops and routes. You can change this later in Settings.</string>
+    <string name="search_result_mode_migration_title">Map-first navigation?</string>
+    <string name="search_result_mode_migration_body">Choose whether selecting stops and routes opens a &lt;b&gt;map&lt;/b&gt; by default. You can change this later in Settings.</string>
+    <string name="search_result_mode_migration_map">Map navigation</string>
+    <string name="search_result_mode_migration_lists">List navigation</string>
     <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>
     <string name="search_result_mode_lists_description">Choose a direction and stop from lists, then read arrivals without using a map.</string>
     <string name="migration_back">Back</string>

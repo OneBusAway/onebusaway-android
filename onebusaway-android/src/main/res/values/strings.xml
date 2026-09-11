@@ -1555,7 +1555,7 @@
     <string name="search_result_mode_map">Map</string>
     <string name="search_result_mode_lists">Lists and arrivals</string>
     <string name="search_result_mode_migration_title">Map-first navigation?</string>
-    <string name="search_result_mode_migration_body">Choose whether selecting stops and routes opens a &lt;b&gt;map&lt;/b&gt; by default. You can change this later in Settings.</string>
+    <string name="search_result_mode_migration_body">When you tap on a stop or a route, do you want to see it represented as a &lt;b&gt;list&lt;/b&gt; or as a &lt;b&gt;map&lt;/b&gt;? You can change this later in Settings.</string>
     <string name="search_result_mode_migration_map">Map navigation</string>
     <string name="search_result_mode_migration_lists">List navigation</string>
     <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>

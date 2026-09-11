@@ -18,8 +18,12 @@ package org.onebusaway.android.ui.home
 import android.content.Intent
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.ui.fromIntent
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.readRouteReveal
+import org.onebusaway.android.ui.searchresults.SearchResultMode
+import org.onebusaway.android.ui.searchresults.searchResultMode
 
 /** Reuse March's persisted drawer selection, including values imported from SharedPreferences. */
 internal const val HOME_SECTION_KEY = "selected_navigation_drawer_position"
@@ -45,8 +49,23 @@ internal fun PreferencesRepository.rememberHomeSection(route: String) {
     setInt(HOME_SECTION_KEY, section)
 }
 
+/**
+ * The mapless board a tracking-card launch (#2166) should open — the watched stop, with the watched
+ * route's row preselected as the map drawer would select it — or null when it should take its usual
+ * map reveal. The card's PendingIntent asks for the map — the vehicles are what it cannot show — but
+ * a rider in Lists mode has said stops open on the board, and that choice has the last word here as
+ * it does in `NavController.openStop` (#2319). The map half of the reveal
+ * (`HomeActivity.maybeRevealTrackedRouteFromIntent`) asks this same question, so the two agree.
+ */
+internal fun Intent.trackedStopBoardRoute(prefs: PreferencesRepository): String? {
+    if (prefs.searchResultMode() != SearchResultMode.LISTS) return null
+    val route = readRouteReveal() ?: return null
+    val stop = FocusedStop.fromIntent(this) ?: return null
+    return NavRoutes.arrivals(stop.id, stop.name, route.routeId, route.headsign)
+}
+
 /** Explicit destinations win over the remembered section; only an ordinary launcher opening uses it. */
-internal fun launchDestination(intent: Intent, prefs: PreferencesRepository): String = IntentRouteMapper.routeForIntent(intent) ?: if (
+internal fun launchDestination(intent: Intent, prefs: PreferencesRepository): String = IntentRouteMapper.routeForIntent(intent) ?: intent.trackedStopBoardRoute(prefs) ?: if (
     intent.action == Intent.ACTION_MAIN &&
     intent.hasCategory(Intent.CATEGORY_LAUNCHER) &&
     intent.data == null &&

@@ -40,8 +40,8 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.rememberHomeSection
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.navigateFromHome
-import org.onebusaway.android.ui.nav.openSearchRoute
-import org.onebusaway.android.ui.nav.openSearchStop
+import org.onebusaway.android.ui.nav.openRoute
+import org.onebusaway.android.ui.nav.openStop
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.searchresults.searchResultMode
@@ -72,7 +72,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
                 onRevealStop = { navController.showArrivals(it) },
-                onSearchStop = { navController.openSearchStop(it, prefs.searchResultMode()) }
+                onSearchStop = { navController.openStop(it, prefs.searchResultMode(), prefersMap = true) }
             )
         }
     }
@@ -84,17 +84,19 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) },
-                onOpenRoute = { navController.openSearchRoute(it, prefs.searchResultMode()) }
+                onOpenRoute = { navController.openRoute(it, prefs.searchResultMode(), prefersMap = true) }
             )
         }
     }
     composable(NavRoutes.MY_RECENT, arguments = tabArg) { entry ->
+        val prefs = PreferencesEntryPoint.get(LocalContext.current)
         ObaTheme {
             MyRecentDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
+                prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
                 onRevealStop = { navController.showArrivals(it) },
+                onOpenRoute = { navController.openRoute(it, prefs.searchResultMode(), prefersMap = true) },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) }
             )
         }

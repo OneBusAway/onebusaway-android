@@ -85,23 +85,33 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
         NavRoutes.ARRIVALS,
         enterTransition = { arrivalsMapEnterTransition() },
         exitTransition = { arrivalsMapExitTransition() },
-        arguments = listOf(
-            navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType },
-            navArgument(NavRoutes.ARG_STOP_NAME) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
+        arguments = listOf(navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType }) +
+            listOf(NavRoutes.ARG_STOP_NAME, NavRoutes.ARG_ROUTE_ID, NavRoutes.ARG_ROUTE_HEADSIGN).map { name ->
+                navArgument(name) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             }
-        )
     ) { entry ->
-        val stopId = requireNotNull(entry.arguments?.getString(NavRoutes.ARG_STOP_ID)) { "Arrivals requires a stop id" }
-        val initialName = entry.arguments?.getString(NavRoutes.ARG_STOP_NAME)
-        ObaTheme { ArrivalsBoard(stopId, initialName, navController) }
+        val args = entry.arguments
+        val stopId = requireNotNull(args?.getString(NavRoutes.ARG_STOP_ID)) { "Arrivals requires a stop id" }
+        val initialName = args.getString(NavRoutes.ARG_STOP_NAME)
+        val routeId = args.getString(NavRoutes.ARG_ROUTE_ID)
+        val routeHeadsign = args.getString(NavRoutes.ARG_ROUTE_HEADSIGN)
+        ObaTheme { ArrivalsBoard(stopId, initialName, routeId, routeHeadsign, navController) }
     }
 }
 
+/** [selectedRouteId]/[selectedHeadsign] name a route row to preselect (see [NavRoutes.arrivals]); null for none. */
 @Composable
-private fun ArrivalsBoard(stopId: String, initialName: String?, navController: NavHostController) {
+private fun ArrivalsBoard(
+    stopId: String,
+    initialName: String?,
+    selectedRouteId: String?,
+    selectedHeadsign: String?,
+    navController: NavHostController
+) {
     val context = LocalContext.current
     val viewModel: ArrivalsViewModel = viewModel(
         factory = viewModelFactory {
@@ -222,6 +232,9 @@ private fun ArrivalsBoard(stopId: String, initialName: String?, navController: N
                     onShowHiddenAlerts = viewModel::showHiddenAlerts,
                     onLoadMore = viewModel::loadMore,
                     loadingMore = viewModel.loadingMore,
+                    // Resolved against the loaded rows exactly as the map drawer's selection is.
+                    selectedRowKey = selectedRouteId?.let { routeRowKey(it, selectedHeadsign) },
+                    selectedRouteId = selectedRouteId,
                     listState = listState,
                     displayMode = displayMode,
                     onDisplayModeChange = { displayMode = it },

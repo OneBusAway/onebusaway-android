@@ -35,8 +35,8 @@ import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.donation.DonationLearnMoreScreen
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.nav.openSearchRoute
-import org.onebusaway.android.ui.nav.openSearchStop
+import org.onebusaway.android.ui.nav.openRoute
+import org.onebusaway.android.ui.nav.openStop
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nightlight.NightLightRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsRoute
@@ -123,9 +123,9 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                 onRouteShowOnMap = { route ->
                     DatabaseEntryPoint.get(activity).routeRecorder()
                         .recordDetails(route.id, route.shortName, route.longName, route.url)
-                    navController.openSearchRoute(route.id, PreferencesEntryPoint.get(activity).searchResultMode())
+                    navController.openRoute(route.id, PreferencesEntryPoint.get(activity).searchResultMode(), prefersMap = true)
                 },
-                onRevealStop = { navController.openSearchStop(it, PreferencesEntryPoint.get(activity).searchResultMode()) },
+                onRevealStop = { navController.openStop(it, PreferencesEntryPoint.get(activity).searchResultMode(), prefersMap = true) },
                 // A coach-number hit drills into the ride that vehicle is running — the same
                 // route-mode-with-a-focused-vehicle view an arrivals ETA-pill tap opens.
                 onVehicleShowOnMap = { ride ->

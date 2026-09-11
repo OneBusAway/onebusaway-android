@@ -52,7 +52,7 @@ class SearchWorkflowNavigationTest {
         restoration.setContent { Harness() }
         compose.runOnIdle {
             nav.navigate(NavRoutes.search("8"))
-            nav.openSearchRoute("route8", SearchResultMode.LISTS)
+            nav.openRoute("route8", SearchResultMode.LISTS, prefersMap = true)
         }
         compose.onNodeWithText("Downtown").performClick()
         compose.onAllNodes(hasScrollAction())[0].performScrollToIndex(28)
@@ -76,17 +76,34 @@ class SearchWorkflowNavigationTest {
         compose.setContent { Harness() }
         compose.runOnIdle {
             nav.navigate(NavRoutes.search("123"))
-            nav.openSearchStop(StopReveal("123", "My stop"), SearchResultMode.LISTS)
+            nav.openStop(StopReveal("123", "My stop"), SearchResultMode.LISTS, prefersMap = true)
             assertEquals(NavRoutes.ARRIVALS, nav.currentDestination?.route)
             nav.popBackStack()
             assertEquals(NavRoutes.SEARCH, nav.currentDestination?.route)
-            nav.openSearchStop(StopReveal("123", "My stop"), SearchResultMode.MAP)
+            nav.openStop(StopReveal("123", "My stop"), SearchResultMode.MAP, prefersMap = true)
             assertEquals(NavRoutes.HOME, nav.currentDestination?.route)
             assertEquals("123", nav.currentBackStackEntry!!.savedStateHandle.consumeStopReveal()?.stopId)
             nav.navigate(NavRoutes.search("8"))
-            nav.openSearchRoute("route8", SearchResultMode.MAP)
+            nav.openRoute("route8", SearchResultMode.MAP, prefersMap = true)
             assertEquals(NavRoutes.HOME, nav.currentDestination?.route)
             assertEquals("route8", nav.currentBackStackEntry!!.savedStateHandle.consumeRouteReveal()?.routeId)
+        }
+    }
+
+    /** A saved-stop row prefers the board even in Map mode (#2297); Lists mode overrides a map preference (#2319). */
+    @Test
+    fun modeHasTheLastWordOverARequestersMapPreference() {
+        compose.setContent { Harness() }
+        compose.runOnIdle {
+            nav.openStop(StopReveal("123", "My stop"), SearchResultMode.MAP, prefersMap = false)
+            assertEquals(NavRoutes.ARRIVALS, nav.currentDestination?.route)
+            nav.popBackStack()
+            nav.openStop(StopReveal("123", "My stop"), SearchResultMode.LISTS, prefersMap = true)
+            assertEquals(NavRoutes.ARRIVALS, nav.currentDestination?.route)
+            assertEquals(null, nav.getBackStackEntry(NavRoutes.HOME).savedStateHandle.consumeStopReveal())
+            nav.popBackStack()
+            nav.openRoute("route8", SearchResultMode.LISTS, prefersMap = true)
+            assertEquals(NavRoutes.ROUTE_INFO, nav.currentDestination?.route)
         }
     }
 
@@ -102,7 +119,7 @@ class SearchWorkflowNavigationTest {
                         RouteInfoUiState.Success(RouteInfo("route8", "8", "Route eight", "Metro", null, listOf(RouteDirection("Downtown", (0..60).map { RouteStopItem("s$it", "Stop $it", "N", 0.0, 0.0) })))),
                         onBack = { nav.popBackStack() },
                         onShowRouteOnMap = { nav.showRouteMapFromArrivals(ShowRouteRequest("route8")) },
-                        onStopClick = { nav.openSearchStop(StopReveal(it.id, it.name), SearchResultMode.LISTS) }
+                        onStopClick = { nav.openStop(StopReveal(it.id, it.name), SearchResultMode.LISTS, prefersMap = true) }
                     )
                 }
                 composable(

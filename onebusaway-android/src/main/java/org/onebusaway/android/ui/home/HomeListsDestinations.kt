@@ -41,15 +41,16 @@ import org.onebusaway.android.ui.mylists.StarredStopsRepository
 import org.onebusaway.android.ui.mylists.StopListDestination
 import org.onebusaway.android.ui.mylists.chooseSortOrder
 import org.onebusaway.android.ui.mylists.confirmClear
-import org.onebusaway.android.ui.mylists.openRoute
 import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.mylists.routeActions
 import org.onebusaway.android.ui.mylists.stopActions
 import org.onebusaway.android.ui.mylists.toStopReveal
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.openRoute
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.showArrivals
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.ui.tracking.badgeTracking
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -124,7 +125,9 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             RouteListDestination(
                 vm,
                 emptyText = R.string.my_no_starred_routes,
-                onClick = { route -> openRoute(route) { routeId -> navController.revealRouteOnMap(routeId) } },
+                onClick = { route ->
+                    navController.openRoute(route.id, PreferencesEntryPoint.get(host).searchResultMode(), prefersMap = true)
+                },
                 actions = {
                     host.routeActions(
                         it,

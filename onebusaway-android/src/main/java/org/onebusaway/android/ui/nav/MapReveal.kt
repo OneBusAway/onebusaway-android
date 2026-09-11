@@ -22,6 +22,7 @@ import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.geoPointOrNull
 
@@ -164,8 +165,28 @@ data class StopReveal(
     val useDefaultZoom: Boolean = false
 )
 
-/** Reveal the map focused on [reveal]'s stop, popping back to HOME. */
-fun NavController.revealStopOnMap(reveal: StopReveal) {
+/**
+ * The one way to focus a stop from outside the map (#2319). Every requester says whether it would
+ * rather show the map ([prefersMap]) — a trip's stop list or a search hit does, a saved-stop row does
+ * not (#2297) — and the rider's "Open search results in" choice ([mode]) has the last word: Lists
+ * mode opens the mapless board for everyone, so a rider who chose it is never dropped onto the map
+ * by a screen that forgot to ask. Map mode honours the requester.
+ *
+ * [revealStopOnMap] is private so this is the only road to the map; a board-only requester may still
+ * call [showArrivals] directly, since the board is right in both modes. The one deliberate map visit a
+ * rider makes *from* a board goes through [showStopMapFromArrivals] instead.
+ */
+fun NavController.openStop(stop: StopReveal, mode: SearchResultMode, prefersMap: Boolean) {
+    if (prefersMap && mode == SearchResultMode.MAP) revealStopOnMap(stop) else showArrivals(stop)
+}
+
+/** The route counterpart of [openStop]: Lists mode opens the route's stop list, Map mode honours [prefersMap]. */
+fun NavController.openRoute(routeId: String, mode: SearchResultMode, prefersMap: Boolean) {
+    if (prefersMap && mode == SearchResultMode.MAP) revealRouteOnMap(routeId) else navigate(NavRoutes.routeInfo(routeId))
+}
+
+/** Reveal the map focused on [reveal]'s stop, popping back to HOME. Reached only through [openStop]. */
+private fun NavController.revealStopOnMap(reveal: StopReveal) {
     getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal)
     popBackStack(NavRoutes.HOME, false)
 }
@@ -177,9 +198,6 @@ internal fun SavedStateHandle.putStopReveal(reveal: StopReveal) {
     set(RESULT_MAP_STOP_LON, reveal.point?.longitude)
     set(RESULT_MAP_STOP_DEFAULT_ZOOM, reveal.useDefaultZoom)
 }
-
-/** Reveal the stop [stopId] on the map, knowing nothing else about it. */
-fun NavController.revealStopOnMap(stopId: String) = revealStopOnMap(StopReveal(stopId))
 
 /**
  * Reads and consumes a pending stop reveal from the HOME [SavedStateHandle] — the symmetric typed *read*

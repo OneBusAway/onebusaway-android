@@ -106,6 +106,7 @@ internal fun AppCompatActivity.recentRoutesTab(
     viewModel: MyListViewModel<RouteListItem>,
     @StringRes titleRes: Int,
     @DrawableRes iconRes: Int,
+    onOpenRoute: (routeId: String) -> Unit,
     onShowOnMap: (routeId: String) -> Unit
 ): MyTab = MyTab(
     tag = MyTabs.RECENT_ROUTES,
@@ -121,7 +122,7 @@ internal fun AppCompatActivity.recentRoutesTab(
     RouteListDestination(
         viewModel,
         emptyText = R.string.my_no_recent_routes,
-        onClick = { openRoute(it, onShowOnMap) },
+        onClick = { openRoute(it, onOpenRoute) },
         actions = {
             routeActions(it, R.string.my_context_remove_recent, onShowOnMap) {
                 viewModel.remove(it.id)
@@ -241,6 +242,7 @@ fun MyRoutesDestination(
                 recent,
                 R.string.my_recent_title,
                 R.drawable.ic_tab_recent_unselected,
+                onOpenRoute,
                 onShowRouteOnMap
             ),
             routeSearchTab(search, onShowRouteOnMap, onOpenRoute)
@@ -255,6 +257,7 @@ fun MyRecentDestination(
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
     onRevealStop: (StopReveal) -> Unit,
+    onOpenRoute: (routeId: String) -> Unit,
     onShowRouteOnMap: (routeId: String) -> Unit
 ) {
     val activity = LocalContext.current.findActivity()
@@ -278,6 +281,7 @@ fun MyRecentDestination(
                 recentRoutes,
                 R.string.my_recent_routes,
                 R.drawable.ic_route,
+                onOpenRoute,
                 onShowRouteOnMap
             )
         )

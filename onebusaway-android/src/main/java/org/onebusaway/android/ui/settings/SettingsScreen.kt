@@ -52,6 +52,7 @@ import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.SegmentedChoice
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.home.FocusTimeout
 import org.onebusaway.android.ui.searchresults.SearchResultMode
@@ -241,13 +242,20 @@ fun SettingsScreen(
             }
 
             PreferenceCategory(stringResource(R.string.preferences_category_behavior)) {
-                ListPreferenceItem(
-                    title = stringResource(R.string.search_result_mode_title),
-                    entries = listOf(stringResource(R.string.search_result_mode_map), stringResource(R.string.search_result_mode_lists)),
-                    entryValues = SearchResultMode.entries.map { it.value },
-                    selectedValue = state.searchResultMode.value,
-                    onValueSelected = { actions.onSearchResultMode(SearchResultMode.fromPreference(it)) }
-                )
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    val title = stringResource(R.string.search_result_mode_title)
+                    Text(title, style = MaterialTheme.typography.bodyLarge)
+                    SegmentedChoice(
+                        // Classic layout on the left, new on the right, as in Arrival display default.
+                        options = listOf(SearchResultMode.LISTS, SearchResultMode.MAP),
+                        selected = state.searchResultMode,
+                        onChange = actions.onSearchResultMode,
+                        label = title,
+                        optionLabel = { if (it == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_list },
+                        modifier = Modifier.padding(top = 8.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    )
+                }
                 ListPreferenceItem(
                     title = stringResource(R.string.preferences_focus_timeout_title),
                     entries = FocusTimeout.entries.map { stringResource(it.labelRes) },

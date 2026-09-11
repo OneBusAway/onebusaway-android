@@ -429,8 +429,8 @@ class HomeActivity : AppCompatActivity() {
                 viewModel.reportMenuAnalytics(R.string.analytics_label_twitter)
             }
             HelpAction.CONTACT_US -> goToSendFeedBack()
-            // LEGEND / WHATS_NEW open dialogs — handled by HelpFeature against HelpViewModel.
-            HelpAction.LEGEND, HelpAction.WHATS_NEW -> Unit
+            // LEGEND / WHATS_NEW / LAYOUT open dialogs — handled by HelpFeature against HelpViewModel.
+            HelpAction.LEGEND, HelpAction.WHATS_NEW, HelpAction.LAYOUT -> Unit
         }
     }
 

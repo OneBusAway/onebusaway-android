@@ -15,26 +15,17 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.compose.components.SegmentedChoice
 
 @Composable
 fun ArrivalDisplayModeSwitch(
@@ -44,21 +35,15 @@ fun ArrivalDisplayModeSwitch(
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
     label: String = stringResource(R.string.arrival_display_switch)
 ) {
-    Row(
-        modifier.fillMaxWidth().padding(contentPadding),
-        horizontalArrangement = Arrangement.End
-    ) {
-        SingleChoiceSegmentedButtonRow(Modifier.semantics { contentDescription = label }) {
-            ArrivalDisplayMode.entries.forEachIndexed { index, option ->
-                SegmentedButton(
-                    selected = mode == option,
-                    onClick = { onChange(option) },
-                    shape = SegmentedButtonDefaults.itemShape(index, ArrivalDisplayMode.entries.size),
-                    label = { Text(stringResource(option.labelRes)) }
-                )
-            }
-        }
-    }
+    SegmentedChoice(
+        options = ArrivalDisplayMode.entries,
+        selected = mode,
+        onChange = onChange,
+        label = label,
+        optionLabel = { it.labelRes },
+        modifier = modifier,
+        contentPadding = contentPadding
+    )
 }
 
 internal val ArrivalDisplayMode.labelRes: Int

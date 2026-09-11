@@ -42,9 +42,10 @@ internal fun SearchWorkflowChoiceDialog(
     onSave: (SearchResultMode) -> Unit,
     onDismiss: () -> Unit,
     page: Int = 1,
-    pageCount: Int = 1
+    pageCount: Int = 1,
+    initial: SearchResultMode = SearchResultMode.LISTS
 ) {
-    var selected by rememberSaveable { mutableStateOf(SearchResultMode.LISTS) }
+    var selected by rememberSaveable(initial) { mutableStateOf(initial) }
     MigrationDialog(
         title = stringResource(R.string.search_result_mode_migration_title),
         page = page,
@@ -60,7 +61,7 @@ internal fun SearchWorkflowChoiceDialog(
                 Text(AnnotatedString.fromHtml(stringResource(R.string.search_result_mode_migration_body)))
                 listOf(SearchResultMode.LISTS, SearchResultMode.MAP).forEach { mode ->
                     MigrationChoice(
-                        title = stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_lists),
+                        title = stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_migration_map else R.string.search_result_mode_migration_lists),
                         description = stringResource(if (mode == SearchResultMode.MAP) R.string.search_result_mode_map_description else R.string.search_result_mode_lists_description),
                         previous = mode == SearchResultMode.LISTS,
                         selected = selected == mode,

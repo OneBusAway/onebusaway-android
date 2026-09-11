@@ -49,19 +49,21 @@ class TrackedStopLaunchTest {
     }
 
     @Test
-    fun listsModeSendsATrackingCardLaunchToTheBoard() {
+    fun listsModeSendsATrackingCardLaunchToTheBoardWithTheWatchedRouteSelected() {
         val card = Intent(context, HomeActivity::class.java).putStopRouteReveal(
             stop = FocusedStop(id = "1_100", name = "Pine St", code = null, point = GeoPoint(47.6, -122.3)),
             route = RouteRevealExtras(routeId = "1_40", routeShortName = "40", headsign = "Downtown")
         )
 
         prefs.setString(SearchResultMode.PREFERENCE_KEY, SearchResultMode.MAP.value)
-        assertNull(card.trackedStopOnBoard(prefs))
+        assertNull(card.trackedStopBoardRoute(prefs))
         assertEquals(NavRoutes.HOME, launchDestination(card, prefs))
 
         prefs.setString(SearchResultMode.PREFERENCE_KEY, SearchResultMode.LISTS.value)
-        assertEquals("1_100", card.trackedStopOnBoard(prefs)?.stopId)
-        assertEquals(NavRoutes.arrivals("1_100", "Pine St"), launchDestination(card, prefs))
+        // The route half survives the switch to the board, which preselects that row as the map drawer would.
+        val board = NavRoutes.arrivals("1_100", "Pine St", routeId = "1_40", routeHeadsign = "Downtown")
+        assertEquals(board, card.trackedStopBoardRoute(prefs))
+        assertEquals(board, launchDestination(card, prefs))
     }
 
     @Test
@@ -71,7 +73,7 @@ class TrackedStopLaunchTest {
             .putExtra(MapParams.CENTER_LAT, 47.6)
             .putExtra(MapParams.CENTER_LON, -122.3)
         prefs.setString(SearchResultMode.PREFERENCE_KEY, SearchResultMode.LISTS.value)
-        assertNull(showOnMap.trackedStopOnBoard(prefs))
+        assertNull(showOnMap.trackedStopBoardRoute(prefs))
         assertEquals(NavRoutes.HOME, launchDestination(showOnMap, prefs))
     }
 }

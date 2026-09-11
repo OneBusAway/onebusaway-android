@@ -132,6 +132,27 @@ class ArrivalsNavigationTest {
     }
 
     @Test
+    fun aBoardRouteCarriesTheRouteRowToSelectAndStaysOptional() {
+        compose.setContent { Harness() }
+        compose.runOnIdle {
+            nav.navigate(NavRoutes.arrivals("stop/1", "My stop", routeId = "1_40/x", routeHeadsign = "Pike & 3rd"))
+            val args = nav.currentBackStackEntry!!.arguments!!
+            assertEquals(NavRoutes.ARRIVALS, nav.currentDestination?.route)
+            assertEquals("stop/1", args.getString(NavRoutes.ARG_STOP_ID))
+            assertEquals("My stop", args.getString(NavRoutes.ARG_STOP_NAME))
+            assertEquals("1_40/x", args.getString(NavRoutes.ARG_ROUTE_ID))
+            assertEquals("Pike & 3rd", args.getString(NavRoutes.ARG_ROUTE_HEADSIGN))
+
+            // Every other board request names no row.
+            nav.navigate(NavRoutes.arrivals("stop/2"))
+            val plain = nav.currentBackStackEntry!!.arguments!!
+            assertEquals("stop/2", plain.getString(NavRoutes.ARG_STOP_ID))
+            assertNull(plain.getString(NavRoutes.ARG_ROUTE_ID))
+            assertNull(plain.getString(NavRoutes.ARG_ROUTE_HEADSIGN))
+        }
+    }
+
+    @Test
     fun shortcutUpOpensStarredStopsAndOpeningAnotherStopDoesNotInheritExitBehavior() {
         compose.setContent { Harness() }
         compose.runOnIdle {
@@ -252,13 +273,13 @@ class ArrivalsNavigationTest {
                 NavRoutes.ARRIVALS,
                 enterTransition = { arrivalsMapEnterTransition() },
                 exitTransition = { arrivalsMapExitTransition() },
-                arguments = listOf(
-                    navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType },
-                    navArgument(NavRoutes.ARG_STOP_NAME) {
-                        type = NavType.StringType
-                        nullable = true
+                arguments = listOf(navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType }) +
+                    listOf(NavRoutes.ARG_STOP_NAME, NavRoutes.ARG_ROUTE_ID, NavRoutes.ARG_ROUTE_HEADSIGN).map { name ->
+                        navArgument(name) {
+                            type = NavType.StringType
+                            nullable = true
+                        }
                     }
-                )
             ) { entry ->
                 val id = requireNotNull(entry.arguments?.getString(NavRoutes.ARG_STOP_ID))
                 var mode by rememberArrivalDisplayMode(id) { ArrivalDisplayMode.TIME }

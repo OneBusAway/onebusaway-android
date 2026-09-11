@@ -21,7 +21,6 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.fromIntent
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.nav.readRouteReveal
 import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.searchresults.searchResultMode
@@ -51,19 +50,22 @@ internal fun PreferencesRepository.rememberHomeSection(route: String) {
 }
 
 /**
- * The stop a tracking-card launch (#2166) should open on the mapless board, or null when it should
- * take its usual map reveal. The card's PendingIntent asks for the map — the vehicles are what it
- * cannot show — but a rider in Lists mode has said stops open on the board, and that choice has the
- * last word here as it does in `NavController.openStop` (#2319). The map half of the reveal
+ * The mapless board a tracking-card launch (#2166) should open — the watched stop, with the watched
+ * route's row preselected as the map drawer would select it — or null when it should take its usual
+ * map reveal. The card's PendingIntent asks for the map — the vehicles are what it cannot show — but
+ * a rider in Lists mode has said stops open on the board, and that choice has the last word here as
+ * it does in `NavController.openStop` (#2319). The map half of the reveal
  * (`HomeActivity.maybeRevealTrackedRouteFromIntent`) asks this same question, so the two agree.
  */
-internal fun Intent.trackedStopOnBoard(prefs: PreferencesRepository): StopReveal? {
-    if (prefs.searchResultMode() != SearchResultMode.LISTS || readRouteReveal() == null) return null
-    return FocusedStop.fromIntent(this)?.let { StopReveal(it.id, it.name, it.point) }
+internal fun Intent.trackedStopBoardRoute(prefs: PreferencesRepository): String? {
+    if (prefs.searchResultMode() != SearchResultMode.LISTS) return null
+    val route = readRouteReveal() ?: return null
+    val stop = FocusedStop.fromIntent(this) ?: return null
+    return NavRoutes.arrivals(stop.id, stop.name, route.routeId, route.headsign)
 }
 
 /** Explicit destinations win over the remembered section; only an ordinary launcher opening uses it. */
-internal fun launchDestination(intent: Intent, prefs: PreferencesRepository): String = IntentRouteMapper.routeForIntent(intent) ?: intent.trackedStopOnBoard(prefs)?.let { NavRoutes.arrivals(it.stopId, it.name) } ?: if (
+internal fun launchDestination(intent: Intent, prefs: PreferencesRepository): String = IntentRouteMapper.routeForIntent(intent) ?: intent.trackedStopBoardRoute(prefs) ?: if (
     intent.action == Intent.ACTION_MAIN &&
     intent.hasCategory(Intent.CATEGORY_LAUNCHER) &&
     intent.data == null &&

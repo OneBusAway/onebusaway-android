@@ -63,7 +63,7 @@ import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.launchDestination
 import org.onebusaway.android.ui.home.launchIntentEffect
-import org.onebusaway.android.ui.home.trackedStopOnBoard
+import org.onebusaway.android.ui.home.trackedStopBoardRoute
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
@@ -273,8 +273,9 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun maybeRevealTrackedRouteFromIntent(intent: Intent) {
         val route = intent.readRouteReveal() ?: return
-        // Lists mode sends this launch to the board instead (launchDestination); no map focus to set.
-        if (intent.trackedStopOnBoard(PreferencesEntryPoint.get(this)) != null) return
+        // Lists mode sends this launch to the board instead (launchDestination), which preselects the
+        // same row there; no map focus to set.
+        if (intent.trackedStopBoardRoute(PreferencesEntryPoint.get(this)) != null) return
         // The stop half through the app's one reader of it, rather than a second parse of the same
         // keys — which is also how the stop's code survives the trip.
         val stop = FocusedStop.fromIntent(intent) ?: return

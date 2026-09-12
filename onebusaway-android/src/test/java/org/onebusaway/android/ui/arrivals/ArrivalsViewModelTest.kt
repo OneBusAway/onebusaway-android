@@ -141,7 +141,8 @@ class ArrivalsViewModelTest {
         minutesAfter: Int = 65,
         isStale: Boolean = false,
         favorite: Boolean = false,
-        hideAlertsByDefault: Boolean = false
+        hideAlertsByDefault: Boolean = false,
+        realtimeOutages: List<RealtimeOutage> = emptyList()
     ) = ArrivalsData(
         arrivals = emptyList(),
         routeGroups = emptyList(),
@@ -154,7 +155,8 @@ class ArrivalsViewModelTest {
         hideAlertsByDefault = hideAlertsByDefault,
         stopCode = null,
         stopLat = 0.0,
-        stopLon = 0.0
+        stopLon = 0.0,
+        realtimeOutages = realtimeOutages
     )
 
     @Test
@@ -175,6 +177,20 @@ class ArrivalsViewModelTest {
         assertEquals("Pine St & 3rd Ave", (state as ArrivalsUiState.Content).header.name)
         // The window-end instant rides through unchanged from ArrivalsData into the Content state.
         assertEquals(ServerTime(65 * 60_000L), state.windowEnd)
+    }
+
+    /**
+     * Verifies that realtimeOutages from repository data is propagated to ArrivalsUiState.Content.
+     */
+    @Test
+    fun `refresh propagates realtimeOutages to Content state`() = runTest {
+        val outages = listOf(RealtimeOutage("1", "King County Metro"))
+        val viewModel = ArrivalsViewModel("1_100", FakeArrivalsRepository(Result.success(data(realtimeOutages = outages))))
+
+        viewModel.refresh()
+
+        val state = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(outages, state.realtimeOutages)
     }
 
     @Test

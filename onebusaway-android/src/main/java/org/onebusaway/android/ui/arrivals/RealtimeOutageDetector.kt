@@ -23,13 +23,33 @@ package org.onebusaway.android.ui.arrivals
 const val MIN_ARRIVALS_FOR_REALTIME_OUTAGE = 3
 
 /**
+ * An operating transit agency identified by its unique ID and display name.
+ *
+ * @param id the unique agency identifier from GTFS / OBA references
+ * @param name the human-readable display name of the agency
+ */
+data class OperatingAgency(
+    val id: String,
+    val name: String
+)
+
+/**
  * An agency whose realtime predictions appear to be offline at the stop being viewed.
  *
+ * @param agencyId the unique identifier of the affected transit agency
  * @param agencyName the display name of the affected transit agency
  */
 data class RealtimeOutage(
+    val agencyId: String,
     val agencyName: String
-)
+) {
+    /**
+     * Secondary constructor allowing creation with only [agencyName] for testing convenience.
+     *
+     * @param agencyName the display name of the affected transit agency
+     */
+    constructor(agencyName: String) : this(agencyId = agencyName, agencyName = agencyName)
+}
 
 /**
  * Detects whether any transit agency serving the given [arrivals] is experiencing a realtime data
@@ -39,29 +59,38 @@ data class RealtimeOutage(
  * 1. It has at least [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] arrivals at this stop within the time window.
  * 2. None of its arrivals have realtime predictions ([ArrivalInfo.predicted] is false for all).
  *
- * If an agency has even a single predicted arrival, no outage is flagged for it (partial coverage
- * is normal). Agencies with fewer than [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] arrivals or an empty/blank
- * name are ignored to avoid false positives on low-frequency services or incomplete metadata.
+ * Arrivals are grouped by their unique [OperatingAgency.id] so that per-agency thresholds and
+ * prediction checks remain strictly independent, even if two distinct agencies share the same display
+ * name. If an agency has even a single predicted arrival, no outage is flagged for it. Agencies with
+ * fewer than [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] arrivals or missing/blank ID/name are ignored to avoid
+ * false positives.
  *
  * @param arrivals the list of arrivals loaded for the stop
- * @param agencyNameOf resolves an arrival's agency display name from route references
+ * @param agencyOf resolves an arrival's operating agency (ID and display name) from route references
  * @return a list of [RealtimeOutage] objects for affected agencies, ordered alphabetically by agency name
  */
 fun detectRealtimeOutages(
     arrivals: List<ArrivalInfo>,
-    agencyNameOf: (ArrivalInfo) -> String?
+    agencyOf: (ArrivalInfo) -> OperatingAgency?
 ): List<RealtimeOutage> {
     if (arrivals.isEmpty()) return emptyList()
 
     return arrivals
-        .groupBy { agencyNameOf(it) }
-        .mapNotNull { (agencyName, agencyArrivals) ->
-            if (agencyName.isNullOrBlank()) return@mapNotNull null
+        .mapNotNull { arrival ->
+            val agency = agencyOf(arrival)
+            if (agency == null || agency.id.isBlank() || agency.name.isBlank()) {
+                null
+            } else {
+                agency to arrival
+            }
+        }
+        .groupBy(keySelector = { it.first }, valueTransform = { it.second })
+        .mapNotNull { (agency, agencyArrivals) ->
             if (agencyArrivals.size >= MIN_ARRIVALS_FOR_REALTIME_OUTAGE && agencyArrivals.none { it.predicted }) {
-                RealtimeOutage(agencyName = agencyName)
+                RealtimeOutage(agencyId = agency.id, agencyName = agency.name)
             } else {
                 null
             }
         }
-        .sortedBy { it.agencyName }
+        .sortedWith(compareBy({ it.agencyName }, { it.agencyId }))
 }

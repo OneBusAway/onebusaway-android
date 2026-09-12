@@ -179,9 +179,12 @@ class ArrivalsViewModelTest {
         assertEquals(ServerTime(65 * 60_000L), state.windowEnd)
     }
 
+    /**
+     * Verifies that realtimeOutages from repository data is propagated to ArrivalsUiState.Content.
+     */
     @Test
     fun `refresh propagates realtimeOutages to Content state`() = runTest {
-        val outages = listOf(RealtimeOutage("King County Metro"))
+        val outages = listOf(RealtimeOutage("1", "King County Metro"))
         val viewModel = ArrivalsViewModel("1_100", FakeArrivalsRepository(Result.success(data(realtimeOutages = outages))))
 
         viewModel.refresh()

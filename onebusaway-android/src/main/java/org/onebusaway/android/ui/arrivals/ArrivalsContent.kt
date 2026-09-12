@@ -483,6 +483,9 @@ private fun AlertRow(alert: AlertItem, onClick: () -> Unit) {
 /**
  * A compact, nonblocking banner shown when an agency's realtime predictions are unavailable
  * at the stop being viewed (issue #2301). Renders an info-severity alert card per affected agency.
+ *
+ * @param outages the list of detected realtime outages affecting agencies at this stop
+ * @param modifier modifier for layout styling and animations
  */
 @Composable
 internal fun RealtimeOutageBanner(
@@ -490,12 +493,20 @@ internal fun RealtimeOutageBanner(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        for (outage in outages) {
-            RealtimeOutageRow(outage = outage)
+        val uniqueOutages = remember(outages) { outages.distinctBy { it.agencyName } }
+        for (outage in uniqueOutages) {
+            key(outage.agencyId) {
+                RealtimeOutageRow(outage = outage)
+            }
         }
     }
 }
 
+/**
+ * An alert card displaying that realtime predictions for a specific agency are unavailable.
+ *
+ * @param outage the outage information containing the agency name to display
+ */
 @Composable
 private fun RealtimeOutageRow(outage: RealtimeOutage) {
     AlertSurface(severity = AlertSeverity.INFO) {

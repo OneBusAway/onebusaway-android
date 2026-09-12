@@ -24,8 +24,19 @@ import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 
+/**
+ * Unit tests for [detectRealtimeOutages].
+ */
 class RealtimeOutageDetectorTest {
 
+    /**
+     * Builds a minimal [ArrivalInfo] for outage detector tests.
+     *
+     * @param routeId the route identifier for the arrival
+     * @param predicted whether realtime prediction is available
+     * @param tripId the trip identifier
+     * @return a constructed [ArrivalInfo] model
+     */
     private fun arrival(
         routeId: String = "route-1",
         predicted: Boolean = false,
@@ -48,12 +59,18 @@ class RealtimeOutageDetectorTest {
         )
     }
 
+    /**
+     * Verifies that an empty arrivals list produces no outages.
+     */
     @Test
     fun `empty arrivals list returns no outage`() {
-        val result = detectRealtimeOutages(emptyList()) { "Metro" }
+        val result = detectRealtimeOutages(emptyList()) { OperatingAgency("1", "Metro") }
         assertTrue(result.isEmpty())
     }
 
+    /**
+     * Verifies that an agency with all predicted arrivals does not trigger an outage.
+     */
     @Test
     fun `agency with all predicted arrivals has no outage`() {
         val arrivals = listOf(
@@ -61,10 +78,13 @@ class RealtimeOutageDetectorTest {
             arrival("r1", predicted = true),
             arrival("r1", predicted = true)
         )
-        val result = detectRealtimeOutages(arrivals) { "Metro" }
+        val result = detectRealtimeOutages(arrivals) { OperatingAgency("1", "Metro") }
         assertTrue(result.isEmpty())
     }
 
+    /**
+     * Verifies that an agency with a mix of predicted and scheduled arrivals does not trigger an outage.
+     */
     @Test
     fun `agency with mix of predicted and scheduled arrivals has no outage`() {
         val arrivals = listOf(
@@ -72,10 +92,13 @@ class RealtimeOutageDetectorTest {
             arrival("r1", predicted = true),
             arrival("r1", predicted = false)
         )
-        val result = detectRealtimeOutages(arrivals) { "Metro" }
+        val result = detectRealtimeOutages(arrivals) { OperatingAgency("1", "Metro") }
         assertTrue(result.isEmpty())
     }
 
+    /**
+     * Verifies that an agency with at least 3 scheduled-only arrivals triggers an outage.
+     */
     @Test
     fun `agency with at least 3 scheduled-only arrivals flags outage`() {
         val arrivals = listOf(
@@ -83,20 +106,26 @@ class RealtimeOutageDetectorTest {
             arrival("r1", predicted = false),
             arrival("r2", predicted = false)
         )
-        val result = detectRealtimeOutages(arrivals) { "Metro" }
-        assertEquals(listOf(RealtimeOutage("Metro")), result)
+        val result = detectRealtimeOutages(arrivals) { OperatingAgency("1", "Metro") }
+        assertEquals(listOf(RealtimeOutage("1", "Metro")), result)
     }
 
+    /**
+     * Verifies that an agency with fewer than 3 scheduled-only arrivals does not trigger an outage.
+     */
     @Test
     fun `agency with fewer than 3 scheduled-only arrivals does not flag outage`() {
         val arrivals = listOf(
             arrival("r1", predicted = false),
             arrival("r1", predicted = false)
         )
-        val result = detectRealtimeOutages(arrivals) { "Metro" }
+        val result = detectRealtimeOutages(arrivals) { OperatingAgency("1", "Metro") }
         assertTrue(result.isEmpty())
     }
 
+    /**
+     * Verifies that when multiple agencies serve a stop, only the affected agency is flagged.
+     */
     @Test
     fun `multiple agencies with only one affected flags only affected agency`() {
         val arrivals = listOf(
@@ -114,15 +143,68 @@ class RealtimeOutageDetectorTest {
         )
         val result = detectRealtimeOutages(arrivals) {
             when {
-                it.routeId.startsWith("metro") -> "King County Metro"
-                it.routeId.startsWith("st") -> "Sound Transit"
-                it.routeId.startsWith("pt") -> "Pierce Transit"
+                it.routeId.startsWith("metro") -> OperatingAgency("1", "King County Metro")
+                it.routeId.startsWith("st") -> OperatingAgency("40", "Sound Transit")
+                it.routeId.startsWith("pt") -> OperatingAgency("3", "Pierce Transit")
                 else -> null
             }
         }
-        assertEquals(listOf(RealtimeOutage("King County Metro")), result)
+        assertEquals(listOf(RealtimeOutage("1", "King County Metro")), result)
     }
 
+    /**
+     * Verifies that distinct agencies with the same display name do not have their arrivals
+     * merged across agency IDs to falsely trigger an outage (regression test).
+     */
+    @Test
+    fun `distinct agencies with the same display name do not merge arrivals to falsely trigger outage`() {
+        val arrivals = listOf(
+            // Agency 1: 2 arrivals, both scheduled (< 3 threshold)
+            arrival("agency1-r1", predicted = false),
+            arrival("agency1-r2", predicted = false),
+            // Agency 2: 1 arrival, scheduled (< 3 threshold)
+            arrival("agency2-r1", predicted = false)
+        )
+        val result = detectRealtimeOutages(arrivals) {
+            when {
+                it.routeId.startsWith("agency1") -> OperatingAgency("id-1", "Metro")
+                it.routeId.startsWith("agency2") -> OperatingAgency("id-2", "Metro")
+                else -> null
+            }
+        }
+        // Neither agency has >= 3 arrivals, so neither should be flagged
+        assertTrue(result.isEmpty())
+    }
+
+    /**
+     * Verifies that distinct agencies with the same display name evaluate realtime predictions
+     * independently so one agency's live data doesn't suppress another agency's outage.
+     */
+    @Test
+    fun `distinct agencies with the same display name evaluate independently`() {
+        val arrivals = listOf(
+            // Agency 1: 3 arrivals, all scheduled (outage)
+            arrival("agency1-r1", predicted = false),
+            arrival("agency1-r2", predicted = false),
+            arrival("agency1-r3", predicted = false),
+            // Agency 2: 3 arrivals, all predicted (no outage)
+            arrival("agency2-r1", predicted = true),
+            arrival("agency2-r2", predicted = true),
+            arrival("agency2-r3", predicted = true)
+        )
+        val result = detectRealtimeOutages(arrivals) {
+            when {
+                it.routeId.startsWith("agency1") -> OperatingAgency("id-1", "Metro")
+                it.routeId.startsWith("agency2") -> OperatingAgency("id-2", "Metro")
+                else -> null
+            }
+        }
+        assertEquals(listOf(RealtimeOutage("id-1", "Metro")), result)
+    }
+
+    /**
+     * Verifies that multiple affected agencies are sorted alphabetically by agency name.
+     */
     @Test
     fun `multiple affected agencies are sorted alphabetically`() {
         val arrivals = listOf(
@@ -134,19 +216,26 @@ class RealtimeOutageDetectorTest {
             arrival("kcm-3", predicted = false)
         )
         val result = detectRealtimeOutages(arrivals) {
-            if (it.routeId.startsWith("st")) "Sound Transit" else "King County Metro"
+            if (it.routeId.startsWith("st")) {
+                OperatingAgency("40", "Sound Transit")
+            } else {
+                OperatingAgency("1", "King County Metro")
+            }
         }
         assertEquals(
             listOf(
-                RealtimeOutage("King County Metro"),
-                RealtimeOutage("Sound Transit")
+                RealtimeOutage("1", "King County Metro"),
+                RealtimeOutage("40", "Sound Transit")
             ),
             result
         )
     }
 
+    /**
+     * Verifies that null or blank agency IDs or names are ignored.
+     */
     @Test
-    fun `null or blank agency name is ignored`() {
+    fun `null or blank agency info is ignored`() {
         val arrivals = listOf(
             arrival("r1", predicted = false),
             arrival("r2", predicted = false),
@@ -155,10 +244,16 @@ class RealtimeOutageDetectorTest {
         val resultNull = detectRealtimeOutages(arrivals) { null }
         assertTrue(resultNull.isEmpty())
 
-        val resultBlank = detectRealtimeOutages(arrivals) { "   " }
-        assertTrue(resultBlank.isEmpty())
+        val resultBlankName = detectRealtimeOutages(arrivals) { OperatingAgency("1", "   ") }
+        assertTrue(resultBlankName.isEmpty())
+
+        val resultBlankId = detectRealtimeOutages(arrivals) { OperatingAgency("   ", "Metro") }
+        assertTrue(resultBlankId.isEmpty())
     }
 
+    /**
+     * Verifies that when realtime predictions recover on a subsequent poll, the outage clears.
+     */
     @Test
     fun `recovery with predicted arrival clears the outage`() {
         val outageArrivals = listOf(
@@ -166,7 +261,7 @@ class RealtimeOutageDetectorTest {
             arrival("r1", predicted = false),
             arrival("r2", predicted = false)
         )
-        assertEquals(1, detectRealtimeOutages(outageArrivals) { "Metro" }.size)
+        assertEquals(1, detectRealtimeOutages(outageArrivals) { OperatingAgency("1", "Metro") }.size)
 
         // After refresh, predictions return for one or more trips
         val recoveredArrivals = listOf(
@@ -174,9 +269,12 @@ class RealtimeOutageDetectorTest {
             arrival("r1", predicted = false),
             arrival("r2", predicted = false)
         )
-        assertTrue(detectRealtimeOutages(recoveredArrivals) { "Metro" }.isEmpty())
+        assertTrue(detectRealtimeOutages(recoveredArrivals) { OperatingAgency("1", "Metro") }.isEmpty())
     }
 
+    /**
+     * Minimal [ArrivalData] test stub for constructing [ArrivalInfo].
+     */
     private data class FakeArrivalData(
         override val predicted: Boolean,
         override val predictedArrivalTime: ServerTime?,

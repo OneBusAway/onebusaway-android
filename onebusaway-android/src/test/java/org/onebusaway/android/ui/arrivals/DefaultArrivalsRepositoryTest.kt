@@ -290,6 +290,9 @@ class DefaultArrivalsRepositoryTest {
         )
     }
 
+    /**
+     * Verifies that a fresh load with all scheduled arrivals for an agency flags a realtime outage.
+     */
     @Test
     fun `a fresh load with all scheduled arrivals for an agency flags realtime outage`() = runTest {
         val dataSource = FakeStopArrivalsDataSource()
@@ -355,7 +358,7 @@ class DefaultArrivalsRepositoryTest {
 
         val data = repository.getArrivals(STOP_ID, 65).getOrThrow()
 
-        assertEquals(listOf(RealtimeOutage("Metro")), data.realtimeOutages)
+        assertEquals(listOf(RealtimeOutage("agency-1", "Metro")), data.realtimeOutages)
     }
 
     @Test

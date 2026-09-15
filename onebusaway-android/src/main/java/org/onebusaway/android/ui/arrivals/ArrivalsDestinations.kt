@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,6 +78,7 @@ import org.onebusaway.android.ui.nav.navigateUpFromArrivals
 import org.onebusaway.android.ui.nav.showRouteMapFromArrivals
 import org.onebusaway.android.ui.nav.showStopMapFromArrivals
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
+import org.onebusaway.android.ui.widget.StopTimesWidgetConfigActivity
 import org.onebusaway.android.util.GeoPoint
 
 /** A mapless stop destination. Its VM and scroll position live with the back-stack entry. */
@@ -199,6 +201,14 @@ private fun ArrivalsBoard(
                         DropdownMenuItem(text = { Text(stringResource(R.string.my_context_create_shortcut)) }, onClick = {
                             menuOpen = false
                             Shortcuts.createStopShortcut(context, title, StopLauncher.Builder(context, stopId).setStopName(title))
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.stop_info_option_add_widget)) }, onClick = {
+                            menuOpen = false
+                            context.startActivity(
+                                Intent(context, StopTimesWidgetConfigActivity::class.java)
+                                    .putExtra(StopTimesWidgetConfigActivity.EXTRA_STOP_ID, stopId)
+                                    .putExtra(StopTimesWidgetConfigActivity.EXTRA_STOP_NAME, title)
+                            )
                         })
                         DropdownMenuItem(text = { Text(stringResource(R.string.stop_info_option_report_problem)) }, enabled = content != null, onClick = {
                             menuOpen = false

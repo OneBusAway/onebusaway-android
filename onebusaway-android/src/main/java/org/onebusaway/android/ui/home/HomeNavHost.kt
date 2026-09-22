@@ -104,26 +104,33 @@ import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
- * The HOME destination's dependency surface — the one destination that consumes the full home bundle
- * (the feature ViewModels, the list VMs, the arrivals factory, the Activity-bound [activityActions], and
- * the map seed). Built once in [HomeActivity.onCreate] and passed to [HomeNavHost]. Every *other*
- * destination instead recovers the host via `LocalContext.current.findActivity()` and reads its
- * (non-private) members, so only HOME needs this holder (the six feature VMs + the list VMs are private
- * to the activity).
+ * Activity-owned home features, resolved independently on first use. Constructing this holder must
+ * not read the Activity's lazy ViewModel delegates: lists and boards need help/startup dialogs but
+ * none of the map or trip features. HOME reads those only after its launch-readiness gate below.
+ * The providers retain activity-scoped ownership and SavedStateHandle restoration.
  */
 class HomeDestinationDeps(
     val homeViewModel: HomeViewModel,
-    val mapViewModel: MapViewModel,
-    val surveyViewModel: SurveyViewModel,
-    val donationViewModel: DonationViewModel,
-    val weatherViewModel: WeatherViewModel,
-    val helpViewModel: HelpViewModel,
-    val tripPlanViewModel: TripPlanViewModel,
-    val tripResultsViewModel: TripResultsViewModel,
-    val pinnedTripViewModel: PinnedTripViewModel,
+    mapViewModel: () -> MapViewModel,
+    surveyViewModel: () -> SurveyViewModel,
+    donationViewModel: () -> DonationViewModel,
+    weatherViewModel: () -> WeatherViewModel,
+    helpViewModel: () -> HelpViewModel,
+    tripPlanViewModel: () -> TripPlanViewModel,
+    tripResultsViewModel: () -> TripResultsViewModel,
+    pinnedTripViewModel: () -> PinnedTripViewModel,
     val arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     val activityActions: HomeActivityActions
-)
+) {
+    val mapViewModel by lazy(mapViewModel)
+    val surveyViewModel by lazy(surveyViewModel)
+    val donationViewModel by lazy(donationViewModel)
+    val weatherViewModel by lazy(weatherViewModel)
+    val helpViewModel by lazy(helpViewModel)
+    val tripPlanViewModel by lazy(tripPlanViewModel)
+    val tripResultsViewModel by lazy(tripResultsViewModel)
+    val pinnedTripViewModel by lazy(pinnedTripViewModel)
+}
 
 /**
  * The single-Activity Navigation-Compose backbone: every screen is a NavHost destination.

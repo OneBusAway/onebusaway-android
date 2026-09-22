@@ -71,7 +71,6 @@ import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.nav.extraDestinations
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.mylists.myListsGraph
-import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.LAUNCH_ROOT
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -304,10 +303,11 @@ fun HomeNavHost(
 /**
  * Handles [initialIntent] once, then drains [HomeActivity]'s `launchIntents` channel as each
  * `onNewIntent` enqueues more (warm relaunch): for each external intent it runs the intent's domain side
- * effects, translates it to a route via [IntentRouteMapper] (null = stay on the map), then navigates there
- * popping up to HOME. This is the only navigation that can't hold the NavController itself — the OS hands
- * intents to the Activity, which exists before/around the composition. The channel is an UNLIMITED queue
- * (not a latch) so rapid, distinct back-to-back intents are each delivered exactly once rather than
+ * effects and opens its launch destination, popping up to HOME. A plain warm launcher return leaves
+ * the current destination and back stack intact (#2333). This is the only navigation that can't hold
+ * the NavController itself — the OS hands intents to the Activity, which exists before/around the
+ * composition. The channel is an UNLIMITED queue (not a latch) so rapid, distinct back-to-back intents
+ * are each delivered exactly once rather than
  * overwriting one another before the collector consumes them (#1582).
  *
  * The collect is gated on `repeatOnLifecycle(STARTED)` so we never navigate while the activity is STOPPED.
@@ -332,7 +332,7 @@ internal fun launchIntentEffect(
     LaunchedEffect(navController, lifecycleOwner) {
         fun handle(intent: Intent, initial: Boolean) {
             sideEffects(intent)
-            val route = launchDestination(intent, prefs)
+            val route = launchDestination(intent, prefs, isColdLaunch = initial) ?: return
             navController.navigateFromHome(route)
             if (initial) {
                 val entry = navController.currentBackStackEntry

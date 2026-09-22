@@ -152,7 +152,21 @@ class HomeActivity : AppCompatActivity() {
         // The whole screen is Compose: a ModalNavigationDrawer + an edge-to-edge BottomSheetScaffold whose
         // bottom sheet is the per-stop arrivals panel (ArrivalsSheetHost). No map-related View seam remains.
 
-        val activityActions = buildActivityActions()
+        // Keep the holder stable across recompositions without resolving destination features here.
+        // Explicit launch actions may still resolve a VM before navigation (e.g. trip notifications).
+        val home = HomeDestinationDeps(
+            homeViewModel = viewModel,
+            mapViewModel = { mapViewModel },
+            surveyViewModel = { surveyViewModel },
+            donationViewModel = { donationViewModel },
+            weatherViewModel = { weatherViewModel },
+            helpViewModel = { helpViewModel },
+            tripPlanViewModel = { tripPlanViewModel },
+            tripResultsViewModel = { tripResultsViewModel },
+            pinnedTripViewModel = { pinnedTripViewModel },
+            arrivalsViewModelFactory = arrivalsViewModelFactory,
+            activityActions = buildActivityActions()
+        )
 
         val initialIntent = intent
         setContent {
@@ -170,19 +184,7 @@ class HomeActivity : AppCompatActivity() {
                 HomeNavHost(
                     navController = navController,
                     launchReady = launchReady,
-                    home = HomeDestinationDeps(
-                        homeViewModel = viewModel,
-                        mapViewModel = mapViewModel,
-                        surveyViewModel = surveyViewModel,
-                        donationViewModel = donationViewModel,
-                        weatherViewModel = weatherViewModel,
-                        helpViewModel = helpViewModel,
-                        tripPlanViewModel = tripPlanViewModel,
-                        tripResultsViewModel = tripResultsViewModel,
-                        pinnedTripViewModel = pinnedTripViewModel,
-                        arrivalsViewModelFactory = arrivalsViewModelFactory,
-                        activityActions = activityActions
-                    )
+                    home = home
                 )
                 PaymentWarningDialog(viewModel.paymentWarning, viewModel::dismissPaymentWarning)
                 // The `add-region` consent gate, a sibling of the region picker below: it must overlay

@@ -154,13 +154,15 @@ import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * The compact trip-plan form, shown in the top chrome (in place of the search field) while planning.
- * No header/close chrome — exiting directions is a back gesture (handled in HomeScreen).
+ * [onClose] is its close button — the on-screen way out of directions, alongside the Back gesture
+ * (both handled in HomeScreen).
  */
 @Composable
 fun DirectionsFormCard(
     viewModel: TripPlanViewModel,
     state: TripPlanFormState,
     onPickEndpoint: (TripEndpointSlot) -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -210,7 +212,8 @@ fun DirectionsFormCard(
                 },
                 onReverse = viewModel::reverseTrip,
                 onRefresh = viewModel::refreshPlan,
-                onAdvancedSettings = { showAdvanced = true }
+                onAdvancedSettings = { showAdvanced = true },
+                onClose = onClose
             )
         }
     }

@@ -40,7 +40,6 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -449,44 +448,50 @@ class TripPlanFormRenderTest {
     }
 
     /**
-     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110):
-     * clear of both fields and centred across the pair, which puts it on the divider between them.
-     * Position is the whole point of the move, so it's asserted rather than left to the eye.
+     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110);
+     * close shares that trailing column (#2337), level with the origin row, which puts reverse level with
+     * the destination. Clear of both fields, and each centred on its own row. Position is the whole point,
+     * so it's asserted rather than left to the eye.
      */
     @Test
-    fun reverseSitsBetweenTheTwoEndpointFields() {
+    fun closeAndReverseSitLevelWithTheOriginAndDestinationRows() {
         renderForm(plannedState)
 
-        val button = bounds(TripPlanTestTags.REVERSE)
+        val close = bounds(TripPlanTestTags.CLOSE)
+        val reverse = bounds(TripPlanTestTags.REVERSE)
         val from = bounds(FROM_FIELD)
         val to = bounds(TO_FIELD)
 
-        assertTrue(
-            "reverse should sit clear of both fields, but started at ${button.left} against " +
-                "${from.right} and ${to.right}",
-            button.left >= from.right && button.left >= to.right
-        )
-        // Compare the rendered pixel centres exactly; any different pixel is a real misalignment.
-        val buttonCenter = (button.top + button.bottom) / 2f
-        val betweenRows = (from.bottom + to.top) / 2f
-        val buttonCenterPx = with(composeRule.density) { buttonCenter.toPx() }.roundToInt()
-        val dividerCenterPx = with(composeRule.density) { betweenRows.toPx() }.roundToInt()
-        assertEquals(
-            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
-            dividerCenterPx,
-            buttonCenterPx
-        )
+        for ((name, button) in listOf("close" to close, "reverse" to reverse)) {
+            assertTrue(
+                "$name should sit clear of both fields, but started at ${button.left} against " +
+                    "${from.right} and ${to.right}",
+                button.left >= from.right && button.left >= to.right
+            )
+        }
+        // Each field fills its row's height, so its vertical span is the row's. A button is level with
+        // its row when it lies inside that span and is centred on it — to within a dp, not a pixel:
+        // centring a 40dp button in a 48dp slot lands on a half pixel at fractional densities, and the
+        // two roundings needn't agree. A button drifted onto the divider or the other row still fails.
+        for ((name, button, row) in listOf(Triple("close", close, from), Triple("reverse", reverse, to))) {
+            assertTrue(
+                "$name should lie within its row ${row.top}..${row.bottom}, but spans ${button.top}..${button.bottom}",
+                button.top >= row.top && button.bottom <= row.bottom
+            )
+            val offset = (button.top + button.bottom) / 2 - (row.top + row.bottom) / 2
+            assertTrue("$name should be centred on its row, but is off by $offset", offset.value.absoluteValue < 1f)
+        }
     }
 
     /**
-     * Reverse and additional-preferences sit in one trailing column, across two bands that lay
+     * Close, reverse and additional-preferences sit in one trailing column, across two bands that lay
      * themselves out independently. The form spells that out — both bands take their width and their
      * trailing gutter from one shared modifier, and every button one size — but nothing makes a band
      * keep using either, so the alignment is still the part of the move most able to drift, and the
      * part worth pinning.
      */
     @Test
-    fun reverseIsColumnAlignedWithTheActionBarsTrailingButton() {
+    fun trailingButtonsAreColumnAlignedWithTheActionBar() {
         renderForm(plannedState)
 
         assertEquals(
@@ -494,6 +499,22 @@ class TripPlanFormRenderTest {
             bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
             bounds(TripPlanTestTags.REVERSE).right
         )
+        assertEquals(
+            "close should share a trailing edge with additional-preferences",
+            bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
+            bounds(TripPlanTestTags.CLOSE).right
+        )
+    }
+
+    /** Leaving directions is the host's; what's checked here is the ask (#2337). */
+    @Test
+    fun tappingCloseFiresTheCloseCallback() {
+        var closed = false
+        renderForm(state = { plannedState }, onClose = { closed = true })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.CLOSE).performClick()
+
+        assertTrue("tapping close should ask the host to leave directions", closed)
     }
 
     /** The form is stateless, so the swap itself is the host's; what's checked here is the ask. */
@@ -623,7 +644,8 @@ class TripPlanFormRenderTest {
         onStreetModeSelected: (StreetMode) -> Unit = {},
         onReverse: () -> Unit = {},
         onRefresh: () -> Unit = {},
-        onPickDateTime: () -> Unit = {}
+        onPickDateTime: () -> Unit = {},
+        onClose: () -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
@@ -642,7 +664,8 @@ class TripPlanFormRenderTest {
                         onStreetModeSelected = onStreetModeSelected,
                         onReverse = onReverse,
                         onRefresh = onRefresh,
-                        onAdvancedSettings = {}
+                        onAdvancedSettings = {},
+                        onClose = onClose
                     )
                 }
             }

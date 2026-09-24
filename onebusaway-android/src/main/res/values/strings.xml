@@ -1107,6 +1107,7 @@
     <string name="directions_caution_hide_details">Hide safety details</string>
     <!-- Confirmation shown when a gesture (Back, or a tap on the map background) would close directions
          while a planned trip is drawn on the map, since that discards the whole plan. -->
+    <string name="directions_close">Close directions</string>
     <string name="directions_exit_confirm_title">Leave these directions?</string>
     <string name="directions_exit_confirm_message">Your planned trip will be discarded.</string>
     <string name="directions_exit_confirm_discard">Discard</string>

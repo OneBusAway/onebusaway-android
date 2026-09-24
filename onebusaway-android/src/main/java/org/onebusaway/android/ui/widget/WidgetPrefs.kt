@@ -60,6 +60,12 @@ object WidgetPrefs {
             .apply()
     }
 
+    /** A [WidgetConfig] as one string, so the pin callback's extra carries every field. See [decodeConfig]. */
+    fun encodeConfig(config: WidgetConfig): String = json.encodeToString(WidgetConfig.serializer(), config)
+
+    /** The [WidgetConfig] [encodeConfig] produced, or null if [raw] is null or unreadable. */
+    fun decodeConfig(raw: String?): WidgetConfig? = decode(WidgetConfig.serializer(), raw, widgetId = -1)
+
     /** Serializes and persists a [WidgetArrivalSnapshot] for the given widget id. */
     fun saveSnapshot(context: Context, widgetId: Int, snapshot: WidgetArrivalSnapshot) {
         stopWidgetPrefs(context).edit()
@@ -74,12 +80,12 @@ object WidgetPrefs {
         widgetId
     )
 
-    /** The saved [WidgetArrivalSnapshot] for the given widget id, or null if none exists. */
-    fun loadSnapshot(context: Context, widgetId: Int): WidgetArrivalSnapshot? = decode(
+    /** The saved [WidgetArrivalSnapshot] for the widget, or null if none, or if it was fetched for another config. */
+    fun loadSnapshot(context: Context, widgetId: Int, config: WidgetConfig): WidgetArrivalSnapshot? = decode(
         WidgetArrivalSnapshot.serializer(),
         stopWidgetPrefs(context).getString(snapshotKey(widgetId), null),
         widgetId
-    )
+    )?.takeIf { it.isFor(config) }
 
     /** Saves a [WidgetConfig] as the pending pin config, applied once `requestPinAppWidget` places the widget. */
     fun savePendingPinConfig(context: Context, config: WidgetConfig) {

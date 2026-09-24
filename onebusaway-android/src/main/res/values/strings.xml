@@ -1584,14 +1584,22 @@
     <string name="widget_config_save_widget">Save widget</string>
     <string name="widget_config_select_at_least_one_route">Select at least 1 route</string>
     <string name="widget_config_select_no_more_than_three_routes">Select no more than 3 routes</string>
+    <string name="widget_config_no_region">Choose a region before saving the widget</string>
     <string name="widget_config_add_manually">Please add the widget manually from the home screen</string>
     <string name="widget_not_configured">Not configured</string>
+    <!-- %1$s is the widget's region name -->
+    <string name="widget_paused_other_region">Switch to %1$s to see arrivals</string>
     <string name="widget_no_times">N/A</string>
-    <string name="widget_updated_just_now">Updated just now</string>
-    <string name="widget_updated_minutes_ago">Updated %d min. ago</string>
+    <!-- The widget's font, pinned so StopTimesWidget's pill measurement matches what's drawn. -->
+    <string name="widget_font_family" translatable="false">sans-serif</string>
+    <!-- Screen-reader text for a canceled trip; %1$s is its time, e.g. "3:42pm" -->
+    <string name="widget_eta_canceled_description">%1$s, canceled</string>
+    <!-- %1$s is a clock time, e.g. "3:37pm" -->
+    <string name="widget_updated_at_time">Updated %1$s</string>
     <!-- Sample content for the static widget-picker preview only (xml-v31/stop_times_widget_info.xml's
          previewLayout) - never shown once a widget is actually placed and configured. -->
     <string name="widget_preview_stop_name">3rd &amp; Pike</string>
     <string name="widget_preview_route_name">D Line</string>
-    <string name="widget_preview_updated_at">Updated 2 min. ago</string>
+    <string name="widget_preview_eta">3:42pm</string>
+    <string name="widget_preview_updated_at">Updated 3:37pm</string>
 </resources>

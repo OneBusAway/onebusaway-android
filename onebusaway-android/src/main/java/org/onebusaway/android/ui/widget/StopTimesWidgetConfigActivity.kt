@@ -83,6 +83,9 @@ class StopTimesWidgetConfigActivity : ComponentActivity() {
     @Inject
     lateinit var stopArrivalsDataSource: StopArrivalsDataSource
 
+    @Inject
+    lateinit var widgetDeployments: WidgetDeployments
+
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,9 +100,11 @@ class StopTimesWidgetConfigActivity : ComponentActivity() {
         var existingRoutes: Map<String, String> = emptyMap()
 
         // If editing an existing widget (opened via its "reconfigure" affordance, with no stop extras
-        // of its own), load the saved config to pre-populate the fields.
+        // of its own), load the saved config to pre-populate the fields — unless it's for another server:
+        // this screen saves to the current one, so it starts blank rather than rebind the old stop id.
         if (stopId == null && appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            WidgetPrefs.loadConfig(this, appWidgetId)?.let { existing ->
+            val current = widgetDeployments.current()
+            WidgetPrefs.loadConfig(this, appWidgetId)?.takeIf { current == CurrentServer.Loading || it.isServedBy(current) }?.let { existing ->
                 stopId = existing.stopId
                 stopName = existing.stopName
                 existingWidgetName = existing.widgetName
@@ -134,19 +139,27 @@ class StopTimesWidgetConfigActivity : ComponentActivity() {
     }
 
     private fun onSave(stopId: String, stopName: String, widgetName: String, selectedRoutes: Map<String, String>) {
+        // Bind the widget to the server its stop was picked from (see WidgetDeployment).
+        val deployment = (widgetDeployments.current() as? CurrentServer.On)?.deployment
+        if (deployment == null) {
+            Toast.makeText(this, R.string.widget_config_no_region, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val config = WidgetConfig(stopId, stopName, widgetName, deployment, selectedRoutes)
+
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            pinWidgetWithConfig(stopId, stopName, widgetName, selectedRoutes)
+            pinWidgetWithConfig(config)
             return
         }
 
-        WidgetPrefs.saveConfig(this, appWidgetId, WidgetConfig(stopId, stopName, widgetName, selectedRoutes))
+        WidgetPrefs.saveConfig(this, appWidgetId, config)
         StopTimesWidget.refreshWidget(this, AppWidgetManager.getInstance(this), appWidgetId)
 
         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
         finish()
     }
 
-    private fun pinWidgetWithConfig(stopId: String, stopName: String, widgetName: String, selectedRoutes: Map<String, String>) {
+    private fun pinWidgetWithConfig(config: WidgetConfig) {
         val appWidgetManager = AppWidgetManager.getInstance(this)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || !appWidgetManager.isRequestPinAppWidgetSupported) {
             Toast.makeText(this, R.string.widget_config_add_manually, Toast.LENGTH_SHORT).show()
@@ -157,15 +170,11 @@ class StopTimesWidgetConfigActivity : ComponentActivity() {
         // Save the config before requesting the pin. On some Android versions the system launches the
         // configure activity after placement anyway, which we don't want; StopTimesWidget.onUpdate
         // detects and silently applies this instead of showing the config screen again.
-        WidgetPrefs.savePendingPinConfig(this, WidgetConfig(stopId, stopName, widgetName, selectedRoutes))
+        WidgetPrefs.savePendingPinConfig(this, config)
 
         val callbackIntent = Intent(this, StopTimesWidget::class.java).apply {
             action = StopTimesWidget.ACTION_APPLY_PENDING_CONFIG
-            putExtra(StopTimesWidget.EXTRA_STOP_ID, stopId)
-            putExtra(StopTimesWidget.EXTRA_STOP_NAME, stopName)
-            putExtra(StopTimesWidget.EXTRA_WIDGET_NAME, widgetName)
-            putStringArrayListExtra(StopTimesWidget.EXTRA_ROUTE_IDS, ArrayList(selectedRoutes.keys))
-            putStringArrayListExtra(StopTimesWidget.EXTRA_ROUTE_NAMES, ArrayList(selectedRoutes.values))
+            putExtra(StopTimesWidget.EXTRA_CONFIG, WidgetPrefs.encodeConfig(config))
         }
 
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
@@ -181,8 +190,8 @@ class StopTimesWidgetConfigActivity : ComponentActivity() {
 
         val previewExtras = Bundle().apply {
             val preview = RemoteViews(packageName, R.layout.stop_times_widget_preview)
-            preview.setTextViewText(R.id.preview_stop_name, widgetName)
-            selectedRoutes.values.firstOrNull()?.let { preview.setTextViewText(R.id.widget_route_1_title, it) }
+            preview.setTextViewText(R.id.preview_stop_name, config.widgetName)
+            config.routeShortNames.values.firstOrNull()?.let { preview.setTextViewText(R.id.widget_route_1_title, it) }
             putParcelable(AppWidgetManager.EXTRA_APPWIDGET_PREVIEW, preview)
         }
 

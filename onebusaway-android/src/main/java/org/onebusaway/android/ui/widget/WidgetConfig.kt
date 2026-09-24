@@ -21,6 +21,7 @@ import kotlinx.serialization.Serializable
  * The user's configuration for a single Stop Times widget instance. Persisted (as JSON, via
  * [WidgetPrefs]) keyed by the widget's `appWidgetId`.
  *
+ * @param deployment the server [stopId] belongs to; the widget pauses while the app is on another.
  * @param routeShortNames route id -> short name (e.g. "1_100" -> "44"), for the up-to-3 routes the
  * widget shows.
  */
@@ -29,5 +30,6 @@ data class WidgetConfig(
     val stopId: String,
     val stopName: String,
     val widgetName: String,
+    val deployment: WidgetDeployment,
     val routeShortNames: Map<String, String> = emptyMap()
 )

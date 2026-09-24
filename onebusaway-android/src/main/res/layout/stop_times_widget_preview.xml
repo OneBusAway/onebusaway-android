@@ -42,6 +42,7 @@
 
             <TextView
                     android:id="@+id/preview_stop_name"
+                    android:fontFamily="@string/widget_font_family"
                     android:layout_width="0dp"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
@@ -70,6 +71,7 @@
 
             <TextView
                     android:id="@+id/widget_route_1_title"
+                    android:fontFamily="@string/widget_font_family"
                     android:layout_width="60dp"
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
@@ -78,6 +80,7 @@
                     android:textColor="@color/md_theme_onSurface" />
 
             <TextView
+                    android:fontFamily="@string/widget_font_family"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingLeft="10dp"
@@ -87,7 +90,7 @@
                     android:background="@drawable/widget_eta_bg_on_time"
                     android:maxLines="1"
                     android:minWidth="50dp"
-                    android:text="@string/stop_info_eta_now"
+                    android:text="@string/widget_preview_eta"
                     android:textSize="13sp"
                     android:textColor="@android:color/white" />
         </LinearLayout>
@@ -104,6 +107,7 @@
             android:paddingRight="18dp">
 
         <TextView
+                android:fontFamily="@string/widget_font_family"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

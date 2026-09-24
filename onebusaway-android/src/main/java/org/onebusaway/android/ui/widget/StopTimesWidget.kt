@@ -21,20 +21,29 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
-import android.os.Build
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Layout
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.TextPaint
+import android.text.style.AbsoluteSizeSpan
+import android.text.style.StrikethroughSpan
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import dagger.hilt.android.EntryPointAccessors
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.WidgetEntryPoint
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.time.etaMinutes
 import org.onebusaway.android.ui.arrivals.StopLauncher
+import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
@@ -59,25 +68,19 @@ class StopTimesWidget : AppWidgetProvider() {
                 scheduleNextRefresh(context, widgetId)
                 refreshWidget(context, AppWidgetManager.getInstance(context), widgetId)
             }
-            ACTION_UPDATE_RELATIVE_TIMES -> {
-                // Triggered every minute; always reschedule (even with the screen off) so the chain
-                // continues when the screen comes back on.
-                scheduleNextRelativeTimesUpdate(context, widgetId)
-                updateArrivalsFromCache(context, widgetId)
+            ACTION_REDRAW_WIDGET -> {
+                // Every minute, from the cache only: drops departed trips between fetches. Fetching is the
+                // refresh alarm's job; a stale-triggered fetch here would bypass a failing worker's backoff.
+                scheduleNextRedraw(context, widgetId)
+                updateArrivalsFromCache(context, widgetId, allowStaleRefresh = false)
             }
             ACTION_APPLY_PENDING_CONFIG -> {
                 // Callback after requestPinAppWidget succeeds.
                 if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return
-                val stopId = intent.getStringExtra(EXTRA_STOP_ID)
-                val stopName = intent.getStringExtra(EXTRA_STOP_NAME)
-                val widgetName = intent.getStringExtra(EXTRA_WIDGET_NAME)
-                if (stopId == null || stopName == null || widgetName == null) return
-                val routeIds = intent.getStringArrayListExtra(EXTRA_ROUTE_IDS).orEmpty()
-                val routeNames = intent.getStringArrayListExtra(EXTRA_ROUTE_NAMES).orEmpty()
-                val routeShortNames = routeIds.mapIndexed { i, id -> id to (routeNames.getOrNull(i) ?: id) }.toMap()
+                val config = WidgetPrefs.decodeConfig(intent.getStringExtra(EXTRA_CONFIG)) ?: return
 
-                WidgetPrefs.saveConfig(context, widgetId, WidgetConfig(stopId, stopName, widgetName, routeShortNames))
-                scheduleRepeatingRefreshBroadcasts(context, widgetId)
+                WidgetPrefs.saveConfig(context, widgetId, config)
+                scheduleAlarms(context, widgetId)
                 refreshWidget(context, AppWidgetManager.getInstance(context), widgetId)
             }
         }
@@ -86,7 +89,7 @@ class StopTimesWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         Log.d(TAG, "onUpdate widgetIds=${appWidgetIds.toList()}")
         for (appWidgetId in appWidgetIds) {
-            scheduleRepeatingRefreshBroadcasts(context, appWidgetId)
+            scheduleAlarms(context, appWidgetId)
             updateArrivalsFromCache(context, appWidgetId)
 
             val config = WidgetPrefs.loadConfig(context, appWidgetId)
@@ -103,7 +106,11 @@ class StopTimesWidget : AppWidgetProvider() {
                 continue
             }
 
-            val snapshot = WidgetPrefs.loadSnapshot(context, appWidgetId)
+            // Paused: nothing to fetch. Enqueuing anyway would loop, since WorkManager toggling its own
+            // receivers when the queue empties counts as a package change, which re-sends APPWIDGET_UPDATE.
+            if (isPaused(context, config)) continue
+
+            val snapshot = WidgetPrefs.loadSnapshot(context, appWidgetId, config)
             val isStale = snapshot == null ||
                 ElapsedTime.now() - ElapsedTime(snapshot.receivedAtElapsedMs) > STALE_ON_PLACEMENT_WINDOW
             if (isStale) {
@@ -116,8 +123,8 @@ class StopTimesWidget : AppWidgetProvider() {
         Log.d(TAG, "onDeleted widgetIds=${appWidgetIds.toList()}")
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         for (appWidgetId in appWidgetIds) {
-            cancelAlarm(context, alarmManager, appWidgetId, ACTION_UPDATE_RELATIVE_TIMES)
-            cancelAlarm(context, alarmManager, appWidgetId, ACTION_REFRESH_WIDGET)
+            cancelAlarm(context, alarmManager, appWidgetId, ACTION_REFRESH_WIDGET, REQUEST_SLOT_REFRESH_ALARM)
+            cancelAlarm(context, alarmManager, appWidgetId, ACTION_REDRAW_WIDGET, REQUEST_SLOT_REDRAW_ALARM)
             WidgetPrefs.delete(context, appWidgetId)
         }
     }
@@ -131,12 +138,12 @@ class StopTimesWidget : AppWidgetProvider() {
         updateArrivalsFromCache(context, appWidgetId)
     }
 
-    private fun cancelAlarm(context: Context, alarmManager: AlarmManager, widgetId: Int, action: String) {
+    private fun cancelAlarm(context: Context, alarmManager: AlarmManager, widgetId: Int, action: String, slot: Int) {
         val intent = Intent(context, StopTimesWidget::class.java).setAction(action)
         alarmManager.cancel(
             PendingIntent.getBroadcast(
                 context,
-                requestCode(widgetId, action),
+                widgetId * REQUEST_CODE_SLOTS + slot,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -146,37 +153,32 @@ class StopTimesWidget : AppWidgetProvider() {
     companion object {
 
         const val ACTION_REFRESH_WIDGET = "org.onebusaway.android.ui.ACTION_REFRESH_WIDGET"
-        const val ACTION_UPDATE_RELATIVE_TIMES = "org.onebusaway.android.ui.ACTION_UPDATE_WIDGET_RELATIVE_TIMES"
+        const val ACTION_REDRAW_WIDGET = "org.onebusaway.android.ui.ACTION_REDRAW_WIDGET"
         const val ACTION_APPLY_PENDING_CONFIG = "org.onebusaway.android.ui.ACTION_APPLY_PENDING_WIDGET_CONFIG"
 
-        const val EXTRA_STOP_ID = "stop_id"
-        const val EXTRA_STOP_NAME = "stop_name"
-        const val EXTRA_WIDGET_NAME = "widget_name"
-        const val EXTRA_ROUTE_IDS = "route_ids"
-        const val EXTRA_ROUTE_NAMES = "route_names"
+        /** The pin callback's whole [WidgetConfig], as [WidgetPrefs.encodeConfig] wrote it. */
+        const val EXTRA_CONFIG = "widget_config"
 
         private const val TAG = "StopTimesWidget"
 
         private const val WIDGET_CELL_SIZE_2 = 110
-        private const val WIDGET_CELL_SIZE_3 = 250
-        private const val WIDGET_CELL_SIZE_4 = 300
 
-        // Alarm-scheduling cadence.
-        private val RELATIVE_TIMES_INTERVAL = 1.minutes
+        // Floors, not promises: both alarms are inexact and non-waking (see scheduleAlarm).
         private val REFRESH_INTERVAL = 5.minutes
+        private val REDRAW_INTERVAL = 1.minutes
 
         // A widget just placed with no snapshot yet, or one whose snapshot is older than this, gets an
         // immediate fetch instead of waiting for the next 5-minute alarm.
         private val STALE_ON_PLACEMENT_WINDOW = 5.minutes
 
-        // A snapshot older than this is too old to keep ticking down (would show garbage countdowns);
-        // trigger a full refresh instead of a cache-only relabel.
+        // A render that finds a snapshot older than this refetches instead.
         private val STALE_SNAPSHOT_MAX_AGE = 10.minutes
 
-        // An arrival more than this far in the past is dropped rather than shown as a negative ETA.
-        private const val STALE_ARRIVAL_GRACE_MINUTES = 2L
-
+        // Per-widget request-code slots, so no two broadcast PendingIntents collide.
         private const val REQUEST_CODE_SLOTS = 3
+        private const val REQUEST_SLOT_REFRESH_ALARM = 0
+        private const val REQUEST_SLOT_REFRESH_BUTTON = 1
+        private const val REQUEST_SLOT_REDRAW_ALARM = 2
 
         private val WIDGET_ROW_IDS = intArrayOf(
             R.id.widget_route_1_row,
@@ -202,24 +204,33 @@ class StopTimesWidget : AppWidgetProvider() {
          * finishes, it calls [updateArrivalsFromCache] to populate the rows.
          */
         fun refreshWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val config = WidgetPrefs.loadConfig(context, appWidgetId)
+            if (config != null && isPaused(context, config)) {
+                // Nothing to fetch; just redraw the paused state.
+                updateArrivalsFromCache(context, appWidgetId)
+                return
+            }
             applyLoadingState(context, appWidgetManager, appWidgetId)
-            if (WidgetPrefs.loadConfig(context, appWidgetId) != null) {
+            if (config != null) {
                 WidgetArrivalWorker.enqueue(context, appWidgetId)
             }
         }
 
         /**
          * Populates the widget's arrival rows from the last cached [WidgetArrivalSnapshot]. Called by
-         * [WidgetArrivalWorker] after a successful API fetch, and by the per-minute alarm to reformat
-         * ETA labels without hitting the network.
+         * [WidgetArrivalWorker] after a fetch, on placement and resize, and each minute to drop departed trips.
+         *
+         * Arrivals show clock times ("3:42pm"), not a countdown: widget text is static between redraws,
+         * and on Android 12+ nothing guarantees a redraw on time (no exact alarms by default). A clock
+         * time stays correct however late the next redraw is.
          *
          * @param allowStaleRefresh whether an unusable snapshot should trigger [refreshWidget] (which
-         * enqueues a fresh [WidgetArrivalWorker] run). Must be `false` when called from the worker's own
-         * failure path (`Result.retry()`): enqueuing a replacement run there would bypass WorkManager's
-         * retry backoff and could hammer the API on every failure instead of backing off.
+         * enqueues a fresh [WidgetArrivalWorker] run). Must be `false` from the worker's own failure path
+         * (`Result.retry()`) and the per-minute redraw: enqueuing a replacement run there would bypass
+         * WorkManager's retry backoff and could hammer the API on every failure instead of backing off.
          */
         fun updateArrivalsFromCache(context: Context, widgetId: Int, allowStaleRefresh: Boolean = true) {
-            val views = RemoteViews(context.packageName, R.layout.stop_times_widget)
+            val views = baseViews(context)
             val config = WidgetPrefs.loadConfig(context, widgetId)
             val appWidgetManager = AppWidgetManager.getInstance(context)
 
@@ -230,16 +241,26 @@ class StopTimesWidget : AppWidgetProvider() {
             }
             views.setTextViewText(R.id.stop_times_widget_title, config.widgetName)
 
+            if (isPaused(context, config)) {
+                // The app is on another server than this widget's stop: show why and fetch nothing, since
+                // that server would reject the id or answer for a different stop. Tapping opens the app,
+                // not the stop's board, which would hit the wrong server too.
+                views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_paused_other_region, config.deployment.displayName))
+                bindAppIntent(context, views, widgetId)
+                bindRefreshIntent(context, views, widgetId)
+                appWidgetManager.updateAppWidget(widgetId, views)
+                return
+            }
+
             // Renders with no route data — the widget just shows its title, no ETA rows. Used both when
             // there's nothing cached yet and when a cached snapshot exists but can't be trusted.
             fun renderWithoutRouteData() {
-                views.setViewVisibility(R.id.widget_loading_spinner, View.GONE)
                 bindStopIntent(context, views, widgetId, config)
                 bindRefreshIntent(context, views, widgetId)
                 appWidgetManager.updateAppWidget(widgetId, views)
             }
 
-            val snapshot = WidgetPrefs.loadSnapshot(context, widgetId)
+            val snapshot = WidgetPrefs.loadSnapshot(context, widgetId, config)
             if (snapshot == null) {
                 renderWithoutRouteData()
                 return
@@ -280,11 +301,15 @@ class StopTimesWidget : AppWidgetProvider() {
             val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val minHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
 
-            bindRouteRows(context, views, snapshot.routes, nowServer)
-            bindUpdatedAtLabel(context, views, elapsedSinceFetch)
+            val rows = snapshot.routes.map { route -> route.shortName to route.arrivals.filter { it.isShownAt(nowServer) } }
+            val pillTexts = rows.map { (_, arrivals) -> arrivals.map { pillText(context, it) } }
+            bindRouteRows(context, views, rows, pillTexts)
+            views.setTextViewText(
+                R.id.widget_updated_at,
+                context.getString(R.string.widget_updated_at_time, DisplayFormat.formatTime(context, snapshot.serverTimeAtFetchMs))
+            )
 
-            views.setViewVisibility(R.id.widget_loading_spinner, View.GONE)
-            applySizeVisibility(context, views, minWidthDp, minHeightDp)
+            applySizeVisibility(context, views, minWidthDp, minHeightDp, pillTexts)
             bindStopIntent(context, views, widgetId, config)
             bindRefreshIntent(context, views, widgetId)
 
@@ -293,7 +318,7 @@ class StopTimesWidget : AppWidgetProvider() {
 
         // Switches the widget UI to the "loading" state for a single widget.
         private fun applyLoadingState(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val views = RemoteViews(context.packageName, R.layout.stop_times_widget)
+            val views = baseViews(context)
             val config = WidgetPrefs.loadConfig(context, appWidgetId)
 
             if (config == null) {
@@ -302,11 +327,21 @@ class StopTimesWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.stop_times_widget_title, config.widgetName)
                 bindStopIntent(context, views, appWidgetId, config)
                 views.setViewVisibility(R.id.widget_loading_spinner, View.VISIBLE)
-                for (rowId in WIDGET_ROW_IDS) views.setViewVisibility(rowId, View.GONE)
             }
             bindRefreshIntent(context, views, appWidgetId)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+
+        /**
+         * A fresh [RemoteViews] reset to a known baseline: no rows, no spinner, no footer. A launcher
+         * *reapplies* an update onto the views already showing when the layout is the same, so nothing
+         * a render doesn't set falls back to the layout's defaults; it keeps whatever the last render set.
+         */
+        private fun baseViews(context: Context): RemoteViews = RemoteViews(context.packageName, R.layout.stop_times_widget).apply {
+            for (rowId in WIDGET_ROW_IDS) setViewVisibility(rowId, View.GONE)
+            setViewVisibility(R.id.widget_loading_spinner, View.GONE)
+            setTextViewText(R.id.widget_updated_at, "")
         }
 
         // Tapping the widget body opens the arrivals board for the configured stop.
@@ -324,6 +359,29 @@ class StopTimesWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
         }
 
+        // A paused widget's tap opens the app (see updateArrivalsFromCache).
+        private fun bindAppIntent(context: Context, views: RemoteViews, appWidgetId: Int) {
+            val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+        }
+
+        /**
+         * Whether the app is on a different server than [config]'s (see [WidgetDeployment]). Not while the
+         * region is still loading: the cached snapshot came from the widget's own server, so keep showing it.
+         */
+        private fun isPaused(context: Context, config: WidgetConfig): Boolean {
+            val current = EntryPointAccessors.fromApplication(context.applicationContext, WidgetEntryPoint::class.java)
+                .widgetDeployments()
+                .current()
+            return current != CurrentServer.Loading && !config.isServedBy(current)
+        }
+
         // Tapping the refresh button triggers an immediate API fetch.
         private fun bindRefreshIntent(context: Context, views: RemoteViews, appWidgetId: Int) {
             val refreshIntent = Intent(context, StopTimesWidget::class.java).apply {
@@ -332,7 +390,7 @@ class StopTimesWidget : AppWidgetProvider() {
             }
             val refreshPendingIntent = PendingIntent.getBroadcast(
                 context,
-                (appWidgetId * REQUEST_CODE_SLOTS) + 2,
+                appWidgetId * REQUEST_CODE_SLOTS + REQUEST_SLOT_REFRESH_BUTTON,
                 refreshIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -340,13 +398,36 @@ class StopTimesWidget : AppWidgetProvider() {
         }
 
         // Shows or hides route rows and ETA columns based on the current widget dimensions.
-        private fun applySizeVisibility(context: Context, views: RemoteViews, minWidthDp: Int, minHeightDp: Int) {
-            // Hide ETA columns as the widget gets narrower.
-            if (minWidthDp <= WIDGET_CELL_SIZE_4) {
-                for (rowEtas in WIDGET_ETA_IDS) views.setViewVisibility(rowEtas[2], View.GONE)
-            }
-            if (minWidthDp <= WIDGET_CELL_SIZE_3) {
-                for (rowEtas in WIDGET_ETA_IDS) views.setViewVisibility(rowEtas[1], View.GONE)
+        private fun applySizeVisibility(
+            context: Context,
+            views: RemoteViews,
+            minWidthDp: Int,
+            minHeightDp: Int,
+            pillTexts: List<List<CharSequence>>
+        ) {
+            // Measured, since a clock time's width varies by locale and 12/24-hour setting. Min width is
+            // the portrait width, the narrower layout.
+            val res = context.resources
+            val columns = pillColumnsThatFit(
+                rowWidthPx = minWidthDp *
+                    res.displayMetrics.density -
+                    2 *
+                    res.getDimension(R.dimen.widget_row_padding_horizontal) -
+                    res.getDimension(R.dimen.widget_route_title_width),
+                rows = pillTexts,
+                measurePx = TextPaint(Paint.ANTI_ALIAS_FLAG).let { paint ->
+                    // The widget's pinned font, not the launcher's (which may be wider and clip the last
+                    // pill). getDesiredWidth, not measureText, so the AM/PM size span is measured too.
+                    paint.typeface = Typeface.create(res.getString(R.string.widget_font_family), Typeface.NORMAL)
+                    paint.textSize = res.getDimension(R.dimen.widget_eta_text_size)
+                    ({ text: CharSequence -> Layout.getDesiredWidth(text, paint) })
+                },
+                pillPaddingPx = 2 * res.getDimension(R.dimen.widget_eta_padding_horizontal),
+                pillMinWidthPx = res.getDimension(R.dimen.widget_eta_min_width),
+                gapPx = res.getDimension(R.dimen.widget_eta_gap)
+            )
+            for (rowEtas in WIDGET_ETA_IDS) {
+                for (column in columns until rowEtas.size) views.setViewVisibility(rowEtas[column], View.GONE)
             }
 
             val headerHorizontalPaddingPx = dpToPx(context, 18)
@@ -381,83 +462,52 @@ class StopTimesWidget : AppWidgetProvider() {
 
         private fun dpToPx(context: Context, dp: Int): Int = (dp * context.resources.displayMetrics.density).toInt()
 
-        // Schedules both alarms for a widget. Called once on placement/reboot via onUpdate. Both
-        // alarms reschedule themselves on each fire via onReceive.
-        private fun scheduleRepeatingRefreshBroadcasts(context: Context, appWidgetId: Int) {
-            scheduleNextRelativeTimesUpdate(context, appWidgetId)
+        private fun scheduleAlarms(context: Context, appWidgetId: Int) {
             scheduleNextRefresh(context, appWidgetId)
+            scheduleNextRedraw(context, appWidgetId)
         }
 
-        private fun scheduleNextRelativeTimesUpdate(context: Context, appWidgetId: Int) {
-            scheduleExactAlarm(context, appWidgetId, ACTION_UPDATE_RELATIVE_TIMES, RELATIVE_TIMES_INTERVAL)
-        }
+        private fun scheduleNextRefresh(context: Context, appWidgetId: Int) = scheduleAlarm(context, appWidgetId, ACTION_REFRESH_WIDGET, REQUEST_SLOT_REFRESH_ALARM, REFRESH_INTERVAL)
 
-        private fun scheduleNextRefresh(context: Context, appWidgetId: Int) {
-            scheduleExactAlarm(context, appWidgetId, ACTION_REFRESH_WIDGET, REFRESH_INTERVAL)
-        }
+        private fun scheduleNextRedraw(context: Context, appWidgetId: Int) = scheduleAlarm(context, appWidgetId, ACTION_REDRAW_WIDGET, REQUEST_SLOT_REDRAW_ALARM, REDRAW_INTERVAL)
 
-        // Schedules an exact alarm for the given action. The data refresh uses ELAPSED_REALTIME_WAKEUP
-        // so it runs even with the screen off; the relative-times update uses ELAPSED_REALTIME since
-        // the labels are only visible when the screen is on. Falls back to setWindow on API 31+ if the
-        // SCHEDULE_EXACT_ALARM permission has not been granted by the user.
-        private fun scheduleExactAlarm(context: Context, appWidgetId: Int, action: String, delay: Duration) {
+        /**
+         * Schedules [action] for this widget [delay] from now. Inexact and non-waking on purpose: a
+         * sleeping phone isn't woken for a widget nobody can see, and an alarm that came due during sleep
+         * fires as the phone wakes. Being late only delays a departed trip's removal or the next fetch.
+         */
+        private fun scheduleAlarm(context: Context, appWidgetId: Int, action: String, slot: Int, delay: Duration) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, StopTimesWidget::class.java).apply {
-                setAction(action)
+                this.action = action
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             }
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
-                requestCode(appWidgetId, action),
+                appWidgetId * REQUEST_CODE_SLOTS + slot,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-
-            val triggerAtElapsed = ElapsedTime.now() + delay
-            val alarmType = if (action == ACTION_UPDATE_RELATIVE_TIMES) {
-                AlarmManager.ELAPSED_REALTIME
-            } else {
-                AlarmManager.ELAPSED_REALTIME_WAKEUP
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setWindow(alarmType, triggerAtElapsed.ms, 30.seconds.inWholeMilliseconds, pendingIntent)
-            } else {
-                alarmManager.setExact(alarmType, triggerAtElapsed.ms, pendingIntent)
-            }
+            alarmManager.set(AlarmManager.ELAPSED_REALTIME, (ElapsedTime.now() + delay).ms, pendingIntent)
         }
 
-        // A unique PendingIntent request code for the given widget ID and action. Slot 0 = REFRESH
-        // alarm, 1 = RELATIVE_TIMES alarm, 2 = refresh button (see bindRefreshIntent).
-        private fun requestCode(widgetId: Int, action: String): Int {
-            val actionIndex = when (action) {
-                ACTION_REFRESH_WIDGET -> 0
-                ACTION_UPDATE_RELATIVE_TIMES -> 1
-                else -> throw IllegalArgumentException("Unknown action: $action")
-            }
-            return (widgetId * REQUEST_CODE_SLOTS) + actionIndex
-        }
-
+        // One row per route: its name, then a pill per arrival labelled from [pillTexts].
         private fun bindRouteRows(
             context: Context,
             views: RemoteViews,
-            routes: List<WidgetArrivalSnapshot.Route>,
-            nowServer: ServerTime
+            rows: List<Pair<String, List<WidgetArrivalSnapshot.Arrival>>>,
+            pillTexts: List<List<CharSequence>>
         ) {
             for (rowIndex in WIDGET_ROUTE_TITLE_IDS.indices) {
-                if (rowIndex >= routes.size) {
+                if (rowIndex >= rows.size) {
                     views.setViewVisibility(WIDGET_ROW_IDS[rowIndex], View.GONE)
                     continue
                 }
                 views.setViewVisibility(WIDGET_ROW_IDS[rowIndex], View.VISIBLE)
 
-                val route = routes[rowIndex]
-                views.setTextViewText(WIDGET_ROUTE_TITLE_IDS[rowIndex], route.shortName)
-
-                val validArrivals = route.arrivals.filter {
-                    etaMinutes(ServerTime(it.displayTimeMs), nowServer) >= -STALE_ARRIVAL_GRACE_MINUTES
-                }
-                bindEtaPills(context, views, WIDGET_ETA_IDS[rowIndex], validArrivals, nowServer)
+                val (shortName, arrivals) = rows[rowIndex]
+                views.setTextViewText(WIDGET_ROUTE_TITLE_IDS[rowIndex], shortName)
+                bindEtaPills(context, views, WIDGET_ETA_IDS[rowIndex], arrivals, pillTexts[rowIndex])
             }
         }
 
@@ -466,12 +516,13 @@ class StopTimesWidget : AppWidgetProvider() {
             views: RemoteViews,
             etaViewIds: IntArray,
             arrivals: List<WidgetArrivalSnapshot.Arrival>,
-            nowServer: ServerTime
+            texts: List<CharSequence>
         ) {
             if (arrivals.isEmpty()) {
                 // No upcoming arrivals — show N/A in the first pill and hide the rest.
                 views.setTextViewText(etaViewIds[0], context.getString(R.string.widget_no_times))
                 views.setInt(etaViewIds[0], "setBackgroundResource", R.drawable.widget_eta_bg_scheduled)
+                views.setContentDescription(etaViewIds[0], null)
                 views.setViewVisibility(etaViewIds[0], View.VISIBLE)
                 for (i in 1 until etaViewIds.size) views.setViewVisibility(etaViewIds[i], View.GONE)
                 return
@@ -482,38 +533,41 @@ class StopTimesWidget : AppWidgetProvider() {
                     continue
                 }
                 val arrival = arrivals[i]
-                views.setTextViewText(etaViewIds[i], formatMinutesAway(context, arrival, nowServer))
+                val eta = texts[i]
+                if (arrival.isCanceled) {
+                    // Struck through, as on the arrivals board. Screen readers don't announce the
+                    // strike, hence the description.
+                    views.setTextViewText(
+                        etaViewIds[i],
+                        SpannableString(eta).apply { setSpan(StrikethroughSpan(), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
+                    )
+                    views.setContentDescription(etaViewIds[i], context.getString(R.string.widget_eta_canceled_description, eta.toString()))
+                } else {
+                    views.setTextViewText(etaViewIds[i], eta)
+                    views.setContentDescription(etaViewIds[i], null) // clear a previous canceled trip's
+                }
                 views.setInt(etaViewIds[i], "setBackgroundResource", etaBackgroundResource(arrival))
                 views.setViewVisibility(etaViewIds[i], View.VISIBLE)
             }
         }
 
-        private fun bindUpdatedAtLabel(context: Context, views: RemoteViews, elapsedSinceFetch: Duration) {
-            // Round to the nearest minute (adding 30s before integer division) so the label
-            // transitions at the halfway point rather than truncating to the lower minute.
-            val minutes = (elapsedSinceFetch.inWholeSeconds + 30) / 60
-            val label = if (minutes == 0L) {
-                context.getString(R.string.widget_updated_just_now)
-            } else {
-                context.getString(R.string.widget_updated_minutes_ago, minutes)
+        /** A pill's clock time with its AM/PM marker shrunk, as the board shrinks a countdown's units. */
+        private fun pillText(context: Context, arrival: WidgetArrivalSnapshot.Arrival): CharSequence {
+            val markerSizePx = context.resources.getDimensionPixelSize(R.dimen.widget_eta_marker_text_size)
+            val text = SpannableStringBuilder()
+            for (part in DisplayFormat.formatTimeParts(context, arrival.displayTimeMs)) {
+                val start = text.length
+                text.append(part.text)
+                if (!part.emphasized) text.setSpan(AbsoluteSizeSpan(markerSizePx), start, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
-            views.setTextViewText(R.id.widget_updated_at, label)
-        }
-
-        private fun formatMinutesAway(context: Context, arrival: WidgetArrivalSnapshot.Arrival, nowServer: ServerTime): String {
-            val minutes = etaMinutes(ServerTime(arrival.displayTimeMs), nowServer)
-            return if (minutes == 0L) {
-                context.getString(R.string.stop_info_eta_now)
-            } else {
-                "$minutes ${context.getString(R.string.minutes_abbreviation)}"
-            }
+            return text
         }
 
         // The pill color is the app's single source of truth for schedule-deviation color (#2043) —
         // the same states/colors the arrivals board's own ETA pills use — rather than a widget-only
-        // palette.
+        // palette. A canceled trip is always gray, per the board's legend.
         private fun etaBackgroundResource(arrival: WidgetArrivalSnapshot.Arrival): Int {
-            if (!arrival.isPredicted) return R.drawable.widget_eta_bg_scheduled
+            if (arrival.isCanceled || !arrival.isPredicted) return R.drawable.widget_eta_bg_scheduled
             val deviation = (arrival.displayTimeMs - arrival.scheduledTimeMs).milliseconds
             return when (ScheduleDeviation.status(isRealtime = true, deviation = deviation)) {
                 ScheduleDeviation.Status.EARLY -> R.drawable.widget_eta_bg_early
@@ -523,4 +577,31 @@ class StopTimesWidget : AppWidgetProvider() {
             }
         }
     }
+}
+
+/**
+ * How many ETA columns fit every row in [rowWidthPx] (after padding and the route name); at least 1.
+ * Pill sizing mirrors layout/stop_times_widget.xml via the same dimens. Rows with fewer pills don't
+ * limit the others.
+ */
+internal fun pillColumnsThatFit(
+    rowWidthPx: Float,
+    rows: List<List<CharSequence>>,
+    measurePx: (CharSequence) -> Float,
+    pillPaddingPx: Float,
+    pillMinWidthPx: Float,
+    gapPx: Float
+): Int {
+    val maxColumns = rows.maxOfOrNull { it.size }?.coerceAtLeast(1) ?: 1
+    val fitting = rows.minOfOrNull { texts ->
+        var used = 0f
+        var fit = 0
+        for ((i, text) in texts.withIndex()) {
+            used += (if (i > 0) gapPx else 0f) + maxOf(measurePx(text) + pillPaddingPx, pillMinWidthPx)
+            if (used > rowWidthPx) break
+            fit++
+        }
+        if (fit == texts.size) Int.MAX_VALUE else fit
+    } ?: Int.MAX_VALUE
+    return fitting.coerceIn(1, maxColumns)
 }

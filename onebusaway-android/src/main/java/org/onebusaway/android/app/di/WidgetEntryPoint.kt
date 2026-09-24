@@ -20,13 +20,15 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.ui.widget.WidgetDeployments
 
 /**
  * A Hilt [EntryPoint] exposing the singleton graph to [org.onebusaway.android.ui.widget.WidgetArrivalWorker],
  * which `WorkManager`'s default (reflection-based) factory constructs directly — not through Hilt — so
  * it can't be `@AndroidEntryPoint`-injected. Resolved via `EntryPointAccessors.fromApplication(...)`
  * inside `doWork()`, the same manual-entry-point idea [ArrivalsViewModelFactoryEntryPoint] uses for a
- * Compose destination that can't be field-injected either.
+ * Compose destination that can't be field-injected either. [org.onebusaway.android.ui.widget.StopTimesWidget]
+ * (not Hilt-injected; see the manifest) uses it for [widgetDeployments].
  */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -35,4 +37,6 @@ interface WidgetEntryPoint {
     fun stopArrivalsDataSource(): StopArrivalsDataSource
 
     fun elapsedClock(): ElapsedClock
+
+    fun widgetDeployments(): WidgetDeployments
 }

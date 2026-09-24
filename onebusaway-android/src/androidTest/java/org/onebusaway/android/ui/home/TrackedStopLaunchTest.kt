@@ -58,12 +58,14 @@ class TrackedStopLaunchTest {
         prefs.setString(SearchResultMode.PREFERENCE_KEY, SearchResultMode.MAP.value)
         assertNull(card.trackedStopBoardRoute(prefs))
         assertEquals(NavRoutes.HOME, launchDestination(card, prefs))
+        assertEquals(NavRoutes.HOME, launchDestination(card, prefs, isColdLaunch = false))
 
         prefs.setString(SearchResultMode.PREFERENCE_KEY, SearchResultMode.LISTS.value)
         // The route half survives the switch to the board, which preselects that row as the map drawer would.
         val board = NavRoutes.arrivals("1_100", "Pine St", routeId = "1_40", routeHeadsign = "Downtown")
         assertEquals(board, card.trackedStopBoardRoute(prefs))
         assertEquals(board, launchDestination(card, prefs))
+        assertEquals(board, launchDestination(card, prefs, isColdLaunch = false))
     }
 
     @Test
@@ -75,5 +77,6 @@ class TrackedStopLaunchTest {
         prefs.setString(SearchResultMode.PREFERENCE_KEY, SearchResultMode.LISTS.value)
         assertNull(showOnMap.trackedStopBoardRoute(prefs))
         assertEquals(NavRoutes.HOME, launchDestination(showOnMap, prefs))
+        assertEquals(NavRoutes.HOME, launchDestination(showOnMap, prefs, isColdLaunch = false))
     }
 }

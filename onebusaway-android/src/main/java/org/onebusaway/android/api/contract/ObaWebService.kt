@@ -288,4 +288,38 @@ interface ObaWebService {
         @Query("userOnVehicle") userOnVehicle: Boolean? = null,
         @Query("userVehicleNumber") userVehicleNumber: String? = null
     ): ObaEnvelope<NoData>
+
+    /**
+     * ondemand service — one on-demand (GTFS-Flex) service with full rules and references (wiki §3).
+     * [geometryDetail] is `none|simplified|full`; the server default here is `full`, so screens pass
+     * `simplified` (a county zone's full ring can be ~750 KB). A 404 is an ordinary not-found.
+     */
+    @GET("api/ondemand/service/{serviceId}.json")
+    suspend fun onDemandService(
+        @Path("serviceId") serviceId: String,
+        @Query("geometryDetail") geometryDetail: String? = null
+    ): ObaEnvelope<EntryWithReferences<OnDemandServiceDto>>
+
+    /** ondemand services-for-agency — every on-demand service of [agencyId]; 404 for an unknown agency. */
+    @GET("api/ondemand/services-for-agency/{agencyId}.json")
+    suspend fun onDemandServicesForAgency(
+        @Path("agencyId") agencyId: String,
+        @Query("geometryDetail") geometryDetail: String? = null
+    ): ObaEnvelope<ListWithReferences<OnDemandServiceDto>>
+
+    /**
+     * ondemand services-for-location — services covering a point ([radius] mode) or a viewport
+     * ([latSpan]/[lonSpan] mode; radius wins when both are given). Each element carries `matchReason`.
+     * **This is the probe**: a deployment without the namespace answers HTTP 404 here, which
+     * [org.onebusaway.android.api.data.OnDemandDataSource] reads as "this region doesn't serve it".
+     */
+    @GET("api/ondemand/services-for-location.json")
+    suspend fun onDemandServicesForLocation(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("radius") radius: Int? = null,
+        @Query("latSpan") latSpan: Double? = null,
+        @Query("lonSpan") lonSpan: Double? = null,
+        @Query("geometryDetail") geometryDetail: String? = null
+    ): ObaEnvelope<ListWithReferences<OnDemandServiceDto>>
 }

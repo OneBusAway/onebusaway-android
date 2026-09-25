@@ -34,6 +34,7 @@ import org.onebusaway.android.api.contract.NearbyStop
 import org.onebusaway.android.api.contract.NoData
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.ObaWebService
+import org.onebusaway.android.api.contract.OnDemandServiceDto
 import org.onebusaway.android.api.contract.Position
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.RouteReference
@@ -104,6 +105,28 @@ class DemoObaWebService(private val fixture: DemoTransitFixture) : ObaWebService
     override suspend fun routeIdsForAgency(agencyId: String): ObaEnvelope<ListWithReferences<String>> = if (agencyId == fixture.agency.id) ok(ListWithReferences(fixture.routes.map { it.id })) else notFound()
 
     override suspend fun stopIdsForAgency(agencyId: String): ObaEnvelope<ListWithReferences<String>> = if (agencyId == fixture.agency.id) ok(ListWithReferences(fixture.stops.map { it.id })) else notFound()
+
+    // The demo transit system publishes no on-demand service: the lists are empty and a lookup is the
+    // same 404-coded envelope a real deployment answers with, so the zone layer and the arrivals card
+    // simply show nothing during the tour.
+    override suspend fun onDemandService(
+        serviceId: String,
+        geometryDetail: String?
+    ): ObaEnvelope<EntryWithReferences<OnDemandServiceDto>> = notFound()
+
+    override suspend fun onDemandServicesForAgency(
+        agencyId: String,
+        geometryDetail: String?
+    ): ObaEnvelope<ListWithReferences<OnDemandServiceDto>> = if (agencyId == fixture.agency.id) ok(ListWithReferences(references = references())) else notFound()
+
+    override suspend fun onDemandServicesForLocation(
+        lat: Double,
+        lon: Double,
+        radius: Int?,
+        latSpan: Double?,
+        lonSpan: Double?,
+        geometryDetail: String?
+    ): ObaEnvelope<ListWithReferences<OnDemandServiceDto>> = ok(ListWithReferences(references = references()))
 
     override suspend fun trip(tripId: String): ObaEnvelope<EntryWithReferences<TripReference>> {
         val run = DemoScenario.runById(fixture, tripId) ?: return notFound()

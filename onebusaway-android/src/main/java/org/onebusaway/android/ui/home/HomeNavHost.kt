@@ -258,6 +258,7 @@ fun HomeNavHost(
                     onNightLight = { navController.navigateFromHome(NavRoutes.NIGHT_LIGHT) },
                     onLearnMore = { navController.navigateFromHome(NavRoutes.DONATION_LEARN_MORE) },
                     onOpenSurvey = { url -> navController.navigateFromHome(NavRoutes.surveyWebView(url)) },
+                    onOpenOnDemandService = { id -> navController.navigateFromHome(NavRoutes.onDemandService(id)) },
                     onShowArrivals = { stop ->
                         if (navController.previousBackStackEntry?.destination?.route == NavRoutes.ARRIVALS &&
                             navController.previousBackStackEntry?.arguments?.getString(NavRoutes.ARG_STOP_ID) == stop.id

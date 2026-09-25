@@ -1484,7 +1484,9 @@
     <string name="ondemand_booking_opens">Booking opens %1$s for a ride on %2$s</string>
     <!-- Shown when no advance notice is required -->
     <string name="ondemand_book_at_ride_time">Book when you are ready to ride</string>
+    <!-- Shown under "How to book" when the feed gives no booking deadline the app can state -->
     <string name="ondemand_no_deadline_published">This agency has not published a booking deadline. Contact them to book.</string>
+    <!-- Shown under "When" when the feed publishes no days or hours for the service -->
     <string name="ondemand_no_rules">No service hours are published for this service.</string>
     <!-- Button that opens the phone dialer; %1$s is a phone number -->
     <string name="ondemand_call">Call %1$s</string>
@@ -1494,6 +1496,7 @@
     <string name="ondemand_more_info">More information</string>
     <!-- Section heading for the agency's own notes about booking -->
     <string name="ondemand_details_title">Details</string>
+    <!-- Shown in place of the service page when the server does not know the service -->
     <string name="ondemand_not_found">This on-demand service is not available in this region.</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->

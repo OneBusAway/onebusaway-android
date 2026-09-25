@@ -50,18 +50,4 @@ import javax.inject.Singleton
  * rather than a plain field.
  */
 @Singleton
-class NearbyArrivalsSupport @Inject constructor() {
-
-    private val unsupported = mutableSetOf<String>()
-
-    /** Whether [obaBaseUrl] is already known not to serve the endpoint. Unknown (and null) endpoints
-     *  read as supported (un-probed), which is what makes the first query the probe. */
-    @Synchronized
-    fun isKnownUnsupported(obaBaseUrl: String?): Boolean = obaBaseUrl != null && obaBaseUrl in unsupported
-
-    /** Record that the deployment at [obaBaseUrl] answered 404 for the endpoint. */
-    @Synchronized
-    fun recordAbsent(obaBaseUrl: String?) {
-        obaBaseUrl?.let(unsupported::add)
-    }
-}
+class NearbyArrivalsSupport @Inject constructor() : AbsentEndpointTracker()

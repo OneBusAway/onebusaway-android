@@ -28,17 +28,4 @@ import javax.inject.Singleton
  * gets its own verdict, and an upgraded server is re-probed on the next launch.
  */
 @Singleton
-class OnDemandSupport @Inject constructor() {
-
-    private val unsupported = mutableSetOf<String>()
-
-    /** Whether [obaBaseUrl] is already known not to serve the namespace; unknown and null read as un-probed. */
-    @Synchronized
-    fun isKnownUnsupported(obaBaseUrl: String?): Boolean = obaBaseUrl != null && obaBaseUrl in unsupported
-
-    /** Record that the deployment at [obaBaseUrl] answered HTTP 404 on `services-for-location`. */
-    @Synchronized
-    fun recordAbsent(obaBaseUrl: String?) {
-        obaBaseUrl?.let(unsupported::add)
-    }
-}
+class OnDemandSupport @Inject constructor() : AbsentEndpointTracker()

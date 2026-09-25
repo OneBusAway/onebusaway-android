@@ -1,0 +1,203 @@
+{
+  "timezone": "America/Los_Angeles",
+  "calendars": [
+    {"id": "5088_c_71675_b_85952_d_63","days": ["mon","tue","wed","thu","fri","sat"],"startDate": "2025-12-01","endDate": "2026-12-01","exceptedDates": []},
+    {"id": "5088_c_71675_b_85952_d_64","days": ["sun"],"startDate": "2025-12-01","endDate": "2026-12-01","exceptedDates": []},
+    {"id": "MC_mon-tues-wed-thurs-fri","days": ["mon","tue","wed","thu","fri"],"startDate": "2024-01-01","endDate": "2027-12-31","exceptedDates": ["2024-05-27","2024-07-04","2024-09-02","2024-11-28","2024-11-29","2024-12-24","2024-12-25","2025-01-01","2025-05-26","2025-07-04","2025-09-01","2025-11-27","2025-11-28","2025-12-24","2025-12-25","2026-01-01"]},
+    {"id": "MC_sat","days": ["sat"],"startDate": "2024-01-01","endDate": "2027-12-31","exceptedDates": []},
+    {"id": "MC_mon-tues-wed-thurs-fri-sat-sun","days": ["mon","tue","wed","thu","fri","sat","sun"],"startDate": "2024-01-01","endDate": "2027-12-31","exceptedDates": []},
+    {"id": "AP_mon-tues-wed-thurs-fri","days": ["mon","tue","wed","thu","fri"],"startDate": "2024-01-01","endDate": "2027-12-31","exceptedDates": ["2024-05-27","2024-07-04","2024-09-02","2024-11-28","2024-11-29","2024-12-24","2024-12-25","2025-01-01","2025-05-26","2025-07-04","2025-09-01","2025-11-27","2025-11-28","2025-12-24","2025-12-25","2026-01-01"]},
+    {"id": "MC_synthetic_weekdays_from_2026-03-16","days": ["mon","tue","wed","thu","fri"],"startDate": "2026-03-16","endDate": "2027-12-31","exceptedDates": []}
+  ],
+  "vectors": [
+    {
+      "name": "alexandria prior-day just before 17:00",
+      "timezone": "America/Los_Angeles",
+      "bookingRule": {"id": "5088_booking_route_77652","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "17:00:00","priorNoticeStartDay": 14,"priorNoticeStartTime": "00:00:00","priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": "703-746-5222","infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:00:00","endPickupTime": "24:50:00","calendarIds": ["5088_c_71675_b_85952_d_63"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-10T16:59:00-07:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-10T17:00:00-07:00","openInstant": "2026-02-25T00:00:00-08:00","nextBookableServiceDate": "2026-03-11"}
+    },
+    {
+      "name": "alexandria prior-day just after 17:00",
+      "timezone": "America/Los_Angeles",
+      "bookingRule": {"id": "5088_booking_route_77652","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "17:00:00","priorNoticeStartDay": 14,"priorNoticeStartTime": "00:00:00","priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": "703-746-5222","infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:00:00","endPickupTime": "24:50:00","calendarIds": ["5088_c_71675_b_85952_d_63"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-10T17:01:00-07:00",
+      "expected": {"state": "closedForDate","cutoffInstant": "2026-03-10T17:00:00-07:00","openInstant": "2026-02-25T00:00:00-08:00","nextBookableServiceDate": "2026-03-12"}
+    },
+    {
+      "name": "post-midnight window: 24:50 end pickup still open at 00:30 next civil day",
+      "timezone": "America/Los_Angeles",
+      "bookingRule": {"id": "5088_synthetic_realtime","bookingType": 0,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:00:00","endPickupTime": "24:50:00","calendarIds": ["5088_c_71675_b_85952_d_63"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-12T00:30:00-07:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-12T00:50:00-07:00","openInstant": null,"nextBookableServiceDate": "2026-03-12"}
+    },
+    {
+      "name": "post-midnight window: closed at 01:00 next civil day",
+      "timezone": "America/Los_Angeles",
+      "bookingRule": {"id": "5088_synthetic_realtime","bookingType": 0,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:00:00","endPickupTime": "24:50:00","calendarIds": ["5088_c_71675_b_85952_d_63"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-12T01:00:00-07:00",
+      "expected": {"state": "closedForDate","cutoffInstant": "2026-03-12T00:50:00-07:00","openInstant": null,"nextBookableServiceDate": "2026-03-12"}
+    },
+    {
+      "name": "same-day bookingType 1 durationMin 60: open at noon",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_booking_rule_MC1","bookingType": 1,"priorNoticeDurationMin": 60,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": "(231)723-6525","infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-11T12:00:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-11T17:00:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-11"}
+    },
+    {
+      "name": "same-day bookingType 1 durationMin 60: closed 30 min before end",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_booking_rule_MC1","bookingType": 1,"priorNoticeDurationMin": 60,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": "(231)723-6525","infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-11T17:30:00-04:00",
+      "expected": {"state": "closedForDate","cutoffInstant": "2026-03-11T17:00:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-12"}
+    },
+    {
+      "name": "real-time bookingType 0: cutoff is latest pickup",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_realtime","bookingType": 0,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-11T17:30:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-11T18:00:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-11"}
+    },
+    {
+      "name": "charlevoix CC4 type 0 with forbidden durationMin ignored",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "CC_booking_rule_CC4","bookingType": 0,"priorNoticeDurationMin": 90,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "07:20:00","endPickupTime": "16:40:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-11T16:00:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-11T16:40:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-11"}
+    },
+    {
+      "name": "priorNoticeCalendarId weekday-only: last day counted back over a weekend",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_calendar_counted","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "15:00:00","priorNoticeStartDay": 3,"priorNoticeStartTime": "09:00:00","priorNoticeCalendarId": "MC_mon-tues-wed-thurs-fri","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-16",
+      "now": "2026-03-13T14:00:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-13T15:00:00-04:00","openInstant": "2026-03-11T09:00:00-04:00","nextBookableServiceDate": "2026-03-16"}
+    },
+    {
+      "name": "priorNoticeCalendarId weekday-only: start day counted back over a weekend",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_calendar_counted","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "15:00:00","priorNoticeStartDay": 3,"priorNoticeStartTime": "09:00:00","priorNoticeCalendarId": "MC_mon-tues-wed-thurs-fri","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-17",
+      "now": "2026-03-12T08:00:00-04:00",
+      "expected": {"state": "notYetOpen","cutoffInstant": "2026-03-16T15:00:00-04:00","openInstant": "2026-03-12T09:00:00-04:00","nextBookableServiceDate": "2026-03-13"}
+    },
+    {
+      "name": "priorNoticeStartDay 14: far-out travel date is notYetOpen",
+      "timezone": "America/Los_Angeles",
+      "bookingRule": {"id": "5088_booking_route_77652","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "17:00:00","priorNoticeStartDay": 14,"priorNoticeStartTime": "00:00:00","priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": "703-746-5222","infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:00:00","endPickupTime": "24:50:00","calendarIds": ["5088_c_71675_b_85952_d_63"]},
+      "travelDate": "2026-04-15",
+      "now": "2026-03-10T12:00:00-07:00",
+      "expected": {"state": "notYetOpen","cutoffInstant": "2026-04-14T17:00:00-07:00","openInstant": "2026-04-01T00:00:00-07:00","nextBookableServiceDate": "2026-03-11"}
+    },
+    {
+      "name": "no pickup booking rule: open with null cutoff",
+      "timezone": "America/Los_Angeles",
+      "bookingRule": null,
+      "rule": {"startPickupTime": "05:00:00","endPickupTime": "24:50:00","calendarIds": ["5088_c_71675_b_85952_d_63"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-10T12:00:00-07:00",
+      "expected": {"state": "open","cutoffInstant": null,"openInstant": null,"nextBookableServiceDate": "2026-03-10"}
+    },
+    {
+      "name": "arenac AP1 bookingType 1 with null durationMin: unknown",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "AP_booking_rule_AP1","bookingType": 1,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "06:00:00","endPickupTime": "19:00:00","calendarIds": ["AP_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-11T12:00:00-04:00",
+      "expected": {"state": "unknown","cutoffInstant": null,"openInstant": null,"nextBookableServiceDate": null}
+    },
+    {
+      "name": "arenac AP2 bookingType 2 lastDay 7 null lastTime: cutoff at 00:00 of last day",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "AP_booking_rule_AP2","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 7,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "06:00:00","endPickupTime": "19:00:00","calendarIds": ["AP_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-18",
+      "now": "2026-03-10T12:00:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-11T00:00:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-18"}
+    },
+    {
+      "name": "DST spring-forward travel date 2026-03-08 Detroit: noon anchor keeps 18:00 at 18:00 EDT",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_realtime","bookingType": 0,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri-sat-sun"]},
+      "travelDate": "2026-03-08",
+      "now": "2026-03-08T12:00:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-08T18:00:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-08"}
+    },
+    {
+      "name": "DST spring-forward: prior-day cutoff lands on 2026-03-07 in EST",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_priorday","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "17:00:00","priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri-sat-sun"]},
+      "travelDate": "2026-03-08",
+      "now": "2026-03-07T16:00:00-05:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-07T17:00:00-05:00","openInstant": null,"nextBookableServiceDate": "2026-03-08"}
+    },
+    {
+      "name": "priorNoticeCalendarId starting too late: last-day count-back cannot complete, unknown",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_calendar_starts_late","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "15:00:00","priorNoticeStartDay": 3,"priorNoticeStartTime": "09:00:00","priorNoticeCalendarId": "MC_synthetic_weekdays_from_2026-03-16","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-16",
+      "now": "2026-03-13T14:00:00-04:00",
+      "expected": {"state": "unknown","cutoffInstant": null,"openInstant": null,"nextBookableServiceDate": null}
+    },
+    {
+      "name": "priorNoticeCalendarId starting too late: start-day count-back cannot complete, unknown",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_calendar_starts_late","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "15:00:00","priorNoticeStartDay": 3,"priorNoticeStartTime": "09:00:00","priorNoticeCalendarId": "MC_synthetic_weekdays_from_2026-03-16","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-17",
+      "now": "2026-03-13T14:00:00-04:00",
+      "expected": {"state": "unknown","cutoffInstant": null,"openInstant": null,"nextBookableServiceDate": null}
+    },
+    {
+      "name": "bookingType 2 with null priorNoticeLastDay: unknown",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_no_last_day","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": "15:00:00","priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": null,"message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-10T12:00:00-04:00",
+      "expected": {"state": "unknown","cutoffInstant": null,"openInstant": null,"nextBookableServiceDate": null}
+    },
+    {
+      "name": "same-day bookingType 1 with a forbidden priorNoticeCalendarId: ignored, open at noon",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_same_day_with_calendar","bookingType": 1,"priorNoticeDurationMin": 60,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": "MC_mon-tues-wed-thurs-fri","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-11",
+      "now": "2026-03-11T12:00:00-04:00",
+      "expected": {"state": "open","cutoffInstant": "2026-03-11T17:00:00-04:00","openInstant": null,"nextBookableServiceDate": "2026-03-11"}
+    },
+    {
+      "name": "same-day bookingType 1 startDay counts civil days, not the forbidden priorNoticeCalendarId",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_same_day_start_day_with_calendar","bookingType": 1,"priorNoticeDurationMin": 60,"priorNoticeDurationMax": null,"priorNoticeLastDay": null,"priorNoticeLastTime": null,"priorNoticeStartDay": 1,"priorNoticeStartTime": "08:00:00","priorNoticeCalendarId": "MC_mon-tues-wed-thurs-fri","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "05:30:00","endPickupTime": "18:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri"]},
+      "travelDate": "2026-03-16",
+      "now": "2026-03-13T12:00:00-04:00",
+      "expected": {"state": "notYetOpen","cutoffInstant": "2026-03-16T17:00:00-04:00","openInstant": "2026-03-15T08:00:00-04:00","nextBookableServiceDate": "2026-03-13"}
+    }
+  ]
+}

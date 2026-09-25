@@ -478,6 +478,20 @@ data class ContinuationArrow(val point: GeoPoint, val bearing: Float)
  */
 data class RouteContinuation(val polyline: RoutePolyline, val arrow: ContinuationArrow, val badge: ContinuationBadge)
 
+/**
+ * One on-demand service-area polygon (GTFS-Flex, wiki §2.4), drawn as a translucent fill in the
+ * service's route colour. [rings] follow GeoJSON: ring 0 is the exterior, any others are holes. A
+ * MultiPolygon area produces one of these per member, all carrying the same [serviceId], which is what
+ * a tap on any of them opens.
+ */
+data class ZonePolygon(
+    val serviceId: String,
+    val serviceName: String,
+    val rings: List<List<GeoPoint>>,
+    /** The route's GTFS colour (ARGB), or null for the default line colour. */
+    val color: Int?
+)
+
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
@@ -495,6 +509,9 @@ data class MapRenderSnapshot(
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
     val rentals: List<RentalMarker> = emptyList(),
     val rentalsVisible: Boolean = false,
+    // On-demand service zones for the viewport (written by OnDemandLayerController). Drawn beneath the
+    // stops on the static layer; empty when the layer is off or the region has no flex data.
+    val onDemandZones: List<ZonePolygon> = emptyList(),
     val stops: List<StopMarker> = emptyList(),
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
     // individually focused stop.
@@ -803,6 +820,16 @@ class MapRenderState {
 
     fun clearRentals() {
         _snapshot.update { it.copy(rentals = emptyList()) }
+    }
+
+    // --- On-demand zones: the viewport's flex service areas, written by OnDemandLayerController. ---
+
+    fun setOnDemandZones(zones: List<ZonePolygon>) {
+        _snapshot.update { it.copy(onDemandZones = zones) }
+    }
+
+    fun clearOnDemandZones() {
+        _snapshot.update { it.copy(onDemandZones = emptyList()) }
     }
 
     // --- Stops: the host owns accumulation/cap + focus; this just holds the current list + id. ---

@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.api.data.OnDemandDataSource
+import org.onebusaway.android.api.data.OnDemandSupport
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.demo.DemoModeState
@@ -124,6 +126,8 @@ class MapViewModel @Inject constructor(
     private val routeRepository: RouteMapRepository,
     private val focusedTripRepository: FocusedTripRepository,
     private val rentalPlacesRepository: RentalPlacesRepository,
+    private val onDemandDataSource: OnDemandDataSource,
+    private val onDemandSupport: OnDemandSupport,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
@@ -211,6 +215,19 @@ class MapViewModel @Inject constructor(
     private val rentalController = RentalLayerController(
         host = mapHost,
         rentalPlacesRepository = rentalPlacesRepository,
+        prefsRepository = prefsRepository,
+        regionRepository = regionRepo,
+        demoMode = demoMode,
+        scope = viewModelScope
+    )
+
+    // The on-demand zone overlay (GTFS-Flex service areas for the viewport); overlays every mode
+    // exactly as the rental layer does.
+    private val onDemandController = OnDemandLayerController(
+        settledCamera = mapHost.settledCamera(),
+        renderState = mapHost.renderState,
+        dataSource = onDemandDataSource,
+        support = onDemandSupport,
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
         demoMode = demoMode,
@@ -339,6 +356,7 @@ class MapViewModel @Inject constructor(
         // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
         if (routeController.focusedStopId == null) stopsController.start()
         rentalController.start()
+        onDemandController.start()
     }
 
     /**
@@ -372,6 +390,7 @@ class MapViewModel @Inject constructor(
             palette = palette
         )
         rentalController.start()
+        onDemandController.start()
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
@@ -412,6 +431,7 @@ class MapViewModel @Inject constructor(
         stopsController.stop()
         routeController.stop()
         rentalController.stop()
+        onDemandController.stop()
         if (routeController.focusedStopId != null) {
             stopsController.start()
         } else {
@@ -633,6 +653,7 @@ class MapViewModel @Inject constructor(
         // showed the rider vehicles they could neither switch off — the layer button is hidden here —
         // nor act on, while the trip's own bike legs already say where its vehicle is picked up.
         rentalController.hide()
+        onDemandController.hide()
     }
 
     /**
@@ -722,6 +743,7 @@ class MapViewModel @Inject constructor(
         stopsController.clearFocus()
         stopsController.start()
         rentalController.start()
+        onDemandController.start()
     }
 
     /**

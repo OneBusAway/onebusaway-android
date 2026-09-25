@@ -87,7 +87,12 @@ private const val REFRESH_PERIOD_MS = 60_000L
  * section, the on-demand card, the direction line — pushes it down by one. Kept pure so the count
  * can't drift from the `item(...)` order in [ArrivalsList] without a failing test.
  */
-internal fun firstRouteIndex(hasModeSwitch: Boolean, alertsBeforeRoutes: Boolean, onDemandBeforeRoutes: Boolean, directionBeforeRoutes: Boolean): Int = listOf(hasModeSwitch, alertsBeforeRoutes, onDemandBeforeRoutes, directionBeforeRoutes).count { it }
+internal fun firstRouteIndex(
+    hasModeSwitch: Boolean,
+    alertsBeforeRoutes: Boolean,
+    onDemandBeforeRoutes: Boolean,
+    directionBeforeRoutes: Boolean
+): Int = listOf(hasModeSwitch, alertsBeforeRoutes, onDemandBeforeRoutes, directionBeforeRoutes).count { it }
 
 /** How many service alerts the alert list shows before the "show more" link, and the page size each
  *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */

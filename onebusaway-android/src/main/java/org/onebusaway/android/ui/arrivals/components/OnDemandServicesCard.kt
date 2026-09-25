@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -45,10 +44,11 @@ internal fun OnDemandServicesCard(
         )
         for (item in items) {
             Surface(
+                onClick = { onOpen(item.id) },
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 shape = MaterialTheme.shapes.small,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp).clickable { onOpen(item.id) }
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(item.name, style = MaterialTheme.typography.bodyMedium)

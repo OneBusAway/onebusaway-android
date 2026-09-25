@@ -198,6 +198,15 @@
       "travelDate": "2026-03-16",
       "now": "2026-03-13T12:00:00-04:00",
       "expected": {"state": "notYetOpen","cutoffInstant": "2026-03-16T17:00:00-04:00","openInstant": "2026-03-15T08:00:00-04:00","nextBookableServiceDate": "2026-03-13"}
+    },
+    {
+      "name": "priorNoticeCalendarId starting too late: unknown dates are skipped, not terminal, when searching the next bookable date",
+      "timezone": "America/Detroit",
+      "bookingRule": {"id": "MC_synthetic_calendar_skip_unknown","bookingType": 2,"priorNoticeDurationMin": null,"priorNoticeDurationMax": null,"priorNoticeLastDay": 1,"priorNoticeLastTime": "15:00:00","priorNoticeStartDay": null,"priorNoticeStartTime": null,"priorNoticeCalendarId": "MC_synthetic_weekdays_from_2026-03-16","message": null,"pickupMessage": null,"dropOffMessage": null,"phoneNumber": null,"infoUrl": null,"bookingUrl": null},
+      "rule": {"startPickupTime": "09:00:00","endPickupTime": "17:00:00","calendarIds": ["MC_mon-tues-wed-thurs-fri-sat-sun"]},
+      "travelDate": "2026-03-13",
+      "now": "2026-03-13T08:00:00-04:00",
+      "expected": {"state": "unknown","cutoffInstant": null,"openInstant": null,"nextBookableServiceDate": "2026-03-17"}
     }
   ]
 }

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -712,7 +713,9 @@ private fun TripActionBar(
         modifier = Modifier
             .formBand()
             .padding(start = ACTION_BAR_START_INSET)
-            .height(ACTION_BAR_HEIGHT)
+            // A minimum: a pinned trip's two-line callout (time over day, #2337) may need more at a
+            // large font scale, and the bar grows for it rather than clipping the day.
+            .heightIn(min = ACTION_BAR_HEIGHT)
             // The scripted tour's "narrow it down" step rings this row (#2164) — the when/mode/advanced
             // controls, not the endpoints above them.
             .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_OPTIONS),
@@ -899,7 +902,8 @@ private fun WhenTimeSegment(
     val nowLabel = stringResource(R.string.trip_plan_now)
     Box(modifier) {
         SegmentButton(
-            text = if (departNow) nowLabel else whenLabel(dayRelation, dateLabel, timeLabel),
+            text = if (departNow) nowLabel else timeLabel,
+            subtext = if (departNow) null else dayLabel(dayRelation, dateLabel),
             emphasized = false,
             testTag = TripPlanTestTags.WHEN_TIME,
             onClick = { expanded = true }
@@ -961,31 +965,40 @@ private fun WhenTimeSegment(
 }
 
 /**
- * A pinned instant as the callout states it (#2185): the time first, then the day — but only when the
- * day needs saying at all. Most pinned trips are for later today, where the date was pure noise
- * crowding out the one part the rider is reading for; tomorrow has a word, so it gets the word; and
- * anything further out falls back to its date. The full instant is still one tap away, at the head of
- * the menu this segment opens.
+ * The day a pinned instant's callout names under its time (#2185), or null when the day needs no saying.
+ * Most pinned trips are for later today, where the date was pure noise crowding out the one part the
+ * rider is reading for; tomorrow has a word, so it gets the word; and anything further out falls back
+ * to its date. The full instant is still one tap away, at the head of the menu this segment opens.
+ *
+ * A line of its own rather than a suffix on the time (#2337): as a suffix it was the part the bar's
+ * ellipsis cut, so a trip on another day read as a bare time — "10:45…" — with nothing on screen saying
+ * which day it was for.
  */
 @Composable
-private fun whenLabel(dayRelation: TripDay, dateLabel: String, timeLabel: String): String = when (dayRelation) {
-    TripDay.TODAY -> timeLabel
-    TripDay.TOMORROW -> stringResource(R.string.trip_plan_time_tomorrow, timeLabel)
-    TripDay.OTHER -> stringResource(R.string.trip_plan_time_date, timeLabel, dateLabel)
+private fun dayLabel(dayRelation: TripDay, dateLabel: String): String? = when (dayRelation) {
+    TripDay.TODAY -> null
+    TripDay.TOMORROW -> stringResource(R.string.trip_plan_date_tomorrow)
+    TripDay.OTHER -> dateLabel
 }
 
-/** One tappable half of the "when" sentence: text plus a small chevron, on a rounded press surface. */
+/**
+ * One tappable half of the "when" sentence: text plus a small chevron, on a rounded press surface.
+ * [subtext], when present, is a quieter second line under [text] — the pinned trip's day — each line
+ * with the slot's full width to itself, so neither can push the other into the ellipsis.
+ */
 @Composable
 private fun SegmentButton(
     text: String,
     emphasized: Boolean,
     testTag: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    subtext: String? = null
 ) {
     Row(
         modifier = modifier
-            .height(32.dp)
+            // A minimum, not a fixed height: a two-line label grows the button rather than clipping.
+            .heightIn(min = 32.dp)
             // The value is the label, so TalkBack reads it as-is; the click label supplies the verb the
             // bare text can't ("Depart" alone doesn't say it's changeable).
             .clickable(onClickLabel = stringResource(R.string.trip_plan_change_when), onClick = onClick)
@@ -994,15 +1007,25 @@ private fun SegmentButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
-        )
+        Column(Modifier.weight(1f, fill = false)) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            subtext?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
         Icon(
             imageVector = AppIcons.KeyboardArrowDown,
             contentDescription = null,

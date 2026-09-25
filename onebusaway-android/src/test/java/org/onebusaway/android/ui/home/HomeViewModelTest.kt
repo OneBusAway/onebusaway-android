@@ -722,6 +722,84 @@ class HomeViewModelTest {
     @Test
     fun `tapping off an unplanned form leaves directions outright`() = assertLeavesUnplannedDirectionsOutright(HomeViewModel::unfocusMapOneLevel)
 
+    @Test
+    fun `closing a drawn trip asks before discarding it`() = assertConfirmsBeforeDiscardingTrip(HomeViewModel::closeDirections)
+
+    @Test
+    fun `closing an unplanned form leaves directions outright`() = assertLeavesUnplannedDirectionsOutright(HomeViewModel::closeDirections)
+
+    /**
+     * #2337: the close button is the one-tap way out. Unlike Back, which from a drilled-into leg only
+     * steps out to the overview, it leaves the whole trip — still behind the #2140 confirmation.
+     */
+    @Test
+    fun `close from a focused leg leaves directions whole`() = runTest {
+        val vm = viewModel()
+        vm.revealStop(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        advanceUntilIdle()
+        vm.enterDirectionsShowing()
+        vm.focusItineraryLegOnMap(walkLeg(0))
+        vm.focusItineraryLegOnMap(walkLeg(2))
+        advanceUntilIdle()
+
+        vm.closeDirections()
+        assertTrue(vm.pendingDirectionsExit.value)
+        vm.confirmExitDirections()
+        advanceUntilIdle()
+
+        assertEquals("stop", (vm.currentFocus.value as? CurrentFocus.Stop)?.stop?.id)
+        // Beneath the stop lies only the bare map: no leg, and no overview, left to walk back into.
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.canUndoMapAction.value)
+    }
+
+    /** Declining the question keeps the rider exactly where they were — on the leg, not the overview. */
+    @Test
+    fun `declining close from a focused leg stays on that leg`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        val walk = walkLeg(2)
+        vm.focusItineraryLegOnMap(walk)
+        advanceUntilIdle()
+
+        vm.closeDirections()
+        vm.dismissDirectionsExit()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
+    }
+
+    /** A second close landing before the form is gone must not pop the focus the first one restored. */
+    @Test
+    fun `a repeated close does not unwind past where directions began`() = runTest {
+        val vm = viewModel()
+        vm.revealStop(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        advanceUntilIdle()
+        vm.enterDirections()
+        advanceUntilIdle()
+
+        vm.closeDirections()
+        vm.closeDirections()
+        advanceUntilIdle()
+
+        assertEquals("stop", (vm.currentFocus.value as? CurrentFocus.Stop)?.stop?.id)
+    }
+
+    /** Close unwinds like Back rather than moving forward, so the next Back can't walk into the trip (#2317). */
+    @Test
+    fun `close leaves no step back into directions`() = runTest {
+        val vm = viewModel()
+        vm.enterDirections()
+        advanceUntilIdle()
+
+        vm.closeDirections()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse("closing directions must not put directions back on the undo history", vm.canUndoMapAction.value)
+    }
+
     /**
      * #2317: leaving directions recorded the focus it left, Back included — so the press that had just
      * left put a step back *into* directions behind itself. The next Back walked in, the one after that

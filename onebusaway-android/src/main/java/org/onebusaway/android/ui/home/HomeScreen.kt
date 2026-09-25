@@ -1017,6 +1017,7 @@ fun HomeScreen(
                                                 viewModel = tripPlanViewModel,
                                                 state = tripPlanFormState,
                                                 onPickEndpoint = { pickTarget = it },
+                                                onClose = homeViewModel::closeDirections,
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
                                                     .statusBarsPadding()

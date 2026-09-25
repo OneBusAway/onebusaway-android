@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -142,8 +143,8 @@ private val ACTION_BAR_START_INSET = CONTENT_KEYLINE - SEGMENT_TEXT_INSET
  */
 private val TRAILING_GUTTER = 4.dp
 
-/** Clear space between the endpoint rows' content and the reverse button beside them. */
-private val REVERSE_CLEARANCE = 4.dp
+/** Clear space between the endpoint rows' content and the close/reverse buttons beside them. */
+private val TRAILING_BUTTON_CLEARANCE = 4.dp
 
 /**
  * The shape the card's two bands share: full width, inset at the trailing edge by [TRAILING_GUTTER].
@@ -195,6 +196,9 @@ object TripPlanTestTags {
     /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
 
+    /** The leave-directions button, beside the origin row (#2337). */
+    const val CLOSE = "tripPlanClose"
+
     /** The action bar's re-plan-this-same-trip button. */
     const val REFRESH = "tripPlanRefresh"
 
@@ -238,8 +242,8 @@ val TripEndpointSlot.tagPrefix: String
  * That band doubles as the form's action bar, carrying the mode pickers and additional-preferences as
  * well. It's the reason the endpoint rows carry no per-field chrome: everything acting on the trip's
  * *terms* lives on one line, and nothing acts on a single endpoint (see [EndpointRow]). The one action
- * on the endpoints themselves — reverse — sits beside the pair, centred on the divider between them.
- * The card measures 146dp against the old layout's 216dp.
+ * on the endpoints themselves — reverse — sits beside the pair, in a trailing column it shares with
+ * close. The card measures 146dp against the old layout's 216dp.
  *
  * Stateless and driven by [TripPlanFormState]; the date/time/current-location actions are platform
  * interactions launched by the host.
@@ -260,13 +264,13 @@ fun TripPlanForm(
     onReverse: () -> Unit,
     onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Row(modifier = Modifier.formBand(), verticalAlignment = Alignment.CenterVertically) {
-            // The rows take the width the button doesn't, rather than running full width beneath it —
-            // which is what stops a long place name, and the divider, from sliding under the button.
-            // Centring the sibling button against the resulting block lands it on that divider.
+        Row(modifier = Modifier.formBand()) {
+            // The rows take the width the buttons don't, rather than running full width beneath them —
+            // which is what stops a long place name, and the divider, from sliding under a button.
             Column(Modifier.weight(1f)) {
                 // One row per endpoint, in TripEndpointSlot's declaration order (origin above
                 // destination) — the enum is the list of rows.
@@ -274,7 +278,7 @@ fun TripPlanForm(
                     if (index > 0) {
                         // Inset past the rail so the hairline starts where the text does, leaving the
                         // origin and destination glyphs reading as one continuous column.
-                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = REVERSE_CLEARANCE)
+                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = TRAILING_BUTTON_CLEARANCE)
                     }
                     EndpointRow(
                         slot = slot,
@@ -287,12 +291,30 @@ fun TripPlanForm(
                     )
                 }
             }
-            FormIconButton(
-                painter = painterResource(R.drawable.ic_swap_direction),
-                contentDescription = stringResource(R.string.tripplanner_reverse),
-                onClick = onReverse,
-                modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
-            )
+            // The trailing column: close level with the origin row, reverse level with the destination.
+            // Close is the card's one visible way out of directions (#2337) — Back walks out a step at a
+            // time and is no use to a rider who can't make the gesture — and this column is the only
+            // place on the card with room for it. Each button is centred in a box the height of the row
+            // beside it, with the divider's own thickness between, so the two stay level with their rows.
+            Column {
+                TrailingButtonSlot {
+                    FormIconButton(
+                        painter = rememberVectorPainter(AppIcons.Close),
+                        contentDescription = stringResource(R.string.directions_close),
+                        onClick = onClose,
+                        modifier = Modifier.testTag(TripPlanTestTags.CLOSE)
+                    )
+                }
+                Spacer(Modifier.height(DividerDefaults.Thickness))
+                TrailingButtonSlot {
+                    FormIconButton(
+                        painter = painterResource(R.drawable.ic_swap_direction),
+                        contentDescription = stringResource(R.string.tripplanner_reverse),
+                        onClick = onReverse,
+                        modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
+                    )
+                }
+            }
         }
         // Full-width, unlike the one above: this one separates the endpoints from the actions, rather
         // than separating two members of the same group.
@@ -315,6 +337,12 @@ fun TripPlanForm(
             onAdvancedSettings = onAdvancedSettings
         )
     }
+}
+
+/** One endpoint row's height of the trailing column, its button centred level with that row. */
+@Composable
+private fun TrailingButtonSlot(content: @Composable () -> Unit) {
+    Box(Modifier.height(ENDPOINT_ROW_HEIGHT), contentAlignment = Alignment.Center) { content() }
 }
 
 /**
@@ -481,7 +509,7 @@ private fun EndpointRow(
                     }
                 }
             )
-            Spacer(Modifier.width(REVERSE_CLEARANCE))
+            Spacer(Modifier.width(TRAILING_BUTTON_CLEARANCE))
         }
 
         // The two ways to fill an endpoint that aren't typing. They used to be permanent icon buttons on
@@ -1029,7 +1057,7 @@ private fun TripPlanFormPreview() {
             onPickDateTime = {},
             availableStreetModes = StreetMode.entries,
             onVehicleModeSelected = {}, onStreetModeSelected = {},
-            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}
+            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}, onClose = {}
         )
     }
 }

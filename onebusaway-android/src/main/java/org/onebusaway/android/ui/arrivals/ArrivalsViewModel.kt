@@ -20,6 +20,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.onebusaway.android.time.WallTime
@@ -101,8 +104,10 @@ class ArrivalsViewModel @AssistedInject constructor(
      * `ArrivalsAnalyticsEffect` does the reporting — mirroring `HomeViewModel`'s `HomeAnalyticsEvent` /
      * `HomeAnalyticsEffect` split.
      */
-    private val _stopViewed = MutableSharedFlow<StopViewedEvent>(extraBufferCapacity = 1)
-    val stopViewed: SharedFlow<StopViewedEvent> = _stopViewed.asSharedFlow()
+    // A Channel (not a SharedFlow) so the event waits for the host's collector even if the first
+    // load lands before ArrivalsAnalyticsEffect subscribes, and is delivered exactly once.
+    private val _stopViewed = Channel<StopViewedEvent>(Channel.CONFLATED)
+    val stopViewed: Flow<StopViewedEvent> = _stopViewed.receiveAsFlow()
 
     /** Guards [_stopViewed] so it fires at most once per ViewModel (i.e. per visit) even if the first
      *  response is a stale fallback (no prior fresh load yet) rather than a genuine success. */
@@ -155,7 +160,7 @@ class ArrivalsViewModel @AssistedInject constructor(
                 repository.lastLoaded()?.let { _arrivalsLoaded.tryEmit(it) }
                 if (!data.isStale && !stopViewReported) {
                     stopViewReported = true
-                    _stopViewed.tryEmit(
+                    _stopViewed.trySend(
                         StopViewedEvent(data.header.stopId, data.header.name, data.stopLat, data.stopLon)
                     )
                 }

@@ -80,8 +80,12 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
         rule.calendarIds.mapNotNull { id -> service.calendars[id]?.let { WhenRow(id, it.days, rule.startPickupTime, rule.endPickupTime) } }
     }.distinctBy { Triple(it.days, it.start, it.end) }
     val bookingRules = service.rules.mapNotNull(service::pickupBookingRule).distinctBy { it.id }
+    // No pickup rule names an info URL of its own: fall back to the service's own URL (iOS parity).
+    val infoUrl = bookingRules.firstNotNullOfOrNull { it.infoUrl } ?: service.url
     val booking = if (service.rules.isEmpty()) {
-        null
+        infoUrl?.let {
+            BookingSummary(travelDate = null, evaluation = null, zone = null, phoneNumber = null, bookingUrl = null, infoUrl = it, messages = emptyList())
+        }
     } else {
         val zone = agencyZone(service.agencyTimezone)
         val line = zone?.let { service.bookingLine(now, it) }
@@ -91,7 +95,7 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
             zone = zone,
             phoneNumber = bookingRules.firstNotNullOfOrNull { it.phoneNumber },
             bookingUrl = bookingRules.firstNotNullOfOrNull { it.bookingUrl },
-            infoUrl = bookingRules.firstNotNullOfOrNull { it.infoUrl },
+            infoUrl = infoUrl,
             messages = bookingRules.flatMap { listOfNotNull(it.message, it.pickupMessage, it.dropOffMessage) }.distinct()
         )
     }

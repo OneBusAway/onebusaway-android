@@ -105,14 +105,21 @@ private fun ServiceContent(content: OnDemandServiceUiState.Content, onCall: (Str
             Text(formatWindow(row.start, row.end, locale), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        content.booking?.let { booking -> BookingSection(booking, locale, onCall, onOpenUrl) }
+        content.booking?.let { booking -> BookingSection(booking, hasRules = content.service.rules.isNotEmpty(), locale, onCall, onOpenUrl) }
     }
 }
 
+/**
+ * [hasRules] is false for a service with no availability rules: it has nothing to compute a
+ * deadline from, so the section skips the deadline line rather than claiming "no deadline
+ * published" for a service that was never going to publish one.
+ */
 @Composable
-private fun BookingSection(booking: BookingSummary, locale: Locale, onCall: (String) -> Unit, onOpenUrl: (String) -> Unit) {
+private fun BookingSection(booking: BookingSummary, hasRules: Boolean, locale: Locale, onCall: (String) -> Unit, onOpenUrl: (String) -> Unit) {
     Text(stringResource(R.string.ondemand_how_to_book_title), style = MaterialTheme.typography.titleMedium)
-    Text(deadlineLine(booking, locale), style = MaterialTheme.typography.bodyMedium)
+    if (hasRules) {
+        Text(deadlineLine(booking, locale), style = MaterialTheme.typography.bodyMedium)
+    }
     booking.phoneNumber?.let { phone ->
         Button(onClick = { onCall(phone) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ondemand_call, phone)) }
     }

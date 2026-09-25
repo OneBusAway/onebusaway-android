@@ -111,6 +111,29 @@ class OnDemandServicePresentationTest {
     }
 
     @Test
+    fun `the service url is the info link when no booking rule has one`() {
+        val service = alexandria.copy(bookingRules = mapOf("5088_booking" to booking.copy(infoUrl = null)), url = "https://example.com/dot-paratransit")
+        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
+        assertEquals("https://example.com/dot-paratransit", summary.infoUrl)
+    }
+
+    @Test
+    fun `a booking rule info url wins over the service url`() {
+        val service = alexandria.copy(url = "https://example.com/dot-paratransit")
+        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
+        assertEquals("https://www.alexandriava.gov/Paratransit", summary.infoUrl)
+    }
+
+    @Test
+    fun `a service url still shows the booking section when there are no rules`() {
+        val service = alexandria.copy(rules = emptyList(), url = "https://example.com/dot-paratransit")
+        val content = presentService(service, tuesdayAfternoon)
+        assertTrue(content.whenRows.isEmpty())
+        val summary = requireNotNull(content.booking)
+        assertEquals("https://example.com/dot-paratransit", summary.infoUrl)
+    }
+
+    @Test
     fun `a same-day rule without a minimum notice yields no deadline but keeps the contact`() {
         val unknownNotice = booking.copy(bookingType = BookingType.SAME_DAY, priorNoticeLastDay = null, priorNoticeLastTime = null, priorNoticeStartDay = null, priorNoticeStartTime = null)
         val service = alexandria.copy(bookingRules = mapOf("5088_booking" to unknownNotice))

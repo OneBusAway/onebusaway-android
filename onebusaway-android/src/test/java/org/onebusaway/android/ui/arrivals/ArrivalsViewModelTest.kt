@@ -21,6 +21,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -516,5 +517,78 @@ class ArrivalsViewModelTest {
         val content = viewModel.state.value as ArrivalsUiState.Content
         assertEquals(listOf("a1"), content.alerts.map { it.situationId })
         assertEquals(0, content.hiddenAlertCount)
+    }
+
+    // --- stopViewed telemetry (once per visit, on the first successful load) --------------------
+
+    @Test
+    fun `stopViewed emits once on the first successful load`() = runTest {
+        val repository = FakeArrivalsRepository(Result.success(data()))
+        val viewModel = ArrivalsViewModel("1_100", repository)
+        val events = mutableListOf<StopViewedEvent>()
+        val job = launch { viewModel.stopViewed.collect { events.add(it) } }
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertEquals(listOf(StopViewedEvent("1_100", "Pine St & 3rd Ave", 0.0, 0.0)), events)
+        job.cancel()
+    }
+
+    @Test
+    fun `stopViewed does not emit again on a later poll refresh`() = runTest {
+        val repository = FakeArrivalsRepository(Result.success(data()))
+        val viewModel = ArrivalsViewModel("1_100", repository)
+        val events = mutableListOf<StopViewedEvent>()
+        val job = launch { viewModel.stopViewed.collect { events.add(it) } }
+        advanceUntilIdle()
+
+        viewModel.refresh() // initial load
+        viewModel.refresh() // auto-refresh poll
+        viewModel.refresh() // another poll
+        advanceUntilIdle()
+
+        assertEquals(1, events.size)
+        job.cancel()
+    }
+
+    @Test
+    fun `stopViewed does not emit when the load fails with nothing to show`() = runTest {
+        val viewModel = ArrivalsViewModel(
+            "1_100",
+            FakeArrivalsRepository(Result.failure(IOException("No network")))
+        )
+        val events = mutableListOf<StopViewedEvent>()
+        val job = launch { viewModel.stopViewed.collect { events.add(it) } }
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertTrue(events.isEmpty())
+        job.cancel()
+    }
+
+    @Test
+    fun `a stale first response is not reported, but the next fresh response is`() = runTest {
+        // A stale fallback (isStale = true) isn't a genuine successful load; the once-per-visit report
+        // should wait for the first fresh response instead of being permanently skipped.
+        val repository = FakeArrivalsRepository(Result.success(data(isStale = true)))
+        val viewModel = ArrivalsViewModel("1_100", repository)
+        val events = mutableListOf<StopViewedEvent>()
+        val job = launch { viewModel.stopViewed.collect { events.add(it) } }
+        advanceUntilIdle()
+
+        viewModel.refresh() // stale — not reported
+        advanceUntilIdle()
+        assertTrue(events.isEmpty())
+
+        repository.result = Result.success(data(isStale = false))
+        viewModel.refresh() // fresh — reported
+        advanceUntilIdle()
+
+        assertEquals(1, events.size)
+        job.cancel()
     }
 }

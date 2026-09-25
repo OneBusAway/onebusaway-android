@@ -93,6 +93,21 @@ class ArrivalsViewModel @AssistedInject constructor(
     private val _arrivalsLoaded = MutableSharedFlow<ArrivalsLoaded>(extraBufferCapacity = 1)
     val arrivalsLoaded: SharedFlow<ArrivalsLoaded> = _arrivalsLoaded.asSharedFlow()
 
+    /**
+     * Emits once per visit, the first time this stop's arrivals load successfully (not on every 60s
+     * poll) — mirrors iOS, which fires its stop-viewed event exactly once per stop-screen visit on the
+     * first successful load. Plain data only: the device location and the `Context` needed to actually
+     * dispatch to [org.onebusaway.android.analytics.ObaAnalytics] aren't available here, so the host's
+     * `ArrivalsAnalyticsEffect` does the reporting — mirroring `HomeViewModel`'s `HomeAnalyticsEvent` /
+     * `HomeAnalyticsEffect` split.
+     */
+    private val _stopViewed = MutableSharedFlow<StopViewedEvent>(extraBufferCapacity = 1)
+    val stopViewed: SharedFlow<StopViewedEvent> = _stopViewed.asSharedFlow()
+
+    /** Guards [_stopViewed] so it fires at most once per ViewModel (i.e. per visit) even if the first
+     *  response is a stale fallback (no prior fresh load yet) rather than a genuine success. */
+    private var stopViewReported = false
+
     /** Whether the stop-details dialog (the overflow "show stop details" action) is showing. */
     private val _stopDetailsVisible = MutableStateFlow(false)
     val stopDetailsVisible: StateFlow<Boolean> = _stopDetailsVisible.asStateFlow()
@@ -138,6 +153,12 @@ class ArrivalsViewModel @AssistedInject constructor(
                 fatalError.value = null
                 loaded.value = data
                 repository.lastLoaded()?.let { _arrivalsLoaded.tryEmit(it) }
+                if (!data.isStale && !stopViewReported) {
+                    stopViewReported = true
+                    _stopViewed.tryEmit(
+                        StopViewedEvent(data.header.stopId, data.header.name, data.stopLat, data.stopLon)
+                    )
+                }
                 !data.isStale
             },
             onFailure = { error ->
@@ -291,3 +312,15 @@ class ArrivalsViewModel @AssistedInject constructor(
         )
     }
 }
+
+/**
+ * A one-shot "stop viewed" telemetry event ([ArrivalsViewModel.stopViewed]). Plain data only — no
+ * `Location`/`Context`, so the event (and the once-per-visit decision that produces it) stays
+ * JVM-testable; the host's `ArrivalsAnalyticsEffect` supplies the device location and dispatches it.
+ */
+data class StopViewedEvent(
+    val stopId: String,
+    val stopName: String?,
+    val stopLat: Double,
+    val stopLon: Double
+)

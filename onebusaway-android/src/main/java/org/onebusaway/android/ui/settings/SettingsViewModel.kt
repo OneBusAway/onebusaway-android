@@ -104,6 +104,7 @@ class SettingsViewModel @Inject constructor(
         showZoomControls = prefs.getBoolean(R.string.preference_key_show_zoom_controls, false),
         compactStopIcons = prefs.getBoolean(R.string.preference_key_compact_stop_icons, false),
         showRentalButton = prefs.getBoolean(R.string.preference_key_show_rental_button, true),
+        showOnDemandZones = prefs.getBoolean(R.string.preference_key_show_ondemand_zones, true),
         displayWeatherView = prefs.getBoolean(R.string.preference_key_display_weather_view, true),
         showAvailableStudies = prefs.getBoolean(R.string.preference_key_show_available_studies, true),
         leftHandMode = prefs.getBoolean(R.string.preference_key_left_hand_mode, false),
@@ -178,6 +179,8 @@ class SettingsViewModel @Inject constructor(
     fun onCompactStopIconsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_compact_stop_icons, value)
 
     fun onShowRentalButtonChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_rental_button, value)
+
+    fun onShowOnDemandZonesChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_ondemand_zones, value)
 
     fun onDisplayWeatherViewChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_display_weather_view, value)
 

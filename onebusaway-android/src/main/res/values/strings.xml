@@ -687,6 +687,10 @@
 
     <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
     <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
+    <!-- Settings: title of the switch that toggles the on-demand (GTFS-Flex) zones layer on the map -->
+    <string name="preferences_show_ondemand_zones_title">Show on-demand zones</string>
+    <!-- Settings: summary explaining what the on-demand zones switch above does -->
+    <string name="preferences_show_ondemand_zones_summary">Draw dial-a-ride service areas on the map where the region publishes them</string>
     <!-- Settings: how long the home screen keeps a selected stop after the rider last left it (#2294) -->
     <string name="preferences_focus_timeout_title">Remember selected stop for</string>
     <string name="preferences_focus_timeout_30_minutes">30 minutes</string>

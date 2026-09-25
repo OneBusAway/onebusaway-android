@@ -24,8 +24,8 @@ import javax.inject.Singleton
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
-import org.onebusaway.android.region.Region
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 
 /**
@@ -78,5 +78,4 @@ class ObaEndpointResolver @Inject constructor(
  * per-deployment verdict (such as [org.onebusaway.android.api.data.OnDemandSupport]'s) keys on it so it
  * names the server that answered.
  */
-fun obaEndpoint(customApiUrl: String?, region: Region?): String? =
-    customApiUrl?.takeIf { it.isNotEmpty() } ?: region?.obaBaseUrl
+fun obaEndpoint(customApiUrl: String?, region: Region?): String? = customApiUrl?.takeIf { it.isNotEmpty() } ?: region?.obaBaseUrl

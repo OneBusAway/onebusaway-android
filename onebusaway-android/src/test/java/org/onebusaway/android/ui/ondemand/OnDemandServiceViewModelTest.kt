@@ -40,8 +40,8 @@ import org.onebusaway.android.models.BookingType
 import org.onebusaway.android.models.FlexCalendar
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
-import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.models.ServiceDayTime
+import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.TimeProvider
 

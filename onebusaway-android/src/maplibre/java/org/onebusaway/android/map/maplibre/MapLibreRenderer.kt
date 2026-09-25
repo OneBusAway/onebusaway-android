@@ -32,6 +32,7 @@ import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.annotations.PolygonOptions
 import org.maplibre.android.annotations.Polyline
 import org.maplibre.android.annotations.PolylineOptions
 import org.maplibre.android.geometry.LatLng
@@ -60,10 +61,14 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.ZonePolygon
+import org.onebusaway.android.map.render.contains
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
+import org.onebusaway.android.map.render.zoneFillColor
+import org.onebusaway.android.map.render.zoneStrokeColor
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -284,6 +289,7 @@ class MapLibreRenderer(
         rentalIcons.clear()
         routeBadgeByMarker.clear()
 
+        renderZones(snapshot.onDemandZones)
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
         routeStopLayer.render(
             snapshot.stops,
@@ -326,6 +332,21 @@ class MapLibreRenderer(
         }
 
         renderRouteBadges(snapshot.routeBadges)
+    }
+
+    // Classic annotations draw in add order, so adding these before the stops puts zones underneath. The
+    // classic PolygonOptions has no stroke width, so the outline is the SDK's hairline.
+    private fun renderZones(zones: List<ZonePolygon>) {
+        for (zone in zones) {
+            val exterior = zone.rings.firstOrNull() ?: continue
+            val options = PolygonOptions()
+                .addAll(exterior.map { it.toLatLng() })
+                .fillColor(zoneFillColor(zone.color))
+                .strokeColor(zoneStrokeColor(zone.color))
+                .alpha(1f)
+            for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
+            staticAnnotations.add(map.addPolygon(options))
+        }
     }
 
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
@@ -760,6 +781,12 @@ class MapLibreRenderer(
     }
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
+
+    /** The topmost zone under [point], for the adapter's map-click dispatch (classic polygons have no click listener). */
+    fun zoneAt(point: LatLng): ZonePolygon? {
+        val geoPoint = GeoPoint(point.latitude, point.longitude)
+        return renderState.snapshot.value.onDemandZones.lastOrNull { it.contains(geoPoint) }
+    }
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

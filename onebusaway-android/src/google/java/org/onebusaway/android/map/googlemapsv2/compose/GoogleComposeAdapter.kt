@@ -312,6 +312,11 @@ private fun wireClicks(
         cb.onMapLongClick(GeoPoint(latLng.latitude, latLng.longitude))
     }
 
+    map.setOnPolygonClickListener { polygon ->
+        infoWindows.clear()
+        renderer.zoneForPolygon(polygon)?.let(cb::onOnDemandZoneClick)
+    }
+
     map.setOnMarkerClickListener { marker -> routeMarkerTap(marker, renderer, infoWindows, cb) }
 
     map.setOnInfoWindowClickListener { marker ->

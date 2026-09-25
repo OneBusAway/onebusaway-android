@@ -311,6 +311,11 @@ private fun wireClicks(
             callbacks.onStopClick(stop)
             return@addOnMapClickListener true
         }
+        renderer.zoneAt(point)?.let { zone ->
+            infoWindows.clear()
+            callbacks.onOnDemandZoneClick(zone)
+            return@addOnMapClickListener true
+        }
         infoWindows.clear()
         callbacks.onMapClick(GeoPoint(point.latitude, point.longitude))
         false

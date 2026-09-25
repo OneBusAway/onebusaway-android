@@ -34,6 +34,8 @@ import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polygon
+import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.gms.maps.model.StrokeStyle
@@ -70,11 +72,15 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.ZONE_STROKE_WIDTH_PX
+import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
+import org.onebusaway.android.map.render.zoneFillColor
+import org.onebusaway.android.map.render.zoneStrokeColor
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -117,6 +123,8 @@ class GoogleMapRenderer(
         ContextCompat.getColor(context, R.color.route_stop_outline)
     )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
+    private val staticPolygons = mutableListOf<Polygon>()
+    private val zoneByPolygon = HashMap<Polygon, ZonePolygon>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -271,6 +279,9 @@ class GoogleMapRenderer(
         staticMarkers.clear()
         staticPolylines.forEach { it.remove() }
         staticPolylines.clear()
+        staticPolygons.forEach { it.remove() }
+        staticPolygons.clear()
+        zoneByPolygon.clear()
         rentalByMarker.clear()
         continuationBadgeByMarker.clear()
         routeBadgeByMarker.clear()
@@ -280,6 +291,7 @@ class GoogleMapRenderer(
     fun renderStatic(snapshot: MapRenderSnapshot = renderState.snapshot.value) {
         clearStatic()
 
+        renderZones(snapshot.onDemandZones)
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand, snapshot.compactStopIcons)
         routeStopLayer.render(
             snapshot.stops,
@@ -321,6 +333,24 @@ class GoogleMapRenderer(
 
         snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
         renderRouteBadges(snapshot.routeBadges)
+    }
+
+    // Drawn before the stop layers and at [ZONE_Z_INDEX] so zones sit beneath every line and marker.
+    private fun renderZones(zones: List<ZonePolygon>) {
+        for (zone in zones) {
+            val exterior = zone.rings.firstOrNull() ?: continue
+            val options = PolygonOptions()
+                .addAll(exterior.map { it.toLatLng() })
+                .fillColor(zoneFillColor(zone.color))
+                .strokeColor(zoneStrokeColor(zone.color))
+                .strokeWidth(ZONE_STROKE_WIDTH_PX)
+                .clickable(true)
+                .zIndex(ZONE_Z_INDEX)
+            for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
+            val polygon = map.addPolygon(options)
+            staticPolygons.add(polygon)
+            zoneByPolygon[polygon] = zone
+        }
     }
 
     private fun renderRouteBadges(badges: List<RouteBadge>) {
@@ -899,6 +929,9 @@ class GoogleMapRenderer(
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
+    /** The zone a native polygon draws, for the adapter's polygon-click dispatch. */
+    fun zoneForPolygon(polygon: Polygon): ZonePolygon? = zoneByPolygon[polygon]
+
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
     /** The route-continuation badge (#1691) tapped, or null if [marker] isn't that badge. */
@@ -953,6 +986,9 @@ class GoogleMapRenderer(
         // The ping ripple draws above the route line/band (gms always draws Circles beneath markers, so it
         // never covers the vehicle icon regardless of this value).
         private const val PING_Z_INDEX = 3f
+
+        /** Beneath route lines (z 0) and every marker: zones are context, not content. */
+        private const val ZONE_Z_INDEX = -1f
 
         // The route-continuation badge (#1691) draws above vehicles so it's always reliably tappable.
         private const val ROUTE_BADGE_Z_INDEX = 1.5f

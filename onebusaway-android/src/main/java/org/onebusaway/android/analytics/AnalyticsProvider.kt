@@ -84,7 +84,7 @@ class AnalyticsProvider @Inject constructor(
         val serverUrl = region.umamiAnalyticsUrl ?: return null
         val websiteId = region.umamiAnalyticsId ?: return null
         val host = hostOf(baseUrl) ?: return null
-        return UmamiAnalytics(serverUrl, websiteId, host, installId.get())
+        return UmamiAnalytics(serverUrl, websiteId, host, installId.value)
     }
 
     private fun hostOf(url: String): String? = try {

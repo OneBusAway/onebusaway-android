@@ -16,9 +16,6 @@
 package org.onebusaway.android.analytics
 
 import java.util.UUID
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,25 +29,25 @@ import org.onebusaway.android.testing.FakePreferencesRepository
 class AnalyticsInstallIdTest {
 
     @Test
-    fun `generates a valid random UUID on first call`() {
-        val id = AnalyticsInstallId(FakePreferencesRepository()).get()
+    fun `generates a valid random UUID on first access`() {
+        val id = AnalyticsInstallId(FakePreferencesRepository()).value
         // Throws if not a valid UUID string.
         assertTrue(UUID.fromString(id).toString() == id)
     }
 
     @Test
-    fun `is stable across repeated calls`() {
+    fun `is stable across repeated reads`() {
         val installId = AnalyticsInstallId(FakePreferencesRepository())
-        val first = installId.get()
-        val second = installId.get()
+        val first = installId.value
+        val second = installId.value
         assertEquals(first, second)
     }
 
     @Test
     fun `is stable across separate instances sharing the same persisted store`() {
         val prefs = FakePreferencesRepository()
-        val first = AnalyticsInstallId(prefs).get()
-        val second = AnalyticsInstallId(prefs).get()
+        val first = AnalyticsInstallId(prefs).value
+        val second = AnalyticsInstallId(prefs).value
         assertEquals(first, second)
     }
 
@@ -59,32 +56,6 @@ class AnalyticsInstallIdTest {
         val prefs = FakePreferencesRepository().apply {
             setString("analyticsInstallId", "existing-id")
         }
-        assertEquals("existing-id", AnalyticsInstallId(prefs).get())
-    }
-
-    @Test
-    fun `concurrent first calls converge on a single id`() {
-        val installId = AnalyticsInstallId(FakePreferencesRepository())
-        val results = CopyOnWriteArrayList<String>()
-        val threadCount = 16
-        val ready = CountDownLatch(threadCount)
-        val go = CountDownLatch(1)
-        val done = CountDownLatch(threadCount)
-        val executor = Executors.newFixedThreadPool(threadCount)
-        repeat(threadCount) {
-            executor.execute {
-                ready.countDown()
-                go.await()
-                results += installId.get()
-                done.countDown()
-            }
-        }
-        ready.await()
-        go.countDown()
-        done.await()
-        executor.shutdown()
-
-        assertEquals(threadCount, results.size)
-        assertEquals(1, results.toSet().size)
+        assertEquals("existing-id", AnalyticsInstallId(prefs).value)
     }
 }

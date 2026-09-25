@@ -40,19 +40,10 @@ class AnalyticsInstallId @Inject constructor(
     private val prefs: PreferencesRepository
 ) {
 
-    @Volatile
-    private var cached: String? = null
-
-    /** Returns the install's anonymous id, generating and persisting one on first call. */
-    fun get(): String {
-        cached?.let { return it }
-        synchronized(this) {
-            cached?.let { return it }
-            val id = prefs.getString(INSTALL_ID_KEY, null) ?: UUID.randomUUID().toString().also {
-                prefs.setString(INSTALL_ID_KEY, it)
-            }
-            cached = id
-            return id
+    /** The install's anonymous id, generated and persisted on first access. */
+    val value: String by lazy {
+        prefs.getString(INSTALL_ID_KEY, null) ?: UUID.randomUUID().toString().also {
+            prefs.setString(INSTALL_ID_KEY, it)
         }
     }
 

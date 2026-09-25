@@ -29,6 +29,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +80,11 @@ object AppModule {
         scope = scope,
         produceFile = { context.preferencesDataStoreFile("settings") }
     )
+
+    /** CPU-bound work off the main thread; see [DefaultDispatcher]. */
+    @Provides
+    @DefaultDispatcher
+    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
     /** Wall-clock source — the single `System.currentTimeMillis()` boundary for injected consumers. */
     @Provides

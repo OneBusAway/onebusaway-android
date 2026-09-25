@@ -18,7 +18,9 @@ package org.onebusaway.android.ui.ondemand
 import androidx.lifecycle.SavedStateHandle
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -52,7 +54,11 @@ class OnDemandServiceViewModelTest {
 
     private val service = OnDemandService("5088_77652", "5088", "5088_77652", "DOT Paratransit", OnDemandServiceKind.ZONE, agencyTimezone = "America/Los_Angeles")
 
-    private fun viewModel(source: OnDemandDataSource) = OnDemandServiceViewModel(SavedStateHandle(mapOf(NavRoutes.ARG_ONDEMAND_SERVICE_ID to "5088_77652")), source)
+    private fun viewModel(source: OnDemandDataSource, presentDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()) = OnDemandServiceViewModel(
+        SavedStateHandle(mapOf(NavRoutes.ARG_ONDEMAND_SERVICE_ID to "5088_77652")),
+        source,
+        presentDispatcher
+    )
 
     @Test
     fun `loads the service named by the nav arg`() = runTest {
@@ -95,6 +101,15 @@ class OnDemandServiceViewModelTest {
         vm.retry()
         source.pending[1].complete(OnDemandResult.Loaded(service))
         source.pending[0].complete(OnDemandResult.Failed(IOException("offline")))
+        assertTrue(vm.state.value is OnDemandServiceUiState.Content)
+    }
+
+    @Test
+    fun `the service is presented on the injected dispatcher, not the main thread`() = runTest {
+        val presentDispatcher = StandardTestDispatcher(testScheduler)
+        val vm = viewModel(FakeDataSource(OnDemandResult.Loaded(service)), presentDispatcher)
+        assertEquals(OnDemandServiceUiState.Loading, vm.state.value)
+        presentDispatcher.scheduler.advanceUntilIdle()
         assertTrue(vm.state.value is OnDemandServiceUiState.Content)
     }
 }

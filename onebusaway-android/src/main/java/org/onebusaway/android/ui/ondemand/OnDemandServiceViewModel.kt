@@ -21,14 +21,17 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.api.data.OnDemandDataSource
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.api.isNotFound
+import org.onebusaway.android.app.di.DefaultDispatcher
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 
@@ -36,7 +39,9 @@ import org.onebusaway.android.ui.nav.NavRoutes
 @HiltViewModel
 class OnDemandServiceViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    private val dataSource: OnDemandDataSource
+    private val dataSource: OnDemandDataSource,
+    // presentService walks every rule's calendar day by day, which is too much for the main thread.
+    @param:DefaultDispatcher private val presentDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val serviceId: String = requireNotNull(savedState[NavRoutes.ARG_ONDEMAND_SERVICE_ID]) { "on-demand service page requires a service id" }
@@ -60,7 +65,7 @@ class OnDemandServiceViewModel @Inject constructor(
             _state.value = when (val result = dataSource.service(serviceId)) {
                 // The deadline is computed against the device wall clock (spec §6.3), never the
                 // envelope's currentTime, which sits on the long-cache tier.
-                is OnDemandResult.Loaded -> presentService(result.value, Instant.ofEpochMilli(WallTime.now().epochMs))
+                is OnDemandResult.Loaded -> withContext(presentDispatcher) { presentService(result.value, Instant.ofEpochMilli(WallTime.now().epochMs)) }
                 is OnDemandResult.Failed -> if (result.cause.isNotFound) OnDemandServiceUiState.NotFound else OnDemandServiceUiState.Error
                 OnDemandResult.Unsupported -> OnDemandServiceUiState.Error
             }

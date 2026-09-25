@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
@@ -37,14 +40,17 @@ internal fun OnDemandService.toItem(): OnDemandServiceItem = OnDemandServiceItem
 
 /**
  * Resolves a stop's pointer [ids] to card items, in pointer order, through [cache] (services are
- * static data; a 60-second poll must not refetch them). A service that fails to load is simply left
- * off the card — the arrivals themselves are the screen's job, and the pointer will be tried again on
- * the next load.
+ * static data; a 60-second poll must not refetch them). Uncached pointers are fetched concurrently,
+ * since the arrivals wait on this. A service that fails to load is simply left off the card — the
+ * arrivals themselves are the screen's job, and the pointer will be tried again on the next load.
+ * [cache] must tolerate concurrent writes.
  */
 internal suspend fun loadOnDemandItems(
     ids: List<String>,
     cache: MutableMap<String, OnDemandServiceItem>,
     fetch: suspend (String) -> OnDemandResult<OnDemandService>
-): List<OnDemandServiceItem> = ids.mapNotNull { id ->
-    cache[id] ?: (fetch(id) as? OnDemandResult.Loaded)?.value?.toItem()?.also { cache[id] = it }
+): List<OnDemandServiceItem> = coroutineScope {
+    ids.map { id ->
+        async { cache[id] ?: (fetch(id) as? OnDemandResult.Loaded)?.value?.toItem()?.also { cache[id] = it } }
+    }.awaitAll().filterNotNull()
 }

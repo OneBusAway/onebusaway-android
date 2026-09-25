@@ -16,8 +16,12 @@
 package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.models.AvailabilityRule
@@ -59,5 +63,26 @@ class OnDemandItemsTest {
         }
         assertEquals(0, fetches)
         assertEquals("Cached", items.single().name)
+    }
+
+    @Test
+    fun `pointers are fetched concurrently and still come back in pointer order`() = runTest {
+        val pending = mapOf("a" to CompletableDeferred<OnDemandResult<OnDemandService>>(), "b" to CompletableDeferred())
+        val requested = mutableListOf<String>()
+        val load = async {
+            loadOnDemandItems(listOf("a", "b"), mutableMapOf()) { id ->
+                requested += id
+                pending.getValue(id).await()
+            }
+        }
+        runCurrent()
+
+        assertEquals(listOf("a", "b"), requested)
+        assertFalse(load.isCompleted)
+
+        // Complete out of order: the result must still follow the pointer order.
+        pending.getValue("b").complete(OnDemandResult.Loaded(service("b", null)))
+        pending.getValue("a").complete(OnDemandResult.Loaded(service("a", null)))
+        assertEquals(listOf("a", "b"), load.await().map { it.id })
     }
 }

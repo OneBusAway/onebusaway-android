@@ -127,7 +127,9 @@ data class ArrivalsData(
     val hideAlertsByDefault: Boolean,
     val stopCode: String?,
     val stopLat: Double,
-    val stopLon: Double
+    val stopLon: Double,
+    /** Realtime outages detected for transit agencies serving this stop (issue #2301). */
+    val realtimeOutages: List<RealtimeOutage> = emptyList()
 )
 
 /** Loads real-time arrivals for a stop and persists the stop / route favorites. */
@@ -357,6 +359,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // The situation ids that are active right now, so a per-arrival alert indicator lights up
         // only for currently-active alerts — matching the banner's active set (issue #1687 Bug 2).
         val activeSituationIds = situations.filter(isActive).mapTo(HashSet()) { it.id }
+        val realtimeOutages = detectRealtimeOutages(arrivals) { agencyFor(snapshot, it.routeId) }
         return ArrivalsData(
             arrivals = arrivals,
             // Stable (agency, line, headsign) row order (#1822), not ETA — a row's position shouldn't
@@ -374,7 +377,8 @@ class DefaultArrivalsRepository @Inject constructor(
             preferences.getBoolean(R.string.preference_key_hide_alerts, false),
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
-            stopLon = stop?.longitude ?: 0.0
+            stopLon = stop?.longitude ?: 0.0,
+            realtimeOutages = realtimeOutages
         )
     }
 
@@ -401,6 +405,14 @@ class DefaultArrivalsRepository @Inject constructor(
      *  reference is missing from the snapshot. Shared by the route-row sort key and [buildActions] so
      *  the two don't independently reimplement the same route→agency lookup. */
     private fun agencyNameFor(snapshot: StopArrivals, routeId: String): String? = snapshot.route(routeId)?.agencyId?.let(snapshot::agencyName)
+
+    /** The operating agency (id and display name) for a route, or null when either the route or its agency
+     *  reference is missing from the snapshot. */
+    private fun agencyFor(snapshot: StopArrivals, routeId: String): OperatingAgency? {
+        val agencyId = snapshot.route(routeId)?.agencyId ?: return null
+        val name = snapshot.agencyName(agencyId) ?: return null
+        return OperatingAgency(id = agencyId, name = name)
+    }
 
     /** Precomputes the navigation/dialog data for each arrival (legacy reads these on menu tap). */
     private fun buildActions(

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
@@ -27,6 +28,7 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
+import org.onebusaway.android.api.data.OnDemandDataSource
 import org.onebusaway.android.api.data.StopArrivals
 import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.database.oba.ImportGate
@@ -127,7 +129,9 @@ data class ArrivalsData(
     val hideAlertsByDefault: Boolean,
     val stopCode: String?,
     val stopLat: Double,
-    val stopLon: Double
+    val stopLon: Double,
+    /** The stop's on-demand services (its `onDemandServiceIds`) that loaded, in pointer order. */
+    val onDemandServices: List<OnDemandServiceItem> = emptyList()
 )
 
 /** Loads real-time arrivals for a stop and persists the stop / route favorites. */
@@ -233,7 +237,8 @@ class DefaultArrivalsRepository @Inject constructor(
     private val preferences: PreferencesRepository,
     private val display: ArrivalsDisplay,
     private val elapsedClock: ElapsedClock,
-    private val demoMode: DemoModeState
+    private val demoMode: DemoModeState,
+    private val onDemandDataSource: OnDemandDataSource
 ) : ArrivalsRepository {
 
     /**
@@ -264,6 +269,10 @@ class DefaultArrivalsRepository @Inject constructor(
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
     // Recent stops. markAsUsed bumps USE_COUNT, so this is done once — not on every 60s poll/refresh.
     private var stopRecorded = false
+
+    // On-demand services are static data, so each pointer is fetched once per repository (i.e. per
+    // viewed stop) rather than on every poll. Concurrent because a user refresh can overlap the poll.
+    private val onDemandItemsById: MutableMap<String, OnDemandServiceItem> = ConcurrentHashMap()
 
     override suspend fun getArrivals(
         stopId: String,
@@ -339,6 +348,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = display.convert(snapshot.arrivals, now, includeArrivalDepartureLabel)
         val stop = snapshot.stop
+        val onDemandServices = loadOnDemandItems(stop?.onDemandServiceIds.orEmpty(), onDemandItemsById, onDemandDataSource::service)
         val userInfo = stopDao.userInfo(snapshot.stopId)
         val header = StopHeader(
             stopId = snapshot.stopId,
@@ -374,7 +384,8 @@ class DefaultArrivalsRepository @Inject constructor(
             preferences.getBoolean(R.string.preference_key_hide_alerts, false),
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
-            stopLon = stop?.longitude ?: 0.0
+            stopLon = stop?.longitude ?: 0.0,
+            onDemandServices = onDemandServices
         )
     }
 

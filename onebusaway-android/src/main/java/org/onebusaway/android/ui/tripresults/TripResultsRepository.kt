@@ -33,7 +33,10 @@ import org.onebusaway.android.directions.model.substitutableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.geoPointOrNull
+import org.onebusaway.android.util.inInterchangeableOrder
+import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
@@ -47,8 +50,11 @@ interface TripResultsRepository {
     /** Summarizes each itinerary into an option card ([ItineraryOption]). */
     suspend fun summarize(itineraries: List<TripItinerary>): Result<List<ItineraryOption>>
 
-    /** Builds the trip-log timeline entries for a single itinerary. */
-    suspend fun directionsFor(itinerary: TripItinerary): Result<List<TripLogEntry>>
+    /**
+     * Builds the trip-log timeline entries for a single itinerary. [plannedStart] is
+     * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart], or null when the plan doesn't say.
+     */
+    suspend fun directionsFor(itinerary: TripItinerary, plannedStart: ServerTime?): Result<List<TripLogEntry>>
 }
 
 class DefaultTripResultsRepository @Inject constructor(
@@ -79,7 +85,8 @@ class DefaultTripResultsRepository @Inject constructor(
     )
 
     override suspend fun directionsFor(
-        itinerary: TripItinerary
+        itinerary: TripItinerary,
+        plannedStart: ServerTime?
     ): Result<List<TripLogEntry>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
             // The legacy generator supplies the localized step / intermediate-stop text (needs a Context
@@ -92,7 +99,7 @@ class DefaultTripResultsRepository @Inject constructor(
             // the chain leader, #2000); the builder folds the same continuation legs into the leader's
             // Transit entry so the two agree.
             val routeLegRefs = resolveRouteLegRefs(itinerary.legs, itinerary.substitutableRoutes())
-            TripLogBuilder.build(itinerary.legs, flat, routeLegRefs)
+            TripLogBuilder.build(itinerary.legs, flat, routeLegRefs, plannedStart)
         }
     }
 
@@ -112,6 +119,9 @@ class DefaultTripResultsRepository @Inject constructor(
         substitutable: List<List<InterchangeableRoute>>
     ): List<RouteLegRef?> {
         val refs = MutableList<RouteLegRef?>(legs.size) { null }
+        // Every OBA id this itinerary needs, resolved in one network round (#2170) and index-aligned to
+        // `legs`, so each leg's stops can only be named on that leg's own route.
+        val ids = otpObaIdResolver.resolveLegs(legs)
         for (chain in Interlines.chains(legs)) {
             val leader = legs[chain.leaderIndex]
             val transitions = chain.transitionLegIndices.associateWith { j ->
@@ -119,7 +129,7 @@ class DefaultTripResultsRepository @Inject constructor(
                     badge = legs[j].shortNameBadge(),
                     routeDisplayName = legs[j].routeDisplayName(),
                     headsign = legs[j].headsign,
-                    stop = legs[j].from.resolveStop(legs[j])
+                    stop = legs[j].from.toStopRef(ids[j].fromStopId)
                 )
             }
             // The ride's legs beyond the leader — each continued onto on the same vehicle, boarding at
@@ -127,11 +137,9 @@ class DefaultTripResultsRepository @Inject constructor(
             // matches — a self-interline) and shows the shared vehicle across them (#2000). A leg whose
             // route can't be resolved to an OBA id is dropped (it can't be loaded), same as the leader.
             val extraSegments = ((chain.leaderIndex + 1)..chain.alightIndex).mapNotNull { j ->
-                val routeId = otpObaIdResolver.obaRouteId(legs[j].routeId, legs[j].agencyId, legs[j].agencyName)
-                    ?: return@mapNotNull null
                 RouteFocusSegment(
-                    routeId = routeId,
-                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName),
+                    routeId = ids[j].routeId ?: return@mapNotNull null,
+                    anchorStopId = ids[j].fromStopId,
                     directionHeadsign = legs[j].headsign
                 )
             }
@@ -142,18 +150,34 @@ class DefaultTripResultsRepository @Inject constructor(
             // "stay on board" rows do, so the two mark one ride's route changes identically. A leg with no
             // geometry contributes an empty span rather than being dropped — the spans stay aligned to the
             // ride's legs, and the map skips one it can't draw.
+            //
+            // The leg's own published colour rides along so the map can draw the span before its route loads
+            // (see [riddenSpanColorSource], #2186). Deliberately the raw parse rather than
+            // [ridePresentationColor]'s colourless-ride substitution: this stands in for the route's
+            // *published* colour until that route can state it, and the map's own route lines have never had
+            // that substitution either (#2041's remaining work), so a colourless ride resolves the same way
+            // before and after the load instead of changing colour on landing.
+            // The routes the rider may board in this one's place, in the order the ride's badge names them
+            // (#2010) — so the ride keeps its stripes when the rider drills into it (#2100/#2241), and keeps
+            // them in the badge's own order. Read off the chain leader, which is where `substitutableRoutes`
+            // puts them, and empty for an interlined chain by construction.
+            val interchangeableColors = substitutable[chain.leaderIndex]
+                .inInterchangeableOrder { it.displayName }
+                .map { parseObaHexColor(it.routeColor) }
             val riddenSpans = (chain.leaderIndex..chain.alightIndex).map { j ->
                 RiddenSpan(
                     points = legs[j].legGeometry?.decodedPoints().orEmpty(),
-                    routeId = otpObaIdResolver.obaRouteId(legs[j].routeId, legs[j].agencyId, legs[j].agencyName),
-                    startsCutover = j in chain.transitionLegIndices
+                    routeId = ids[j].routeId,
+                    plannedColor = parseObaHexColor(legs[j].routeColor),
+                    startsCutover = j in chain.transitionLegIndices,
+                    interchangeableColors = interchangeableColors
                 )
             }
             refs[chain.leaderIndex] = RouteLegRef(
-                routeId = otpObaIdResolver.obaRouteId(leader.routeId, leader.agencyId, leader.agencyName),
+                routeId = ids[chain.leaderIndex].routeId,
                 headsign = leader.headsign,
-                board = leader.from.resolveStop(leader),
-                alight = legs[chain.alightIndex].to.resolveStop(legs[chain.alightIndex]),
+                board = leader.from.toStopRef(ids[chain.leaderIndex].fromStopId),
+                alight = legs[chain.alightIndex].to.toStopRef(ids[chain.alightIndex].toStopId),
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
                 riddenSpans = riddenSpans,
@@ -177,8 +201,12 @@ class DefaultTripResultsRepository @Inject constructor(
         )
     }
 
-    private suspend fun TripPlace.resolveStop(leg: TripLeg) = RouteStopRef(
-        stopId = otpObaIdResolver.obaStopId(stopId, leg.agencyId, leg.agencyName),
+    /**
+     * The stop as the drawer/map refer to it. The name/code/point stand on their own, so a stop whose
+     * OBA id couldn't be resolved is still labelled and framed; it just gets no arrivals board.
+     */
+    private fun TripPlace.toStopRef(obaStopId: String?) = RouteStopRef(
+        stopId = obaStopId,
         stopCode = stopCode,
         name = name,
         point = geoPointOrNull(lat, lon)

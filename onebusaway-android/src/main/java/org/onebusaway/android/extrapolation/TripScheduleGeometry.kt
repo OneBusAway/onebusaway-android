@@ -15,7 +15,10 @@
  */
 package org.onebusaway.android.extrapolation
 
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.ScheduleTime
 
 /**
  * This stop's one offset along the trip, or null when the trip does not serve it — or serves it more
@@ -62,4 +65,77 @@ fun ObaTripSchedule.findSegmentStartIndex(distanceAlongTrip: Double): Int {
     }
     // At exactly the last stop's distance
     return stopTimes.size - 2
+}
+
+/**
+ * A trip's scheduled clock, read forward from a vehicle's current position: how long the schedule
+ * says it should take to *first reach* each point ahead.
+ *
+ * Counts scheduled dwells, because it is compared against wall-clock elapsed time and a vehicle
+ * really does spend the dwell. A dwell shows up as a plateau: schedule time advances while distance
+ * does not.
+ *
+ * Deliberately just the two arrays. Reading the curve is [FirstPassageDistribution]'s job, and it
+ * needs the mapping in both directions with its own plateau conventions, so a lookup here would be
+ * a second copy of the same interpolation rather than a service to anyone.
+ *
+ * @property scheduleSeconds cumulative scheduled seconds from the anchor; starts at 0, non-decreasing
+ * @property distances distance along the trip in meters at each knot; starts at the anchor's own
+ *   distance, non-decreasing
+ */
+class PassageProfile
+internal constructor(
+    val scheduleSeconds: DoubleArray,
+    val distances: DoubleArray
+)
+
+/**
+ * Builds the [PassageProfile] from [startDist] to the last scheduled stop, or null when the schedule
+ * cannot support one: fewer than two stops, a distance outside the scheduled range, a degenerate
+ * segment under the vehicle, or nothing left ahead of it.
+ */
+fun ObaTripSchedule.passageProfileFrom(startDist: Double): PassageProfile? {
+    if (stopTimes.size < 2) return null
+    val segIdx =
+        try {
+            findSegmentStartIndex(startDist)
+        } catch (e: IndexOutOfBoundsException) {
+            return null
+        }
+
+    val segStart = stopTimes[segIdx]
+    val segEnd = stopTimes[segIdx + 1]
+    val segDist = segEnd.distanceAlongTrip - segStart.distanceAlongTrip
+    val segTravel: Duration = segEnd.arrivalTime - segStart.departureTime
+    if (segDist <= 0 || segTravel <= Duration.ZERO) return null
+
+    // The anchor's own place on the schedule clock, interpolated across the segment it sits in —
+    // the same construction replaySchedule uses to put a distance on the schedule timeline.
+    val fraction = (startDist - segStart.distanceAlongTrip) / segDist
+    val origin: ScheduleTime = segStart.departureTime + segTravel * fraction
+
+    val seconds = ArrayList<Double>(2 * (stopTimes.size - segIdx))
+    val distances = ArrayList<Double>(2 * (stopTimes.size - segIdx))
+    seconds.add(0.0)
+    distances.add(startDist)
+
+    fun addKnot(t: Double, d: Double) {
+        // Schedule time must advance for the curve to stay invertible; a stop the schedule
+        // reaches no later than the previous knot folds into it, carrying its distance forward.
+        if (t <= seconds.last()) {
+            if (d > distances.last()) distances[distances.size - 1] = d
+            return
+        }
+        seconds.add(t)
+        distances.add(maxOf(d, distances.last()))
+    }
+
+    for (i in (segIdx + 1) until stopTimes.size) {
+        val stop = stopTimes[i]
+        addKnot((stop.arrivalTime - origin).toDouble(DurationUnit.SECONDS), stop.distanceAlongTrip)
+        addKnot((stop.departureTime - origin).toDouble(DurationUnit.SECONDS), stop.distanceAlongTrip)
+    }
+
+    if (seconds.size < 2) return null
+    return PassageProfile(seconds.toDoubleArray(), distances.toDoubleArray())
 }

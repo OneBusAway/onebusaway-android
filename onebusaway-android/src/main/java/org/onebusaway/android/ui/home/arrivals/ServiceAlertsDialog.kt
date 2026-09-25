@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ internal fun ServiceAlertsDialog(
     onShowAlert: (String) -> Unit,
     onHideAlert: (AlertItem) -> Unit,
     onShowHiddenAlerts: () -> Unit,
+    onHideAllAlerts: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(
@@ -75,6 +77,15 @@ internal fun ServiceAlertsDialog(
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f)
                     )
+                    // "Hide alerts" lives here rather than on a stop-level menu (where the retired
+                    // standalone screen kept it, #1898): it is an action on the alerts this dialog is
+                    // showing, so it appears exactly where there are alerts to hide.
+                    TextButton(onClick = {
+                        onHideAllAlerts()
+                        onDismiss()
+                    }) {
+                        Text(stringResource(R.string.stop_info_option_hide_alerts))
+                    }
                     IconButton(onClick = onDismiss) {
                         Icon(
                             painter = painterResource(R.drawable.ic_navigation_close),

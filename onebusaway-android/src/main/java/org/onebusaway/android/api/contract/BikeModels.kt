@@ -18,12 +18,14 @@ package org.onebusaway.android.api.contract
 import kotlinx.serialization.Serializable
 
 /**
- * Bike-rental response models for [BikeWebService]. These come from an OpenTripPlanner server
- * (`routers/default/bike_rental`), not the OBA `where` API, and are plain JSON.
+ * Bike-rental response models for [BikeWebService]. These come from an **OTP 1.x** server
+ * (`routers/default/bike_rental`), not the OBA `where` API, and are plain JSON. Since #2168 this is
+ * the *fallback* wire shape for the rental map layer, used where a region publishes no
+ * bikeshare-capable OTP2 GraphQL endpoint — see `Rentals.graphql` for the richer path.
  *
- * [org.onebusaway.android.api.adapters.toBikeStations] (in `api/adapters/BikeStationAdapters.kt`) maps
- * these onto the app-owned [org.onebusaway.android.map.bike.BikeStation] domain model the map/overlay
- * consumers (BikeLayerController, MapRenderState, BikeInfoWindow, …) actually read. Property names
+ * [org.onebusaway.android.api.adapters.toRentalPlaces] (in `api/adapters/RentalPlaceAdapters.kt`) maps
+ * these onto the app-owned [org.onebusaway.android.map.rental.RentalPlace] domain model the map/overlay
+ * consumers (RentalLayerController, MapRenderState, RentalInfoWindow, …) actually read. Property names
  * mirror the OTP field names so no `@SerialName` is needed.
  */
 @Serializable

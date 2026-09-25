@@ -15,9 +15,13 @@
  */
 package org.onebusaway.android.ui.searchresults
 
+import org.onebusaway.android.api.data.VehicleAssignment
+
 /**
- * One row of the combined search results list — a matching route or stop. The screen renders
- * these into a single heterogeneous list (routes first, then stops), matching the legacy screen.
+ * One row of the combined search results list — a matching route, stop, or vehicle. The screen
+ * renders these into a single heterogeneous list (routes first, then stops, then vehicles; the first
+ * two orderings match the legacy screen, and coach-number hits come last so a numeric query still
+ * leads with the route/stop it names).
  */
 sealed interface SearchResultItem {
 
@@ -45,5 +49,27 @@ sealed interface SearchResultItem {
         val isFavorite: Boolean,
         val latitude: Double,
         val longitude: Double
+    ) : SearchResultItem
+
+    /**
+     * A vehicle matched by its coach number — the number painted on the bus, which riders use to
+     * find a specific vehicle (e.g. to meet someone riding it).
+     *
+     * [assignment] is the data layer's [VehicleAssignment] as-is: it already carries exactly what the
+     * row renders (the ride, or which of the two rideless cases this is — the server's own "no trip"
+     * answer captions differently from a lookup that never got one), so mirroring it into a parallel
+     * UI enum would only add a hand-synced copy to keep in step.
+     *
+     * @param id the agency-prefixed OBA vehicle id (`1_4531`), used only as the row key
+     * @param coachNumber the number as a rider reads it off the vehicle, shown as the row's title
+     * @param agency the operating agency's display name
+     * @param assignment what it is running; anything but [VehicleAssignment.OnTrip] makes the row
+     *   unselectable rather than hiding the match
+     */
+    data class Vehicle(
+        val id: String,
+        val coachNumber: String,
+        val agency: String,
+        val assignment: VehicleAssignment
     ) : SearchResultItem
 }

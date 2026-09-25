@@ -44,6 +44,10 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- For notifications, POST_NOTIFICATIONS is required when targeting Android 12 or higher-->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Android 16 Live Updates: without this the platform silently declines to promote the
+         trip-tracking countdown (#2166), so it never reaches the status-bar chip or the lock screen.
+         Non-runtime, and inert below API 36. The rider can still turn it off per-app in Settings. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -148,6 +152,33 @@
                 <data android:host="add-region" />
                 <data android:host="view-stop" />
             </intent-filter>
+            <!-- Place intents from other apps (#1936): `geo:` (the platform's "open this location", what
+                 the address book emits for a postal address) and shared `text/plain` (a maps link or a
+                 bare address). Both are read by org.onebusaway.android.ui.nav.PlaceIntents — which owns
+                 this vocabulary and the reasoning behind these two filters, including why https maps
+                 links are deliberately not claimed here — and consumed by
+                 HomeActivity.maybePlanToPlaceFromIntent, which opens the directions focus with the place
+                 as the trip's destination. -->
+            <!-- BROWSABLE as well as DEFAULT, matching what Google Maps declares for `geo:`: without it a
+                 `<a href="geo:…">` on a web page can't reach us, which would make this app the one map
+                 app on the device a geo link can't open. Unlike the BROWSABLE `add-region` filter above,
+                 a hostile page gains nothing worth having here — the worst it can do is open the trip
+                 planner with a destination filled in. Nothing is written and nothing is sent. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="geo" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable"/>
@@ -158,9 +189,10 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
-        <!-- Arrivals is a HomeActivity NavHost destination. These frozen component names
-             (old pinned launcher shortcuts) keep resolving via aliases → HomeActivity, which reads the
-             stop data URI and navigates. Aliases inherit launchMode/configChanges from HomeActivity. -->
+        <!-- Legacy pinned stop shortcuts open the mapless arrivals destination. These frozen
+             component names keep resolving via aliases → HomeActivity, which translates the stop
+             data URI into a Compose route. Aliases inherit
+             launchMode/configChanges from HomeActivity. -->
         <activity-alias
             android:name="org.onebusaway.android.ui.ArrivalsListActivity"
             android:targetActivity="org.onebusaway.android.ui.HomeActivity"
@@ -364,6 +396,25 @@
              planned further out; app-internal, so not exported and targeted explicitly. -->
         <receiver
             android:name=".directions.realtime.TripPlanMonitorAlarmReceiver"
+            android:exported="false" />
+
+        <!-- Live countdowns for the buses the rider chose to track (#2166). Polls arrivals for the
+             tracked stops and keeps one Live Update notification per tracked trip. No platform
+             foregroundServiceType covers "watch a bus for the rider"; specialUse is the sanctioned
+             catch-all, and the subtype documents it for Play review. -->
+        <service
+            android:name=".tracking.TripTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="transit_trip_tracking" />
+        </service>
+
+        <!-- The tracking notification's "stop tracking" action and swipe-away. Triggered only by the
+             app's own explicit-component PendingIntents, so it needs no cross-app access. -->
+        <receiver
+            android:name=".tracking.TripTrackingReceiver"
             android:exported="false" />
 
         <meta-data

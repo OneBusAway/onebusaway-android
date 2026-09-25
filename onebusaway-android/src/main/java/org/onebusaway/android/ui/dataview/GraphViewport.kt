@@ -179,9 +179,18 @@ class GraphViewport(
         }
     }
 
-    inline fun forEachDistTick(action: (x: Float, dist: Double) -> Unit) {
+    /**
+     * Walks the distance grid lines across the visible window.
+     *
+     * [labelResolution] is the smallest distance difference the caller's labels can show, in meters
+     * (see `ConversionUtils.getFormattedDistanceResolution`). Ticks are whole multiples of it, so
+     * neither a zoomed-in window nor a display unit coarser than the metre — tenths of a mile, say —
+     * can put two ticks close enough together to carry the same label. It also makes the ticks land
+     * on round values *as displayed*, which round metres are not once they have been converted.
+     */
+    inline fun forEachDistTick(labelResolution: Double, action: (x: Float, dist: Double) -> Unit) {
         val visMaxDist = visMinDist + visDistRange
-        val step = niceStep(visDistRange / 5.0)
+        val step = labelResolution * max(1.0, niceStep(visDistRange / 5.0 / labelResolution))
         var d = ceil(visMinDist / step) * step
         while (d < visMaxDist) {
             action(toPixelX(d), d)

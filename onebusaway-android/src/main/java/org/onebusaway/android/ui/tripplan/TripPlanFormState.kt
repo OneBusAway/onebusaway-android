@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripplan
 
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.time.ServerTime
 
 /**
  * A JVM-pure projection of a trip-plan endpoint (a [org.onebusaway.android.directions.util.CustomAddress]),
@@ -87,6 +88,29 @@ sealed interface TripEndpoint {
 
     /** A point chosen on the map. Its label is a fixed string resolved by the UI. */
     data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
+
+    companion object {
+
+        /**
+         * A place with coordinates that the app can already name, as an endpoint: [Geocoded] under that
+         * name, or — with no name to show — the bare [MapPoint], whose fixed "Selected location" label is
+         * the honest one for a coordinate there is nothing to call.
+         *
+         * Every surface that hands the planner a place the rider chose *as a named thing* goes through
+         * here — a place another app shared in (#1936), the focused stop's "navigate here" (#2272) —
+         * rather than each restating the same fallback. [isTransit] is for the callers that know the
+         * place is a transit stop or station; it only drives the pill's icon.
+         */
+        fun namedPlace(
+            name: String?,
+            lat: Double,
+            lon: Double,
+            isTransit: Boolean = false
+        ): TripEndpoint = name
+            ?.takeIf { it.isNotBlank() }
+            ?.let { Geocoded(displayName = it, lat = lat, lon = lon, isTransit = isTransit) }
+            ?: MapPoint(lat = lat, lon = lon)
+    }
 }
 
 /**
@@ -120,6 +144,17 @@ data class AdvancedSettings(
     val bikePreference: BikePreference = BikePreference.MEDIUM
 )
 
+/**
+ * Which day a pinned trip instant falls on, as a rider would name it. Settled where the form's
+ * date/time labels are — against a clock reading, in the ViewModel — so the callout can state the
+ * day in words instead of a date whenever there is a word for it (#2185).
+ */
+enum class TripDay {
+    TODAY,
+    TOMORROW,
+    OTHER
+}
+
 /** A fully-specified plan request handed to [TripPlanRepository]. */
 data class TripPlanParams(
     val from: TripEndpoint,
@@ -133,7 +168,20 @@ data class TripPlanParams(
     val walkPreference: WalkPreference = WalkPreference.MEDIUM,
     val cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
     val bikePreference: BikePreference = BikePreference.MEDIUM
-)
+) {
+    /**
+     * When the plan puts the rider at its starting point: the requested departure of a depart-at plan,
+     * and null for an arrive-by one, which fixes when the trip *ends* and says nothing about when the
+     * rider sets out. The trip log uses it as when the rider is at the first stop of an itinerary that
+     * opens on transit (#2228) — the plan's own "you get here" for a ride nothing precedes.
+     *
+     * Minted as [ServerTime] because it is the instant the plan was made against ([dateTimeMillis] is
+     * what the planner is asked to depart at), and the plan's leg times come back on that same timeline
+     * as server-domain instants; it is compared only with those and with the stop's arrival predictions.
+     */
+    val plannedStart: ServerTime?
+        get() = if (arriving) null else ServerTime(dateTimeMillis)
+}
 
 /** The trip-plan form (origin/destination, when, and the advanced options). */
 data class TripPlanFormState(
@@ -153,6 +201,13 @@ data class TripPlanFormState(
     val departNow: Boolean = true,
     val dateLabel: String = "",
     val timeLabel: String = "",
+    /**
+     * Which day [dateTimeMillis] falls on, relative to the clock as it read when the labels above
+     * were written. The callout leads with the time and names the day only when it isn't today, so
+     * this travels with [dateLabel]/[timeLabel] rather than being re-derived per recomposition —
+     * one instant, one set of labels, no way for them to disagree.
+     */
+    val dayRelation: TripDay = TripDay.TODAY,
     val modes: TripModeSelection = TripModeSelection(),
     val wheelchair: Boolean = false,
     val optimizeTransfers: Boolean = false,
@@ -292,10 +347,24 @@ sealed interface PlanResult {
      * [params] are the request that produced these [itineraries], carried so the trip-plan-change
      * monitor can re-plan the same request. Null when the results were restored from a notification
      * re-entry (the full request isn't reconstructed there), in which case monitoring isn't re-armed.
+     *
+     * [fromSnapshot] marks results that came off disk rather than off the wire — a pinned trip the
+     * rider just resumed (#2053). It gates the change monitor: a stored plan carries [params], so the
+     * monitor *could* be armed for it, but its departure may be long past and the monitor's start
+     * window (`departure - now <= window`) admits a past departure, which would raise a foreground
+     * service for a bus that has already gone. This states the fact — where these itineraries came
+     * from — rather than inferring staleness from their timestamps. A Refresh re-plans and re-arms.
+     *
+     * [generation] numbers each plan the ViewModel publishes, so a re-plan that comes back
+     * structurally equal to the one on screen (a Refresh within the same minute, say) is still a new
+     * plan to whoever keys on it. `TripItinerary` is a data class, so [itineraries] alone can't tell
+     * the two apart, and Compose compares effect keys structurally.
      */
     data class Success(
+        val generation: Long,
         val itineraries: List<TripItinerary>,
-        val params: TripPlanParams? = null
+        val params: TripPlanParams? = null,
+        val fromSnapshot: Boolean = false
     ) : PlanResult
     data class Error(val error: TripPlanError) : PlanResult
 }

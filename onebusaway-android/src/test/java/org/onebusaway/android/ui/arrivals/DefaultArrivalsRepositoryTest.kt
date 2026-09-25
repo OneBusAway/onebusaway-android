@@ -44,13 +44,13 @@ import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.ServiceAlertRecord
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
 import org.onebusaway.android.database.oba.StopUserInfoRow
+import org.onebusaway.android.demo.FakeDemoModeState
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.region.FakeRegionRepository
@@ -204,20 +204,19 @@ class DefaultArrivalsRepositoryTest {
     private fun repository(
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
-        clock: FakeElapsedClock = FakeElapsedClock()
+        clock: FakeElapsedClock = FakeElapsedClock(),
+        demoMode: FakeDemoModeState = FakeDemoModeState()
     ) = DefaultArrivalsRepository(
         regionRepository = FakeRegionRepository(),
         stopArrivals = dataSource,
         serviceAlertDao = FakeServiceAlertDao(),
         stopDao = stopDao,
-        // The real shared owner over the same fake StopDao, so setStopFavorite exercises the actual
-        // ensure-row delegation (#1996) rather than a stub.
-        stopFavorites = StopFavoritesRepository(stopDao, FakeRegionRepository(), NoopImportGate),
         routeFavorites = FakeRouteFavorites(),
         importGate = NoopImportGate,
         preferences = FakePreferencesRepository(),
         display = FakeArrivalsDisplay(),
-        elapsedClock = clock
+        elapsedClock = clock,
+        demoMode = demoMode
     )
 
     // --- Fixtures ---------------------------------------------------------------------------------
@@ -318,30 +317,36 @@ class DefaultArrivalsRepositoryTest {
         assertEquals(listOf(STOP_ID), stopDao.markStopUsedCalls)
     }
 
-    // --- Stop favoriting --------------------------------------------------------------------------
+    @Test
+    fun `a stop viewed on the demo transit system is not recorded in the rider's recents`() = runTest {
+        // The scripted tour (#2164) focuses the demo system's anchor stop through the ordinary reveal
+        // path, which lands in recordStop. Recording it would file a Seattle stop under whatever region
+        // the rider is actually in — top of their Recent stops, and a 404 when they tap it.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot()) }
+        val stopDao = FakeStopDao()
+        val repository = repository(dataSource, stopDao = stopDao, demoMode = FakeDemoModeState(true))
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(emptyList<String>(), stopDao.markStopUsedCalls)
+    }
 
     @Test
-    fun `setStopFavorite ensures the stop row exists instead of a bare no-op update`() = runTest {
-        // The row is absent (this fake's getStop always returns null) — the pre-#1996 bare
-        // stopDao.setFavorite UPDATE would have silently no-op'd. Delegating to StopFavoritesRepository
-        // instead inserts the identity row with the flag already set, matching the map focus banner.
+    fun `a demo load does not consume the session's one recording`() = runTest {
+        // The once-per-session latch has to track the write, not the attempt: a load the demo system
+        // answered records nothing, so the first real load afterwards still owes a Recent-stops entry.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot()) }
         val stopDao = FakeStopDao()
-        val repository = repository(FakeStopArrivalsDataSource(), stopDao = stopDao)
+        val demoMode = FakeDemoModeState(true)
+        val repository = repository(dataSource, stopDao = stopDao, demoMode = demoMode)
 
-        repository.setStopFavorite(
-            stopId = STOP_ID,
-            code = "577",
-            name = "Pine St & 3rd Ave",
-            latitude = 47.6,
-            longitude = -122.3,
-            favorite = true
-        )
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+        demoMode.set(false)
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
 
-        val inserted = stopDao.upsertedStops.single()
-        assertEquals(STOP_ID, inserted.id)
-        assertEquals("577", inserted.code)
-        assertEquals("Pine St & 3rd Ave", inserted.name)
-        assertEquals(1, inserted.favorite)
+        assertEquals(listOf(STOP_ID), stopDao.markStopUsedCalls)
     }
 
     // --- The stale-fallback path ------------------------------------------------------------------

@@ -8,7 +8,7 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.render.BadgedRoute
-import org.onebusaway.android.map.render.ITINERARY_ROUTE_BADGE_SCALE_PROFILE
+import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.util.GeoPoint
@@ -46,8 +46,8 @@ class ItineraryRouteBadgesTest {
         assertEquals(GeoPoint(0.0, 0.5), badge.point)
         // A tap lands back on the ride it names, never on that route's own map.
         assertEquals(RouteBadgeTap.FocusItineraryRide(setOf(1)), badge.tap)
-        // And it follows the zoom (#2102) rather than holding a fixed size, unlike every other label.
-        assertEquals(ITINERARY_ROUTE_BADGE_SCALE_PROFILE, badge.scale)
+        // And it follows the zoom (#2102) rather than holding a fixed size, on the map's one label schedule.
+        assertEquals(ROUTE_BADGE_SCALE_PROFILE, badge.scale)
     }
 
     @Test

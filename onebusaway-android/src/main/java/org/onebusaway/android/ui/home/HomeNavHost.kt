@@ -19,14 +19,19 @@ package org.onebusaway.android.ui.home
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.accessibility.AccessibilityManager
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.colorResource
@@ -42,8 +47,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,29 +71,37 @@ import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.nav.extraDestinations
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.mylists.myListsGraph
-import org.onebusaway.android.ui.nav.IntentRouteMapper
+import org.onebusaway.android.ui.nav.LAUNCH_ROOT
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
+import org.onebusaway.android.ui.nav.RESULT_MAP_TRIP
+import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.nav.arrivalsMapEnterTransition
+import org.onebusaway.android.ui.nav.arrivalsMapExitTransition
 import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
+import org.onebusaway.android.ui.nav.consumeTripMapReveal
+import org.onebusaway.android.ui.nav.mapReturnAction
+import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
-import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
+import org.onebusaway.android.ui.nav.openRoute
+import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.report.reportGraph
+import org.onebusaway.android.ui.routeinfo.routeInfoGraph
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripdetails.tripGraph
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.tripPlanGraph
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
-
-private const val TAG = "HomeNavHost"
 
 /**
  * The HOME destination's dependency surface — the one destination that consumes the full home bundle
@@ -107,6 +120,7 @@ class HomeDestinationDeps(
     val helpViewModel: HelpViewModel,
     val tripPlanViewModel: TripPlanViewModel,
     val tripResultsViewModel: TripResultsViewModel,
+    val pinnedTripViewModel: PinnedTripViewModel,
     val arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     val activityActions: HomeActivityActions
 )
@@ -121,15 +135,54 @@ class HomeDestinationDeps(
 @Composable
 fun HomeNavHost(
     navController: NavHostController,
-    home: HomeDestinationDeps
+    home: HomeDestinationDeps,
+    launchReady: Boolean = true
 ) {
+    val currentEntry by navController.currentBackStackEntryAsState()
+    currentEntry?.let { entry ->
+        val launchRoot by entry.savedStateHandle.getStateFlow(LAUNCH_ROOT, false).collectAsStateWithLifecycle()
+        BackHandler(enabled = launchRoot) { navController.navigateBackOrFinish() }
+    }
+    // HOME renders help inside its tutorial scope. Restored lists and boards need the same
+    // startup sequence even when the map has never been composed.
+    if (launchReady && currentEntry != null && currentEntry?.destination?.route != NavRoutes.HOME) {
+        ObaTheme {
+            org.onebusaway.android.ui.home.help.HelpFeature(
+                viewModel = home.helpViewModel,
+                onHelpAction = { action ->
+                    if (action == HelpAction.AGENCIES) {
+                        navController.navigate(NavRoutes.AGENCIES)
+                    } else {
+                        home.activityActions.onHelpActionExternal(action)
+                    }
+                },
+                onShowWelcomeTutorial = home.activityActions.onShowWelcomeTutorial
+            )
+        }
+    }
     NavHost(navController = navController, startDestination = NavRoutes.HOME) {
-        composable(NavRoutes.HOME) { entry ->
+        composable(
+            NavRoutes.HOME,
+            enterTransition = { arrivalsMapEnterTransition() },
+            exitTransition = { arrivalsMapExitTransition() }
+        ) { entry ->
+            // Navigation retains outgoing content during transitions. A cold launch's blank HOME
+            // anchor must stay blank while the board/list enters, even after launch routing completes.
+            // Once actually visited, keep normal transition/state-saving behavior for this map entry.
+            var mapStarted by rememberSaveable { mutableStateOf(false) }
+            if (!mapStarted && (!launchReady || navController.currentBackStackEntry?.id != entry.id)) return@composable
+            SideEffect { mapStarted = true }
             // Apply a one-shot "reveal on map" handed back by a pushed destination (route info, search,
             // the My* lists) via HOME's own SavedStateHandle, then consume it (set-null) so it neither
             // re-fires on recomposition nor survives a later route-focus exit + process death. The
             // HomeViewModel adopts the result as the focus authority and directs the map VM from there.
             val handle = entry.savedStateHandle
+            val revealTrip by handle.getStateFlow<String?>(RESULT_MAP_TRIP, null)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(revealTrip) {
+                val reveal = handle.consumeTripMapReveal() ?: return@LaunchedEffect
+                home.homeViewModel.revealTripOnMap(reveal, home.mapViewModel.viewport)
+            }
             val revealRouteId by handle.getStateFlow<String?>(RESULT_MAP_ROUTE_ID, null)
                 .collectAsStateWithLifecycle()
             val revealStopId by handle.getStateFlow<String?>(RESULT_MAP_STOP_ID, null)
@@ -143,25 +196,17 @@ fun HomeNavHost(
             }
             LaunchedEffect(revealStopId) {
                 if (revealStopId == null) return@LaunchedEffect
-                // Read + consume all three keys atomically via the typed helper (which owns the key names
-                // and Double types). A non-null result applies the focus; a null result here means STOP_ID
-                // was present but lat/lon were missing.
-                val reveal = handle.consumeStopReveal()
-                if (reveal != null) {
-                    // An in-session reveal (search result / recents / route-info tap): pan the camera
-                    // over to the stop rather than jump, since the map is already on screen.
-                    home.homeViewModel.revealStop(
-                        FocusedStop(reveal.stopId, null, null, reveal.point),
-                        animate = true
-                    )
-                } else {
-                    // Keys already consumed; record the dropped focus so the latent path is findable
-                    // (see consumeStopReveal for why this is only reachable on a corrupted handle).
-                    Log.w(TAG, "Dropped a partial stop reveal: stop id present but lat/lon missing")
-                    FirebaseCrashlytics.getInstance().recordException(
-                        IllegalStateException("Partial stop reveal: stop id present but lat/lon missing")
-                    )
-                }
+                // Read + consume every key atomically via the typed helper (which owns the key names and
+                // their types). Whatever the requester knew about the stop rides along; the rest is
+                // filled in by the arrivals load (see HomeViewModel.onArrivalsLoaded).
+                val reveal = handle.consumeStopReveal() ?: return@LaunchedEffect
+                // An in-session reveal (search result / recents / list-row / route-info tap): pan the
+                // camera over to the stop rather than jump, since the map is already on screen.
+                home.homeViewModel.revealStop(
+                    FocusedStop(reveal.stopId, reveal.name, point = reveal.point),
+                    animate = true,
+                    useDefaultZoom = reveal.useDefaultZoom
+                )
             }
             val currentFocus by home.homeViewModel.currentFocus.collectAsStateWithLifecycle()
             val routeHeader by home.mapViewModel.routeHeader.collectAsStateWithLifecycle()
@@ -175,6 +220,7 @@ fun HomeNavHost(
 
                 // A menu row: navigate (popping to HOME) + report its analytics.
                 fun menuNav(route: String, @StringRes label: Int) {
+                    PreferencesEntryPoint.get(context).rememberHomeSection(route)
                     navController.navigateFromHome(route)
                     home.homeViewModel.reportMenuAnalytics(label)
                 }
@@ -191,15 +237,10 @@ fun HomeNavHost(
                     },
                     onSettings = { menuNav(NavRoutes.SETTINGS, R.string.analytics_label_button_press_settings) },
                     onSearch = { query -> navController.navigateFromHome(NavRoutes.search(query)) },
-                    onRecentStopsRoutes = {
-                        // The user found the drawer item on their own — don't later spotlight it in onboarding.
-                        PreferencesEntryPoint.get(context).setBoolean(ArrivalTutorial.KEY_MORE_MENU, true)
-                        navController.navigateFromHome(NavRoutes.myRecent())
-                    },
-                    // Recents dropdown taps reveal the stop / route on the map (the same stop-focus the
-                    // search results and map markers use).
-                    onRecentStop = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
-                    onRecentRoute = { routeId -> navController.revealRouteOnMap(routeId) },
+                    onRecentStopsRoutes = { navController.navigateFromHome(NavRoutes.myRecent()) },
+                    // Recent stops open arrivals; search suggestions for routes follow the search preference.
+                    onRecentStop = { navController.showArrivals(it) },
+                    onRecentRoute = { routeId -> navController.openRoute(routeId, PreferencesEntryPoint.get(context).searchResultMode(), prefersMap = true) },
                     onHelpAction = { action ->
                         if (action == HelpAction.AGENCIES) {
                             navController.navigateFromHome(NavRoutes.AGENCIES)
@@ -213,8 +254,18 @@ fun HomeNavHost(
                         )
                     },
                     onEditReminder = { args -> navController.navigateFromHome(NavRoutes.tripInfo(args)) },
+                    onNightLight = { navController.navigateFromHome(NavRoutes.NIGHT_LIGHT) },
                     onLearnMore = { navController.navigateFromHome(NavRoutes.DONATION_LEARN_MORE) },
-                    onOpenSurvey = { url -> navController.navigateFromHome(NavRoutes.surveyWebView(url)) }
+                    onOpenSurvey = { url -> navController.navigateFromHome(NavRoutes.surveyWebView(url)) },
+                    onShowArrivals = { stop ->
+                        if (navController.previousBackStackEntry?.destination?.route == NavRoutes.ARRIVALS &&
+                            navController.previousBackStackEntry?.arguments?.getString(NavRoutes.ARG_STOP_ID) == stop.id
+                        ) {
+                            navController.popBackStack()
+                        } else {
+                            navController.showArrivals(StopReveal(stop.id, stop.name, stop.point))
+                        }
+                    }
                 )
             }
             HomeScreen(
@@ -228,13 +279,17 @@ fun HomeNavHost(
                 helpViewModel = home.helpViewModel,
                 tripPlanViewModel = home.tripPlanViewModel,
                 tripResultsViewModel = home.tripResultsViewModel,
+                pinnedTripViewModel = home.pinnedTripViewModel,
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
-                callbacks = callbacks
+                callbacks = callbacks,
+                showHelpDialogs = currentEntry?.id == entry.id,
+                onBackToSource = navController.mapReturnAction()
             )
         }
         // The rest of the graph, grouped by feature (each a NavGraphBuilder extension near its
         // feature; they recover the host via findActivity rather than threading dependencies).
         arrivalsGraph(navController)
+        routeInfoGraph(navController)
         tripGraph(navController)
         myListsGraph(navController)
         homeListsGraph(navController)
@@ -246,33 +301,57 @@ fun HomeNavHost(
 }
 
 /**
- * Drains [HomeActivity]'s `launchIntents` channel once the NavHost is composed (cold launch) and as each
+ * Handles [initialIntent] once, then drains [HomeActivity]'s `launchIntents` channel as each
  * `onNewIntent` enqueues more (warm relaunch): for each external intent it runs the intent's domain side
- * effects, translates it to a route via [IntentRouteMapper] (null = stay on the map), then navigates there
- * popping up to HOME. This is the only navigation that can't hold the NavController itself — the OS hands
- * intents to the Activity, which exists before/around the composition. The channel is an UNLIMITED queue
- * (not a latch) so rapid, distinct back-to-back intents are each delivered exactly once rather than
+ * effects and opens its launch destination, popping up to HOME. A plain warm launcher return leaves
+ * the current destination and back stack intact (#2333). This is the only navigation that can't hold
+ * the NavController itself — the OS hands intents to the Activity, which exists before/around the
+ * composition. The channel is an UNLIMITED queue (not a latch) so rapid, distinct back-to-back intents
+ * are each delivered exactly once rather than
  * overwriting one another before the collector consumes them (#1582).
  *
  * The collect is gated on `repeatOnLifecycle(STARTED)` so we never navigate while the activity is STOPPED.
  * The UNLIMITED channel buffers any intent submitted during that window and replays it when the lifecycle
  * returns to STARTED, so the gate costs no deliveries (#1592).
+ *
+ * Returns the saved launch readiness used to gate HOME's map. If state is saved before the cold intent
+ * is handled, recreation retries it from [initialIntent], even though the new Activity's channel is
+ * empty. Once handled, recreation restores navigation without replaying the launch's side effects.
  */
 @Composable
-internal fun LaunchIntentEffect(
+internal fun launchIntentEffect(
     navController: NavHostController,
+    initialIntent: Intent,
     launchIntents: Flow<Intent>,
     onSideEffects: (Intent) -> Unit
-) {
+): Boolean {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val prefs = PreferencesEntryPoint.get(LocalContext.current)
+    val sideEffects by rememberUpdatedState(onSideEffects)
+    var launchReady by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(navController, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            launchIntents.collect { i ->
-                onSideEffects(i)
-                IntentRouteMapper.routeForIntent(i)?.let { navController.navigateFromHome(it) }
+        fun handle(intent: Intent, initial: Boolean) {
+            sideEffects(intent)
+            val route = launchDestination(intent, prefs, isColdLaunch = initial) ?: return
+            navController.navigateFromHome(route)
+            if (initial) {
+                val entry = navController.currentBackStackEntry
+                when (entry?.destination?.route) {
+                    NavRoutes.ARRIVALS, NavRoutes.HOME_STARRED_STOPS,
+                    NavRoutes.HOME_STARRED_ROUTES, NavRoutes.MY_REMINDERS ->
+                        entry.savedStateHandle[LAUNCH_ROOT] = true
+                }
             }
         }
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            if (!launchReady) {
+                handle(initialIntent, initial = true)
+                launchReady = true
+            }
+            launchIntents.collect { handle(it, initial = false) }
+        }
     }
+    return launchReady
 }
 
 /**

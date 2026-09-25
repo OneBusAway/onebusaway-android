@@ -26,7 +26,6 @@ import kotlinx.coroutines.supervisorScope
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
@@ -40,10 +39,7 @@ internal data class StopFocusPresentation(
     val stops: FocusedTripStops,
     val routes: List<ObaRoute>,
     val routeColors: Map<RouteDirectionKey, Int>
-) {
-    /** The focused trips' scheduled stops snapped onto their own shapes; empty when no stop is focused. */
-    fun projectedStops(): Map<String, GeoPoint> = trips?.let { projectFocusedStops(it, geometry, stops) }.orEmpty()
-}
+)
 
 /**
  * Owns the "show the exact trips currently arriving at this stop" layer. Extracted from

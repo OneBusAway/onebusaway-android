@@ -27,7 +27,7 @@
     <string name="navdrawer_item_help">Aiuto</string>
     <string name="navdrawer_item_send_feedback">Invia feedback</string>
     <string name="navdrawer_item_open_source">Scoprici su GitHub!</string>
-    <string name="navdrawer_item_plan_trip">Pianifica un viaggio (beta)</string>
+    <string name="navdrawer_item_plan_trip">Pianifica un viaggio</string>
     <string name="navdrawer_item_pay_fare">Compra biglietto</string>
 
     <!-- Permissions -->
@@ -66,7 +66,7 @@
     <string name="map_option_search">Cerca</string>
     <string name="main_help_title">Aiuto</string>
     <string name="main_help_whatsnew_title">Novità</string>
-    <string name="main_help_whatsnew">"• <b>Correzioni di bug</b> Diverse correzioni di bug e miglioramenti nella rifinitura. - Vedi https://bit.ly/oba-android-releases "</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Un aspetto tutto nuovo per una nuova era\n&#8226;\u0020Gli arrivi sono ora raggruppati per linea\n&#8226;\u0020Micromobilità aggiunta al livello delle biciclette\n&#8226;\u0020Tocca una fermata per vedere le sue linee\n&#8226;\u0020Ingrandisci per vedere le linee vicine\n&#8226;\u0020Posizioni dei veicoli estrapolate e animate\n&#8226;\u0020Segui il tuo autobus con notifiche in tempo reale\n&#8226;\u0020Miglioramenti significativi al pianificatore di viaggi\n&#8226;\u0020Diverse piccole correzioni di bug\n\nVedi https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Chiudi</string>
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Verde significa “In orario”</string>
@@ -174,7 +174,6 @@
     <string name="stop_info_option_showonmap">Mostra sulla mappa</string>
     <string name="menu_option_sort_by">Ordina per</string>
     <string name="stop_info_option_refresh">Aggiorna</string>
-    <string name="stop_info_option_show_details">Mostra dettagli fermata</string>
     <string name="stop_info_option_report_problem">Segnala problema con fermata</string>
     <string name="stop_info_option_night_light">Luce notturna</string>
     <string name="stop_info_option_hide_alerts">Nascondi avvisi attivi</string>
@@ -215,8 +214,6 @@
     <string name="stop_info_item_options_title">Opzioni</string>
     <string name="stop_info_clear">Cancella</string>
     <string name="stop_info_favorite">La mia fermata</string>
-    <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>
-    <string name="stop_info_route_ids_label">Linee:</string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Promemoria di destinazione (beta)</string>
@@ -257,8 +254,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Mostra informazioni sull’arrivo</string>
-    <string name="route_info_context_showonmap">Mostra sulla mappa</string>
     <string name="route_info_no_shape_data">Non è possibile visualizzare questa linea sulla mappa.</string>
 
     <!-- My stops/routes -->
@@ -334,9 +329,10 @@
     <string name="trip_info_separator">-</string>
 
     <!-- Occupancy -->
-
-
-
+    <string name="realtime_empty">Vuoto</string>
+    <string name="realtime_many_seats_available">Molti posti a sedere</string>
+    <string name="realtime_standing_room">Spazio in piedi</string>
+    <string name="realtime_full">Pieno</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">Non hai promemoria.\n\nPuoi creare dei promemoria toccando un autobus in arrivo alla tua fermata.</string>
@@ -453,14 +449,8 @@
     <string name="preferences_show_zoom_controls_title">Mostra controlli zoom</string>
     <string name="preferences_show_zoom_controls_summary">Mostra controlli zoom sulla mappa</string>
 
-    <string name="preferences_show_header_arrivals_title">Mostra arrivi sopra nome fermata</string>
-    <string name="preferences_show_header_arrivals_summary">Quando visualizzi i preferiti, mostra informazioni sugli arrivi nell’intestazione (la visuale della mappa resta invariata)</string>
-
     <string name="preferences_trip_plan_notifications_title">Notifiche sul piano di viaggio (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Dopo aver pianificato un viaggio, invia notifiche se ci sono ritardi o se il viaggio non è più consigliato.</string>
-
-    <string name="preferences_show_tutorial_screens_title">Mostra schermate tutorial</string>
-    <string name="preferences_show_tutorial_screens_summary">Mostra popup informativi sull’utilizzo delle funzionalità</string>
 
     <string name="preferences_left_hand_mode_title">Modalità mano sinistra</string>
     <string name="preferences_left_hand_mode_summary">Sposta alcuni pulsanti sul lato sinistro dello schermo</string>
@@ -488,8 +478,6 @@
     <string name="preferences_experimental_regions_disable_warning">L’area sperimentale corrente non sarà disponibile! Vuoi procedere?</string>
     <string name="preferences_analytics_title">Invia dati di utilizzo anonimi</string>
     <string name="preferences_analytics_summary">Aiutaci a migliorare l’app</string>
-    <string name="preferences_tutorial_title">Mostra tutorial</string>
-    <string name="preferences_tutorial_summary">Mostra istruzioni per utilizzare questa app</string>
     <string name="preferences_donate_title">Dona</string>
     <string name="preferences_donate_summary">Supporta il progetto open-source %1$s</string>
     <string name="preferences_powered_by_oba_title">Powered by %1$s</string>
@@ -603,7 +591,6 @@
         <item quantity="many">Data aggiornati %1$d min %2$d s fa</item>
         <item quantity="other">Data aggiornati %1$d min %2$d s fa</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Posizione calcolata in base all’orario</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Non perdere più l’autobus la sera!</string>
@@ -613,16 +600,10 @@
     <string name="night_light_cancel">Annulla</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">%1$s ti dà il benvenuto!</string>
-    <string name="tutorial_welcome_text">Tocca una fermata (punto verde sulla mappa) per vedere gli orari di arrivo.</string>
     <string name="tutorial_opt_out_dialog_title">Mostrare tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">Desideri che vengano mostrati popup informativi per l’utilizzo di %1$s? Puoi sempre attivare e disattivare i popup nelle impostazioni, o mostrare il tutorial in seguito premendo su Aiuto.</string>
     <string name="tutorial_arrival_header_arrival_info_title">Quanto manca all’arrivo dell’autobus?</string>
     <string name="tutorial_arrival_header_arrival_info_text">Tanto così! Lo sfondo colorato ti dice se l’autobus è in anticipo (rosso) o in ritardo (blu). In orario = sfondo verde. Se non sappiamo dove sia l’autobus, ti mostriamo l’orario previsto (sfondo grigio). Grigio con testo barrato significa che il tragitto è stato cancellato.</string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Scorri in su per mostrare più arrivi</string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Tocca la freccia o trascina il pannello in su per vedere altri arrivi a questa fermata.</string>
-    <string name="tutorial_recent_stops_routes_title">Fermate e linee recenti</string>
-    <string name="tutorial_recent_stops_routes_text">Per ritrovare le fermate e le linee cercate di recente, apri il menu.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Autorizzazioni per la posizione</string>
@@ -854,11 +835,8 @@
     <string name="transit_directions_bikeshare_label">Bike sharing</string>
 
     <!-- Bikeshare info window -->
-    <string name="bike_info_window_bikes_title">Bici</string>
 
     <!-- Bikeshare preference option -->
-    <string name="bike_info_window_spaces_title">Spazi</string>
-    <string name="layers_speedial_bikeshare_label">Bike sharing</string>
     <string name="bike_station_title">Tocca per prenotare una bici</string>
     <string name="floating_bike_title">Tocca per prenotare questa bici</string>
 
@@ -884,10 +862,6 @@
     <string name="preferences_reset_donation_timestamps_title">Reimposta i Timestamp delle Donazioni</string>
     <string name="preferences_reset_donation_timestamps_summary">Toccando questa opzione verranno cancellati i timestamp di ’Ricordamelo più tardi’ e ’Non disturbarmi’ associati alle richieste di donazione.</string>
     <string name="preferences_show_weather_view">Mostra vista meteo</string>
-    <string name="preferences_preferred_maps_title">Tipo Di Mappa Preferito</string>
-    <string name="preferences_preferred_map_option_normal2d">Mappa predefinita</string>
-    <string name="preferences_preferred_map_option_normal3d">Mappa predefinita con edifici 3D</string>
-    <string name="preferences_preferred_map_option_satellite">Mappa satellitare</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Mostra studi disponibili</string>
@@ -927,8 +901,4 @@
     <string name="my_option_clear_starred_routes_confirm">Questa operazione rimuoverà definitivamente tutti i percorsi contrassegnati con una stella.</string>
     <string name="map_option_zoom_out">Riduci</string>
     <string name="map_option_zoom_in">Ingrandisci</string>
-    <string name="map_option_layers_close">Chiudi pulsante livelli mappa</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
-    <string name="map_option_layers">Pulsante livelli mappa</string>
 </resources>

@@ -116,38 +116,4 @@ class BisectTest {
         val q = dist.quantile(0.5)
         assertTrue("Quantile should be finite and positive", q.isFinite() && q > 0)
     }
-
-    @Test(timeout = 2000)
-    fun `GammaMixtureDistribution quantile does not hang with extreme weight`() {
-        // weight very close to 1.0 — the denominator (1-m) in GammaExtrapolator
-        // approaches zero, similar to what happens with extreme schedule speeds
-        val slow = GammaDistribution(0.27, 1.0)
-        val fast = GammaDistribution(0.1, 100.0)
-        val mix = GammaMixtureDistribution(0.999, slow, fast)
-        val q = mix.quantile(0.5)
-        assertTrue("Quantile should be finite", q.isFinite())
-    }
-
-    @Test(timeout = 2000)
-    fun `GammaMixtureDistribution quantile does not produce NaN`() {
-        // Components with very different scales can cause floating-point
-        // precision loss in the variance calculation
-        val comp1 = GammaDistribution(0.5, 0.001)
-        val comp2 = GammaDistribution(100.0, 100.0)
-        val mix = GammaMixtureDistribution(0.5, comp1, comp2)
-        val q = mix.quantile(0.5)
-        assertTrue("Quantile should be finite", q.isFinite())
-        assertTrue("Quantile should be non-negative", q >= 0)
-    }
-
-    @Test(timeout = 2000)
-    fun `GammaMixtureDistribution with identical components has valid quantile`() {
-        // When both components are the same, variance should be exactly that
-        // of the single component — no precision issues
-        val comp = GammaDistribution(3.0, 2.0)
-        val mix = GammaMixtureDistribution(0.5, comp, comp)
-        val q = mix.quantile(0.5)
-        val expected = comp.quantile(0.5)
-        assertEquals(expected, q, 1e-6)
-    }
 }

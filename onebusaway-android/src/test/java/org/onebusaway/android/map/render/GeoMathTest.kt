@@ -17,6 +17,7 @@ package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.onebusaway.android.util.GeoPoint
 
@@ -67,6 +68,40 @@ class GeoMathTest {
         assertNull(leadingBearing(listOf(GeoPoint(47.6, -122.3))))
         // Every vertex on top of the first: there is no heading here to guess at.
         assertNull(leadingBearing(List(3) { GeoPoint(47.6, -122.3) }))
+    }
+
+    @Test
+    fun `ground resolution halves with each zoom level and narrows towards the poles`() {
+        // The 256px-tile scale everything screen-sized on this map is sized through: one tile spans the
+        // world at zoom 0, so a pixel covers 156543 m at the equator and half that per level down.
+        assertEquals(156543.03, metersPerPixel(latitude = 0.0, zoom = 0.0), 0.01)
+        assertEquals(metersPerPixel(0.0, 10.0) / 2.0, metersPerPixel(0.0, 11.0), 1e-9)
+        // A degree of longitude is shorter at 60°N by exactly a half, and so is the ground under a pixel.
+        assertEquals(metersPerPixel(0.0, 12.0) / 2.0, metersPerPixel(60.0, 12.0), 1e-6)
+    }
+
+    @Test
+    fun `both runaway inputs are clamped, so every caller gets a finite answer`() {
+        // The formula runs away at the projection's cutoff and at absurd zooms, and the callers that used to
+        // write it out each guarded a different one of the two.
+        assertEquals(
+            metersPerPixel(MAX_MERCATOR_LATITUDE, zoom = 12.0),
+            metersPerPixel(latitude = 90.0, zoom = 12.0),
+            1e-9
+        )
+        assertEquals(metersPerPixel(0.0, 30.0), metersPerPixel(0.0, zoom = 40.0), 1e-9)
+        assertEquals(metersPerPixel(0.0, 0.0), metersPerPixel(0.0, zoom = -5.0), 1e-9)
+    }
+
+    @Test
+    fun `a reading that is not a position at all is refused, not clamped into range`() {
+        // Clamping leaves a NaN alone, and the callers scale geometry by what comes back, so a NaN answer
+        // would spread through the shapes instead of stopping at the broken reading that caused it.
+        assertThrows(IllegalArgumentException::class.java) { metersPerPixel(latitude = Double.NaN, zoom = 12.0) }
+        assertThrows(IllegalArgumentException::class.java) { metersPerPixel(latitude = 47.6, zoom = Double.NaN) }
+        assertThrows(IllegalArgumentException::class.java) {
+            metersPerPixel(latitude = Double.POSITIVE_INFINITY, zoom = 12.0)
+        }
     }
 
     private companion object {

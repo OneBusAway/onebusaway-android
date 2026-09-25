@@ -291,7 +291,7 @@ class DefaultTripInfoRepository @Inject constructor(
         val url = sidecarRegionUrl(
             sidecarBaseUrl = base,
             regionsPath = context.getString(R.string.arrivals_reminders_api_endpoint),
-            regionId = region.id,
+            regionId = region.sidecarId,
             resource = "alarms"
         )
         // runCatchingCancellable keeps a cancelled save from being reported to the UI as a save failure.

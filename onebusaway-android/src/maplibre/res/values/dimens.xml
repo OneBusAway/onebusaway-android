@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- maplibre's default marker bitmap (maplibre_marker_icon_default) is 20x56 at mdpi, so its pin
+         stands nearly twice as tall as the Google flavor's. See the google flavor's value. -->
+    <dimen name="map_pin_height">56dp</dimen>
+</resources>

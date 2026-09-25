@@ -23,12 +23,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.search.RouteSearchContent
 import org.onebusaway.android.ui.search.RouteSearchResult
 import org.onebusaway.android.ui.search.SearchViewModel
 import org.onebusaway.android.ui.search.StopSearchContent
 import org.onebusaway.android.ui.search.StopSearchResult
 import org.onebusaway.android.util.ExternalIntents
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The shared list/search "destinations": body composables hosted by both the Compose [MyTabsScreen]
@@ -43,11 +45,19 @@ fun StopListDestination(
     viewModel: MyListViewModel<StopListItem>,
     @StringRes emptyText: Int,
     onClick: (StopListItem) -> Unit,
-    actions: (StopListItem) -> List<RowAction>
+    actions: (StopListItem) -> List<RowAction>,
+    // Long-pressing an arrival badge starts or stops that bus's live countdown (#2166). Only the
+    // starred-stops lists pass it — they are the only ones that render arrival badges at all.
+    onToggleTracking: ((ArrivalBadge) -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MyListContent(state, emptyText = stringResource(emptyText), itemKey = { it.id }) { stop ->
-        StopRow(stop, onClick = { onClick(stop) }, actions = actions(stop))
+        StopRow(
+            stop,
+            onClick = { onClick(stop) },
+            actions = actions(stop),
+            onToggleTracking = onToggleTracking
+        )
     }
 }
 
@@ -84,11 +94,11 @@ fun ReminderListDestination(
 @Composable
 fun StopSearchDestination(
     viewModel: SearchViewModel<StopSearchResult>,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit
+    onRevealStop: (StopReveal) -> Unit
 ) {
     StopSearchContent(
         viewModel = viewModel,
-        onStopClick = { onShowOnMap(it.id, it.latitude, it.longitude) }
+        onStopClick = { onRevealStop(StopReveal(it.id, it.name, GeoPoint(it.latitude, it.longitude))) }
     )
 }
 

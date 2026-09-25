@@ -23,7 +23,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.onebusaway.android.map.bike.BikeStation
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteDirectionKey
@@ -86,18 +87,33 @@ enum class RouteLineDash {
  *  - [OUTLINE] — a hairline edge that holds a directions ride off the basemap. Every ride in a drawn
  *    itinerary carries it, so it says nothing about selection; it is there because a faded, badge-toned
  *    line has less of its own contrast to spend against the map than a full-strength one does.
- *  - [SELECTION] — the heavier case marking the line the rider has selected (#2082). Selection used to be
- *    said with a width, but the map already spends width on what a line *is* (a ride, an on-street leg,
- *    route context), so saying two things with one channel left neither legible. It stays legible against
- *    [OUTLINE] because it is twice the weight of it — selection is now a *heavier* edge, not the only edge.
+ *  - [APPROACH] — the selected line's *approach*: where the vehicle is coming from, upstream of where the
+ *    rider boards. It draws in the selection colour, so the approach and the ride read as one route line
+ *    stepping down at the boarding point, but at a lighter weight, because it wraps the thinnest line on the
+ *    map ([ITINERARY_APPROACH_WIDTH_PROFILE], 3.5dp) and a full selection case there would be wider than the
+ *    line inside it.
+ *  - [SELECTION] — the heaviest case, marking the line the rider has actually selected (#2082). Selection
+ *    used to be said with a width, but the map already spends width on what a line *is* (a ride, an
+ *    on-street leg, route context), so saying two things with one channel left neither legible. It stays
+ *    legible against [OUTLINE] because it is three times the weight of it — selection is now a *heavier*
+ *    edge, not the only edge. Two weights read as one edge and a thicker one; three read as an edge and a
+ *    band, which is what this wants, since the thing it competes with for attention is the line it wraps and
+ *    not the basemap. Asking for it changes nothing else about a line: it keeps the weight, colour and dash
+ *    that say what *kind* of line it is, so drilling into one doesn't restyle the trip around it. It simply
+ *    replaces the [OUTLINE] a directions ride already wore, selection being the step up in edge weight.
  *
  * The widths are deliberately *not* on the zoom ramp: a case is an outline, and an outline that thins with
  * its line stops separating it from the basemap at exactly the zoom where the line is hardest to pick out.
+ *
+ * Every one of them stays finer than the thinnest line that asks for it, so a case always reads as that
+ * line's edge and never as a second line under it — which is the whole reason [APPROACH] exists as its own
+ * weight rather than the approach simply taking [SELECTION]. `RouteLineWidthProfileTest` pins that pairing.
  */
 enum class RouteLineCase(val widthDp: Float) {
     NONE(0f),
     OUTLINE(0.75f),
-    SELECTION(1.5f);
+    APPROACH(1f),
+    SELECTION(2.25f);
 
     /** What this case adds to its line's *total* width — both sides. Derived here so no caller has to
      *  remember that [widthDp] is per-side. */
@@ -161,6 +177,15 @@ enum class RouteLineMark {
  * rider. Marked per end rather than per line so a stay-aboard interline can hide its internal seam while
  * keeping bulbs at the beginning and end of the combined ride.
  *
+ * [stripeColors] are the *other* colours this line is shared by — the routes a rider may board in place of
+ * the one it is drawn for (#2100). A line carrying them is striped: cut into equal runs along its length
+ * that cycle through [color] and then each of these in turn, so a ride the rider may take either of two
+ * routes for shows both, exactly as the badge naming it does, instead of quietly showing whichever route
+ * the planner happened to pick. The runs are cut by [StripeRoutePolylinePass] — a stripe has to hold its
+ * length on the *screen*, so how long one is depends on the camera, which is the render pipeline's to know
+ * and not the producer's. Only the line's own [color] reaches the marks and the case: a bulb, a cut and a
+ * case say where the ride begins, ends and sits, none of which the alternatives change.
+ *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
  * only to the list they render. An empty set is a strict pass-through.
@@ -168,6 +193,7 @@ enum class RouteLineMark {
 data class RoutePolyline(
     val color: Int?,
     val points: List<GeoPoint>,
+    val stripeColors: List<Int> = emptyList(),
     val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
     val dash: RouteLineDash = RouteLineDash.NONE,
@@ -187,22 +213,37 @@ data class RoutePolyline(
 data class GenericMarker(val point: GeoPoint, val hue: Float?)
 
 /**
- * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the
- * icon, color, and info-window text from it, paired with the shared [MapVehicles.response]);
- * [activeTripId] is the stable key used for marker identity + animation; [isRealtime] is the
- * draw-time decision (from whatever produced the drawn point — the extrapolation anchor or the current
- * status) that selects the live-vs-scheduled icon.
+ * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the icon,
+ * color, occupancy pips, and title from it, resolved against [source]); [activeTripId] is the stable key
+ * used for marker identity + animation; [isRealtime] is the draw-time decision (from whatever produced
+ * the drawn point — the extrapolation anchor or the current status) that selects the live-vs-scheduled
+ * icon.
  */
 data class VehicleMarker(
     val activeTripId: String,
     val point: GeoPoint,
     val isRealtime: Boolean,
     val status: ObaTripStatus,
+    /**
+     * The poll this vehicle came out of — the references pool its trip, and through it its route type and
+     * name, resolve from.
+     *
+     * Carried per vehicle rather than once for the set, because a set is not always one poll's worth of
+     * vehicles: a route-focus session with interchangeable routes (#2042) or a stay-aboard interline
+     * (#2000) merges the leader poll with an extra poll per extra route, and a poll's references answer
+     * for its **own** vehicles. Held as one shared response, every extra route's vehicle missed both hops
+     * and silently took the default bus glyph and an "unidentified" accessible name — a 2 Line train drawn
+     * as a bus while the 1 Line beside it drew correctly. #2043 fixed the same mismatch for the disc
+     * *colour* by pairing each vehicle with its poll; this is that pairing kept on the marker, so the
+     * renderer cannot reach for the wrong pool.
+     */
+    val source: RouteTrips,
     // The latest fix's instant — constant between fixes (so [point] is extrapolated forward from it),
     // changing when fresh AVL data arrives. The renderer animates the marker across the fix jump.
     val fixTimeMs: Long = 0L,
-    // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N), so the
-    // direction arrow tracks the glide. [Float.NaN] off-shape: the renderer falls back to the orientation.
+    // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N).
+    // [Float.NaN] off-shape. Carried by the extrapolation rather than consumed by the renderer: it drove
+    // the marker's direction arrow until #2194 removed it, and nothing draws with it today.
     val bearing: Float = Float.NaN,
     // The last real fix's position on the route shape (the glide's seed), where the selected vehicle's
     // most-recent-data dot is drawn — so the dot sits at the band's origin, not the raw off-shape reported
@@ -215,40 +256,50 @@ data class VehicleMarker(
     // color (#2043). Resolved by the controller from the same map the polylines use, so the two
     // cannot disagree. Null when the route carries no color and none was assigned; the renderer applies
     // [DEFAULT_ROUTE_LINE_COLOR], exactly as [RoutePolyline.resolvedColor] does.
-    val routeColor: Int? = null
+    val routeColor: Int? = null,
+    // The uncertainty band's colour, on the **selected** vehicle only; null on every other one. Its disc
+    // is drawn in this instead of [routeColor], so the live estimate reads as part of the same data
+    // object as the band it sits in and the two markers that bound that band (#1990). Kept separate from
+    // [routeColor] rather than overwriting it: that field states which line this vehicle travels with,
+    // and it is still true of the selected vehicle — this only says what its disc is *drawn* in while it
+    // is the one carrying a band.
+    val bandColor: Int? = null
 )
 
 /**
- * One bike-rental marker. [station] is the app-owned domain type (the renderer reads its
- * name/availability for the info window and its floating-vs-station flag for the icon).
- * [bikeshareVisible] on the snapshot is the layer/directions-mode gate; the per-zoom icon band is
- * chosen live by the renderer.
+ * One rental marker — a free-floating vehicle or a dock (#2168). [place] is the app-owned domain type;
+ * the renderer reads its kind and form factor for the icon, its range for the label beneath it, and
+ * the rest for the detail window. [rentalsVisible] on the snapshot is the layer/directions-mode gate;
+ * the per-zoom icon band is chosen live by the renderer.
  */
-data class BikeMarker(
+data class RentalMarker(
     val id: String,
     val point: GeoPoint,
-    val isFloatingBike: Boolean,
-    val station: BikeStation
+    val place: RentalPlace,
+    /**
+     * Which layer this marker wears — its colour and glyph. Resolved by the controller against the
+     * enabled layers (see `rentalMarkerLayer`), not re-derived per flavor, so a dock holding both kinds
+     * draws as the kind the rider asked to see rather than whichever sorts first.
+     */
+    val layer: RentalLayer
 )
 
 /**
  * One bus-stop marker. [direction]/[routeType] choose the icon + anchor; [stop] is the raw pojo
- * couriered so a tap can notify focus listeners. Whether this stop renders focused (the 1.5x icon) is
+ * couriered so a tap can notify focus listeners. Whether this stop renders focused (the 1.25x orange icon) is
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
  *
  * [presentedRoutes] identifies the route-direction variants in the current presentation that serve
- * this stop. A non-empty set makes [routeStop] true: [point] is projected onto the route centerline
- * and renders as the trip-map-style circle instead of the direction-anchored icon. Carrying identities,
+ * this stop. A non-empty set makes [routeStop] true: it renders as a route-colored ring at its
+ * geographic boarding location. Carrying identities,
  * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  *
  * [routes] are the routes this marker's **label** names at transit-centre zoom (#2107) — see
- * [stopRouteLabel] — in the order it reads them. Deliberately "what the label says" rather than "what
- * serves this stop", which is the wider fact and lives on [stop]: a producer that wants no label says so
- * by naming no routes, and empty is therefore both "not looked up yet" and "not labelled here", neither of
- * which the renderer has to tell apart. That is what lets a route presentation suppress the labels
- * (`applyRouteStopPresentation`) without a second flag riding the snapshot.
+ * [stopRouteLabel]. Also available to the overlapping-stop chooser when the map label is hidden.
+ * [showRouteLabel] controls the drawing independently of this stop's route metadata.
+ * [compact] keeps nearby alternatives small during stop focus without removing their direction arrow.
  */
 data class StopMarker(
     val id: String,
@@ -258,7 +309,11 @@ data class StopMarker(
     val stop: ObaStop,
     val favorite: Boolean = false,
     val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
-    val routes: List<StopRoute> = emptyList()
+    val routes: List<StopRoute> = emptyList(),
+    val showRouteLabel: Boolean = true,
+    val compact: Boolean = false,
+    /** Displayed line color; null for stops shared by differently colored routes. */
+    val routeColor: Int? = null
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }
@@ -375,8 +430,9 @@ data class RouteBadge(
      */
     val tap: RouteBadgeTap? = null,
     /**
-     * How this label's drawn size answers the camera (#2102) — see [RouteBadgeScaleProfile]. Fixed by
-     * default, so a producer opts its labels into a schedule rather than inheriting one.
+     * How this label's drawn size answers the camera (#2102, #2195) — see [RouteBadgeScaleProfile]. It
+     * defaults to what every label on the map does ([ROUTE_BADGE_SCALE_PROFILE]), so a new kind of label
+     * recedes with its line without having to know to ask; a producer that wants otherwise names its own.
      *
      * Carried as an unresolved *profile*, exactly as [RoutePolyline.widthProfile] is, with the renderer
      * resolving it against the live camera. That's the pattern for a **continuous** zoom response;
@@ -387,7 +443,7 @@ data class RouteBadge(
      * which tears down and rebuilds the whole static layer — bikes, generic pins, the continuation
      * overlay, every tap map. Resizing a label is not worth that, so the resolution stays in the renderer.
      */
-    val scale: RouteBadgeScaleProfile = FIXED_ROUTE_BADGE_SCALE_PROFILE
+    val scale: RouteBadgeScaleProfile = ROUTE_BADGE_SCALE_PROFILE
 ) {
     init {
         // Both stated rather than trusted: a label with nothing to read is a marker the rider can't
@@ -425,21 +481,32 @@ data class RouteContinuation(val polyline: RoutePolyline, val arrow: Continuatio
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
+    /**
+     * The rider's parked trip plan, drawn thin beneath everything else while they explore (#2053).
+     *
+     * Its own slice rather than part of [routePolylines] because the two have opposite lifetimes: the
+     * route list is the *current view's* content and is cleared wholesale on every mode transition,
+     * while a pinned trip is exactly the thing that has to survive those transitions — that is what
+     * being pinned means. Merging them would make the ghost vanish on the first stop the rider taps.
+     * The two are concatenated, ghost first, only at the render seam.
+     */
+    val pinnedTripPolylines: List<RoutePolyline> = emptyList(),
     val routeBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
-    val bikeStations: List<BikeMarker> = emptyList(),
-    val bikeshareVisible: Boolean = false,
+    val rentals: List<RentalMarker> = emptyList(),
+    val rentalsVisible: Boolean = false,
     val stops: List<StopMarker> = emptyList(),
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
     // individually focused stop.
     val routeModeScalesStopsWithZoom: Boolean = false,
-    // The currently focused stop id, couriered so the vehicle info-window's "more info" tap can deep
-    // link into TripDetails scoped to that stop (the legacy VehicleOverlay.Controller hook).
+    // The focused stop, named rather than flagged on each [StopMarker] so focusing is a one-field change
+    // (see [stops]). The stop layers style it — the enlarged icon, the route-stop highlight.
     val focusedStopId: String? = null,
     // The zoom band the stops render in (full directional icon vs small dot). Derived from the camera
     // by StopsMapController and carried here so a pure zoom re-fires the renderer like any other
     // snapshot change — keeping the renderer a pure function of the snapshot (no live camera reads).
     val stopBand: StopBand = StopBand.FULL,
+    val compactStopIcons: Boolean = false,
     // The selected vehicle's route continuation (#1691), or null. A discrete, infrequently-changing
     // annotation like the fields above, so it rides the same renderStatic() redraw path rather than
     // the 20Hz vehicle-motion sampler.
@@ -463,18 +530,15 @@ data class MapRenderSnapshot(
 }
 
 /**
- * The route-mode vehicle **set**: which vehicles exist and the [response] their icons/info-windows
- * derive from. This is discrete state — it changes only at events (a new poll, a direction switch,
- * leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer reconciles
- * markers from each emission. Per-frame *motion* is a separate concern (see
+ * The route-mode vehicle **set**: which vehicles exist, each carrying the poll it came out of (see
+ * [VehicleMarker.source]). This is discrete state — it changes only at events (a new poll, a direction
+ * switch, leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer
+ * reconciles markers from each emission. Per-frame *motion* is a separate concern (see
  * [MapRenderState.vehiclesSampler]); the [markers] here carry only a seed position for a freshly-added
  * marker, which the motion sampler immediately supersedes. The selected vehicle is tracked separately
  * (see [MapRenderState.selectedVehicleTripId]).
  */
-data class MapVehicles(
-    val markers: List<VehicleMarker> = emptyList(),
-    val response: RouteTrips? = null
-)
+data class MapVehicles(val markers: List<VehicleMarker> = emptyList())
 
 /**
  * Produces a renderable frame [T] — the trip-focus overlay or the live vehicle layer — for a frame
@@ -663,6 +727,16 @@ class MapRenderState {
 
     fun clearRoutePolylines() = setRoutePolylines(emptyList())
 
+    /**
+     * The parked trip's ghost geometry, or empty for none (#2053).
+     *
+     * Deliberately does **not** touch [routeFramingPolylines]: the ghost is context the rider explores
+     * *around*, so it must never widen the camera box of whatever they actually focused.
+     */
+    fun setPinnedTripPolylines(polylines: List<RoutePolyline>) {
+        _snapshot.update { it.copy(pinnedTripPolylines = polylines) }
+    }
+
     /** Sets the adjacency route badges (#1827), rendered by both flavors (#1913). */
     fun setRouteBadges(badges: List<RouteBadge>) {
         _snapshot.update { it.copy(routeBadges = badges) }
@@ -720,15 +794,15 @@ class MapRenderState {
 
     val selectedVehicleTripId: StateFlow<String?> = _selectedVehicleTripId.asStateFlow()
 
-    // --- Bike stations (the old BikeStationOverlay): the per-zoom icon band is chosen by the ---
-    // --- renderer; [bikeshareVisible] carries the layer/directions-mode gate. ---
+    // --- Rentals (the old BikeStationOverlay): the per-zoom icon band is chosen by the renderer; ---
+    // --- [rentalsVisible] carries the layer/directions-mode gate. ---
 
-    fun setBikeStations(stations: List<BikeMarker>, bikeshareVisible: Boolean) {
-        _snapshot.update { it.copy(bikeStations = stations, bikeshareVisible = bikeshareVisible) }
+    fun setRentals(rentals: List<RentalMarker>, rentalsVisible: Boolean) {
+        _snapshot.update { it.copy(rentals = rentals, rentalsVisible = rentalsVisible) }
     }
 
-    fun clearBikeStations() {
-        _snapshot.update { it.copy(bikeStations = emptyList()) }
+    fun clearRentals() {
+        _snapshot.update { it.copy(rentals = emptyList()) }
     }
 
     // --- Stops: the host owns accumulation/cap + focus; this just holds the current list + id. ---
@@ -744,6 +818,10 @@ class MapRenderState {
     /** Sets the stop zoom band (full icon vs dot); a no-op emission when unchanged (StateFlow dedups). */
     fun setStopBand(band: StopBand) {
         _snapshot.update { it.copy(stopBand = band) }
+    }
+
+    fun setCompactStopIcons(compact: Boolean) {
+        _snapshot.update { it.copy(compactStopIcons = compact) }
     }
 
     /** Selects (or deselects with null) a vehicle by trip id; the renderer shows its data marker. */

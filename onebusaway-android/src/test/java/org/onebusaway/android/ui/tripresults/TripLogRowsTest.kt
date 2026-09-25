@@ -66,7 +66,7 @@ class TripLogRowsTest {
         mode = TransitMode.BUS,
         routeColorHex = "1B6EF3",
         headsign = "Rainier Beach",
-        reachStopTime = ServerTime(3 * 60_000L),
+        reachStop = ReachStop.OnArrival(ServerTime(3 * 60_000L)),
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,

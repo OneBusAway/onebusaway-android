@@ -27,13 +27,13 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 21
           distribution: 'temurin'
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v6.2.0
+        uses: gradle/actions/setup-gradle@v6.3.0
 
       # Formatting gate. spotlessCheck needs no emulator, so run it up front to fail fast (in seconds)
       # rather than after the ~10-min emulator boot below. `check` also depends on spotlessCheck, but

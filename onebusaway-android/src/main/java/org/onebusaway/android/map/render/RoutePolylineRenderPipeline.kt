@@ -21,7 +21,6 @@ import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.ln
-import kotlin.math.pow
 import kotlin.math.tan
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +35,6 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
-private const val MAX_MERCATOR_LATITUDE = 85.05112878
 private const val VIEWPORT_MARGIN_MULTIPLIER = 1.0
 private const val SIMPLIFICATION_ERROR_PIXELS = 0.75
 private const val MIN_SIMPLIFICATION_METERS = 2.0
@@ -57,8 +55,11 @@ internal class RoutePolylineRenderPipeline(
     }
 }
 
+// Striping runs last, on the geometry that will actually be drawn: it cuts a line into runs, so a pass
+// that reshaped one afterwards would be reshaping the stripes instead — and cutting first would leave
+// every later pass with a dozen lines to do the work of one.
 private val DEFAULT_ROUTE_POLYLINE_PIPELINE = RoutePolylineRenderPipeline(
-    listOf(ViewportClipRoutePolylinePass(), ZoomSimplifyRoutePolylinePass())
+    listOf(ViewportClipRoutePolylinePass(), ZoomSimplifyRoutePolylinePass(), StripeRoutePolylinePass())
 )
 
 /**
@@ -72,7 +73,11 @@ internal fun routePolylineRenderFlow(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     pipeline: RoutePolylineRenderPipeline = DEFAULT_ROUTE_POLYLINE_PIPELINE
 ): Flow<List<RoutePolyline>> = combine(
-    snapshot.map { it.routePolylines }.distinctUntilChanged(),
+    // Ghost first, so the parked trip draws *beneath* whatever the rider is actually looking at (#2053).
+    // Concatenated here rather than in the render state so the two keep their independent lifetimes —
+    // see MapRenderSnapshot.pinnedTripPolylines — and so both flavors get the layer for free: each
+    // renderer reconciles whatever list this flow hands it, and neither has to learn a second one.
+    snapshot.map { it.pinnedTripPolylines + it.routePolylines }.distinctUntilChanged(),
     camera
 ) { polylines, viewport -> polylines to viewport }
     .mapLatest { (polylines, viewport) ->
@@ -108,10 +113,7 @@ internal class ZoomSimplifyRoutePolylinePass : RoutePolylineRenderPass {
     ): List<RoutePolyline> {
         if (polylines.none { RoutePolylineTransform.ZOOM_SIMPLIFY in it.transforms }) return polylines
         val camera = context.camera ?: return polylines
-        val latitude = camera.center.latitude.coerceIn(-MAX_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE)
-        val metresPerPixel = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
-            cos(Math.toRadians(latitude)) /
-            2.0.pow(camera.zoom.coerceIn(0.0, 30.0))
+        val metresPerPixel = metersPerPixel(camera.center.latitude, camera.zoom)
         val tolerance = maxOf(MIN_SIMPLIFICATION_METERS, metresPerPixel * SIMPLIFICATION_ERROR_PIXELS)
         var changed = false
         val simplified = polylines.map { polyline ->

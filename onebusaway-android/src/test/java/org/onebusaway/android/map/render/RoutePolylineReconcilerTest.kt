@@ -17,7 +17,7 @@ import org.onebusaway.android.util.GeoPoint
 class RoutePolylineReconcilerTest {
 
     /** Stand-in for a native gms/maplibre Polyline: tracks its width and removal. */
-    private class FakeLine(val polyline: RoutePolyline, var width: Float) {
+    private class FakeLine(val polyline: RoutePolyline, var width: Float, var markInset: Float) {
         var removed = false
     }
 
@@ -34,17 +34,20 @@ class RoutePolylineReconcilerTest {
 
         val reconciler = RoutePolylineReconciler<FakeLine>(
             widthOf = widthOf,
-            createLine = { polyline, width ->
+            createLine = { polyline, width, markInset ->
                 createCount++
-                FakeLine(polyline, width).also(created::add)
+                FakeLine(polyline, width, markInset).also(created::add)
             },
             removeLines = { lines ->
                 removeCount++
                 lines.forEach { it.removed = true }
             },
-            setWidth = { line, width ->
+            // The mark inset arrives with every width, create or patch: a mark sized against the stroke has
+            // to be restated when the stroke moves, so the two travel together (see the renderer's caps).
+            setWidth = { line, _, width, markInset ->
                 setWidthCount++
                 line.width = width
+                line.markInset = markInset
             },
             caseColorOf = { CASE_COLOR },
             caseExtraWidth = { it.case.extraWidthDp }
@@ -249,6 +252,26 @@ class RoutePolylineReconcilerTest {
 
         assertEquals(10f + SELECTION_CASE_EXTRA, h.cases().single().width, 0f)
         assertEquals(10f, h.strokes().single().width, 0f)
+    }
+
+    @Test
+    fun `a case insets its end marks by the weight it shows, and keeps that inset when re-widened`() {
+        // #2241: a bulb is a circle of its line's stroke width, so the case's copy of it came out wider by
+        // the case's *whole* extra while the case shows only half of that on each side of the line — a halo
+        // at twice the weight of the case beside it. The inset is what closes that, and because it is a
+        // constant weight against a stroke that follows the zoom ramp, it has to survive the re-widening
+        // rather than being a factor stamped once.
+        val h = Harness()
+        h.reconciler.reconcile(listOf(line(1, 0.0).copy(case = RouteLineCase.SELECTION)), zoom = 4f)
+
+        assertEquals(SELECTION_CASE_EXTRA / 2f, h.cases().single().markInset, 0f)
+        // The line's own marks are drawn at its full stroke: a bulb is sized from the ride it caps.
+        assertEquals(0f, h.strokes().single().markInset, 0f)
+
+        h.reconciler.resyncWidths(zoom = 10f)
+
+        assertEquals(SELECTION_CASE_EXTRA / 2f, h.cases().single().markInset, 0f)
+        assertEquals(0f, h.strokes().single().markInset, 0f)
     }
 
     @Test

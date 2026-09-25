@@ -210,7 +210,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     }
 
     /** The OTP server this request targets; see [OtpTarget.resolve]. */
-    private val otpTarget: OtpTarget
+    val otpTarget: OtpTarget
         get() = OtpTarget.resolve(mContext)
 
     /**
@@ -219,7 +219,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
      */
     val formattedOtpBaseUrl: String?
         get() {
-            var otpBaseUrl = otpTarget.baseUrl ?: return null
+            var otpBaseUrl = otpTarget.usableBaseUrl ?: return null
             try {
                 // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
                 URL(otpBaseUrl)

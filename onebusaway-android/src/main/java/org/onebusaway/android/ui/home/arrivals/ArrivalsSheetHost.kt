@@ -16,35 +16,38 @@
 package org.onebusaway.android.ui.home.arrivals
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
-import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.ArrivalsAnalyticsEffect
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
+import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
-import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.routeRowKey
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
@@ -53,6 +56,7 @@ import org.onebusaway.android.ui.home.StopRouteSelection
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
 import org.onebusaway.android.ui.tutorial.TutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
@@ -62,7 +66,8 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
 internal data class ArrivalsSession(
     val viewModel: ArrivalsViewModel,
     val handler: ArrivalActionHandler,
-    val listState: LazyListState
+    val listState: LazyListState,
+    val displayMode: MutableState<ArrivalDisplayMode>
 )
 
 /**
@@ -72,8 +77,8 @@ internal data class ArrivalsSession(
  * (via [rememberClearedViewModelStoreOwner]) — so the VM's `viewModelScope`, and the refresh loop
  * [ArrivalsPolling] drives through it, are cancelled rather than accumulating in the activity's store.
  *
- * Polling and stop-detail dialogs live here so the banner and drawer share one lifecycle and one
- * state source. Loaded responses are forwarded to the host for map focus and tutorials.
+ * Polling lives here so the banner and drawer share one lifecycle and one state source. Loaded
+ * responses are forwarded to the host for map focus and tutorials.
  */
 @Composable
 internal fun rememberArrivalsSession(
@@ -125,10 +130,10 @@ internal fun rememberArrivalsSession(
             )
         }
         val listState = remember { LazyListState() }
+        val displayMode = rememberArrivalDisplayMode(stop.id) { prefs.arrivalDisplayDefault() }
 
         ArrivalsPolling(viewModel)
         ArrivalsAnalyticsEffect(viewModel)
-        StopDetailsHost(viewModel)
 
         // Forward each completed load to the host and start onboarding after the sheet is visible.
         val sheetVisibleState = rememberUpdatedState(sheetVisible)
@@ -143,8 +148,8 @@ internal fun rememberArrivalsSession(
             }
         }
 
-        remember(viewModel, handler, listState) {
-            ArrivalsSession(viewModel, handler, listState)
+        remember(viewModel, handler, listState, displayMode) {
+            ArrivalsSession(viewModel, handler, listState, displayMode)
         }
     }
 }
@@ -156,22 +161,34 @@ internal fun ArrivalsSheetHost(
     state: ArrivalsUiState,
     selectedRoute: StopRouteSelection?,
     mapRouteColors: Map<RouteDirectionKey, Int>,
-    onContentHeight: (heightPx: Int) -> Unit
+    // The selected trip's band tint (#1990), or null when no vehicle is selected.
+    selectedTripBandColor: Int?
 ) {
     session ?: return
     val tutorialState = LocalTutorialState.current
-    Surface(color = colorResource(R.color.trip_details_background)) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
         ArrivalsPanel(
             viewModel = session.viewModel,
             state = state,
             listState = session.listState,
             handler = session.handler,
+            displayMode = ScriptedTutorial.arrivalDisplayMode(tutorialState?.current?.id) ?: session.displayMode.value,
+            onDisplayModeChange = { session.displayMode.value = it },
+            modeSwitchModifier = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ARRIVAL_MODE),
             mapRouteColors = mapRouteColors,
+            selectedTripBandColor = selectedTripBandColor,
             selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
             selectedRouteId = selectedRoute?.originLeg?.routeId,
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
-            onContentHeight = onContentHeight,
-            etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA)
+            selectedTripId = selectedRoute?.selectedTripId,
+            // The onboarding spotlight targets inside the first arrivals row. The ETA pill is shared
+            // with the older opportunistic arrivals tutorial; the badge and star are the scripted
+            // tour's own (#2164).
+            anchors = ArrivalRowAnchors(
+                eta = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
+                badge = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ROUTE_BADGE),
+                star = Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ROUTE_STAR)
+            )
         )
     }
 }
@@ -190,10 +207,15 @@ internal fun StopRouteSelection.selectedArrivalRowKey(): String = originLeg.let 
  * state lags the focus by a few hundred ms and the (often cached) arrivals response beats it. The old
  * code checked sheet visibility *instantaneously* and dropped the start when it lost that race, which
  * skipped the tour almost every time (the next retry was a 60s-away poll). Waiting instead anchors the
- * spotlight to the panel once it's actually on screen. The pending steps are marked shown only once we
- * commit to starting, so a lost-then-retried response can't double-show.
+ * spotlight to the panel once it's actually on screen.
+ *
+ * Starting is all this does: each step is recorded as shown when it is actually displayed, by
+ * [RecordArrivalSpotlightsShown]. Marking the whole pending list here instead meant a sequence ended
+ * early — the "X", or a Back press aimed at the sheet — retired steps the rider never saw. A step that
+ * stays unmarked is still owed, so it comes back at the next stop; the [tutorialState.active] guards
+ * above are what stop one from double-showing within a run.
  */
-private suspend fun maybeStartArrivalTutorial(
+internal suspend fun maybeStartArrivalTutorial(
     prefs: PreferencesRepository,
     tutorialState: TutorialState,
     hasArrivals: Boolean,
@@ -201,11 +223,11 @@ private suspend fun maybeStartArrivalTutorial(
 ) {
     if (tutorialState.active) return
     if (!hasArrivals) return
+    if (ArrivalTutorial.pendingSteps(prefs).isEmpty()) return
+    awaitSheetVisible()
+    // Startup dialogs can disable tutorials while this is waiting for the sheet.
+    if (tutorialState.active) return
     val pending = ArrivalTutorial.pendingSteps(prefs)
     if (pending.isEmpty()) return
-    awaitSheetVisible()
-    // Re-check after the wait: a stop change or another tutorial may have intervened.
-    if (tutorialState.active) return
-    ArrivalTutorial.markShown(prefs, pending)
     tutorialState.start(pending)
 }

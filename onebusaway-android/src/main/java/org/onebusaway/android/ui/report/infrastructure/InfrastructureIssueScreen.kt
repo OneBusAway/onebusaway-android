@@ -159,11 +159,9 @@ fun InfrastructureIssueDestination(navController: NavController) {
                 point?.let { viewModel.onMapFocusChanged(null, it.latitude, it.longitude) }
             }
 
-            override fun onBikeClick(station: org.onebusaway.android.map.bike.BikeStation) {}
+            override fun onRentalClick(place: org.onebusaway.android.map.rental.RentalPlace) {}
 
-            override fun onVehicleInfoWindowClick(status: org.onebusaway.android.models.ObaTripStatus) {}
-
-            override fun onBikeInfoWindowClick(station: org.onebusaway.android.map.bike.BikeStation) {}
+            override fun onRentalInfoWindowClick(place: org.onebusaway.android.map.rental.RentalPlace) {}
         }
     }
 
@@ -246,6 +244,7 @@ fun InfrastructureIssueDestination(navController: NavController) {
                 ObaMap(
                     host = mapViewModel.host,
                     callbacks = mapCallbacks,
+                    stopSelectionEnabled = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MAP_HEIGHT.dp),

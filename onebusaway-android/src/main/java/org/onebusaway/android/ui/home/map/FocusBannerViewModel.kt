@@ -118,6 +118,10 @@ class FocusBannerViewModel @Inject constructor(
         // Ignore taps until the persisted set is known — otherwise a legacy-starred stop looks unstarred
         // and this would compute favorite = true, re-starring what's already starred.
         if (!stopFavoritesReady.value) return
+        // Starring ensures the stop has a row in the stops table, and that row needs a location. The
+        // banner already disables the star until the focus has one (a stop revealed by id alone gets it
+        // from its arrivals load); this is the same guard restated where the write happens.
+        val point = stop.point ?: return
         val favorite = stop.id !in favoriteStopIds.value
         optimisticStopFavorites.update { it + (stop.id to favorite) }
         viewModelScope.launch {
@@ -126,8 +130,8 @@ class FocusBannerViewModel @Inject constructor(
                     id = stop.id,
                     code = stop.code,
                     name = stop.name,
-                    latitude = stop.point.latitude,
-                    longitude = stop.point.longitude,
+                    latitude = point.latitude,
+                    longitude = point.longitude,
                     favorite = favorite
                 )
             }

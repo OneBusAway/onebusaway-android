@@ -34,13 +34,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.SearchableTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.home.rememberHomeSection
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.openRoute
+import org.onebusaway.android.ui.nav.openStop
 import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
+import org.onebusaway.android.ui.nav.showArrivals
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -61,36 +65,39 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
         }
     )
     composable(NavRoutes.MY_STOPS, arguments = tabArg) { entry ->
+        val prefs = PreferencesEntryPoint.get(LocalContext.current)
         ObaTheme {
             MyStopsDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
+                prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
-                onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
-                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) }
+                onRevealStop = { navController.showArrivals(it) },
+                onSearchStop = { navController.openStop(it, prefs.searchResultMode(), prefersMap = true) }
             )
         }
     }
     composable(NavRoutes.MY_ROUTES, arguments = tabArg) { entry ->
+        val prefs = PreferencesEntryPoint.get(LocalContext.current)
         ObaTheme {
             MyRoutesDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
+                prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) },
-                onOpenRoute = { navController.navigateFromHome(NavRoutes.routeInfo(it)) }
+                onOpenRoute = { navController.openRoute(it, prefs.searchResultMode(), prefersMap = true) }
             )
         }
     }
     composable(NavRoutes.MY_RECENT, arguments = tabArg) { entry ->
+        val prefs = PreferencesEntryPoint.get(LocalContext.current)
         ObaTheme {
             MyRecentDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
+                prefsRepository = prefs,
                 onBack = { navController.popBackStack() },
-                onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
-                onShowRouteOnMap = { navController.revealRouteOnMap(it) },
-                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) }
+                onRevealStop = { navController.showArrivals(it) },
+                onOpenRoute = { navController.openRoute(it, prefs.searchResultMode(), prefersMap = true) },
+                onShowRouteOnMap = { navController.revealRouteOnMap(it) }
             )
         }
     }
@@ -105,10 +112,20 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
         ObaTheme {
             Scaffold(
                 topBar = {
-                    ObaTopAppBar(
+                    SearchableTopAppBar(
                         title = stringResource(R.string.navdrawer_item_my_reminders),
+                        onSearch = { navController.navigate(NavRoutes.search(it)) },
                         onBack = { navController.popBackStack() }
                     ) {
+                        IconButton(onClick = {
+                            PreferencesEntryPoint.get(activity).rememberHomeSection(NavRoutes.HOME)
+                            navController.navigateFromHome(NavRoutes.HOME)
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_action_location_map),
+                                contentDescription = stringResource(R.string.home_map)
+                            )
+                        }
                         IconButton(onClick = {
                             activity.chooseSortOrder(
                                 PreferenceUtils.getReminderSortOrderFromPreferences(activity),
@@ -136,7 +153,8 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                                 it,
                                 onEdit = onEditReminder,
                                 onShowRoute = { navController.navigate(NavRoutes.routeInfo(it)) },
-                                onShowStop = { navController.navigate(NavRoutes.arrivals(it)) }
+                                // A reminder stores only its stop's id — enough for a reveal.
+                                onShowStop = { navController.showArrivals(org.onebusaway.android.ui.nav.StopReveal(it)) }
                             )
                         }
                     )

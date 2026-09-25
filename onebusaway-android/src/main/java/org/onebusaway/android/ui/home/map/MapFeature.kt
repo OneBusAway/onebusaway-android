@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home.map
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -56,7 +57,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -64,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -80,22 +81,28 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.Locale
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.StopsBanner
-import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.map.mapBanner
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.stopZoomBand
+import org.onebusaway.android.map.rental.RentalKind
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.RentalPlace
+import org.onebusaway.android.map.settledCamera
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
@@ -106,9 +113,14 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
+import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.tripplan.refuseTripPlanIfUnavailable
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.MapPointSpotlight
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -132,17 +144,21 @@ private const val SHOW_DEBUG_ZOOM_INDICATOR = false
 fun MapFeature(
     mapViewModel: MapViewModel,
     homeViewModel: HomeViewModel,
+    // The transit-centre drawer's query (#2107). Created by the host (the sheet is its), fed from here,
+    // which is where the map view model lives — the same bridge role this module already plays for
+    // padding, insets, and directives.
+    nearbyArrivalsViewModel: NearbyArrivalsViewModel,
     // The sheet-driven FAB lift, computed by HomeScreen from its live SheetState (the map composes only
     // when HOME is the destination, so this lives with the sheet rather than round-tripping the VM).
     fabBottomInset: Dp,
     modifier: Modifier = Modifier,
-    // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
-    onMapLongPress: (GeoPoint) -> Unit = {}
+    // How tall the stops notice currently is, or 0 with none showing (#2229). Reported because the
+    // parked-trip button sits in the *host's* overlay layer and has to clear this one, which lives here —
+    // the same padding/inset bridging this module already does.
+    onStopsBannerHeight: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
-    val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
     // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
     // inset updates on every frame of the keyboard animation, and reading it here directly would
     // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
@@ -170,6 +186,7 @@ fun MapFeature(
     val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
             override fun onStopClick(marker: StopMarker) {
+                dismissNavigateHere()
                 val stop = marker.stop
                 val transition = homeViewModel.onStopFocused(
                     FocusedStop(stop.id, stop.name, stop.stopCode, marker.point, stop.wheelchairBoarding),
@@ -199,30 +216,52 @@ fun MapFeature(
                 // left directions altogether and discarded the trip being entered.
                 if (imeVisible) {
                     // Clearing focus is what closes the editor and its suggestion list; hide() covers
-                    // a keyboard raised by something that isn't a focused Compose field.
+                    // a keyboard raised by something that isn't a focused Compose field. A standing
+                    // "navigate here" offer deliberately survives this tap for the same reason the
+                    // focus does — the tap was aimed at the keyboard, and answering the offer with it
+                    // would be the second unasked-for effect this branch exists to prevent. The next
+                    // tap, aimed at the map the rider can now see, retires it below.
                     focusManager.clearFocus()
                     keyboard?.hide()
                     return
                 }
+                dismissNavigateHere()
                 homeViewModel.unfocusMapOneLevel()
             }
 
             override fun onMapLongClick(point: GeoPoint) {
-                currentOnMapLongPress(point)
+                // The offer's only destination is the trip planner, so it is made only where there is
+                // one to reach; where there isn't, the gesture is answered with the reason (#2264).
+                if (context.refuseTripPlanIfUnavailable()) return
+                // The one gesture that *raises* the offer: drop the pin, which is what the home screen
+                // hangs its "navigate here" bubble off (#2243).
+                mapViewModel.setNavigateHerePin(point)
             }
 
-            override fun onBikeClick(station: BikeStation) {
-                val bikeId = homeViewModel.currentFocus.value.focusedBikeStationId
-                if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
+            /**
+             * Any other tap on the map answers a standing offer by moving on from it: the pin and its
+             * bubble go, and the tap does whatever it was for.
+             *
+             * Called from each tap rather than inferred from a focus change, because the commonest
+             * dismissal — a tap on empty map with nothing focused — changes no focus at all. The offer
+             * deliberately survives panning and zooming: it names a place, and the rider is allowed to
+             * look around it before deciding.
+             */
+            private fun dismissNavigateHere() = mapViewModel.setNavigateHerePin(null)
+
+            override fun onRentalClick(place: RentalPlace) {
+                dismissNavigateHere()
+                val focusedId = homeViewModel.currentFocus.value.focusedBikeStationId
+                if (focusedId == null || !focusedId.equals(place.id, ignoreCase = true)) {
                     // Refused (directions owns the map): leave before the map tears the trip down —
                     // the same order the stop tap above uses, home focus first, map render after.
-                    if (!homeViewModel.onBikeStationFocused(station.id)) return
+                    if (!homeViewModel.onBikeStationFocused(place.id)) return
                     mapViewModel.clearAllFocus()
                 }
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
                     resources.getString(
-                        if (station.isFloatingBike) {
+                        if (place.kind == RentalKind.STATION) {
                             R.string.analytics_label_bike_station_marker_clicked
                         } else {
                             R.string.analytics_label_floating_bike_marker_clicked
@@ -233,7 +272,25 @@ fun MapFeature(
             }
 
             override fun onVehicleClick(status: ObaTripStatus) {
-                mapViewModel.onVehicleTapped(status)
+                dismissNavigateHere()
+                val tripId = status.activeTripId
+                // Tap to select (the trip overlay + most-recent-data dot), tap the selected one again to
+                // read it. The bubble this replaces (#2194) put the same navigation behind a chevron the
+                // rider had to aim at, and took over the map to offer it. Asked before the selection is
+                // driven, since driving it would make every tap look like a re-tap.
+                if (mapViewModel.isVehicleReTap(tripId)) {
+                    MapNavigation.openVehicleTripDetails(
+                        context,
+                        status,
+                        homeViewModel.currentFocus.value.focusedStop?.id
+                    )
+                    return
+                }
+                // The tapped vehicle is a focus level of its own wherever a route is drawn — over a
+                // focused stop, a standalone route, or a directions leg (#2205, #2224) — so HOME owns the
+                // transition and the selection arrives as its directive; a background tap then unwinds
+                // it. Same ask-HOME-then-render shape as the stop and bike taps above.
+                homeViewModel.selectFocusedRouteTrip(tripId)
             }
 
             override fun onRouteContinuationClick(
@@ -241,6 +298,7 @@ fun MapFeature(
                 routeShortName: String,
                 directionId: Int?
             ) {
+                dismissNavigateHere()
                 homeViewModel.advanceRouteContinuation(
                     routeId,
                     routeShortName,
@@ -250,6 +308,7 @@ fun MapFeature(
             }
 
             override fun onRouteBadgeClick(badge: RouteBadge) {
+                dismissNavigateHere()
                 when (val tap = badge.tap) {
                     // An adjacency label (#1827) names a route the rider hasn't opened: open it.
                     is RouteBadgeTap.ShowRoute -> homeViewModel.requestShowFocusedStopRouteOnMap(
@@ -269,16 +328,8 @@ fun MapFeature(
                 }
             }
 
-            override fun onVehicleInfoWindowClick(status: ObaTripStatus) {
-                MapNavigation.openVehicleTripDetails(
-                    context,
-                    status,
-                    homeViewModel.currentFocus.value.focusedStop?.id
-                )
-            }
-
-            override fun onBikeInfoWindowClick(station: BikeStation) {
-                MapNavigation.openBikeDeepLink(context, station)
+            override fun onRentalInfoWindowClick(place: RentalPlace) {
+                MapNavigation.openRentalLink(context, place)
             }
         }
     }
@@ -292,6 +343,20 @@ fun MapFeature(
     }
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.directionsBottomInset.collect { mapViewModel.host.setDirectionsBottomInset(it) }
+    }
+    // Feed the transit-centre drawer's query (#2107) the settled viewport, on the same "settled" the
+    // stop and rental loaders use — so it re-queries once at drag-end rather than per intermediate idle.
+    // Collected straight into the VM, never into Compose state, so a pan doesn't recompose the map.
+    LaunchedEffect(mapViewModel, nearbyArrivalsViewModel) {
+        mapViewModel.host.settledCamera()
+            .distinctUntilChanged()
+            .collect { nearbyArrivalsViewModel.onViewportSettled(it) }
+    }
+    LaunchedEffect(mapViewModel, nearbyArrivalsViewModel) {
+        mapViewModel.renderState.snapshot
+            .map { it.stopBand }
+            .distinctUntilChanged()
+            .collect { nearbyArrivalsViewModel.onStopBand(it) }
     }
     // Publish the floating top chrome's footprint (status-bar inset + FAB-row clearance) as the map's
     // baseline top inset, so the Google compass and centered content clear the FABs instead of drawing at
@@ -309,13 +374,18 @@ fun MapFeature(
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
                     mapViewModel.recenterOnFocusedStop(directive.point)
-                is MapDirective.ShowRoute ->
+                is MapDirective.ShowRoute -> {
                     mapViewModel.toRoute(
                         directive.request,
                         directive.stopScoped,
                         directive.frameRoute,
                         directive.withinDirections
                     )
+                    // After the route, always, and null included: entering a route tears the previous
+                    // session's selection down, so this is what restores the focus's own — and what
+                    // stops a route change from leaving a previous trip selected (#2224).
+                    mapViewModel.selectVehicleTrip(directive.selectedTripId)
+                }
                 is MapDirective.RestoreViewport ->
                     mapViewModel.restoreViewport(directive.viewport)
                 MapDirective.FrameRoute -> mapViewModel.frameRoute()
@@ -329,6 +399,7 @@ fun MapFeature(
                     mapViewModel.setRideArrivals(directive.stopId, directive.groups)
                 MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
                 MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
+                is MapDirective.SelectVehicle -> mapViewModel.selectVehicleTrip(directive.tripId)
                 MapDirective.ClearFocus -> mapViewModel.clearAllFocus()
                 is MapDirective.FocusStop ->
                     mapViewModel.focusStop(
@@ -336,7 +407,8 @@ fun MapFeature(
                         directive.routes,
                         directive.overlayExpanded,
                         directive.recenter,
-                        directive.animate
+                        directive.animate,
+                        directive.useDefaultZoom
                     )
                 is MapDirective.ShowItinerary ->
                     mapViewModel.showItinerary(directive.itinerary, directive.pins)
@@ -430,7 +502,10 @@ fun MapFeature(
     ObaMap(
         host = mapViewModel.host,
         callbacks = callbacks,
-        modifier = modifier,
+        stopSelectionEnabled = true,
+        // The scripted tour's opening step rings the whole map ("this is the map"), and its
+        // long-press step draws its gesture hint at this surface's centre (#2164).
+        modifier = modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_MAP),
         initialLatitude = seed.point.latitude,
         initialLongitude = seed.point.longitude,
         initialZoom = seed.zoom
@@ -440,6 +515,9 @@ fun MapFeature(
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.
     val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
+    // The rental layer's own refusal to draw this viewport (#2168) — shown in the same pill, behind
+    // whatever the stops loader has to say (see [mapBanner]).
+    val rentalsNeedCloserZoom by mapViewModel.rentalsNeedCloserZoom.collectAsStateWithLifecycle()
     val currentFocus by homeViewModel.currentFocus.collectAsStateWithLifecycle()
     // The map is now edge-to-edge (no solid top bar), so this notice floats as a pill at the top-center,
     // below the floating top chrome — the same shared inset (status bar + clearance) the HomeScreen
@@ -450,12 +528,20 @@ fun MapFeature(
             .clipToBounds()
             .mapTopChromeOverlayInset()
     ) {
-        StopsInfoBanner(
-            banner = stopsBanner.forFocus(currentFocus),
-            regionName = mapViewModel.currentRegionName.orEmpty(),
-            onViewServiceArea = mapViewModel::zoomToRegion,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
+        // Measured through a wrapper that is always here rather than on the notice itself: the notice
+        // emits *nothing* when there is nothing to say, and a modifier on something that isn't composed
+        // never reports the shrink — it would just leave its last height standing.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .onSizeChanged { onStopsBannerHeight(it.height) }
+        ) {
+            StopsInfoBanner(
+                banner = mapBanner(stopsBanner.forFocus(currentFocus), rentalsNeedCloserZoom),
+                regionName = mapViewModel.currentRegionName.orEmpty(),
+                onViewServiceArea = mapViewModel::zoomToRegion
+            )
+        }
         if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
             val zoom = camera?.zoom?.toFloat() ?: seed.zoom
             Text(
@@ -479,26 +565,41 @@ fun MapFeature(
         }
     }
 
-    // The welcome tutorial's map-stop spotlight, wired from the flavor-neutral map seam (the published
-    // projector + the shared stop list) so this host knows nothing of the underlying map SDK. A tap
-    // focuses the chosen stop exactly like a marker tap, continuing into the arrivals tutorial.
+    // The scripted tour's map-stop spotlight, wired from the flavor-neutral map seam (the published
+    // projector + the shared stop list) so this host knows nothing of the underlying map SDK.
     val mapStopProjector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
     MapStopSpotlight(
         projector = mapStopProjector,
         currentStops = { mapViewModel.renderState.snapshot.value.stops },
-        onFocusStop = { callbacks.onStopClick(it) }
+        targetStopId = DemoModeController.ANCHOR_STOP_ID
     )
+    // The tour's long-press step rings the place the rider would press — the demo trip's destination —
+    // which has no marker of its own until the trip is planned.
+    MapPointSpotlight(
+        projector = mapStopProjector,
+        point = DemoModeController.TRIP_PLAN_DESTINATION,
+        anchorId = ScriptedTutorial.KEY_TRIP_DESTINATION
+    )
+    // ...and for the length of that step the map also *answers* the mimed press, so the caption's "then
+    // tap Navigate here" points at something that is really there (#2243).
+    TourNavigateHerePin(mapViewModel)
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a
     // self-wired feature module ([MapChromeViewModel]); the map-loading bar reads the map VM's progress
     // directly. Their actions drive the map view model.
     val chrome by hiltViewModel<MapChromeViewModel>().state.collectAsStateWithLifecycle()
     val mapLoading by mapViewModel.progress.collectAsStateWithLifecycle()
+    val rentalsLoading by mapViewModel.rentalsLoading.collectAsStateWithLifecycle()
     MapChrome(
         zoomVisible = chrome.zoomControls,
         leftHandMode = chrome.leftHand,
-        layersVisible = chrome.layersFab,
-        bikeshareActive = chrome.bikeshareActive,
+        // Hidden while directions own the map (#2168): the layer draws nothing there, so a button
+        // offering to toggle it would be inert — and directions already crowd this corner.
+        layersVisible = chrome.layersFab && currentFocus !is CurrentFocus.Directions,
+        rentalsActive = chrome.rentalsActive,
+        bikesActive = chrome.bikesActive,
+        scootersActive = chrome.scootersActive,
+        rentalsLoading = rentalsLoading,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
         onMyLocation = {
@@ -517,23 +618,38 @@ fun MapFeature(
         },
         onZoomIn = { mapViewModel.zoomIn() },
         onZoomOut = { mapViewModel.zoomOut() },
-        onToggleBikeshare = {
-            val active = LayerUtils.isBikeshareLayerVisible(context)
-            // Persist the toggled state (DataStore) + drive the bike loader. MapChromeViewModel observes
-            // the visibility pref reactively, so the bikeshare-active tint updates without a host push.
-            mapViewModel.setBikeshareLayerVisible(!active, persist = true)
-            AnalyticsEntryPoint.get(context).reportUiEvent(
-                PlausibleAnalytics.REPORT_MAP_EVENT_URL,
-                resources.getString(R.string.analytics_layer_bikeshare),
-                resources.getString(
-                    if (active) {
-                        R.string.analytics_label_bikeshare_deactivated
-                    } else {
-                        R.string.analytics_label_bikeshare_activated
-                    }
-                )
-            )
+        onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) },
+        onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
+        onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) },
+        onHideRentalButton = {
+            PreferenceUtils.saveBoolean(resources.getString(R.string.preference_key_show_rental_button), false)
+            // The button is the only signpost to itself, so hiding it without saying where it went
+            // would look like a bug. The toast names Settings, which is the one way back.
+            Toast.makeText(context, R.string.layers_rentals_hidden_toast, Toast.LENGTH_LONG).show()
         }
+    )
+}
+
+/**
+ * Shows or hides the rental layers: persist the new value (DataStore) and drive the loader.
+ * [MapChromeViewModel] observes the visibility preference reactively, so the button's tint updates
+ * without a host push.
+ *
+ * Reports to the long-standing bikeshare analytics event rather than a new one, so the series that
+ * has been counting "the rider changed the rental overlay" keeps counting the same thing.
+ */
+private fun toggleRentals(
+    context: Context,
+    mapViewModel: MapViewModel,
+    active: Boolean
+) {
+    mapViewModel.setRentalsVisible(!active)
+    AnalyticsEntryPoint.get(context).reportUiEvent(
+        PlausibleAnalytics.REPORT_MAP_EVENT_URL,
+        context.getString(R.string.analytics_layer_bikeshare),
+        context.getString(
+            if (active) R.string.analytics_label_bikeshare_deactivated else R.string.analytics_label_bikeshare_activated
+        )
     )
 }
 
@@ -559,6 +675,7 @@ private fun StopsInfoBanner(
     val iconRes = when (lastShown) {
         StopsBanner.None,
         StopsBanner.MoreStopsAvailable -> R.drawable.ic_zoom_in
+        StopsBanner.ZoomInForRentals -> R.drawable.ic_zoom_in
         StopsBanner.ShowingSavedStops -> R.drawable.history_24
         StopsBanner.OutsideRegion -> R.drawable.ic_action_location_map
     }
@@ -614,6 +731,7 @@ private fun StopsInfoBanner(
                 Text(
                     text = when (lastShown) {
                         StopsBanner.ShowingSavedStops -> stringResource(R.string.map_showing_cached_stops)
+                        StopsBanner.ZoomInForRentals -> stringResource(R.string.map_zoom_in_for_rentals)
                         else -> stringResource(R.string.map_zoom_in_for_more_stops)
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -673,4 +791,26 @@ private fun PermissionRationaleDialog(onOk: () -> Unit, onNoThanks: () -> Unit) 
             TextButton(onClick = onNoThanks) { Text(stringResource(R.string.no_thanks)) }
         }
     )
+}
+
+/**
+ * The pin the scripted tour's long-press step would have left, dropped for the length of that step and
+ * taken away again (#2243).
+ *
+ * Here beside [MapPointSpotlight] — the sibling that rings the same place — rather than in the host:
+ * the tour's press is *map* content, this is where the map view model and the demo system's coordinates
+ * already are, and reading the tutorial state in a composable this small keeps a step change from
+ * recomposing the whole home screen.
+ *
+ * The tour never presses the map itself (the spotlight overlay swallows every touch), so this is the one
+ * writer of that pin which isn't a gesture — and it is a [DisposableEffect] because the teardown is the
+ * point: a tour abandoned on this step must not leave a pin behind.
+ */
+@Composable
+private fun TourNavigateHerePin(mapViewModel: MapViewModel) {
+    val onPressStep = LocalTutorialState.current?.current?.id == ScriptedTutorial.STEP_PLAN_PRESS
+    DisposableEffect(onPressStep) {
+        if (onPressStep) mapViewModel.setNavigateHerePin(DemoModeController.TRIP_PLAN_DESTINATION)
+        onDispose { if (onPressStep) mapViewModel.setNavigateHerePin(null) }
+    }
 }

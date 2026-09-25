@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.CameraCommand
@@ -63,6 +64,25 @@ sealed interface StopsBanner {
 
     /** The viewport is outside the current region; offer to frame its service area. */
     data object OutsideRegion : StopsBanner
+
+    /**
+     * The rental layer is on but the viewport is too wide (or too full) to draw it — see
+     * `RentalGuardrails`. Lives on this type rather than in its own strip because there is one
+     * informational pill at the top of the map and it can only say one thing at a time; [mapBanner]
+     * is where that precedence is decided.
+     */
+    data object ZoomInForRentals : StopsBanner
+}
+
+/**
+ * What the map's one informational pill shows. The stops banner wins whenever it has something to
+ * say: it reports on the data the map is fundamentally *for*, while the rental notice reports on an
+ * optional overlay the rider switched on.
+ */
+fun mapBanner(stops: StopsBanner, rentalsNeedCloserZoom: Boolean): StopsBanner = when {
+    stops != StopsBanner.None -> stops
+    rentalsNeedCloserZoom -> StopsBanner.ZoomInForRentals
+    else -> StopsBanner.None
 }
 
 /**
@@ -84,12 +104,19 @@ class MapHost(
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
+    private val demoMode: DemoModeState,
     private val context: Context
 ) {
 
     val renderState = MapRenderState()
 
     init {
+        renderState.setCompactStopIcons(prefsRepository.getBoolean(R.string.preference_key_compact_stop_icons, false))
+        scope.launch {
+            prefsRepository.observeBoolean(R.string.preference_key_compact_stop_icons, false)
+                .collect(renderState::setCompactStopIcons)
+        }
+
         // Re-center when the region changes from the one present at startup (replaces the host's
         // onRegionChanged push). We compare each emission's id against the last-seen id, seeded with the
         // region at construction — rather than dropping the first emission — so it's race-free: even if
@@ -101,7 +128,12 @@ class MapHost(
         scope.launch {
             regionRepo.region.collect { region ->
                 val id = region?.id
-                if (region != null && id != lastRegionId) rezoomForRegion()
+                // Not while the scripted tour is running (#2164). The tour aims the camera at the demo
+                // transit system's city, and region discovery finishing mid-tour — which is exactly what
+                // happens on a first launch, the case the tour most needs to survive — would otherwise
+                // yank the camera to the rider's own region and leave every remaining step describing an
+                // empty map. The region is still recorded, so leaving demo mode reframes normally.
+                if (region != null && id != lastRegionId && !demoMode.isActive) rezoomForRegion()
                 lastRegionId = id
             }
         }
@@ -184,6 +216,21 @@ class MapHost(
     /** Set by the stop loader per load; cleared ([StopsBanner.None]) on view changes. */
     fun setStopsBanner(banner: StopsBanner) {
         _stopsBanner.value = banner
+    }
+
+    private val _rentalsNeedCloserZoom = MutableStateFlow(false)
+
+    /**
+     * Whether the rental layer refused to draw for this viewport — the zoom gate or the density budget
+     * (see `RentalGuardrails`). Its own flow rather than a [StopsBanner] value because the two loaders
+     * write independently and would otherwise clobber each other's notice; [mapBanner] resolves which
+     * one the pill actually shows.
+     */
+    val rentalsNeedCloserZoom: StateFlow<Boolean> = _rentalsNeedCloserZoom.asStateFlow()
+
+    /** Set by the rental loader per load. */
+    fun setRentalsNeedCloserZoom(needsCloserZoom: Boolean) {
+        _rentalsNeedCloserZoom.value = needsCloserZoom
     }
 
     private val _effects = MutableSharedFlow<MapEffect>(extraBufferCapacity = 8)

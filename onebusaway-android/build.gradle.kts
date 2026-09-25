@@ -53,8 +53,16 @@ android {
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+        // versionCode is a fallback only: the play {} block's AUTO resolution strategy takes the
+        // real one from the highest code already on Play, so this value is used only by builds with
+        // no Play credentials — whose output must never be uploaded.
+        //
+        // versionName is YY.RELEASE.PATCH — the two-digit year, then which release it is within that
+        // year, then any patch on it. 26.2.0 is the second release of 2026. The minor is NOT the
+        // month: 26.1.0 shipped in March. See "Version numbering" in docs/RELEASING.md, and bump it
+        // by hand.
         versionCode = 153
-        versionName = "26.1.0"
+        versionName = "26.3.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -350,9 +358,10 @@ configurations.all {
     exclude(group = "org.json", module = "json")
 }
 
-// OTP 2.x GraphQL trip planning (#1780). Codegen source: src/main/graphql/otp2/
-// {schema.graphqls, Plan.graphql}. Schema is pinned to a specific OTP release tag (see the header
-// comment in schema.graphqls) rather than live introspection, per the issue's instructions.
+// OTP 2.x GraphQL trip planning (#1780) and the rental-vehicle map layer (#2168). Codegen source:
+// src/main/graphql/otp2/{schema.graphqls, Plan.graphql, Rentals.graphql}. Schema is pinned to a
+// specific OTP release tag (see the header comment in schema.graphqls) rather than live
+// introspection, per the issue's instructions.
 apollo {
     service("otp2") {
         packageName.set("org.onebusaway.android.api.graphql")
@@ -381,6 +390,10 @@ apollo {
         // "kotlin.Int"/"kotlin.Long" likewise). mapScalarToKotlinDouble("Reluctance") is shorthand for
         // exactly that, not a prerequisite for it. Verified against apollo-api 5.0.1's own bytecode.
         mapScalar("Reluctance", "kotlin.Double")
+        // Ratio (RentalVehicleFuel.percent) is the battery reading the rental layer shows — the
+        // schema describes it as "a fractional multiplier between 0 and 1, for example 0.25", so it
+        // is numeric like the two above rather than a string.
+        mapScalar("Ratio", "kotlin.Double")
     }
 }
 

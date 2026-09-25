@@ -66,6 +66,28 @@ class DeriveDesiredRegistrationTest {
     }
 
     @Test
+    fun `a deep-link region registers under the sidecar's id, not its local one`() {
+        // #2165: a custom region's own id is a locally-invented negative number the sidecar has never
+        // heard of, so registering under it POSTs to `/regions/-2/push_registrations` and 404s. When the
+        // link named the server's id, that is the one the URL must carry.
+        val registration = derive(
+            region = sidecarRegion.copy(id = -2L, custom = true, sidecarRegionId = 19L)
+        )
+        assertEquals(
+            DesiredRegistration.Wanted(
+                PushRegistration(
+                    regionId = 19L,
+                    sidecarBaseUrl = "https://sidecar.example.org",
+                    token = "token-a",
+                    locale = "en-US",
+                    description = null
+                )
+            ),
+            registration
+        )
+    }
+
+    @Test
     fun `notifications off is a definitive opt-out regardless of the other inputs`() {
         assertEquals(DesiredRegistration.OptedOut, derive(notificationsEnabled = false))
         // Definitive even while the async inputs are still settling: opting out never waits.

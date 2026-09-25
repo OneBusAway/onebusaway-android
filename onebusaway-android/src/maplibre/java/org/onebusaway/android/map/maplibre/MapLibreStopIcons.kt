@@ -23,6 +23,7 @@ import kotlin.math.roundToInt
 import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 import org.onebusaway.android.R
+import org.onebusaway.android.map.render.NEARBY_STOP_ICON_SCALE
 import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopDirection
 
@@ -39,6 +40,14 @@ import org.onebusaway.android.map.render.StopDirection
  * SymbolManager style-image model is part of the feature-level rewrite tracked in issue #1728.
  */
 object MapLibreStopIcons {
+
+    private val nearbyIcons = HashMap<Icon, Icon>()
+
+    /** Reuse one smaller texture per original icon when nearby stops are retained during focus. */
+    @Synchronized
+    fun nearbyIcon(context: Context, icon: Icon): Icon = nearbyIcons.getOrPut(icon) {
+        IconFactory.getInstance(context).fromBitmap(StopBitmaps.scale(icon.bitmap, NEARBY_STOP_ICON_SCALE))
+    }
 
     private var loaded = false
 
@@ -70,7 +79,7 @@ object MapLibreStopIcons {
     private lateinit var starDotStopIcon: Icon
     private lateinit var starDotStopIconFocused: Icon
 
-    private const val FOCUS_ICON_SCALE = 1.5f
+    private const val FOCUS_ICON_SCALE = 1.25f
 
     private var basePx = 0
 
@@ -93,7 +102,7 @@ object MapLibreStopIcons {
         return stopIcons[StopDirection.fromKey(direction).ordinal]
     }
 
-    /** The focused (1.5x) stop icon for a direction string. */
+    /** The focused (1.25x) stop icon for a direction string. */
     @Synchronized
     fun focusedIconForDirection(context: Context, direction: String): Icon {
         ensureLoaded(context)

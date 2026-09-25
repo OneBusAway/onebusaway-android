@@ -21,11 +21,13 @@ import androidx.collection.LruCache
 /**
  * Memoizes the [V] wrapper (a Google `BitmapDescriptor`, or a counting stand-in in tests) for a marker
  * icon, keyed by a **stable logical key** rather than the bitmap instance. The motivating case is
- * `GoogleMapRenderer`'s vehicle reconcile, which re-stamps a gliding vehicle's icon on each heading-octant
- * change at ~20Hz — hundreds of `BitmapDescriptorFactory.fromBitmap(...)` allocations/sec on a busy route
- * without this.
+ * `GoogleMapRenderer`'s vehicle reconcile, which re-stamps every vehicle's icon on every poll — dozens of
+ * `BitmapDescriptorFactory.fromBitmap(...)` allocations per poll on a busy route without this. (It was
+ * hundreds/sec until #2194: the marker then carried a heading arrow, so a gliding vehicle also needed
+ * re-stamping on each octant flip at ~20Hz. The arrow is gone and that path with it, but the per-poll
+ * re-stamp remains and is what this still pays for.)
  *
- * Keying by a logical id (e.g. type+octant+color), not by the [Bitmap] itself, is deliberate: the source
+ * Keying by a logical id (e.g. type+fullness+color), not by the [Bitmap] itself, is deliberate: the source
  * bitmap caches are small, bounded LRUs, so on a busy route they evict and re-create the same logical icon
  * as a *new* Bitmap instance — identity keying would inherit that thrash and defeat the cache. With a
  * logical key, [get] reuses the descriptor across that churn, and the bitmap supplier (the expensive

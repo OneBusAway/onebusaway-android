@@ -24,6 +24,9 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 import org.onebusaway.android.extrapolation.ExtrapolationResult
+import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
+import org.onebusaway.android.extrapolation.math.prob.FirstPassageDistribution
+import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
@@ -442,10 +445,9 @@ class TripStateTest {
     // Strategy selection — late-arriving routeType
     // ================================================================
 
-    // The strategy choice is observable from outside: the test status carries no
-    // scheduledDistanceAlongTrip, so the gamma (bus) model cannot resolve a speed distribution
-    // and reports MissingSchedule even when a schedule is present, while schedule replay needs
-    // only the schedule itself and succeeds on the same data.
+    // The strategy choice is observable from outside by the shape of what it returns: schedule
+    // replay models one deterministic vehicle and yields a point mass, while the road path yields a
+    // spread over the schedule ahead.
 
     @Test
     fun `routeType arriving late re-selects the strategy on the new snapshot`() {
@@ -460,19 +462,16 @@ class TripStateTest {
                 .withSchedule(schedule)
 
         // No routeType yet → gamma model
-        assertTrue(
-            unknownType.extrapolate(WallTime(localTime + 10_000L))
-                is ExtrapolationResult.MissingSchedule
-        )
+        assertTrue(distributionOf(unknownType, localTime) is FirstPassageDistribution)
 
         // routeType arrives on a later poll: the copy re-derives the extrapolator, so a
         // grade-separated trip switches to schedule replay instead of staying locked to gamma
         val rail = unknownType.withRouteType(ObaRoute.TYPE_SUBWAY)
-        assertTrue(rail.extrapolate(WallTime(localTime + 10_000L)) is ExtrapolationResult.Success)
+        assertTrue(distributionOf(rail, localTime) is DiracDistribution)
     }
 
     @Test
-    fun `non grade-separated routeType keeps the gamma strategy`() {
+    fun `non grade-separated routeType keeps the first-passage strategy`() {
         val localTime = 100_000L
         val bus =
             TripState.empty("trip1")
@@ -483,7 +482,14 @@ class TripStateTest {
                 )
                 .withSchedule(schedule)
                 .withRouteType(ObaRoute.TYPE_BUS)
-        assertTrue(bus.extrapolate(WallTime(localTime + 10_000L)) is ExtrapolationResult.MissingSchedule)
+        assertTrue(distributionOf(bus, localTime) is FirstPassageDistribution)
+    }
+
+    /** The distribution [state] extrapolates 10s past [localTime], failing if it declines to. */
+    private fun distributionOf(state: TripState, localTime: Long): ProbDistribution {
+        val result = state.extrapolate(WallTime(localTime + 10_000L))
+        assertTrue("expected Success, got $result", result is ExtrapolationResult.Success)
+        return (result as ExtrapolationResult.Success).distribution
     }
 
     @Test

@@ -50,7 +50,10 @@ interface ObaComposeMapAdapter {
     }
 }
 
-/** The neutral map composable: resolves the flavor adapter once and renders its [ObaComposeMapAdapter.Content]. */
+/**
+ * The neutral map composable. [stopSelectionEnabled] opts into stop hit testing and disambiguation;
+ * coordinate pickers and other maps that do not select stops leave it disabled.
+ */
 @Composable
 fun ObaMap(
     host: MapHost,
@@ -58,15 +61,11 @@ fun ObaMap(
     modifier: Modifier = Modifier,
     initialLatitude: Double = 0.0,
     initialLongitude: Double = 0.0,
-    initialZoom: Float = 16f
+    initialZoom: Float = 16f,
+    stopSelectionEnabled: Boolean = false
 ) {
     val adapter = remember { ObaComposeMapAdapter.newInstance() }
-    adapter.Content(
-        host,
-        callbacks,
-        modifier,
-        initialLatitude,
-        initialLongitude,
-        initialZoom
-    )
+    StopSelectionMap(host.renderState, callbacks, modifier, stopSelectionEnabled) { mapCallbacks, mapModifier ->
+        adapter.Content(host, mapCallbacks, mapModifier, initialLatitude, initialLongitude, initialZoom)
+    }
 }

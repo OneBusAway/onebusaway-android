@@ -22,26 +22,31 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
@@ -51,11 +56,11 @@ import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDescription
 import org.onebusaway.android.util.getRouteDisplayName
+import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * The route-mode header content (the old `R.id.route_info` overlay): the route's short/long name +
@@ -88,7 +93,7 @@ data class RouteHeader(
  * The **home map** view model: the coordinator that composes the shared [MapHost] (the flavor-neutral
  * map surface — render state, camera, padding, my-location/region framing) with the use-case
  * controllers the home map needs — [StopsMapController] (nearby stops), [RouteMapController]
- * (single-route and focused-stop route views), and [BikeLayerController] (the bikeshare overlay).
+ * (single-route and focused-stop route views), and [RentalLayerController] (the bikes/scooters overlay).
  * [showNearbyStops] / [showStopRoutes] start the matching presentation (the
  * route controller is the single source of truth for whether a route is
  * shown — there is no separate "mode" state); the controllers react to the live camera
@@ -118,13 +123,14 @@ class MapViewModel @Inject constructor(
     private val mapDataSource: MapDataSource,
     private val routeRepository: RouteMapRepository,
     private val focusedTripRepository: FocusedTripRepository,
-    private val bikeStationsRepository: BikeStationsRepository,
+    private val rentalPlacesRepository: RentalPlacesRepository,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
     private val tripObservationRepository: TripObservationRepository,
     private val stopDao: StopDao,
     private val stopCache: StopCacheRepository,
+    private val demoMode: DemoModeState,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -138,6 +144,7 @@ class MapViewModel @Inject constructor(
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         prefsRepository = prefsRepository,
+        demoMode = demoMode,
         context = context
     )
 
@@ -168,7 +175,10 @@ class MapViewModel @Inject constructor(
         favoriteStopIds = stopDao.favoriteStopIds().map { it.toSet() },
         // The home map reads through the persistent stop cache (#1754) so stops appear instantly on a
         // slow/cold-start load.
-        stopCache = stopCache
+        stopCache = stopCache,
+        // ...except while the scripted tour is on the demo transit system, whose stops are nobody's
+        // region (#2164).
+        demoActive = { demoMode.isActive }
     )
 
     // ----- Map-host surface (delegated) -----
@@ -195,19 +205,29 @@ class MapViewModel @Inject constructor(
     /** The current region's display name (for the out-of-range prompt), or null if none is selected. */
     val currentRegionName: String? get() = mapHost.currentRegionName
 
-    // ----- Bikeshare layer toggle (overlays every mode) -----
+    // ----- Rental layers (bikes + scooters; they overlay every mode) -----
 
-    // The bikeshare overlay (loads stations for the viewport when the layer is on / directions in play).
-    private val bikeController = BikeLayerController(
+    // The rental overlay (loads vehicles/docks for the viewport when a layer is on / directions in play).
+    private val rentalController = RentalLayerController(
         host = mapHost,
-        bikeStationsRepository = bikeStationsRepository,
+        rentalPlacesRepository = rentalPlacesRepository,
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
+        demoMode = demoMode,
         scope = viewModelScope
     )
 
-    /** Toggle the home-map bikeshare layer (the host syncs the pref on resume; the FAB persists it). */
-    fun setBikeshareLayerVisible(visible: Boolean, persist: Boolean = false) = bikeController.setBikeshareLayerVisible(visible, persist)
+    /** Whether the rental layer refused this viewport (see `RentalGuardrails`) — drives the map's pill. */
+    val rentalsNeedCloserZoom: StateFlow<Boolean> get() = mapHost.rentalsNeedCloserZoom
+
+    /** Whether a rental load the rider tapped for is in flight — the rental button's spinner. */
+    val rentalsLoading: StateFlow<Boolean> get() = rentalController.loading
+
+    /** Show/hide rentals entirely — the map's master rental button. */
+    fun setRentalsVisible(visible: Boolean) = rentalController.setRentalsVisible(visible)
+
+    /** Show/hide one rental mode, under the master button. */
+    fun setRentalLayerVisible(layer: RentalLayer, visible: Boolean) = rentalController.setLayerVisible(layer, visible)
 
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
@@ -261,6 +281,13 @@ class MapViewModel @Inject constructor(
     val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
 
     /**
+     * The selected trip's uncertainty-band tint, or null when no vehicle is selected — see
+     * [RouteMapController.selectedTripBandColor]. The arrivals list outlines the focused trip's ETA pill
+     * in it, so the pill and the band on the map read as one object (#1990).
+     */
+    val selectedTripBandColor: StateFlow<Int?> get() = routeController.selectedTripBandColor
+
+    /**
      * Suspend map content padding while the rider aims the centre crosshair at a From/To point. The
      * captured point is the camera target, which padding would move off the crosshair — see
      * [org.onebusaway.android.map.render.MapRenderState.setCenterPickActive].
@@ -311,25 +338,23 @@ class MapViewModel @Inject constructor(
         // leaveCurrentView already restarted the stops loader when a focused stop was preserved;
         // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
         if (routeController.focusedStopId == null) stopsController.start()
-        bikeController.start(directions = false, selectedBikeStationIds = null)
+        rentalController.start()
     }
 
     /**
-     * Enter route mode for [routeId], framing its bounding box unless [zoomToRoute] is false (a silent
-     * restore). Callers ([toRoute] and the restore in `init`) only ever pass a route different from the
-     * current one — re-selecting the active route is handled (re-framed) by [toRoute].
+     * Enter route mode for [request]'s route, framing its bounding box unless [zoomToRoute] is false (a
+     * silent restore). Callers ([toRoute] and the restore in `init`) only ever pass a route different from
+     * the current one — re-selecting the active route is handled (re-framed) by [toRoute].
+     *
+     * The request is handed to the controller whole, exactly as [RouteMapController.reframe] takes it, so
+     * a field added to [ShowRouteRequest] can't be honoured by one entry and dropped by the other (#1797,
+     * #2149). The remaining parameters are what *this view* contributes on top of the request:
+     * whether to keep the current stop focus / drawn itinerary, and what the route is drawn with.
      */
     private fun enterRoute(
-        routeId: String,
+        request: ShowRouteRequest,
         zoomToRoute: Boolean,
-        directionStopId: String?,
-        initialDirectionId: Int? = null,
-        focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
-        riddenSpans: List<RiddenSpan> = emptyList(),
-        extraSegments: List<RouteFocusSegment> = emptyList(),
-        alightStopId: String? = null,
-        directionHeadsign: String? = null,
         itineraryContext: List<RoutePolyline> = emptyList(),
         preserveItinerary: Boolean = false,
         palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
@@ -339,21 +364,14 @@ class MapViewModel @Inject constructor(
         // Preserve based on the transition's origin rather than the context list: an itinerary whose
         // legs have no drawable geometry still has start/end pins and retained controller state to keep.
         leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = preserveItinerary)
-        persistRoute(routeId, directionStopId, initialDirectionId)
+        persistRoute(request.routeId, request.directionStopId, request.initialDirectionId)
         routeController.start(
-            routeId = routeId,
+            request = request,
             zoomToRoute = zoomToRoute,
-            directionStopId = directionStopId,
-            initialDirectionId = initialDirectionId,
-            focusTripId = focusTripId,
-            riddenSpans = riddenSpans,
-            extraSegments = extraSegments,
-            alightStopId = alightStopId,
-            directionHeadsign = directionHeadsign,
             itineraryContext = itineraryContext,
             palette = palette
         )
-        bikeController.start(directions = false, selectedBikeStationIds = null)
+        rentalController.start()
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
@@ -393,7 +411,7 @@ class MapViewModel @Inject constructor(
         if (!keepItinerary) directionsController.clear()
         stopsController.stop()
         routeController.stop()
-        bikeController.stop()
+        rentalController.stop()
         if (routeController.focusedStopId != null) {
             stopsController.start()
         } else {
@@ -413,13 +431,49 @@ class MapViewModel @Inject constructor(
     /** A stop marker was tapped: render-focus it without disturbing the current viewport. */
     fun onStopTapped(stop: ObaStop) = stopsController.onStopTapped(stop)
 
-    /** Selects the tapped vehicle, so the renderer shows its most-recent-data marker. */
-    fun onVehicleTapped(status: ObaTripStatus) {
-        renderState.setSelectedVehicle(status.activeTripId)
+    /**
+     * Select the vehicle running [tripId] (null clears), driving its most-recent-data marker, exact
+     * shape/stops, extrapolation confidence band and block continuation. The map's only vehicle-selection
+     * entry point, and it is never called from a tap: Home drives it from the trip rung of whichever
+     * focus draws the route — a stop's, a standalone one, or a directions leg's (#2205, #2224) — so the
+     * selection is a projection of that focus and is undone by the same background tap that peels it.
+     */
+    fun selectVehicleTrip(tripId: String?) {
+        renderState.setSelectedVehicle(tripId)
     }
+
+    /**
+     * Whether tapping the vehicle on [tripId] is a *second* tap on the one already selected — the host
+     * opens its trip details on that tap (#2194).
+     *
+     * Asked here because this holds the selection whichever route it arrived by: every route-bearing
+     * focus drives it through the same [selectVehicleTrip] directive, and all of them land in this one
+     * render state. An adapter answering it for itself would be reading state it doesn't own, a poll
+     * behind.
+     */
+    fun isVehicleReTap(tripId: String?): Boolean = isVehicleReTap(renderState.selectedVehicleTripId.value, tripId)
 
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) = mapHost.centerOn(lat, lon, animate)
+
+    /**
+     * Put a fixed place on screen at a fixed zoom, and *keep* it there until something else frames the
+     * map.
+     *
+     * The scripted tutorial's opening move (#2164): the tour runs on a bundled demo transit system, so
+     * it has to aim the camera at that system's city whatever city the rider is actually in.
+     *
+     * A retained [FramingIntent] rather than a pair of camera gestures, because the tour can start
+     * before the map is ready to be moved. Gestures go out on a replay-0 flow — one dispatched with no
+     * adapter subscribed is simply discarded — and on a first launch the tutorial fires while the map is
+     * still coming up, so the aim was dropped and the rider was left looking at their own region with a
+     * caption describing a stop that wasn't there. A framing intent is replayed to a late or re-created
+     * adapter, and it also outranks the region fit the map applies on startup, which would otherwise
+     * land after the aim and undo it.
+     */
+    fun aimAt(point: GeoPoint, zoom: Float) {
+        mapHost.frame(FramingIntent.Point(point, zoom))
+    }
 
     /** Recenter on the focused stop after the arrivals sheet expands over it (a Home map directive). */
     fun recenterOnFocusedStop(point: GeoPoint) {
@@ -438,8 +492,9 @@ class MapViewModel @Inject constructor(
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
-        animate: Boolean = false
-    ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter, animate)
+        animate: Boolean = false,
+        useDefaultZoom: Boolean = false
+    ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter, animate, useDefaultZoom)
 
     /**
      * Draw the exact trips with upcoming arrivals at [stopId] without moving the camera. The stop must
@@ -510,16 +565,9 @@ class MapViewModel @Inject constructor(
             routeController.reframe(request, frameRoute)
         } else {
             enterRoute(
-                request.routeId,
+                request,
                 zoomToRoute = frameRoute,
-                directionStopId = request.directionStopId,
-                initialDirectionId = request.initialDirectionId,
-                focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
-                riddenSpans = request.riddenSpans,
-                extraSegments = request.extraSegments,
-                alightStopId = request.alightStopId,
-                directionHeadsign = request.directionHeadsign,
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.
                 itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),
@@ -541,6 +589,36 @@ class MapViewModel @Inject constructor(
      * trip's own endpoints' claim on their terminus pins — a current-location terminus wears none
      * (#2111).
      */
+
+    /**
+     * Trace the rider's parked trip thin under the map, or take it off with a null [itinerary] (#2053).
+     *
+     * Independent of every mode this map has, and that is the point: the pinned trip is what the rider
+     * is exploring *around*, so it survives focusing a stop, opening a route, and returning to nearby
+     * stops — none of which [leaveCurrentView] can tear down, because it lives in its own slice of the
+     * render state rather than in the route list every transition clears.
+     *
+     * The trace only says *the parked trip goes this way*; what is parked, and the way back into it, is
+     * said off the map by `PinnedTripFab` (#2229). When to show either is the host's call, and it is one
+     * call for both — hence a plain nullable here rather than a second gating flag.
+     *
+     * Drawn in the directions palette, the same deliberately-faded colours the trip wore while it was
+     * being read, so the parked trip is recognisably the one the rider left.
+     */
+    fun setPinnedTripTrace(itinerary: TripItinerary?) {
+        renderState.setPinnedTripPolylines(
+            itinerary?.let {
+                // The same lines the drawn trip is stroked with (#2246), reduced to a trace: the ghost is
+                // a *view* of a trip, so it starts from how that trip is drawn rather than from a second,
+                // quieter idea of it.
+                drawnItinerary(it, directionsPalette(), ::parseObaHexColor)
+                    .lines
+                    .map(ItineraryLegLine::line)
+                    .asPinnedTripGhost()
+            }.orEmpty()
+        )
+    }
+
     fun showItinerary(itinerary: TripItinerary, pins: ItineraryPins) {
         if (!directionsActive) {
             leaveCurrentView(clearStopFocus = true)
@@ -551,10 +629,10 @@ class MapViewModel @Inject constructor(
         directionsController.clearEndpoints()
         renderState.clearRoutePolylines()
         directionsController.start(itinerary, directionsPalette(), pins)
-        bikeController.start(
-            directions = true,
-            selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary)
-        )
+        // Directions draws no rentals (#2168): an itinerary that scattered rental markers over itself
+        // showed the rider vehicles they could neither switch off — the layer button is hidden here —
+        // nor act on, while the trip's own bike legs already say where its vehicle is picked up.
+        rentalController.hide()
     }
 
     /**
@@ -616,13 +694,34 @@ class MapViewModel @Inject constructor(
     /** Leave a route selected within stop focus and restore the stop's full adjacency presentation. */
     fun clearSelectedRoute() = showNearbyStops()
 
+    // The pin a map long press drops, and with it the standing "navigate here" offer (#2243). It lives
+    // here because it is map *content*: the flavor renderer draws the pin off the render state, and every
+    // gesture that answers the offer — the long press that raises it, and the taps that move on from it —
+    // arrives at this view model already. The home screen draws the bubble over the pin and reads this
+    // for where.
+    private val _navigateHerePin = MutableStateFlow<GeoPoint?>(null)
+
+    /** Where the long-press offer currently stands, or null with none standing. */
+    val navigateHerePin: StateFlow<GeoPoint?> = _navigateHerePin.asStateFlow()
+
+    /**
+     * Drop the "navigate here" pin at [point] — moving it if one is already down — or clear the offer
+     * with null. The pin itself is the directions layer's (it is the destination's own red pin, drawn
+     * and reconciled where the trip's endpoints are); what this adds is publishing *where* it stands, so
+     * the home screen can hang the offer's bubble off it.
+     */
+    fun setNavigateHerePin(point: GeoPoint?) {
+        directionsController.setNavigateHerePin(point)
+        _navigateHerePin.value = point
+    }
+
     /** Clear standalone/stop/bike focus and return to an ordinary nearby-stops map. */
     fun clearAllFocus() {
         leaveCurrentView(clearStopFocus = true)
         persistRoute(null)
         stopsController.clearFocus()
         stopsController.start()
-        bikeController.start(directions = false, selectedBikeStationIds = null)
+        rentalController.start()
     }
 
     /**
@@ -689,7 +788,7 @@ class MapViewModel @Inject constructor(
 
     /** Refresh prefs-backed state and restart the vehicle poll if in route mode (the host's onResume). */
     fun onResume() {
-        setBikeshareLayerVisible(LayerUtils.isBikeshareLayerVisible(context))
+        rentalController.syncFromPreferences()
         mapHost.refreshMyLocationEnabled()
         // Begin the live location feed for as long as the map is shown (permission-gated; a no-op until
         // granted). This is what makes `location` a live stream — the legacy host's LocationHelper feed.
@@ -711,11 +810,13 @@ class MapViewModel @Inject constructor(
             // deliberately doesn't write it, so a process-death restore keeps the saved camera rather
             // than re-framing the route.
             enterRoute(
-                restoreRouteId,
+                ShowRouteRequest(
+                    routeId = restoreRouteId,
+                    directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
+                    // A user-selected direction persisted before process death wins over the anchor stop.
+                    initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID]
+                ),
                 zoomToRoute = savedStateHandle[MapParams.ZOOM_TO_ROUTE] ?: false,
-                directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
-                // A user-selected direction persisted before process death wins over the anchor stop.
-                initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID],
                 preserveStopFocus = false
             )
         } else {
@@ -723,3 +824,12 @@ class MapViewModel @Inject constructor(
         }
     }
 }
+
+/**
+ * Whether tapping the vehicle on trip [tapped] is a *second* tap on the one already selected — which is
+ * how the map opens a vehicle's trip details now that the info window is gone (#2194).
+ *
+ * A blank id names no particular vehicle (OBA sends "" at block edges, #2003), so it never counts as a
+ * re-tap: two different vehicles would compare equal and tapping the second would open the first's trip.
+ */
+internal fun isVehicleReTap(selected: String?, tapped: String?): Boolean = !tapped.isNullOrEmpty() && selected == tapped

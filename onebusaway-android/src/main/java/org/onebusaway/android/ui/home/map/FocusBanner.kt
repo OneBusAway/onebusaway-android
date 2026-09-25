@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.home.map
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -27,24 +25,22 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -82,7 +78,6 @@ import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
-import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
@@ -93,7 +88,28 @@ import org.onebusaway.android.util.DisplayFormat
 // (below Material's 48dp default — a conscious trade-off for a compact header banner).
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
-private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
+
+// The favorite star and the rail it sits in, on the banner's leading edge. The rail insets the star
+// from the card edge and takes its width from that inset plus the star — it deliberately has no
+// trailing gutter of its own, because the banner content already pads its own leading edge and the
+// two used to stack into a right-hand gap about twice the left inset (#2216).
+private val FAVORITE_ICON_SIZE = 26.4.dp
+private val FAVORITE_RAIL_LEADING_INSET = 10.8.dp
+private val BANNER_MIN_HEIGHT = 64.dp
+
+// The gap between the rail's star and whatever the banner body leads with — the stop name, or the
+// route roundel. Shared so the two focus kinds can't drift apart; the rail contributes nothing to
+// it (see FavoriteRail), so this is the whole gap.
+private val BANNER_CONTENT_START_PADDING = 8.dp
+
+// The route roundel's gap to the name/direction column beside it. Trailing-only: the roundel's
+// leading gap is BANNER_CONTENT_START_PADDING's job, and when this was `horizontal` the two stacked
+// into a 14dp leading gap against the stop's 8dp (#2216).
+private val ROUTE_BADGE_TEXT_GAP = 10.dp
+
+// The route roundel's square tile. Internal so FocusBannerTest can locate the tile's leading edge
+// from its centered label — the roundel carries no semantics of its own to measure.
+internal val ROUTE_BADGE_WIDTH = 64.dp
 
 // Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.
 private val SUBTITLE_ICON_SIZE = 16.dp
@@ -103,20 +119,36 @@ private val SUBTITLE_ICON_OPTICAL_LIFT = 1.dp
 private const val MAX_TITLE_LINES = 2
 
 /**
+ * The focused stop's overflow actions. They act on the stop's arrivals session — which HOME owns, not
+ * the banner — so they arrive as one bundle. Null hides the menu: there is no session to act on until
+ * a stop's arrivals are up.
+ *
+ * These outlived the standalone arrivals screen whose top bar used to hold them (#1898); the banner is
+ * where a focused stop's actions live now. Its "show stop details" item did not: the banner itself
+ * already shows the stop's name, code and direction, and the drawer below it the routes that serve it,
+ * so the dialog only restated what was on screen.
+ */
+data class StopFocusMenu(
+    val onReportStopProblem: () -> Unit,
+    val onNightLight: () -> Unit,
+    val onCreateShortcut: () -> Unit,
+    val onShowArrivals: () -> Unit,
+    /**
+     * Plan a trip to this stop — the map long press's "navigate here" offer, asked of the stop the rider
+     * already has focused instead of a point they have to press for (#2272). Null while the stop's own
+     * location is still unknown (a stop revealed by id alone has none until its arrivals land), since
+     * there is nothing to route to yet; that is the same beat the banner's star waits on, and it has
+     * passed by the time the menu itself is up in every entry point but that one.
+     */
+    val onNavigateHere: (() -> Unit)?
+)
+
+/**
  * Presentation state for the map's shared focus banner.
  */
 sealed interface FocusBannerState {
     val isFavorite: Boolean
     val favoriteEnabled: Boolean
-
-    @get:DrawableRes val focusIconRes: Int
-
-    @get:StringRes val focusDescriptionRes: Int
-
-    data class SubordinateRoute(
-        val shortName: String,
-        val color: Int? = null
-    )
 
     data class Stop(
         val title: String,
@@ -125,28 +157,20 @@ sealed interface FocusBannerState {
         override val isFavorite: Boolean,
         override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
-        val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN,
-        val subordinateRoutes: List<SubordinateRoute> = emptyList(),
-        val subordinateHeadsign: String? = null
-    ) : FocusBannerState {
-        override val focusIconRes = R.drawable.stop_flag
-        override val focusDescriptionRes = R.string.stop_shortcut
-    }
+        val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
+    ) : FocusBannerState
 
     data class Route(
         val header: RouteHeader,
         override val isFavorite: Boolean
     ) : FocusBannerState {
         override val favoriteEnabled: Boolean get() = header.routeId != null
-        override val focusIconRes = R.drawable.ic_route
-        override val focusDescriptionRes = R.string.route_shortcut
     }
 }
 
 /**
  * Floating information and actions for the current stop or standalone route focus. It reports its
- * measured height so map framing stays clear of the complete banner, including a subordinate route
- * status line beneath a focused stop.
+ * measured height so map framing stays clear of the banner.
  */
 @Composable
 fun FocusBanner(
@@ -154,13 +178,14 @@ fun FocusBanner(
     onClose: () -> Unit,
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
-    onClearSubordinateRoute: () -> Unit,
     onRecenterStop: () -> Unit,
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
+    onShowStopList: (String) -> Unit,
     onHeight: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    stopMenu: StopFocusMenu? = null
 ) {
     Surface(
         modifier = modifier.onSizeChanged { onHeight(it.height) },
@@ -173,21 +198,18 @@ fun FocusBanner(
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
         ) {
-            FocusIdentityRail(
-                iconRes = state.focusIconRes,
-                iconDescription = stringResource(state.focusDescriptionRes),
+            FavoriteRail(
                 isFavorite = state.isFavorite,
                 favoriteEnabled = state.favoriteEnabled,
                 onToggleFavorite = onToggleFavorite
             )
-            VerticalDivider(Modifier.fillMaxHeight())
             Box(Modifier.weight(1f)) {
                 when (state) {
                     is FocusBannerState.Stop -> StopFocusBanner(
                         state = state,
                         onShowAlerts = onShowAlerts,
-                        onClearSubordinateRoute = onClearSubordinateRoute,
                         onRecenter = onRecenterStop,
+                        stopMenu = stopMenu,
                         onClose = onClose
                     )
                     is FocusBannerState.Route -> RouteFocusBanner(
@@ -195,6 +217,7 @@ fun FocusBanner(
                         onSelectDirection = onSelectDirection,
                         onFrameRoute = onFrameRoute,
                         onShowSchedule = onShowSchedule,
+                        onShowStopList = onShowStopList,
                         onClose = onClose
                     )
                 }
@@ -203,26 +226,33 @@ fun FocusBanner(
     }
 }
 
-/** Shared left-side orientation chrome: focus type above favorite, separated from content by a rule. */
+/**
+ * The banner's leading rail: just the favorite star, vertically centered. It carried a focus-type
+ * glyph (stop flag / route icon) above the star and a divider beside it until #2216 — orientation
+ * the banner's own content already gives, since a stop shows a stop name and a route shows a route
+ * roundel.
+ *
+ * The rail wraps the star rather than centering it in a fixed-width column: it pads only its
+ * leading edge, so the gap on the star's right is exactly the banner content's own start padding.
+ * Centering in a fixed width added a trailing gutter *on top of* that padding, which is why the
+ * right-hand gap used to read as roughly double the left inset. Its width is still identical for
+ * both focus kinds (the star is a fixed size), so stop and route content start at the same x.
+ *
+ * It also sets the banner's minimum height so a still-loading stop doesn't collapse to a sliver.
+ */
 @Composable
-private fun FocusIdentityRail(
-    @DrawableRes iconRes: Int,
-    iconDescription: String,
+private fun FavoriteRail(
     isFavorite: Boolean,
     favoriteEnabled: Boolean,
     onToggleFavorite: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxHeight().width(48.dp).heightIn(min = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .heightIn(min = BANNER_MIN_HEIGHT)
+            .padding(start = FAVORITE_RAIL_LEADING_INSET),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = iconDescription,
-            tint = colorResource(R.color.navdrawer_icon_tint),
-            modifier = Modifier.size(FOCUS_RAIL_ICON_SIZE)
-        )
         BannerFavoriteAction(
             isFavorite = isFavorite,
             enabled = favoriteEnabled,
@@ -231,101 +261,72 @@ private fun FocusIdentityRail(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StopFocusBanner(
     state: FocusBannerState.Stop,
     onShowAlerts: () -> Unit,
-    onClearSubordinateRoute: () -> Unit,
     onRecenter: () -> Unit,
+    stopMenu: StopFocusMenu?,
     onClose: () -> Unit
 ) {
-    Column(Modifier.fillMaxWidth().fillMaxHeight()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .then(
-                    if (state.subordinateRoutes.isEmpty()) {
-                        Modifier.weight(1f)
-                    } else {
-                        Modifier
-                    }
-                )
-                .padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val subtitle = stopSubtitleText(state.stopCode, state.direction)
-            Column(
-                modifier = Modifier.weight(1f).clickable(
-                    onClickLabel = stringResource(R.string.stop_info_recenter),
-                    role = Role.Button,
-                    onClick = onRecenter
-                )
-            ) {
-                ShrinkToFitStopTitle(state.title)
-                val wheelchairGlyph = wheelchairGlyph(state.wheelchairBoarding)
-                if (subtitle != null || wheelchairGlyph != null) {
-                    Row(
-                        modifier = Modifier.padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (subtitle != null) {
-                            Text(
-                                text = subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                        }
-                        if (wheelchairGlyph != null) {
-                            WheelchairBoardingIndicator(wheelchairGlyph)
-                        }
-                    }
-                }
-            }
-            if (state.hasAlerts) {
-                BannerAlertAction(onClick = onShowAlerts)
-            }
-            HeaderIconButton(
-                painter = painterResource(R.drawable.ic_navigation_close),
-                contentDescription = stringResource(android.R.string.cancel),
-                onClick = onClose
+    var menuExpanded by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxSize()
+            .padding(
+                start = BANNER_CONTENT_START_PADDING,
+                top = 4.dp,
+                end = 4.dp,
+                bottom = 4.dp
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val subtitle = DisplayFormat.stopSubtitleText(LocalContext.current, state.stopCode, state.direction)
+        Column(
+            modifier = Modifier.weight(1f).combinedClickable(
+                onClickLabel = stringResource(R.string.stop_info_recenter),
+                role = Role.Button,
+                onLongClickLabel = if (stopMenu != null) stringResource(R.string.stop_info_item_options_title) else null,
+                onLongClick = if (stopMenu != null) ({ menuExpanded = true }) else null,
+                onClick = onRecenter
             )
-        }
-        if (state.subordinateRoutes.isNotEmpty()) {
-            HorizontalDivider()
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp, top = 7.dp, end = 8.dp, bottom = 7.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                state.subordinateRoutes.forEachIndexed { index, route ->
-                    if (index > 0) {
+        ) {
+            ShrinkToFitStopTitle(state.title)
+            val wheelchairGlyph = wheelchairGlyph(state.wheelchairBoarding)
+            if (subtitle != null || wheelchairGlyph != null) {
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (subtitle != null) {
                         Text(
-                            text = "›",
+                            text = subtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 3.dp)
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                     }
-                    CompactRouteBadge(route)
+                    if (wheelchairGlyph != null) {
+                        WheelchairBoardingIndicator(wheelchairGlyph)
+                    }
                 }
-                state.subordinateHeadsign?.takeIf { it.isNotBlank() }?.let { headsign ->
-                    Text(
-                        text = headsign,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 6.dp).weight(1f)
-                    )
-                } ?: Spacer(Modifier.weight(1f))
-                CompactRouteDismissAction(onClick = onClearSubordinateRoute)
             }
         }
+        if (state.hasAlerts) {
+            BannerAlertAction(onClick = onShowAlerts)
+        }
+        if (stopMenu != null) {
+            StopMenuAction(stopMenu, expanded = menuExpanded, onExpandedChange = { menuExpanded = it })
+        }
+        HeaderIconButton(
+            painter = painterResource(R.drawable.ic_navigation_close),
+            contentDescription = stringResource(android.R.string.cancel),
+            onClick = onClose
+        )
     }
 }
 
@@ -380,34 +381,6 @@ private fun ShrinkToFitStopTitle(title: String) {
     )
 }
 
-/** The stop's identity line: passenger-facing stop number and formatted direction, joined when both are known. */
-@Composable
-private fun stopSubtitleText(stopCode: String?, direction: String?): String? {
-    val codeText = stopCode?.takeIf { it.isNotBlank() }
-        ?.let { stringResource(R.string.stop_details_code, it) }
-    val directionText = DisplayFormat.stopDirectionText(LocalContext.current, direction)
-    return listOfNotNull(codeText, directionText).takeIf { it.isNotEmpty() }?.joinToString(" · ")
-}
-
-/** A deliberately tiny route chip: only enough padding to distinguish the route from its headsign. */
-@Composable
-private fun CompactRouteBadge(route: FocusBannerState.SubordinateRoute) {
-    RouteBadgeChip(shortName = route.shortName, routeColor = route.color)
-}
-
-/** The nested-route dismiss affordance keeps its visible 22dp size as its exact clickable bounds. */
-@Composable
-private fun CompactRouteDismissAction(onClick: () -> Unit) {
-    Icon(
-        painter = painterResource(R.drawable.ic_navigation_close),
-        contentDescription = stringResource(R.string.stop_info_unselect_route),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .size(22.dp)
-            .clickable(onClick = onClick)
-    )
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RouteFocusBanner(
@@ -415,14 +388,24 @@ private fun RouteFocusBanner(
     onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
+    onShowStopList: (String) -> Unit,
     onClose: () -> Unit
 ) {
     val header = state.header
     val scheduleUrl = header.scheduleUrl
     var menuExpanded by remember { mutableStateOf(false) }
-    val scheduleLabel = stringResource(R.string.bus_options_menu_show_route_schedule)
+    val menuLabel = stringResource(R.string.bus_options_menu_show_stop_list)
+    val hasMenu = header.routeId != null || scheduleUrl != null
+    // The loading spinner needs more breathing room from the card edges than the laid-out header
+    // does, but the leading gap is the star's and stays fixed either way.
+    val edgePadding = if (header.loading) 8.dp else 4.dp
     Row(
-        Modifier.fillMaxWidth().padding(if (header.loading) 8.dp else 4.dp),
+        Modifier.fillMaxWidth().padding(
+            start = BANNER_CONTENT_START_PADDING,
+            top = edgePadding,
+            end = edgePadding,
+            bottom = edgePadding
+        ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (header.loading) {
@@ -440,13 +423,12 @@ private fun RouteFocusBanner(
                 Modifier
                     .weight(1f)
                     // Tap frames the route; long press opens the route menu — the same gesture
-                    // pairing the arrivals drawer's route rows use. A route with no schedule page
-                    // has nothing to put in the menu, so it stays tap-only.
+                    // pairing the arrivals drawer's route rows use.
                     .combinedClickable(
                         onClickLabel = stringResource(R.string.route_header_frame_route),
                         role = Role.Button,
-                        onLongClickLabel = if (scheduleUrl != null) scheduleLabel else null,
-                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
+                        onLongClickLabel = if (hasMenu) menuLabel else null,
+                        onLongClick = if (hasMenu) ({ menuExpanded = true }) else null,
                         onClick = onFrameRoute
                     ),
                 verticalAlignment = Alignment.CenterVertically
@@ -458,11 +440,11 @@ private fun RouteFocusBanner(
                 LineBadge(
                     text = header.shortName,
                     maxFontSize = 45.sp,
-                    width = 64.dp,
+                    width = ROUTE_BADGE_WIDTH,
                     square = true,
                     color = badgeContent,
                     containerColor = badgeContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp)
+                    modifier = Modifier.padding(end = ROUTE_BADGE_TEXT_GAP)
                 )
                 Column(Modifier.weight(1f)) {
                     if (header.longName.isNotEmpty()) {
@@ -477,7 +459,7 @@ private fun RouteFocusBanner(
                     // The direction line states the menu's current value; the chevron beside it is the
                     // control that changes it. Deliberately not a trigger itself — it sits inside the
                     // banner body, whose tap reframes the route and whose long press opens the
-                    // schedule, and a nested clickable would consume both on this line.
+                    // route menu, and a nested clickable would consume both on this line.
                     if (directionLabel != null) {
                         // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
                         // the headsign reads identically on both surfaces (#1823).
@@ -507,14 +489,22 @@ private fun RouteFocusBanner(
             onClick = onClose
         )
     }
-    if (scheduleUrl != null) {
+    if (hasMenu) {
         CenteredLongPressMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false }
         ) {
-            MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
-                menuExpanded = false
-                onShowSchedule(scheduleUrl)
+            header.routeId?.let { routeId ->
+                MenuRow(R.string.bus_options_menu_show_stop_list, MaterialSymbols.TripStatus) {
+                    menuExpanded = false
+                    onShowStopList(routeId)
+                }
+            }
+            if (scheduleUrl != null) {
+                MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
+                    menuExpanded = false
+                    onShowSchedule(scheduleUrl)
+                }
             }
         }
     }
@@ -541,7 +531,7 @@ private fun BannerFavoriteAction(
         ),
         tint = colorResource(R.color.navdrawer_icon_tint),
         modifier = Modifier
-            .size(FOCUS_RAIL_ICON_SIZE)
+            .size(FAVORITE_ICON_SIZE)
             .clickable(enabled = enabled, onClick = onClick)
     )
 }
@@ -613,6 +603,50 @@ private fun HeaderIconButton(
             tint = colorResource(R.color.navdrawer_icon_tint),
             modifier = Modifier.size(HEADER_ICON_SIZE)
         )
+    }
+}
+
+/**
+ * The focused stop's overflow: the stop actions that are neither frequent enough for their own icon nor
+ * expressible on the map: a trip planned to the stop, the mapless board, a home-screen shortcut, a
+ * problem report against the stop, and the night-light flasher a rider holds up to a driver.
+ *
+ * "Navigate here" leads because it is the one item a rider looking at a stop is likely to want (#2272);
+ * the rest answer situations, not intentions.
+ */
+@Composable
+private fun StopMenuAction(menu: StopFocusMenu, expanded: Boolean, onExpandedChange: (Boolean) -> Unit) {
+    Box {
+        HeaderIconButton(
+            painter = painterResource(R.drawable.more_vert),
+            contentDescription = stringResource(R.string.stop_info_item_options_title),
+            onClick = { onExpandedChange(true) }
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
+            // The same words the map long press's bubble offers, because it is the same offer.
+            menu.onNavigateHere?.let { navigate ->
+                MenuRow(R.string.map_navigate_here) {
+                    onExpandedChange(false)
+                    navigate()
+                }
+            }
+            MenuRow(R.string.view_arrivals_only) {
+                onExpandedChange(false)
+                menu.onShowArrivals()
+            }
+            MenuRow(R.string.my_context_create_shortcut) {
+                onExpandedChange(false)
+                menu.onCreateShortcut()
+            }
+            MenuRow(R.string.stop_info_option_report_problem) {
+                onExpandedChange(false)
+                menu.onReportStopProblem()
+            }
+            MenuRow(R.string.stop_info_option_night_light) {
+                onExpandedChange(false)
+                menu.onNightLight()
+            }
+        }
     }
 }
 
@@ -694,21 +728,16 @@ private fun FocusBannerPreview() {
                     isFavorite = true,
                     favoriteEnabled = true,
                     hasAlerts = true,
-                    wheelchairBoarding = WheelchairBoarding.ACCESSIBLE,
-                    subordinateRoutes = listOf(
-                        FocusBannerState.SubordinateRoute("65", 0xFF26823B.toInt()),
-                        FocusBannerState.SubordinateRoute("75", 0xFF125BA8.toInt())
-                    ),
-                    subordinateHeadsign = "Downtown Seattle"
+                    wheelchairBoarding = WheelchairBoarding.ACCESSIBLE
                 ),
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
-                onClearSubordinateRoute = {},
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -731,11 +760,11 @@ private fun FocusBannerPreview() {
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
-                onClearSubordinateRoute = {},
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -758,11 +787,11 @@ private fun FocusBannerPreview() {
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
-                onClearSubordinateRoute = {},
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
                 onShowSchedule = {},
+                onShowStopList = {},
                 onHeight = {}
             )
         }

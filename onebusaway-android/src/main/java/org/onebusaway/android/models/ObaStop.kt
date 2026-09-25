@@ -28,13 +28,18 @@ interface ObaStop : ObaElement {
     /** The passenger-facing name for the stop. */
     val name: String?
 
-    /** The location of the stop. */
+    /**
+     * The location of the stop, which every stop has: OBA declares a stop's `lat`/`lon` as primitive
+     * doubles (`StopBean`), so they are on the wire for every stop entry and are never absent. There
+     * is therefore no "unlocated stop" state here to read back — and reading a 0 coordinate as one
+     * would be a guess about a stop sitting at null island, not a fact the source states.
+     */
     val location: Location
 
-    /** The latitude of the stop, or 0 if it doesn't exist. */
+    /** The latitude of the stop; see [location] — always the stop's real latitude. */
     val latitude: Double
 
-    /** The longitude of the stop, or 0 if it doesn't exist. */
+    /** The longitude of the stop; see [location] — always the stop's real longitude. */
     val longitude: Double
 
     /** The direction of the stop (ex "NW", "E"). */

@@ -281,14 +281,13 @@ See the `agencyX`, `agencyY`, and `kiedybus` sample flavors for working examples
 
 We provide configuration options in the flavor `.gradle` files that allow you to choose default behaviors for your brand.
 
-### Arrival Information Style
+### Arrival display
 
-`ARRIVAL_INFO_STYLE` - Valid values are `0` and `1`:
+Riders choose their default arrivals display in Settings and can switch between **Time** (one departure per row) and **Route** (grouped departures) in an open arrivals drawer. The initial fallback is Route. The retired `ARRIVAL_INFO_STYLE` build option no longer controls this presentation.
 
-* `0` (Style A) - The original OneBusAway presentation with small rows sorted by estimated arrival time
-* `1` (Style B) - Groups arrival times by route and shows scheduled arrival times
+[Arrival display default in Settings](images/arrival-display-default.png)
 
-Users can change the sorting style using the "Sort by" button regardless of the default.
+The migration picker is offered only when the recorded previous release is 26.1.0 or earlier (published version codes 1–154) and no display default has been chosen. Fresh installs, missing version history, and upgrades from later releases skip it. Eligibility is recorded before release notes update the version marker, so dismissing the picker preserves the offer for the next launch.
 
 ### Fixed vs. Multi-region
 
@@ -321,8 +320,8 @@ When `USE_FIXED_REGION` is `false`, the `FIXED_REGION_*` fields are unread; leav
 
 See the following flavor files for complete examples:
 
-* [`agencyX.gradle`](../onebusaway-android/flavors/agencyX.gradle) - Multi-region brand with Style A arrivals
-* [`agencyY.gradle`](../onebusaway-android/flavors/agencyY.gradle) - Fixed-region brand with Style B arrivals
+* [`agencyX.gradle`](../onebusaway-android/flavors/agencyX.gradle) - Multi-region brand
+* [`agencyY.gradle`](../onebusaway-android/flavors/agencyY.gradle) - Fixed-region brand
 * [`kiedybus.gradle`](../onebusaway-android/flavors/kiedybus.gradle) - Multi-region brand with custom regions API
 
 ## Acknowledgements

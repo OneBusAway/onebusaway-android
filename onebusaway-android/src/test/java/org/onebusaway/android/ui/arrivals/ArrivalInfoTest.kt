@@ -39,6 +39,31 @@ import org.onebusaway.android.time.ServerTime
  */
 class ArrivalInfoTest {
 
+    @Test
+    fun `chronological mode orders expected instants across routes with stable equal-time ties`() {
+        fun at(route: String, expected: Long, sequence: Int) = infoFor(
+            FakeArrivalData(
+                predicted = true,
+                predictedArrivalTime = ServerTime(expected),
+                scheduledArrivalTime = ServerTime(scheduledArrival),
+                routeId = route,
+                stopSequence = sequence
+            )
+        )
+        val later = at("1_8", scheduledArrival + 20_000, 1)
+        val earlier = at("1_40", scheduledArrival + 5_000, 2)
+        val sameTime = at("1_8", scheduledArrival + 5_000, 3)
+        assertEquals(listOf(earlier, sameTime, later), chronologicalArrivals(listOf(later, earlier, sameTime)))
+    }
+
+    @Test
+    fun `arrival row identities distinguish loop visits stops and service days without prediction time`() {
+        val data = FakeArrivalData(predicted = true, predictedArrivalTime = ServerTime(scheduledArrival), scheduledArrivalTime = ServerTime(scheduledArrival))
+        val distinct = listOf(data, data.copy(stopSequence = 8), data.copy(stopId = "other"), data.copy(serviceDate = 123), data.copy(routeId = "other"))
+        assertEquals(distinct.size, distinct.map { infoFor(it).arrivalRowKey() }.distinct().size)
+        assertEquals(infoFor(data).arrivalRowKey(), infoFor(data.copy(predictedArrivalTime = ServerTime(scheduledArrival + 90_000))).arrivalRowKey())
+    }
+
     /** ~2026-04-13, matching the issue's `currentTime ≈ 1783116081756`. */
     private val now = ServerTime(1_783_116_081_756L)
 
@@ -240,6 +265,50 @@ class ArrivalInfoTest {
         assertEquals(R.color.stop_info_delayed_fill, deviating(91).fillColor)
         assertEquals(R.color.stop_info_early_fill, deviating(-91).fillColor)
         assertEquals(R.color.stop_info_scheduled_fill, deviating(600, predicted = false).fillColor)
+    }
+
+    // --- The timetable time behind displayTime (#2167) --------------------------------------------
+    //
+    // The clock surfaces print the correction — the struck-through scheduled time over the expected
+    // one — so scheduledTime has to be the *same* arrival-vs-departure choice displayTime made, and
+    // has to survive a prediction rather than being overwritten by it.
+
+    @Test
+    fun `scheduledTime keeps the timetable time a prediction moved`() {
+        val info = genuinePrediction
+
+        assertEquals(scheduledArrival, info.scheduledTime.epochMs)
+        assertEquals(1_783_119_500_000L, info.displayTime.epochMs)
+    }
+
+    @Test
+    fun `scheduledTime equals displayTime when there is no usable prediction`() {
+        // Including the closed-stop sentinel, which normalizes to no prediction: the two agree, so
+        // nothing is struck through.
+        val unpredicted = infoFor(arrival(predicted = false, predictedArrivalTime = 0L))
+        assertEquals(unpredicted.displayTime, unpredicted.scheduledTime)
+
+        val suppressed = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
+        assertEquals(suppressed.displayTime, suppressed.scheduledTime)
+    }
+
+    @Test
+    fun `at the first stop scheduledTime is the scheduled departure`() {
+        // stopSequence 0 makes this a departure, and displayTime follows the departure pair — the
+        // timetable time has to follow it there, not stay on the (unused) arrival time.
+        val info = infoFor(
+            FakeArrivalData(
+                predicted = true,
+                predictedArrivalTime = ServerTime(scheduledArrival),
+                scheduledArrivalTime = ServerTime(scheduledArrival),
+                stopSequence = 0,
+                scheduledDepartureTime = ServerTime(scheduledArrival + 120_000L),
+                predictedDepartureTime = ServerTime(scheduledArrival + 300_000L)
+            )
+        )
+
+        assertEquals(scheduledArrival + 120_000L, info.scheduledTime.epochMs)
+        assertEquals(scheduledArrival + 300_000L, info.displayTime.epochMs)
     }
 }
 

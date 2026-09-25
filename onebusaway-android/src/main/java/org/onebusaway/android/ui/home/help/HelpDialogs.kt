@@ -15,15 +15,11 @@
  */
 package org.onebusaway.android.ui.home.help
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -33,28 +29,29 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.arrivals.components.EtaPill
-import org.onebusaway.android.util.ScheduleDeviation
-import org.onebusaway.android.util.ScheduleDeviation.Status
+import org.onebusaway.android.region.RegionState
+import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayChoiceDialog
+import org.onebusaway.android.ui.arrivals.components.ArrivalLegend
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
 
 /**
  * The help-menu options, in the order of the `main_help_options` string-array. Dialog-opening actions
  * (legend / what's-new) are handled by [HelpViewModel]; the rest are Activity operations the host
  * carries out via the `onHelpAction` callback.
  */
-enum class HelpAction { TUTORIALS, LEGEND, WHATS_NEW, AGENCIES, TWITTER, CONTACT_US }
+/** Menu rows, in the order of `R.array.main_help_options` — the array is indexed by ordinal. */
+enum class HelpAction { TUTORIALS, LEGEND, WHATS_NEW, LAYOUT, AGENCIES, TWITTER, CONTACT_US }
 
 /**
  * Self-rendering help feature module: draws the help menu / what's-new / legend dialogs from
- * [HelpViewModel] state, and auto-shows "What's New" once a region has resolved ([regionReady]). Legend
+ * [HelpViewModel] state, and auto-shows "What's New" once a region has resolved (including custom API endpoints). Legend
  * + what's-new taps transition the VM's dialog; the other menu actions (reset tutorials, agencies,
  * Twitter, contact us) are genuine Activity operations, forwarded through [onHelpAction]. The
  * tutorial opt-out's "yes" path shows the welcome tutorial via [onShowWelcomeTutorial].
@@ -66,14 +63,23 @@ fun HelpFeature(
     onShowWelcomeTutorial: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val regionReady by viewModel.regionReady.collectAsStateWithLifecycle()
-    // Auto-show "What's New" once a region has resolved (its content may need refreshed Regions API
-    // data — the old onRegionResolved poke). maybeAutoShowWhatsNew is self-gating (shows at most once
-    // per app-version bump), so re-running on recomposition / config change is safe.
-    LaunchedEffect(regionReady) {
-        if (regionReady) {
-            viewModel.maybeAutoShowWhatsNew()
+    val regionState by viewModel.regionState.collectAsStateWithLifecycle()
+    val regionReady = regionState is RegionState.Active
+    // Start after region resolution and retry when another dialog or tutorial finishes.
+    // The ViewModel admits this sequence only once per launch.
+    val tutorialActive = LocalTutorialState.current?.active == true
+    LaunchedEffect(regionReady, tutorialActive, state.dialog) {
+        if (regionReady && !tutorialActive) {
+            viewModel.maybeShowStartup()
         }
+    }
+    // Keeps each page's unsaved pick across Back and recreation within one pass through the pages.
+    // Once the pass ends, forget it: a later visit from Help must start on the saved choice, not on
+    // one the rider abandoned by dismissing (rememberSaveable restores regardless of its inputs).
+    val migrationState = rememberSaveableStateHolder()
+    val migrationPage = state.migrationPages.indexOf(state.dialog) + 1
+    LaunchedEffect(migrationPage > 0) {
+        if (migrationPage == 0) listOf("search", "arrivals").forEach(migrationState::removeState)
     }
     when (state.dialog) {
         HelpDialog.Menu -> HelpMenuDialog(
@@ -82,6 +88,7 @@ fun HelpFeature(
                 when (action) {
                     HelpAction.LEGEND -> viewModel.showLegend()
                     HelpAction.WHATS_NEW -> viewModel.showWhatsNew()
+                    HelpAction.LAYOUT -> viewModel.showLayoutChoices()
                     else -> {
                         viewModel.dismiss()
                         onHelpAction(action)
@@ -90,6 +97,25 @@ fun HelpFeature(
             },
             onDismiss = viewModel::dismiss
         )
+        HelpDialog.SearchWorkflow -> migrationState.SaveableStateProvider("search") {
+            SearchWorkflowChoiceDialog(
+                initial = viewModel.searchWorkflowStart(),
+                onSave = viewModel::chooseSearchResultMode,
+                onDismiss = viewModel::finishMigrationPage,
+                page = migrationPage,
+                pageCount = state.migrationPages.size
+            )
+        }
+        HelpDialog.ArrivalDisplay -> migrationState.SaveableStateProvider("arrivals") {
+            ArrivalDisplayChoiceDialog(
+                initial = viewModel.arrivalDisplayStart(),
+                onSave = viewModel::chooseArrivalDisplayDefault,
+                onDismiss = viewModel::finishMigrationPage,
+                page = migrationPage,
+                pageCount = state.migrationPages.size,
+                onBack = if (migrationPage > 1) viewModel::previousMigrationPage else null
+            )
+        }
         HelpDialog.WhatsNew -> WhatsNewDialog(
             onDismiss = {
                 viewModel.dismiss()
@@ -172,55 +198,18 @@ private fun TutorialOptOutDialog(onYes: () -> Unit, onNo: () -> Unit, onDismiss:
 }
 
 /**
- * The arrival-color legend. Each row reuses the drawer peek's [EtaPill] (white text on the deviation
- * color, with the pulsing real-time dot) so the sample matches a stop's ETA. Order mirrors the legacy
- * legend: on-time / early / late / scheduled / canceled.
- *
- * The swatches come from [ScheduleDeviation.Status] rather than being spelled out as color resources,
- * so the legend cannot document a palette the app no longer paints (#2043). It takes the pill's
- * on-fill tier for the same reason [EtaPill] does — white text sits on these. The row *labels* still
- * have to be kept truthful by hand: they name both the hue and the ±1.5 minute on-time band.
+ * The arrival-colour legend dialog — a thin shell around the shared [ArrivalLegend], which is the one
+ * definition of what a pill's colour and glyphs mean (the scripted tutorial shows the same content
+ * inline in its "what the colours mean" step).
  */
 @Composable
 private fun LegendDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.main_help_legend_title)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                LegendRow(Status.ON_TIME, predicted = true, label = R.string.main_help_legend_ontime)
-                LegendRow(Status.EARLY, predicted = true, label = R.string.main_help_legend_early)
-                LegendRow(Status.DELAYED, predicted = true, label = R.string.main_help_legend_late)
-                LegendRow(Status.SCHEDULED, predicted = false, label = R.string.main_help_legend_scheduled)
-                LegendRow(
-                    Status.SCHEDULED,
-                    predicted = false,
-                    canceled = true,
-                    label = R.string.main_help_legend_canceled
-                )
-            }
-        },
+        text = { ArrivalLegend(Modifier.verticalScroll(rememberScrollState())) },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.main_help_close)) }
         }
     )
-}
-
-/** One legend swatch. Takes the [Status] rather than a color so the tier choice lives in one place. */
-@Composable
-private fun LegendRow(
-    status: Status,
-    predicted: Boolean,
-    @StringRes label: Int,
-    canceled: Boolean = false
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // The pill paints white text on this, so it takes the on-fill tier — as [EtaPill] always does.
-        EtaPill(eta = 5L, color = colorResource(status.fillColorRes), predicted = predicted, canceled = canceled)
-        Spacer(Modifier.width(16.dp))
-        Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
-    }
 }

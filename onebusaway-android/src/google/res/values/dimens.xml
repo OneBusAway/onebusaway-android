@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- How tall the pin this map's SDK draws for a plain marker stands. Stated by the flavor because
+         it is the flavor's bitmap: the Google Maps SDK's default marker measures about this, while
+         maplibre's is nearly twice as tall (see the maplibre value). The map long-press offer keeps
+         this much room around the point it pins, so its bubble clears the pin rather than covering
+         it (#2243). -->
+    <dimen name="map_pin_height">30dp</dimen>
+</resources>

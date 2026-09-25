@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.R
@@ -13,31 +12,15 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.mock.ArrivalsFixtures
 import org.onebusaway.android.mock.MockRegion
-import org.onebusaway.android.ui.arrivals.dialogs.createStopDetailsDialogText
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.MyTextUtils
-import org.onebusaway.android.util.formatRouteDisplayNames
 
 @RunWith(AndroidJUnit4::class)
 class UIUtilTest : ObaTestCase() {
-    @Test fun formatRouteDisplayNames() {
-        assertEquals("1, 5", formatRouteDisplayNames(arrayListOf("5", "1"), arrayListOf()))
-        assertEquals("1*, 5, 8a, 8b*, 15*", formatRouteDisplayNames(arrayListOf("5", "1", "15", "8b", "8a"), arrayListOf("1", "8b", "15")))
-    }
-
     @Test fun formatDisplayText() {
         assertEquals("SDSU Transit Center", MyTextUtils.formatDisplayText("SDSU Transit Center"))
         assertEquals("North To University Area Tc", MyTextUtils.formatDisplayText("NORTH TO UNIVERSITY AREA TC"))
         assertEquals("SPLC / SR 513", MyTextUtils.formatDisplayText("SPLC / SR 513"))
-    }
-
-    @Test fun createStopDetailsDialogText() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val details = createStopDetailsDialogText(context, "University Area Transit Center", "My stop", "6497", "S", listOf("5"))
-        assertEquals("My stop", details.first)
-        assertTrue(details.second.toString().contains("Official name: University Area Transit Center"))
-        assertTrue(details.second.toString().contains("Stop # 6497"))
-        assertTrue(details.second.toString().contains("Routes: 5"))
     }
 
     @Test fun arrivalTimeIndexSearchAndLabels() {

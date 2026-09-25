@@ -187,17 +187,26 @@ object NavRoutes {
     /** Builds a navigable [ROUTE_INFO] route, encoding the id (route ids can contain `/`, spaces). */
     fun routeInfo(routeId: String): String = "routeInfo/${Uri.encode(routeId)}"
 
-    // --- Arrivals (C-b) ---
-    // stopId is the clean nav-arg; stopName is an optional pre-load title (the screen replaces it with
-    // the loaded header). The standalone ArrivalsListActivity keeps its data-URI contract; this route
-    // is the in-app destination. Direction/routes come from the loaded response, so they're not args.
+    // --- Mapless arrivals and shared stop nav-args ---
+    const val ARRIVALS = "arrivals/{stopId}?stopName={stopName}&routeId={routeId}&routeHeadsign={routeHeadsign}"
+
+    /**
+     * [routeId] and [routeHeadsign] preselect one of the stop's route rows on the board — the mapless
+     * form of the map drawer's stop-scoped route selection, for a tracking-card launch (#2166) that
+     * Lists mode sends here instead of to the map (#2319).
+     */
+    fun arrivals(stopId: String, stopName: String? = null, routeId: String? = null, routeHeadsign: String? = null): String {
+        val query = listOfNotNull(
+            stopName?.let { "$ARG_STOP_NAME=${Uri.encode(it)}" },
+            routeId?.let { "$ARG_ROUTE_ID=${Uri.encode(it)}" },
+            routeHeadsign?.let { "$ARG_ROUTE_HEADSIGN=${Uri.encode(it)}" }
+        )
+        return "arrivals/${Uri.encode(stopId)}" + if (query.isEmpty()) "" else query.joinToString("&", prefix = "?")
+    }
+
     const val ARG_STOP_ID = "stopId"
     const val ARG_STOP_NAME = "stopName"
-    const val ARRIVALS = "arrivals/{$ARG_STOP_ID}?$ARG_STOP_NAME={$ARG_STOP_NAME}"
-
-    /** Builds a navigable [ARRIVALS] route (stop ids can contain `/`, `_`; encode them). */
-    fun arrivals(stopId: String, stopName: String? = null): String = "arrivals/${Uri.encode(stopId)}" +
-        if (stopName != null) "?$ARG_STOP_NAME=${Uri.encode(stopName)}" else ""
+    const val ARG_ROUTE_HEADSIGN = "routeHeadsign"
 
     // --- Trip details (C-d) ---
     // Clean nav-arg keys read by TripDetailsViewModel from SavedStateHandle (TripDetailsActivity's

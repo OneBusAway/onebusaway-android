@@ -30,7 +30,7 @@ import org.onebusaway.android.util.routeCasingColor
  * Bitmaps for the route-continuation overlay (#1691): the pill badge naming a route, and the arrowhead
  * terminating the continuation line. The pill is also every route label on the map ([RouteBadge], drawn
  * by both flavors), which is why [badge] takes a list of routes rather than one name. Resource-free and
- * flavor-neutral (like [BikeBitmaps], so a flavor renderer just wraps the [Bitmap] as a marker icon.
+ * flavor-neutral (like [RentalBitmaps], so a flavor renderer just wraps the [Bitmap] as a marker icon.
  *
  * A prototype-quality first pass: legible + tappable, not a final visual design.
  */
@@ -186,6 +186,14 @@ object ContinuationBadgeBitmaps {
         canvas.drawRoundRect(badgeBounds, cornerRadius, cornerRadius, line)
         return bitmap
     }
+
+    /** The same grid sized to UI text, including the user's font scale, instead of map zoom. */
+    fun badgeGridForTextSize(
+        columns: List<List<BadgedRoute>>,
+        density: Float,
+        darkMode: Boolean,
+        textSizePx: Float
+    ): Bitmap = badgeGrid(columns, density, darkMode, scale = textSizePx / TEXT_SIZE_PX)
 
     /**
      * A stable key identifying the bitmap [badge] draws for these inputs, beside the function itself so the

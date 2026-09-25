@@ -309,6 +309,53 @@ data class ArrivalsForStop(
 )
 
 /**
+ * The arrivals-and-departures-for-location entry: every [arrivalsAndDepartures] at every stop inside
+ * the queried bounding box, in one response. Each arrival names its own `stopId`, so the bays to show
+ * are the distinct stop ids *on the arrivals themselves*, resolved against [References.stop] — **not**
+ * [stopIds] (which repeats ids: one per matched arrival group, so a box of 8 stops answered with 16
+ * entries) and not `references.stops` (a pool that also carries nearby + trip stops — 126 of them for
+ * those same 8 bays).
+ *
+ * [limitExceeded] reports that more matched than were returned. Note the server truncates the
+ * *arrivals* list, not the stop list, so a truncated response drops whole bays rather than trimming
+ * each one — which is why the caller leaves `maxCount` at the server default (see
+ * [org.onebusaway.android.api.data.NearbyArrivalsDataSource]).
+ */
+@Serializable
+data class ArrivalsForLocation(
+    val arrivalsAndDepartures: List<ArrivalDeparture> = emptyList(),
+    val nearbyStopIds: List<NearbyStop> = emptyList(),
+    val situationIds: List<String> = emptyList(),
+    val stopIds: List<String> = emptyList(),
+    val limitExceeded: Boolean = false
+)
+
+/** A stop near the query point ("across the street"), with its distance from that point in metres. */
+@Serializable
+data class NearbyStop(
+    val stopId: String = "",
+    val distanceFromQuery: Double = 0.0
+)
+
+/**
+ * The `data` shape of arrivals-and-departures-for-location. Unlike every other single-entry endpoint
+ * this one cannot use [EntryWithReferences], because the server answers a box containing **no stops**
+ * with a different shape: `ArrivalsAndDeparturesForLocationAction.emptyResponse()` returns the raw
+ * `StopsWithArrivalsAndDeparturesBean` (a flat `{arrivalsAndDepartures, nearbyStops, situations,
+ * stops, timeZone, limitExceeded}`), while the populated path wraps it through
+ * `factory.getResponse(...)` into the usual `{entry, references}`. So `entry` is genuinely absent on
+ * that path — verified identical on all four regions that serve this endpoint — and a non-nullable
+ * field here would make panning onto water throw instead of showing an empty list.
+ *
+ * A null [entry] therefore means "no stops in the box", not a malformed response.
+ */
+@Serializable
+data class ArrivalsForLocationData(
+    val entry: ArrivalsForLocation? = null,
+    val references: References = References()
+)
+
+/**
  * One predicted/scheduled arrival-departure at a stop. Wire names `tripHeadsign`/`routeShortName`
  * match the API; times are epoch millis; occupancy/status are wire strings mapped to the display
  * enums by the projection. Only the fields the arrivals projection reads are modeled.

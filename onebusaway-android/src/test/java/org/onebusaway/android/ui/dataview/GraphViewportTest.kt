@@ -102,9 +102,39 @@ class GraphViewportTest {
     @Test
     fun `distance ticks fall on nice rounded values within the window`() {
         val v = viewport().fitted()
-        val ticks = buildList { v.forEachDistTick { _, dist -> add(dist) } }
+        val ticks = buildList { v.forEachDistTick(labelResolution = 1.0) { _, dist -> add(dist) } }
         assertTrue(ticks.isNotEmpty())
         // step = niceStep(1000/5 = 200) = 200; ticks start at ceil(0/200)*200 = 0, up to < 1000.
         assertEquals(listOf(0.0, 200.0, 400.0, 600.0, 800.0), ticks)
+    }
+
+    @Test
+    fun `distance ticks are whole multiples of what the labels can resolve`() {
+        val v = viewport().fitted()
+        val ticks = buildList { v.forEachDistTick(TENTH_MILE) { _, dist -> add(dist) } }
+        // The window alone would ask for 200 m ticks, which two tenth-of-a-mile labels apart would
+        // sometimes read the same. niceStep(1000/5 / 160.9 = 1.24) = 1, so it steps by one tenth.
+        assertTenths(listOf(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0), ticks)
+    }
+
+    @Test
+    fun `a window far wider than the label resolution still steps by nice multiples of it`() {
+        val v = viewport()
+        v.setDataBounds(minDist = 0.0, maxDist = 100_000.0, minTime = 0L, maxTime = 100_000L)
+        v.setupVisibleWindow(200f, 110f)
+        val ticks = buildList { v.forEachDistTick(TENTH_MILE) { _, dist -> add(dist) } }
+        // niceStep(100000/5 / 160.9 = 124) = 100 tenths of a mile, i.e. ten-mile spacing.
+        assertTenths(listOf(0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0), ticks)
+    }
+
+    /** Asserts the tick meter values are [expected] tenths of a mile, the resolution of a mile label. */
+    private fun assertTenths(expected: List<Double>, ticks: List<Double>) {
+        assertEquals(expected.size, ticks.size)
+        expected.forEachIndexed { i, tenths -> assertEquals(tenths, ticks[i] / TENTH_MILE, 1e-6) }
+    }
+
+    private companion object {
+        /** 0.1 mi in meters, using the app's own feet-per-meter figure. */
+        const val TENTH_MILE = 0.1 * 5280 / 3.281
     }
 }

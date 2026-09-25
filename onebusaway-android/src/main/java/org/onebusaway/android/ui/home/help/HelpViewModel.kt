@@ -26,19 +26,32 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.RegionState
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.searchresults.SearchResultMode
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 /** Which help dialog is showing — the dialog state this help feature module owns. */
 sealed interface HelpDialog {
     object None : HelpDialog
     object Menu : HelpDialog
+    object SearchWorkflow : HelpDialog
+    object ArrivalDisplay : HelpDialog
     object WhatsNew : HelpDialog
     object Legend : HelpDialog
     object TutorialOptOut : HelpDialog
 }
 
 /** The help feature's state: which dialog is up + whether the menu offers "contact us". */
-data class HelpUiState(val dialog: HelpDialog = HelpDialog.None, val showContactUs: Boolean = true)
+data class HelpUiState(
+    val dialog: HelpDialog = HelpDialog.None,
+    val showContactUs: Boolean = true,
+    val migrationPages: List<HelpDialog> = emptyList(),
+    /** The pages were reopened from Help, so finishing them owes no release notes or tutorial offer. */
+    val revisitingLayout: Boolean = false
+)
 
 /**
  * Owns the help / what's-new / legend dialogs as a feature module (mirrors the other home feature
@@ -56,10 +69,8 @@ class HelpViewModel @Inject constructor(
     private val _state = MutableStateFlow(HelpUiState())
     val state: StateFlow<HelpUiState> = _state.asStateFlow()
 
-    // Whether a region has resolved — gates the auto-show of "What's New". The repository owns this hot
-    // predicate ([RegionRepository.regionPresent]); [HelpFeature] reads it. Re-exposed verbatim (no local
-    // mirror needed).
-    val regionReady: StateFlow<Boolean> get() = regionRepository.regionPresent
+    // Active(null) is a resolved custom API endpoint and must receive migration choices too.
+    val regionState: StateFlow<RegionState> get() = regionRepository.state
 
     /**
      * The Twitter/X URL to open from the help menu: the current region's own Twitter URL when it has
@@ -76,6 +87,75 @@ class HelpViewModel @Inject constructor(
         val customApiUrl = prefs.getString(R.string.preference_key_oba_api_url, null)
         _state.update { it.copy(dialog = HelpDialog.Menu, showContactUs = customApiUrl.isNullOrEmpty()) }
     }
+
+    private var startupPresented = false
+
+    /** One startup sequence: default chooser, release notes, then the tutorial invitation. */
+    fun maybeShowStartup() {
+        if (startupPresented || _state.value.dialog != HelpDialog.None) return
+        startupPresented = true
+        // Both choices ship after 26.2.1 and apply to every existing installation, including
+        // fresh installs of 26.2.x. Do not reuse the earlier legacy-only migration marker.
+        val sourceVersion = captureMigrationSource()
+        val pages = buildList {
+            if (sourceVersion > 0 && prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) add(HelpDialog.SearchWorkflow)
+            if (sourceVersion > 0 && prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) add(HelpDialog.ArrivalDisplay)
+        }
+        _state.update { it.copy(migrationPages = pages, dialog = pages.firstOrNull() ?: HelpDialog.None) }
+        if (pages.isEmpty()) maybeAutoShowWhatsNew()
+    }
+
+    fun previousMigrationPage() {
+        _state.update { state ->
+            val previous = state.migrationPages.getOrNull(state.migrationPages.indexOf(state.dialog) - 1)
+            if (previous == null) state else state.copy(dialog = previous)
+        }
+    }
+
+    fun chooseSearchResultMode(mode: SearchResultMode) {
+        prefs.setString(SearchResultMode.PREFERENCE_KEY, mode.value)
+        finishMigrationPage()
+    }
+
+    fun chooseArrivalDisplayDefault(mode: ArrivalDisplayMode) {
+        prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
+        finishMigrationPage()
+    }
+
+    /** Advance through the pages captured at startup; dismissing leaves an unsaved choice owed next launch. */
+    fun finishMigrationPage() {
+        val state = _state.value
+        val index = state.migrationPages.indexOf(state.dialog)
+        if (index < 0) return
+        val next = state.migrationPages.getOrNull(index + 1)
+        _state.update { it.copy(dialog = next ?: HelpDialog.None, revisitingLayout = next != null && it.revisitingLayout) }
+        if (next == null && !state.revisitingLayout && !maybeAutoShowWhatsNew()) maybeShowTutorialOptOut()
+    }
+
+    /**
+     * "Choose Your Layout" from the Help menu: walk both layout pages again, whatever is saved. The
+     * upgrade sequence shows a page only while its choice is unsaved, so a rider who dismissed it,
+     * picked in a hurry, or installed fresh has no other way back to the illustrated comparison.
+     */
+    fun showLayoutChoices() {
+        _state.update {
+            it.copy(
+                migrationPages = listOf(HelpDialog.SearchWorkflow, HelpDialog.ArrivalDisplay),
+                dialog = HelpDialog.SearchWorkflow,
+                revisitingLayout = true
+            )
+        }
+    }
+
+    /** A page starts on the saved choice; unsaved, it starts on the classic layout, the safer answer for an upgrade. */
+    fun searchWorkflowStart(): SearchResultMode = if (prefs.getString(SearchResultMode.PREFERENCE_KEY, null) == null) SearchResultMode.LISTS else prefs.searchResultMode()
+
+    fun arrivalDisplayStart(): ArrivalDisplayMode = if (prefs.getString(ArrivalDisplayMode.PREFERENCE_KEY, null) == null) ArrivalDisplayMode.TIME else prefs.arrivalDisplayDefault()
+
+    // Keep the source across launches before What's New advances its marker, so deferring a
+    // choice neither loses upgrade eligibility nor opts a fresh install in.
+    private fun captureMigrationSource(): Int = prefs.getInt(LAYOUT_MIGRATION_SOURCE_VERSION, -1).takeUnless { it == -1 }
+        ?: prefs.getInt(WHATS_NEW_VER, 0).also { prefs.setInt(LAYOUT_MIGRATION_SOURCE_VERSION, it) }
 
     fun showWhatsNew() = _state.update { it.copy(dialog = HelpDialog.WhatsNew) }
 
@@ -117,5 +197,6 @@ class HelpViewModel @Inject constructor(
         const val TWITTER_URL = "http://mobile.twitter.com/onebusaway"
 
         private const val WHATS_NEW_VER = "whatsNewVer"
+        private const val LAYOUT_MIGRATION_SOURCE_VERSION = "post_26_2_1_layout_migration_source_version"
     }
 }

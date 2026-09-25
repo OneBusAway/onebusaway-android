@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.home.map
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.map.StopsBanner
+import org.onebusaway.android.map.mapBanner
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.util.GeoPoint
@@ -46,6 +47,27 @@ class MapStopsBannerTest {
         assertEquals(
             StopsBanner.MoreStopsAvailable,
             StopsBanner.MoreStopsAvailable.forFocus(CurrentFocus.None)
+        )
+    }
+
+    // --- mapBanner: which loader's notice the one pill shows (#2168) ---
+
+    @Test
+    fun `the rental notice shows only when the stops banner is silent`() {
+        assertEquals(StopsBanner.ZoomInForRentals, mapBanner(StopsBanner.None, rentalsNeedCloserZoom = true))
+        assertEquals(StopsBanner.None, mapBanner(StopsBanner.None, rentalsNeedCloserZoom = false))
+    }
+
+    /** Stops are what the map is fundamentally for; rentals are an overlay the rider switched on. */
+    @Test
+    fun `the stops banner outranks the rental notice`() {
+        assertEquals(
+            StopsBanner.ShowingSavedStops,
+            mapBanner(StopsBanner.ShowingSavedStops, rentalsNeedCloserZoom = true)
+        )
+        assertEquals(
+            StopsBanner.OutsideRegion,
+            mapBanner(StopsBanner.OutsideRegion, rentalsNeedCloserZoom = true)
         )
     }
 }

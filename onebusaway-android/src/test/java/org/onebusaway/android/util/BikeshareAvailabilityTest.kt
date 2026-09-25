@@ -101,15 +101,28 @@ class BikeshareAvailabilityTest {
     }
 
     /**
-     * The Puget Sound case, and the contrast that matters: an OTP2-only bikeshare region can plan
-     * bike trips while having no stations to draw, because the overlay reads OTP1 `/bike_rental`.
-     * Guards against re-collapsing the two gates onto one flag.
+     * The Puget Sound case. Since #2168 the rental map layer reads `vehicleRentalsByBbox` where a
+     * region publishes a bikeshare-capable GraphQL endpoint, so an OTP2-only bikeshare region now
+     * *does* draw rentals — where before it could plan bike trips while drawing nothing, the overlay's
+     * only source being OTP1 `/bike_rental`.
      */
     @Test
-    fun `OTP2-only bikeshare region plans bike trips but draws no stations`() {
+    fun `OTP2-only bikeshare region both plans bike trips and draws rentals`() {
         val region = otp2Region(supportsOtp1Bikeshare = false, supportsGraphqlBikeshare = true)
         assertTrue(BikeshareAvailability.isTripPlanningEnabled(region, null))
-        assertFalse(BikeshareAvailability.isStationLayerEnabled(region, null))
+        assertTrue(BikeshareAvailability.isStationLayerEnabled(region, null))
+    }
+
+    /**
+     * The two gates are still separate flags, which is what stops them re-collapsing onto one: a
+     * region whose OTP1 server publishes rentals draws them even though its OTP2 server — the one a
+     * plan is sent to — says it has none.
+     */
+    @Test
+    fun `an OTP2 region with rentals only on its OTP1 host still draws them`() {
+        val region = otp2Region(supportsOtp1Bikeshare = true, supportsGraphqlBikeshare = false)
+        assertFalse(BikeshareAvailability.isTripPlanningEnabled(region, null))
+        assertTrue(BikeshareAvailability.isStationLayerEnabled(region, null))
     }
 
     @Test

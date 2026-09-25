@@ -15,6 +15,7 @@ import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
+import org.onebusaway.android.map.render.PINNED_TRIP_GHOST_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
@@ -45,53 +46,91 @@ internal fun focusedRoutePolyline(
     transforms = ROUTE_VIEW_TRANSFORMS
 )
 
+// The reductions: a line built for one view, restated for another that says less. Every one of them
+// **constructs** its line rather than `copy()`-ing the original minus a few fields, for the reason
+// `RoutePolyline.asCase` gives for doing the same — a feature added to [RoutePolyline] is then absent
+// from a reduced line unless someone puts it here, which is the safe default. Copy-minus is the opposite
+// default, and it is what let a drilled-into leg keep bulbs this view had decided not to draw (#2241):
+// every new feature rode along until someone noticed, one incident per feature. A reduction that needs a
+// new field will fail to compile into existence; one that quietly gains a feature will not.
+
 /** The active route's broader geometry retained beneath an exact selected-trip line. */
 internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
-        directional = false
+        dash = line.dash,
+        transforms = line.transforms
     )
 }
-
-/**
- * The line the rider has selected, wrapped in the heavier [RouteLineCase.SELECTION] case — the map's one way
- * of saying "this is the one you're looking at" (#2082). Selection deliberately changes nothing else: a leg
- * keeps the weight, colour and dash that say what *kind* of line it is, so drilling into it doesn't restyle
- * the trip around it.
- *
- * It overwrites whatever case the line already carried, which for a directions ride is the hairline
- * [RouteLineCase.OUTLINE] every ride wears: selection is the *step up* in edge weight, so a line that already
- * has an edge simply gets a heavier one. The case's colour is the renderer's to resolve, since it depends on
- * the current theme (see [mapRouteLineCaseColor]).
- */
-internal fun RoutePolyline.withCase(): RoutePolyline = copy(case = RouteLineCase.SELECTION)
 
 /**
  * The selected transit route upstream of the boarding point — where the vehicle is coming from — drawn as
  * part of the selected line rather than as background: solid, cased like the ride it leads into, at its own
  * thinnest itinerary weight ([ITINERARY_APPROACH_WIDTH_PROFILE]).
  *
+ * "Cased like the ride" is a colour and not a width: it takes [RouteLineCase.APPROACH], which draws in the
+ * selection colour at a lighter weight. The two read as one line stepping down at the boarding point, which
+ * is the point, while the case still fits the 3.5dp line it wraps — a full [RouteLineCase.SELECTION] would
+ * add more width than the approach line has, and the thinnest line on the map would draw as a selection band
+ * with a coloured core.
+ *
  * It was previously the map's faintest dashed line, a hair thinner than the receded itinerary legs beside
  * it, so the rider read two near-identical thin strokes meaning quite different things (#2082). Chevrons
  * stay off: the approach is where the vehicle comes from, not a span the rider travels.
  */
 internal fun List<RoutePolyline>.asSelectedRouteApproach(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = ITINERARY_APPROACH_WIDTH_PROFILE,
-        directional = false,
-        dash = RouteLineDash.NONE
-    ).withCase()
+        dash = RouteLineDash.NONE,
+        case = RouteLineCase.APPROACH,
+        transforms = line.transforms
+    )
 }
 
 /**
  * The rider's committed journey retained around a focused transit leg. It keeps each leg's mode/route
- * colour and dash, but drops chevrons and takes a middle weight: stronger than unused route geometry,
- * weaker than the selected ridden segment.
+ * colour, dash and case, and takes a middle weight: stronger than unused route geometry, weaker than the
+ * selected ridden segment.
+ *
+ * It drops a shared ride's stripes (#2100). Striping answers "which of these routes may I board?", a
+ * question about a ride the rider is choosing; a context leg is here to say where the leg being read sits
+ * in the journey, and is drawn at half the width the stripes were cut against — so the same rhythm arrives
+ * as a fleck of noise beside the leg that is actually being read. It drops the end marks with them: a bulb
+ * pair means "alight here, board there" and a cut means "the route changes under you", which are readings
+ * of a trip being *followed* at full weight, not of the trace saying where one leg of it sits — the same
+ * call [asPinnedTripGhost] makes. The ride the rider is actually reading keeps both, drawn over this at
+ * full weight by [routePolylinesWithSegment].
  */
 internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map { line ->
-    line.copy(
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
         widthProfile = ITINERARY_CONTEXT_WIDTH_PROFILE,
-        directional = false
+        dash = line.dash,
+        case = line.case,
+        transforms = line.transforms
+    )
+}
+
+/**
+ * The rider's parked trip as the thin ghost drawn under an exploring map (#2053).
+ *
+ * Keeps each leg's colour — the one thing the ghost is *for* is saying which trip is waiting — and drops
+ * everything that competes for attention: the case that would halo it above the basemap, the terminus
+ * bulbs and interline cuts that are details of a trip being read, a shared ride's stripes, and any
+ * chevrons. What is left is a thin coloured trace of the journey.
+ */
+internal fun List<RoutePolyline>.asPinnedTripGhost(): List<RoutePolyline> = map { line ->
+    RoutePolyline(
+        color = line.color,
+        points = line.points,
+        widthProfile = PINNED_TRIP_GHOST_WIDTH_PROFILE,
+        dash = line.dash,
+        transforms = line.transforms
     )
 }
 
@@ -128,7 +167,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
             RoutePolyline(
                 routeColors[shape.routeDirection] ?: mapRouteLineColorOrNull(shape.routeColor),
                 shape.points,
-                widthProfile,
+                widthProfile = widthProfile,
                 // Adjacent routes in stop focus are plain thin lines — no direction chevrons — so the
                 // mode reads as "these routes pass here", reserving chevrons for a selected route (#1985).
                 directional = false,
@@ -154,6 +193,10 @@ internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
  * One badge model per successfully drawn route-direction, preserving the focused-trip order that
  * mirrors the arrivals drawer. The shared layout chooses stable geographic line-center anchors;
  * flavor renderers only draw them.
+ *
+ * These take the map's label schedule ([RouteBadge.scale]) rather than a fixed pixel size (#2195): a
+ * focused stop's routes fan out from one point, so at an overview zoom their labels are both oversized
+ * against the lines they name and packed tightly enough to hide them.
  */
 internal fun FocusedTripGeometry.toRouteBadges(
     routes: List<ObaRoute>,
@@ -195,7 +238,10 @@ private data class RouteBadgeSpec(
 internal data class SelectedTripStyle(val color: Int, val includeUnderlay: Boolean)
 
 /**
- * [stopFocusActive] alone gates the underlay: inside stop focus the focused-stop's own siblings
+ * The underlay is the route context a selected trip is read against, so it is dropped wherever the view
+ * already draws one of its own — and each such view is asked about directly, never proxied.
+ *
+ * [stopFocusActive] alone gates the stop-focus case: inside stop focus the focused-stop's own siblings
  * already carry the route's other geometry, so the underlay is dropped even when [selectedRouteDirection]
  * isn't among the focused stop's own trips and [routeColors] carries no adjacency entry for it — that
  * combination used to fall back to a whole-route-style underlay (the #1899 regression fixed by #1902),
@@ -203,15 +249,20 @@ internal data class SelectedTripStyle(val color: Int, val includeUnderlay: Boole
  * A color miss still falls back to [routeColorFallback]; only the underlay must not follow it. Both
  * inputs are already in the map's route-line colour policy ([mapRouteLineColor]) — this picks between
  * them, it doesn't render either.
+ *
+ * [rideApproachActive] is the directions-ride case (#2239): a focused ride draws each boardable route's
+ * upstream lead-in as its route context and deliberately nothing else, so putting the whole corridor
+ * back under a tapped vehicle would undo the very restriction the ride focus is drawn with.
  */
 internal fun selectedTripStyle(
     stopFocusActive: Boolean,
+    rideApproachActive: Boolean,
     selectedRouteDirection: RouteDirectionKey,
     routeColors: Map<RouteDirectionKey, Int>,
     routeColorFallback: Int
 ): SelectedTripStyle = SelectedTripStyle(
     color = routeColors[selectedRouteDirection] ?: routeColorFallback,
-    includeUnderlay = !stopFocusActive
+    includeUnderlay = !stopFocusActive && !rideApproachActive
 )
 
 /** Presented route-direction identities at each scheduled stop, optionally narrowed to [route]. */

@@ -10,6 +10,8 @@ import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.NavigationSessionRecord
 import org.onebusaway.android.database.oba.Open311ServerRecord
+import org.onebusaway.android.database.oba.PinnedTripDao
+import org.onebusaway.android.database.oba.PinnedTripRecord
 import org.onebusaway.android.database.oba.RegionBoundRecord
 import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RegionRecord
@@ -60,6 +62,14 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * server, which the directory publishes separately from the OTP1 `supports_otp_bikeshare` because the
  * two servers genuinely differ. NULL (every existing cached row) reads back as false until the next
  * regions refresh.
+ *
+ * v12 adds `regions.sidecar_region_id` (#2165): the id the sidecar knows a deployment by, when an
+ * `add-region` deep link names one that differs from the row's own `_id`. NULL everywhere else, which
+ * reads back as "address the sidecar by `_id`".
+ *
+ * v13 adds `pinned_trips` (#2053): the single trip-plan itinerary the rider parked, so they can leave
+ * directions to explore the system and come back to it. Created empty — nothing is pinned until the
+ * rider pins something.
  */
 @Database(
     entities = [
@@ -77,9 +87,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         NavStopRecord::class,
         NavigationSessionRecord::class,
         CachedStopRecord::class,
-        CachedRouteTypeRecord::class
+        CachedRouteTypeRecord::class,
+        PinnedTripRecord::class
     ],
-    version = 11,
+    version = 13,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -103,6 +114,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     // Map stop cache (#1754).
     abstract fun mapStopCacheDao(): MapStopCacheDao
+
+    // The parked trip plan (#2053).
+    abstract fun pinnedTripDao(): PinnedTripDao
 
     companion object {
         /** The Room database filename (also the backup target). */

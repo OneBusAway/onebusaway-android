@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,9 +22,12 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -56,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
@@ -74,7 +77,9 @@ import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.arrivals.resolveSelectedRouteGroup
+import org.onebusaway.android.ui.arrivals.StopLauncher
+import org.onebusaway.android.ui.arrivals.components.etaPillFocus
+import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
@@ -85,7 +90,6 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
-import org.onebusaway.android.ui.home.arrivals.selectedArrivalRowKey
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
@@ -93,9 +97,10 @@ import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
-import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
+import org.onebusaway.android.ui.home.directions.DirectionsSafetyNotice
+import org.onebusaway.android.ui.home.directions.NavigateHereBubble
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -103,6 +108,7 @@ import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
 import org.onebusaway.android.ui.home.drawer.NavDrawerViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
+import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpFeature
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.map.FocusBanner
@@ -110,6 +116,14 @@ import org.onebusaway.android.ui.home.map.FocusBannerState
 import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.home.map.MapChrome
 import org.onebusaway.android.ui.home.map.MapFeature
+import org.onebusaway.android.ui.home.map.PinnedTripFab
+import org.onebusaway.android.ui.home.map.StopFocusMenu
+import org.onebusaway.android.ui.home.nearby.NearbyArrivalsSheetHost
+import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.home.nearby.limitExceeded
+import org.onebusaway.android.ui.home.nearby.rememberNearbyRouteRows
+import org.onebusaway.android.ui.home.nearby.rememberNearbyRowActions
+import org.onebusaway.android.ui.home.nearby.rememberNearbyRowCallbacks
 import org.onebusaway.android.ui.home.weather.WeatherFeature
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.home.widealert.WideAlertDialog
@@ -118,17 +132,22 @@ import org.onebusaway.android.ui.mylists.RecentItem
 import org.onebusaway.android.ui.mylists.SearchRecentsRepository
 import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
+import org.onebusaway.android.ui.nav.StopReveal
+import org.onebusaway.android.ui.routeinfo.RouteInfoLauncher
 import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.PlanResult
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
+import org.onebusaway.android.ui.tripplan.pinned.describesSameTripAs
+import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.RecordArrivalSpotlightsShown
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
-import org.onebusaway.android.ui.tutorial.WelcomeTutorial
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.ExternalIntents
@@ -157,14 +176,17 @@ class HomeCallbacks(
     val onSearch: (String) -> Unit,
     val onRecentStopsRoutes: () -> Unit,
     // Search-box recents dropdown: tapping a stop or a route reveals it on the map.
-    val onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
+    val onRecentStop: (StopReveal) -> Unit,
     val onRecentRoute: (routeId: String) -> Unit,
     // Wraps [HomeActivityActions.onHelpActionExternal] with the one branch that's a navigation (AGENCIES).
     val onHelpAction: (HelpAction) -> Unit,
     val onShowTrip: (tripId: String, stopId: String) -> Unit,
     val onEditReminder: (args: ReminderEditorArgs) -> Unit,
+    // The focused stop's overflow "night light" item — the driver-flagging flasher screen.
+    val onNightLight: () -> Unit,
     val onLearnMore: () -> Unit,
-    val onOpenSurvey: (url: String) -> Unit
+    val onOpenSurvey: (url: String) -> Unit,
+    val onShowArrivals: (FocusedStop) -> Unit = {}
 )
 
 /**
@@ -218,13 +240,18 @@ fun HomeScreen(
     // the top chrome and the results sheet + itinerary render over the map.
     tripPlanViewModel: TripPlanViewModel,
     tripResultsViewModel: TripResultsViewModel,
+    // The parked trip plan (#2053): read from the results sheet's pin controls and from the resume FAB
+    // over the map, so it is one activity-scoped instance rather than a per-destination one.
+    pinnedTripViewModel: PinnedTripViewModel,
     // Builds the per-focused-stop ArrivalsViewModel for the bottom-sheet host (assisted-injected;
     // the sheet's stop id is runtime-dynamic, so it can't be a plain hiltViewModel). Injected into
     // HomeActivity and threaded down.
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     // All the screen's tap/UI lambdas, bundled (see [HomeCallbacks]); brought into scope below via
     // `with` so the body references them unqualified.
-    callbacks: HomeCallbacks
+    callbacks: HomeCallbacks,
+    showHelpDialogs: Boolean = true,
+    onBackToSource: (() -> Unit)? = null
 ) {
     with(callbacks) {
         with(activityActions) {
@@ -232,7 +259,16 @@ fun HomeScreen(
                 val stopFocus = currentFocus as? CurrentFocus.Stop
                 val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
                 val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
+                val selectedTripBandColor by mapViewModel.selectedTripBandColor.collectAsStateWithLifecycle()
                 val focusBannerViewModel = hiltViewModel<FocusBannerViewModel>()
+                // The transit-centre drawer's query (#2107). Created here — the sheet is this screen's
+                // — and fed the settled viewport + zoom band by MapFeature, which holds the map VM.
+                val nearbyArrivalsViewModel = hiltViewModel<NearbyArrivalsViewModel>()
+                val nearbyArrivalsState by nearbyArrivalsViewModel.state.collectAsStateWithLifecycle()
+                // The map's zoom band, read back off the nearby query rather than derived a second time
+                // here: MapFeature holds the map VM and is the single producer, pushing the band into
+                // the query — so the sheet decision and the query it gates can't drift.
+                val stopBand by nearbyArrivalsViewModel.stopBand.collectAsStateWithLifecycle()
                 val favoriteRouteIds by focusBannerViewModel.favoriteRouteIds.collectAsStateWithLifecycle()
                 val favoriteStopIds by focusBannerViewModel.favoriteStopIds.collectAsStateWithLifecycle()
                 val stopFavoritesReady by focusBannerViewModel.stopFavoritesReady.collectAsStateWithLifecycle()
@@ -247,6 +283,14 @@ fun HomeScreen(
                 // on currentFocus would reset this to 0 when switching between two equal-height banners, framing
                 // the map as if no banner showed. The disappearance case resets it via the banner's else branch.
                 var focusBannerBottomPx by remember { mutableIntStateOf(0) }
+                // How tall the top-of-map overlay layer currently is, and the stops notice beside it — the
+                // two things the parked-trip button (#2229) stacks below. The layer is measured whole rather
+                // than overlay by overlay: its occupants all hang from the top of the band and overlap
+                // each other, so its own height *is* the tallest of them, and an overlay added there
+                // later is cleared without anyone having to remember this. The stops notice is measured
+                // separately only because it lives in the map's own overlay layer, not this one.
+                var overlayBandHeightPx by remember { mutableIntStateOf(0) }
+                var stopsBannerHeightPx by remember { mutableIntStateOf(0) }
                 // The directions trip-plan form card's absolute bottom edge (window px), so the map's top inset
                 // covers the form/FAB during directions (the itinerary-step focus centers in the band below it).
                 var directionsFormBottomPx by remember { mutableIntStateOf(0) }
@@ -278,6 +322,9 @@ fun HomeScreen(
                 // Drives the arrivals-panel onboarding spotlight; provided to the sheet content (so the panel's
                 // anchors can register) and read by [TutorialOverlay] below, which draws over the whole screen.
                 val tutorialState = rememberTutorialState()
+                // Persist each arrivals spotlight as it is actually shown — by whichever tutorial is
+                // running, the opportunistic sequence or the scripted tour, which reuses its anchors.
+                RecordArrivalSpotlightsShown(tutorialState)
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 // The sheet has NO reachable `Hidden` anchor (`skipHiddenState = true`), so peek is the hard
                 // floor of the drag: the user can expand from peek or collapse back to it, but can never drag it
@@ -321,33 +368,48 @@ fun HomeScreen(
                     { scope.launch { drawerState.open() } }
                 }
 
-                // The system navigation-bar inset (height varies by handset) grows the peek so the collapsed
-                // sheet's content clears the bottom chrome; the panel matches this with its own content inset.
-                val peekBottomPadding = navigationBarBottomPadding()
-
-                // The collapsed peek is capped at a fixed fraction of the window height — a constant known up
-                // front, so the open slide has a stable target that can't strand the drag (unlike a measured
-                // height that grows as content loads). Short stops shrink below it to fit (see collapsedPeekDp).
-                // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
-                val capPeekDp = with(density) {
-                    (LocalWindowInfo.current.containerSize.height * PEEK_HEIGHT_FRACTION).toDp()
+                // The expanded sheet's ceiling: how far it may pull up before it starts covering things
+                // that have to stay visible — the status bar / notch, and the floating map chrome (menu +
+                // search FABs) it used to slide straight under (#2282). safeDrawing rather than statusBars
+                // because the cutout is what we're clearing, and it can exceed the status bar; the chrome
+                // clearance is the same one every other top-of-map overlay insets by, so the sheet's top
+                // edge lines up with them instead of drifting when the FAB row is resized.
+                val topSystemInsetPx = WindowInsets.safeDrawing.getTop(density)
+                val maxSheetContentDp = with(density) {
+                    arrivalsSheetCeiling(
+                        windowHeight = LocalWindowInfo.current.containerSize.height.toDp(),
+                        topSystemInset = topSystemInsetPx.toDp(),
+                        dragHandleHeight = DRAG_HANDLE_HEIGHT
+                    )
                 }
 
-                // The panel's fully-laid-out list height in px, reported once
-                // measured (0 until then). Used only to shrink the peek below the cap for short stops. Not reset
-                // on focus change — the next stop's panel overwrites it once laid out, avoiding a cap-bounce.
+                // Observe the actual bounded panel height only to fit the collapsed peek. The expanded
+                // anchor comes directly from layout, never from this state. The panel's measured size
+                // already includes its navigation-bar padding.
                 var contentPx by remember { mutableIntStateOf(0) }
-                // That content height as the on-screen peek it implies: the measured content plus the drag handle
-                // above it and the nav-bar inset below (matching what the collapsed sheet actually shows).
-                val contentPeekDp = with(density) { contentPx.toDp() } + DRAG_HANDLE_HEIGHT + peekBottomPadding
+                val contentPeekDp = with(density) { contentPx.toDp() } + DRAG_HANDLE_HEIGHT
 
-                // Visibility is business state: the sheet is shown (its peek slid up) iff a stop is focused.
-                // Because there's no `Hidden` drag anchor, "shown" is a plain flag that drives the animated peek
-                // height rather than a sheet drag state. The key is the focused stop id while shown (else null),
-                // so the effect reacts to focus/tab changes but NOT to a user drag (same stop -> same key).
+                // The transit-centre drawer's rows, built from the query's last response (#2107). Needed
+                // before the sheet decision below, which gates on there being rows to show.
+                val nearbyRows = rememberNearbyRouteRows(nearbyArrivalsState)
+                val nearbyActionsFor = rememberNearbyRowActions(nearbyArrivalsState, nearbyRows)
+                val nearbyLimitExceeded = nearbyArrivalsState.limitExceeded
+                val nearbyRowCallbacks = rememberNearbyRowCallbacks(
+                    homeViewModel = homeViewModel,
+                    rows = nearbyRows,
+                    undoViewport = { mapViewModel.viewport },
+                    onShowTrip = onShowTrip
+                )
+
+                // Visibility is business state: the sheet is shown (its peek slid up) iff it has something
+                // to show — a focused stop, or (since #2107) the routes leaving every bay in view at
+                // transit-centre zoom. Because there's no `Hidden` drag anchor, "shown" is a plain flag that
+                // drives the animated peek height rather than a sheet drag state. The key is the *identity*
+                // of what's shown, so the effect reacts to focus/mode changes but NOT to a user drag, and
+                // not to a pan that re-queries the same nearby list.
                 var sheetShown by remember { mutableStateOf(false) }
-                val showSheet = shouldShowSheet(currentFocus)
-                val sheetKey = if (showSheet) stopFocus?.stop?.id else null
+                val sheetContent = homeSheetContent(currentFocus, stopBand, nearbyRows.isNotEmpty())
+                val sheetKey = sheetContent.sheetKey
                 LaunchedEffect(sheetKey) {
                     if (sheetKey == null) {
                         // Hide: an expanded sheet is first collapsed to peek (so it then slides straight down as
@@ -358,17 +420,33 @@ fun HomeScreen(
                         }
                         sheetShown = false
                     } else {
-                        // Show immediately on focus — a fixed-fraction peek can't strand the drag, so there's no
-                        // need to wait for arrivals; the peek shows a loading spinner until they land.
+                        // Show immediately — a fixed-fraction peek can't strand the drag, so there's no need to
+                        // wait for arrivals; the peek shows a loading spinner until they land. Collapse to peek
+                        // on the way in, so switching *between* modes (a stop tapped out of the nearby list, or
+                        // back again) doesn't silently hand a full-height sheet to entirely different content.
+                        runCatching {
+                            if (sheetShown && sheetState.currentValue == SheetValue.Expanded) {
+                                sheetState.partialExpand()
+                            }
+                        }
                         sheetShown = true
                     }
                 }
 
+                // Tell the query whether the drawer is the sheet's subject: focusing a stop hands the sheet
+                // to that stop's own arrivals session, so this stops polling a list nobody can see.
+                // Keyed on the focus, not on sheetContent: the drawer's own rows feed sheetContent, so
+                // keying on that would make this effect depend on its own output.
+                LaunchedEffect(currentFocus, nearbyArrivalsViewModel) {
+                    nearbyArrivalsViewModel.setActive(currentFocus is CurrentFocus.None)
+                }
+
                 // One keyed arrivals session feeds the focus banner, alert modal, and drawer body. Keeping it
                 // above the scaffold prevents duplicate polling while preserving the per-stop ViewModelStore.
+                val helpState by helpViewModel.state.collectAsStateWithLifecycle()
                 val arrivalsSession = rememberArrivalsSession(
                     focusedStop = stopFocus?.stop,
-                    sheetVisible = sheetShown,
+                    sheetVisible = sheetShown && helpState.dialog == HelpDialog.None,
                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                     tutorialState = tutorialState,
                     onArrivalsLoaded = onArrivalsLoaded,
@@ -448,7 +526,10 @@ fun HomeScreen(
                         // not on arrivals, so a legacy-starred stop is never shown unstarred (and thus
                         // un-unstarrable) during that window.
                         isFavorite = currentFocus.stop.id in favoriteStopIds,
-                        favoriteEnabled = stopFavoritesReady,
+                        // Also gated on the stop's location being known: starring one creates its row
+                        // in the stops table from the focus, and a stop revealed by id alone has no
+                        // location until its arrivals land — the same beat the title above is waiting on.
+                        favoriteEnabled = stopFavoritesReady && currentFocus.stop.point != null,
                         hasAlerts = arrivalsContent?.hasAlerts == true,
                         // Like the stop code and direction above: the loaded arrivals are the source, with
                         // the focus as the pre-load fallback. Only a map tap mints a focus from a full
@@ -456,25 +537,7 @@ fun HomeScreen(
                         // without the arrivals source the glyph would be missing on most entry points.
                         wheelchairBoarding = arrivalsContent?.header?.wheelchairBoarding
                             ?.takeIf { it != WheelchairBoarding.UNKNOWN }
-                            ?: currentFocus.stop.wheelchairBoarding,
-                        subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
-                            FocusBannerState.SubordinateRoute(
-                                shortName = leg.shortName,
-                                color = arrivalsContent?.actions?.values
-                                    ?.firstOrNull { it.routeId == leg.routeId }
-                                    ?.routeColor
-                            )
-                        }.orEmpty(),
-                        subordinateHeadsign = currentFocus.selectedRoute?.let { selection ->
-                            // Resolve the shown headsign from the loaded arrivals via the same row resolver the
-                            // drawer highlight uses, so every entry point (arrivals row, map route-label tap)
-                            // projects it identically instead of each carrying its own copy.
-                            resolveSelectedRouteGroup(
-                                arrivalsContent?.routeGroups.orEmpty(),
-                                selection.selectedArrivalRowKey(),
-                                selection.originLeg.routeId
-                            )?.headsign
-                        }
+                            ?: currentFocus.stop.wheelchairBoarding
                     )
                     is CurrentFocus.Route -> routeHeader?.let { header ->
                         FocusBannerState.Route(
@@ -486,11 +549,46 @@ fun HomeScreen(
                     CurrentFocus.None, is CurrentFocus.BikeStation, is CurrentFocus.Directions -> null
                 }
 
+                // A trip to the stop the banner is naming — the map long press's offer, asked of the stop
+                // the rider already has focused (#2272). It names the destination with the banner's own
+                // title so the trip's pill reads as the stop they were looking at, rather than as whatever
+                // the planner would reverse-geocode the coordinate back into. Null — and so no menu row —
+                // until the stop's location is known, since until then there is nothing to route to.
+                val navigateToFocusedStop: (() -> Unit)? =
+                    (focusBannerState as? FocusBannerState.Stop)?.let { banner ->
+                        stopFocus?.stop?.point?.let { at ->
+                            {
+                                navigateTo(
+                                    TripEndpoint.namedPlace(
+                                        name = banner.title,
+                                        lat = at.latitude,
+                                        lon = at.longitude,
+                                        isTransit = true
+                                    ),
+                                    homeViewModel,
+                                    mapViewModel,
+                                    tripPlanViewModel
+                                )
+                            }
+                        }
+                    }
+
                 // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
                 // to fit short content once settled: retargeting mid-open would move the AnchoredDraggable anchor
                 // and strand the sheet, so we slide up to the constant cap first, then shrink (flipped by the
                 // animateDpAsState finished-listener below; reset when the sheet slides back to 0 on hide).
                 var openSettled by remember { mutableStateOf(false) }
+
+                // The collapsed peek is capped at a fixed fraction of the window height — a constant known up
+                // front, so the open slide has a stable target that can't strand the drag (unlike a measured
+                // height that grows as content loads). Short stops shrink below it to fit (see collapsedPeekDp).
+                // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
+                // How much of the window it may cover is a property of what the sheet holds — see
+                // [HomeSheetContent.peekHeightFraction] for why the two drawers differ.
+                val capPeekDp = with(density) {
+                    val height = LocalWindowInfo.current.containerSize.height
+                    (height * sheetContent.peekHeightFraction).toDp()
+                }
 
                 // The full collapsed peek: the fixed cap while loading or still opening, then min(content, cap)
                 // once settled — fitting short stops without dead space, clipping tall ones at the cap. The
@@ -544,49 +642,37 @@ fun HomeScreen(
                     }
                 }
 
-                // Welcome onboarding: the host stages a request (help "Show tutorials" / what's-new opt-out /
-                // first-run launch extra) on the VM latch; start the green welcome + map-stop spotlight sequence
-                // here (replacing the legacy ShowcaseView welcome), then clear the latch.
-                LaunchedEffect(Unit) {
-                    homeViewModel.showWelcomeTutorial.collect { requested ->
-                        if (requested) {
-                            tutorialState.start(WelcomeTutorial.steps)
-                            homeViewModel.onWelcomeTutorialConsumed()
-                        }
-                    }
-                }
+                // Onboarding: the scripted guided tour (#2164), which runs on the bundled demo transit
+                // system rather than the rider's own region. Enter, teardown and the per-step stage
+                // directions all live in [ScriptedTourHost] — the enter/exit pair has to stay symmetric
+                // or a rider is stranded in a city they've never been to, so it is one unit rather than
+                // three effects spread through this composable.
+                ScriptedTourHost(
+                    tutorialState = tutorialState,
+                    homeViewModel = homeViewModel,
+                    mapViewModel = mapViewModel,
+                    tripPlanViewModel = tripPlanViewModel,
+                    tripResultsViewModel = tripResultsViewModel,
+                    drawerState = drawerState
+                )
 
-                // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
-                // collapses first; every other back gesture restores the preceding focus and viewport.
-                BackHandler(enabled = canUndoMapAction) {
-                    val sheetAction = if (currentFocus is CurrentFocus.Stop && sheetShown) {
-                        sheetBackAction(sheetState.currentValue.toArrivalsSheetState())
-                    } else {
-                        SheetBackAction.NONE
-                    }
-                    when (sheetAction) {
-                        SheetBackAction.COLLAPSE -> scope.launch { runCatching { sheetState.partialExpand() } }
-                        SheetBackAction.NAVIGATE_BACK, SheetBackAction.NONE ->
-                            homeViewModel.navigateBackFocus()
-                    }
-                }
-
-                HomeDrawer(
-                    drawerState = drawerState,
-                    onStarredStops = onStarredStops,
-                    onStarredRoutes = onStarredRoutes,
-                    onRecentStopsRoutes = onRecentStopsRoutes,
-                    onReminders = onReminders,
-                    onPlanTrip = onPlanTrip,
-                    onPayFare = onPayFare,
-                    onSettings = onSettings,
-                    onHelp = onHelp,
-                    onSendFeedback = onSendFeedback,
-                    onOpenSource = onOpenSource
-                ) {
-                    // Provide the tutorial state to the whole screen (top chrome, map, and sheet) so their
-                    // spotlight anchors register; [TutorialOverlay] below draws from the same state.
-                    CompositionLocalProvider(LocalTutorialState provides tutorialState) {
+                // Provide the tutorial state to the whole screen — the drawer sheet included, since the
+                // scripted tour spotlights its starred rows (#2164) — so every anchor registers;
+                // [TutorialOverlay] below draws from the same state.
+                CompositionLocalProvider(LocalTutorialState provides tutorialState) {
+                    HomeDrawer(
+                        drawerState = drawerState,
+                        onStarredStops = onStarredStops,
+                        onStarredRoutes = onStarredRoutes,
+                        onRecentStopsRoutes = onRecentStopsRoutes,
+                        onReminders = onReminders,
+                        onPlanTrip = onPlanTrip,
+                        onPayFare = onPayFare,
+                        onSettings = onSettings,
+                        onHelp = onHelp,
+                        onSendFeedback = onSendFeedback,
+                        onOpenSource = onOpenSource
+                    ) {
                         // The map runs edge-to-edge (under the status bar): the scaffold fills the whole screen and
                         // the menu/search controls float over its top corners (see MapTopChrome below), replacing the
                         // old solid TopAppBar. The status-bar inset is applied to the floating chrome + overlays
@@ -594,7 +680,9 @@ fun HomeScreen(
                         BottomSheetScaffold(
                             modifier = Modifier.fillMaxSize(),
                             scaffoldState = scaffoldState,
-                            snackbarHost = { SnackbarHost(snackbarHostState) },
+                            snackbarHost = {
+                                SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
+                            },
                             // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
                             sheetPeekHeight = visiblePeekDp,
                             // Paint the sheet container (incl. the strip behind the drag handle) the same color
@@ -602,19 +690,32 @@ fun HomeScreen(
                             // than sitting on a separate default-colored strip.
                             sheetContainerColor = MaterialTheme.colorScheme.surface,
                             sheetDragHandle = {
-                                ArrivalsDragHandle(
-                                    onToggle = toggleSheet,
-                                    modifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL)
-                                )
+                                ArrivalsDragHandle(onToggle = toggleSheet)
                             },
                             sheetContent = {
-                                ArrivalsSheetHost(
-                                    session = arrivalsSession,
-                                    state = arrivalsState,
-                                    selectedRoute = stopFocus?.selectedRoute,
-                                    mapRouteColors = mapRouteColors,
-                                    onContentHeight = { px -> contentPx = px }
-                                )
+                                ArrivalsSheetContent(
+                                    maxHeight = maxSheetContentDp,
+                                    onHeightChanged = { contentPx = it }
+                                ) {
+                                    // Keep the stop panel composed through the hide animation.
+                                    if (sheetContent == HomeSheetContent.NearbyRoutes) {
+                                        NearbyArrivalsSheetHost(
+                                            rows = nearbyRows,
+                                            actionsFor = nearbyActionsFor,
+                                            favoriteRouteIds = favoriteRouteIds,
+                                            callbacks = nearbyRowCallbacks,
+                                            limitExceeded = nearbyLimitExceeded
+                                        )
+                                    } else {
+                                        ArrivalsSheetHost(
+                                            session = arrivalsSession,
+                                            state = arrivalsState,
+                                            selectedRoute = stopFocus?.selectedRoute,
+                                            mapRouteColors = mapRouteColors,
+                                            selectedTripBandColor = selectedTripBandColor
+                                        )
+                                    }
+                                }
                             }
                         ) {
                             // Trip-plan directions focus: the compact form replaces the top-chrome search field and
@@ -632,8 +733,87 @@ fun HomeScreen(
                             // surfaces a message.
                             val directionsError = (tripPlanResult as? PlanResult.Error)?.error
                             val directionsLoading = tripPlanResult is PlanResult.Loading
-                            // A long-pressed map point awaiting the "directions from/to here" choice.
-                            var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
+
+                            // ---- The parked trip plan (#2053) ------------------------------------
+                            val pinnedTrip by pinnedTripViewModel.pinned.collectAsStateWithLifecycle()
+                            val pinnedSummary by pinnedTripViewModel.summary.collectAsStateWithLifecycle()
+                            val pendingResumeIndex by pinnedTripViewModel.pendingResumeIndex
+                                .collectAsStateWithLifecycle()
+                            // Whether the plan on screen is the pinned one — so the controls read Unpin,
+                            // and so a refresh of it can update the snapshot in place.
+                            val pinnedTripIsOnScreen = directionsResults?.params?.let { params ->
+                                pinnedTrip?.describesSameTripAs(params, tripPlanFormState.departNow)
+                            } == true
+                            // A pin is a whole request, so a plan with no request behind it (a monitor
+                            // notification re-entry) is one there is nothing to pin. The results sheet's
+                            // control is *disabled* — it holds its place in a row that is always there —
+                            // while the exit dialog's button is simply absent, since a dialog offering a
+                            // greyed-out answer is worse than one offering two.
+                            val canPin = directionsResults?.params != null
+                            val pinTripOption: (Int) -> Unit = { index ->
+                                val results = directionsResults
+                                val params = results?.params
+                                if (params != null) {
+                                    pinnedTripViewModel.pin(
+                                        params = params,
+                                        departNow = tripPlanFormState.departNow,
+                                        itineraries = results.itineraries,
+                                        selectedIndex = index
+                                    )
+                                }
+                            }
+                            // The option the rider is looking at, which is the one an exit-time pin parks.
+                            val tripResultsState by tripResultsViewModel.state.collectAsStateWithLifecycle()
+                            val selectedOptionIndex =
+                                (tripResultsState as? TripResultsUiState.Success)?.selectedIndex ?: 0
+                            // The toggle the pin control and the card's long-press menu share. The exit
+                            // dialog deliberately does *not* use it: "Pin & leave" must always leave a
+                            // pin behind, and toggling would make it un-pin the very trip it was pressed
+                            // to keep.
+                            val onTogglePinOption: (Int) -> Unit = { index ->
+                                if (pinnedTripIsOnScreen && index == pinnedTrip?.selectedIndex) {
+                                    pinnedTripViewModel.unpin()
+                                } else {
+                                    pinTripOption(index)
+                                }
+                            }
+                            // Both halves of the parked trip — the thin ghost traced under the map and the
+                            // FAB that offers the way back into it (#2229) — are withdrawn inside
+                            // directions, where the real trip is already drawn: a ghost would double every
+                            // line, and the pin's own controls are in the results sheet the rider is
+                            // looking at. One boolean, so the two can't come to answer it differently.
+                            val showPinnedTrip = !directionsActive
+                            LaunchedEffect(pinnedTrip, showPinnedTrip) {
+                                mapViewModel.setPinnedTripTrace(
+                                    pinnedTrip?.selectedItinerary?.takeIf { showPinnedTrip }
+                                )
+                            }
+                            // A pinned trip is one the rider can walk back to, so leaving it costs nothing
+                            // and the #2140 "you'll lose this" confirmation stops being worth asking.
+                            LaunchedEffect(pinnedTripIsOnScreen) {
+                                homeViewModel.setDrawnTripRecoverable(pinnedTripIsOnScreen)
+                            }
+                            // A fresh plan for the trip the rider pinned replaces the pin's snapshot, so
+                            // it stays a bookmark of that trip rather than of the first answer to it.
+                            // Guarded on `fromSnapshot` because a resume *is* the stored plan — adopting
+                            // it would be the pin re-pinning itself once per resume.
+                            LaunchedEffect(directionsResults, pinnedTripIsOnScreen) {
+                                val results = directionsResults ?: return@LaunchedEffect
+                                if (!pinnedTripIsOnScreen || results.fromSnapshot) return@LaunchedEffect
+                                pinnedTripViewModel.resnapshot(results.itineraries)
+                            }
+                            // Resume: seed the form + results *before* entering directions, so the single
+                            // recomposition that turns directions on already sees a plan. Reversed, the
+                            // "planning but no results yet" effect below can fire on the intermediate
+                            // frame and wipe the trip off the map.
+                            val onResumePinnedTrip: () -> Unit = {
+                                pinnedTrip?.let { pin ->
+                                    pinnedTripViewModel.beginResume(pin)
+                                    tripPlanViewModel.restorePinned(pin.params, pin.departNow, pin.itineraries)
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                }
+                            }
+
                             // Leaving directions ends any in-progress map pick.
                             LaunchedEffect(directionsActive) { if (!directionsActive) pickTarget = null }
                             // While planning but not yet submittable (no results), clear any stale drawn itinerary.
@@ -660,18 +840,30 @@ fun HomeScreen(
                                     if (showResultsSheet) directionsSheetHeightPx else 0
                                 )
                             }
-                            // Back cancels an in-progress map pick, then steps out of a drilled-into leg to
-                            // the whole trip, and only from the itinerary overview exits directions focus
-                            // (to nearby stops). This handler composes inside the undo one above, so it
-                            // registers later and wins every back press while directions is active — the
-                            // one-level walk it delegates to is what keeps that from stranding the trip.
-                            BackHandler(enabled = directionsActive) {
-                                if (pickTarget != null) {
-                                    pickTarget = null
-                                } else {
-                                    homeViewModel.navigateBackInDirections()
-                                }
-                            }
+                            // HOME's one Back handler. The whole decision — whether HOME claims the press
+                            // at all, and what it does — is [homeBackAction]; [HomeBackHandler] enables
+                            // and dispatches on that one value. Composed here, before the top chrome and
+                            // the overlays, so the search field, the navigate-here bubble and the tutorial
+                            // still register later and take Back ahead of it; the directions safety
+                            // notice is its own window and needs no such ordering.
+                            HomeBackHandler(
+                                action = homeBackAction(
+                                    returnsToSource = onBackToSource != null,
+                                    directionsActive = directionsActive,
+                                    pickingEndpoint = pickTarget != null,
+                                    sheet = if (sheetShown) {
+                                        sheetState.currentValue.toArrivalsSheetState()
+                                    } else {
+                                        ArrivalsSheetState.Hidden
+                                    },
+                                    canUndoMapAction = canUndoMapAction
+                                ),
+                                onReturnToSource = { onBackToSource?.invoke() },
+                                onCancelEndpointPick = { pickTarget = null },
+                                onNavigateBackInDirections = homeViewModel::navigateBackInDirections,
+                                onCollapseSheet = { scope.launch { runCatching { sheetState.partialExpand() } } },
+                                onUndoMapAction = { homeViewModel.navigateBackFocus() }
+                            )
 
                             // Lift the FABs above whichever sheet is resting over the map — the collapsed arrivals
                             // peek, or in directions the results drawer (whose settled height the map inset above
@@ -686,7 +878,8 @@ fun HomeScreen(
                                     with(density) { directionsSheetHeightPx.toDp() }
                                 } else {
                                     0.dp
-                                }
+                                },
+                                navigationBarInset = navigationBarBottomPadding()
                             )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The
@@ -694,8 +887,9 @@ fun HomeScreen(
                                 MapFeature(
                                     mapViewModel = mapViewModel,
                                     homeViewModel = homeViewModel,
+                                    nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
-                                    onMapLongPress = { longPressPoint = it },
+                                    onStopsBannerHeight = { stopsBannerHeightPx = it },
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -706,48 +900,113 @@ fun HomeScreen(
                                     // Every top-of-map overlay sits below the chrome row via one shared inset
                                     // (status bar + clearance), so no individual overlay has to know the FAB-row height.
                                     Box(Modifier.fillMaxSize().mapTopChromeOverlayInset()) {
-                                        HomeMapOverlays(
-                                            weatherViewModel = weatherViewModel,
-                                            donationViewModel = donationViewModel,
-                                            surveyViewModel = surveyViewModel,
-                                            focusBannerState = focusBannerState,
-                                            onCloseFocus = homeViewModel::clearMapFocus,
-                                            onToggleFavorite = {
-                                                when (focusBannerState) {
-                                                    is FocusBannerState.Stop ->
-                                                        currentFocus.focusedStop?.let {
-                                                            focusBannerViewModel.toggleStopFavorite(it)
-                                                        }
-                                                    is FocusBannerState.Route ->
-                                                        focusBannerViewModel.toggleRouteFavorite(
-                                                            focusBannerState.header
-                                                        )
-                                                    null -> Unit
-                                                }
-                                            },
-                                            onShowAlerts = { serviceAlertsVisible = true },
-                                            onClearSubordinateRoute = homeViewModel::clearStopRouteSelection,
-                                            onRecenterStop = {
-                                                homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
-                                            },
-                                            // The direction menu calls straight into the map VM (which
-                                            // re-filters stops/vehicles + persists the choice), like the height report below.
-                                            onSelectRouteDirection = { directionId ->
-                                                homeViewModel.selectStandaloneRouteDirection(directionId)
-                                                mapViewModel.selectRouteDirection(directionId)
-                                            },
-                                            // Tapping the header body reframes the map to the route's full extent (VM
-                                            // re-issues the retained route framing).
-                                            onFrameRoute = {
-                                                homeViewModel.reframeFocusedRoute(mapViewModel.viewport)
-                                            },
-                                            onLearnMore = onLearnMore,
-                                            onOpenSurvey = onOpenSurvey,
-                                            focusBannerTopPx = focusBannerTopPx,
-                                            // This layer converts measured card height to its map-space bottom edge;
-                                            // the map VM adds marker clearance and owns the resulting content padding.
-                                            onFocusBannerBottom = { focusBannerBottomPx = it }
-                                        )
+                                        // Wrap-height and measured, so the band reports what it actually
+                                        // occupies. An overlay that emits nothing measures 0, which is
+                                        // why this wrapper is always composed rather than the reporting
+                                        // hanging off any one of them.
+                                        Box(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .onSizeChanged { overlayBandHeightPx = it.height }
+                                        ) {
+                                            HomeMapOverlays(
+                                                weatherViewModel = weatherViewModel,
+                                                donationViewModel = donationViewModel,
+                                                surveyViewModel = surveyViewModel,
+                                                focusBannerState = focusBannerState,
+                                                onCloseFocus = homeViewModel::clearMapFocus,
+                                                onToggleFavorite = {
+                                                    when (focusBannerState) {
+                                                        is FocusBannerState.Stop ->
+                                                            currentFocus.focusedStop?.let {
+                                                                focusBannerViewModel.toggleStopFavorite(it)
+                                                            }
+                                                        is FocusBannerState.Route ->
+                                                            focusBannerViewModel.toggleRouteFavorite(
+                                                                focusBannerState.header
+                                                            )
+                                                        null -> Unit
+                                                    }
+                                                },
+                                                onShowAlerts = { serviceAlertsVisible = true },
+                                                onRecenterStop = {
+                                                    homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
+                                                },
+                                                // The focused stop's overflow — the stop actions the
+                                                // retired standalone arrivals screen's top bar used to
+                                                // hold (#1898). Null until the stop has a session to
+                                                // act on, which also keeps it off a route focus.
+                                                stopMenu = arrivalsSession?.let { session ->
+                                                    StopFocusMenu(
+                                                        onReportStopProblem = session.handler::onReportStopProblem,
+                                                        onNightLight = callbacks.onNightLight,
+                                                        onCreateShortcut = {
+                                                            stopFocus?.stop?.let { stop ->
+                                                                val name = stop.name?.takeIf { it.isNotBlank() } ?: stop.id
+                                                                Shortcuts.createStopShortcut(
+                                                                    app,
+                                                                    name,
+                                                                    StopLauncher.Builder(app, stop.id).setStopName(stop.name)
+                                                                )
+                                                            }
+                                                        },
+                                                        onShowArrivals = { stopFocus?.stop?.let(callbacks.onShowArrivals) },
+                                                        onNavigateHere = navigateToFocusedStop
+                                                    )
+                                                },
+                                                // The direction menu calls straight into the map VM (which
+                                                // re-filters stops/vehicles + persists the choice), like the height report below.
+                                                onSelectRouteDirection = { directionId ->
+                                                    homeViewModel.selectStandaloneRouteDirection(directionId)
+                                                    mapViewModel.selectRouteDirection(directionId)
+                                                },
+                                                // Tapping the header body reframes the map to the route's full extent (VM
+                                                // re-issues the retained route framing).
+                                                onFrameRoute = {
+                                                    homeViewModel.reframeFocusedRoute(mapViewModel.viewport)
+                                                },
+                                                onLearnMore = onLearnMore,
+                                                onOpenSurvey = onOpenSurvey,
+                                                focusBannerTopPx = focusBannerTopPx,
+                                                // This layer converts measured card height to its map-space bottom edge;
+                                                // the map VM adds marker clearance and owns the resulting content padding.
+                                                onFocusBannerBottom = { focusBannerBottomPx = it }
+                                            )
+                                        }
+                                        // The parked trip (#2229). Top-of-map rather than down in the
+                                        // FAB column, where it rode the arrivals sheet's lift and so
+                                        // moved every time a drawer did — a standing reminder shouldn't
+                                        // be animating.
+                                        //
+                                        // It clears everything else in the band by measured height
+                                        // rather than by any assumption about what is there — see
+                                        // overlayBandHeightPx. With the band empty it sits directly under
+                                        // the chrome row. Drawn after the overlays, so it stays tappable
+                                        // if one ever grows into it.
+                                        pinnedSummary?.takeIf { showPinnedTrip }?.let { summary ->
+                                            val clearPx = maxOf(overlayBandHeightPx, stopsBannerHeightPx)
+                                            PinnedTripFab(
+                                                state = summary,
+                                                onResume = onResumePinnedTrip,
+                                                onUnpin = pinnedTripViewModel::unpin,
+                                                modifier = Modifier
+                                                    .align(Alignment.TopCenter)
+                                                    .padding(
+                                                        // The gap belongs to the stacking, not to the
+                                                        // button: with nothing above, the band's own
+                                                        // clearance is already the gap.
+                                                        top = with(density) { clearPx.toDp() } +
+                                                            if (clearPx > 0) TOP_OVERLAY_STACK_GAP else 0.dp
+                                                    )
+                                                    // A ceiling, not a width: the fraction sets how far
+                                                    // the button may grow before its route summary
+                                                    // starts wrapping, and wrapContentWidth then lets it
+                                                    // shrink back to whatever it actually needs, centred
+                                                    // in that allowance.
+                                                    .fillMaxWidth(PINNED_TRIP_FAB_WIDTH_FRACTION)
+                                                    .wrapContentWidth()
+                                            )
+                                        }
                                     }
                                     // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
                                     // the very top; the overlay layer above adds the clearance below it.
@@ -780,9 +1039,6 @@ fun HomeScreen(
                                             recents = recents,
                                             onRecentStop = onRecentStop,
                                             onRecentRoute = onRecentRoute,
-                                            // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
-                                            // the menu FAB that opens it (was the retired overflow ⋮).
-                                            menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
                                             modifier = Modifier.statusBarsPadding()
                                         )
                                     }
@@ -791,38 +1047,46 @@ fun HomeScreen(
                                 // when a plan produced itineraries, else an error / no-route message; a plan in
                                 // flight shows a top progress line. The results selection drives the drawn itinerary.
                                 if (directionsActive && pickTarget == null) {
+                                    val pins = directionsResults?.params.itineraryPins()
                                     when {
                                         directionsResults != null -> DirectionsResultsSheet(
                                             resultsViewModel = tripResultsViewModel,
+                                            planGeneration = directionsResults.generation,
                                             itineraries = directionsResults.itineraries,
                                             params = directionsResults.params,
-                                            showItinerary = { itinerary ->
-                                                homeViewModel.showItineraryOnMap(
-                                                    itinerary,
-                                                    directionsResults.params.itineraryPins()
-                                                )
-                                            },
+                                            showItinerary = { homeViewModel.showItineraryOnMap(it, pins) },
+                                            restoreItinerary = { homeViewModel.restoreItineraryOnMap(it, pins) },
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
                                             // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
-                                            // ruled at the moment the plan has the rider reach the stop (#2125).
+                                            // ruled at how the plan gets the rider to the stop (#2125): a transfer's
+                                            // arrival, or — for the first ride — the walk from now (#2227).
                                             stopEtaStrip = { ride, stop ->
+                                                // The focused leg's boarding stop: the one strip that reads the
+                                                // hoisted session rather than opening a second one on the stop the
+                                                // map is already polling — and so the one strip whose pills can be
+                                                // the map's drilled-into vehicle (#2224).
+                                                val isRideBoardStop =
+                                                    stop.stopId != null && stop.stopId == rideBoardStop?.id
                                                 DirectionStopEtaStrip(
                                                     routeLeg = ride.routeLeg,
                                                     stop = stop,
-                                                    reachStopTime = ride.reachStopTime,
+                                                    reachStop = ride.reachStop,
                                                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                                                     onShowTrip = onShowTrip,
                                                     onEditReminder = onEditReminder,
                                                     onFocusVehicle = { request ->
                                                         homeViewModel.focusDirectionsRouteVehicle(request, ride.routeLeg, ride.legPoints)
                                                     },
-                                                    // The focused leg's Board row reads the hoisted session rather than
-                                                    // opening a second one on the stop the map is already polling.
-                                                    hoistedSession = rideArrivalsSession?.takeIf {
-                                                        stop.stopId != null && stop.stopId == rideBoardStop?.id
-                                                    }
+                                                    hoistedSession = rideArrivalsSession?.takeIf { isRideBoardStop },
+                                                    // Same rung and same rim colour the arrivals drawer outlines its
+                                                    // focused pill with, so a pill tapped here and one tapped there
+                                                    // look alike as well as behaving alike.
+                                                    pillFocus = etaPillFocus(
+                                                        rideRouteFocus?.selectedTripId?.takeIf { isRideBoardStop },
+                                                        selectedTripBandColor
+                                                    )
                                                 )
                                             },
                                             // Its own settled height (peek vs expanded), not a measured
@@ -834,6 +1098,21 @@ fun HomeScreen(
                                             // the first in travel order where one label covers the
                                             // same route ridden twice.
                                             rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps,
+                                            // A resume opens on the option the rider pinned; every other
+                                            // plan opens on the first, as it always has.
+                                            resumeIndex = pendingResumeIndex,
+                                            fromSnapshot = directionsResults.fromSnapshot,
+                                            pinnedOptionIndex = pinnedTrip
+                                                ?.selectedIndex
+                                                ?.takeIf { pinnedTripIsOnScreen },
+                                            // A plan with no request behind it has nothing to pin, so
+                                            // its cards carry no long press at all (#2053).
+                                            onTogglePin = onTogglePinOption.takeIf { canPin },
+                                            // Only while this drawer is showing the pinned trip, which
+                                            // is what lets the button say "this trip".
+                                            onUnpinTrip = pinnedTripViewModel::unpin
+                                                .takeIf { pinnedTripIsOnScreen },
+                                            onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                         directionsError != null -> DirectionsErrorSnackbar(
@@ -865,17 +1144,15 @@ fun HomeScreen(
                                         }
                                     )
                                 }
-                                // Long-press → "directions from/to here": enters directions and fills the
-                                // chosen endpoint with the pressed point (see setEndpointFromLongPress).
-                                longPressPoint?.let { point ->
-                                    val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
-                                    DirectionsLongPressMenu(
-                                        onChooseSlot = { slot ->
-                                            homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointFromLongPress(slot, mapPoint)
-                                            longPressPoint = null
-                                        },
-                                        onDismiss = { longPressPoint = null }
+                                // The bubble over a long press's dropped pin. A pressed point has nothing
+                                // to call it, so it travels as a bare map point; see navigateTo for the
+                                // rest, which the focused stop's menu item shares.
+                                NavigateHereOverlay(mapViewModel) { point ->
+                                    navigateTo(
+                                        TripEndpoint.MapPoint(point.latitude, point.longitude),
+                                        homeViewModel,
+                                        mapViewModel,
+                                        tripPlanViewModel
                                     )
                                 }
                                 // Neither Back nor a tap on the map background leaves outright while a trip
@@ -886,46 +1163,113 @@ fun HomeScreen(
                                     .collectAsStateWithLifecycle()
                                 if (showExitConfirm) {
                                     DirectionsExitConfirmDialog(
+                                        // Offered only with nothing pinned, where "pin" can mean exactly
+                                        // one thing. With another trip already parked it would be asking
+                                        // the rider to choose between two trips they can't both see, so
+                                        // the offer is withheld rather than made ambiguously.
+                                        onPinAndLeave = if (canPin && pinnedTrip == null) {
+                                            {
+                                                pinTripOption(selectedOptionIndex)
+                                                homeViewModel.confirmExitDirections()
+                                            }
+                                        } else {
+                                            null
+                                        },
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit
+                                    )
+                                }
+                                // The one-time "these directions may be wrong" acknowledgement (#2218).
+                                // Gated on the focus alone, not on pickTarget, so every way into
+                                // directions passes through it.
+                                if (directionsActive) {
+                                    DirectionsSafetyNotice(
+                                        onDecline = homeViewModel::leaveDirections
                                     )
                                 }
                             }
                         }
                     }
+
+                    if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {
+                        ServiceAlertsDialog(
+                            content = arrivalsContent,
+                            onShowAlert = arrivalsSession.handler::onShowAlert,
+                            onHideAlert = arrivalsSession.handler::onHideAlert,
+                            onShowHiddenAlerts = arrivalsSession.viewModel::showHiddenAlerts,
+                            onHideAllAlerts = arrivalsSession.viewModel::hideAllAlerts,
+                            onDismiss = { serviceAlertsVisible = false }
+                        )
+                    }
+
+                    // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
+                    // current region's alerts), replacing the activity's GtfsAlertsHelper.showWideAlertDialog path.
+                    val wideAlertViewModel = hiltViewModel<WideAlertViewModel>()
+                    val wideAlert by wideAlertViewModel.wideAlert.collectAsStateWithLifecycle()
+                    wideAlert?.let { WideAlertDialog(it) { wideAlertViewModel.dismiss() } }
+
+                    // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
+                    // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
+                    // opt-out are forwarded to the host).
+                    if (showHelpDialogs) {
+                        HelpFeature(
+                            viewModel = helpViewModel,
+                            onHelpAction = onHelpAction,
+                            onShowWelcomeTutorial = onShowWelcomeTutorial
+                        )
+                    }
+
+                    // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
+                    // as the last sibling so it sits on top; renders nothing while no tutorial is active.
+                    TutorialOverlay(tutorialState)
                 }
-
-                if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {
-                    ServiceAlertsDialog(
-                        content = arrivalsContent,
-                        onShowAlert = arrivalsSession.handler::onShowAlert,
-                        onHideAlert = arrivalsSession.handler::onHideAlert,
-                        onShowHiddenAlerts = arrivalsSession.viewModel::showHiddenAlerts,
-                        onDismiss = { serviceAlertsVisible = false }
-                    )
-                }
-
-                // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
-                // current region's alerts), replacing the activity's GtfsAlertsHelper.showWideAlertDialog path.
-                val wideAlertViewModel = hiltViewModel<WideAlertViewModel>()
-                val wideAlert by wideAlertViewModel.wideAlert.collectAsStateWithLifecycle()
-                wideAlert?.let { WideAlertDialog(it) { wideAlertViewModel.dismiss() } }
-
-                // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
-                // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
-                // opt-out are forwarded to the host).
-                HelpFeature(
-                    viewModel = helpViewModel,
-                    onHelpAction = onHelpAction,
-                    onShowWelcomeTutorial = onShowWelcomeTutorial
-                )
-
-                // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
-                // as the last sibling so it sits on top; renders nothing while no tutorial is active.
-                TutorialOverlay(tutorialState)
             }
         }
     }
+}
+
+/**
+ * The map long-press offer, drawn over the map wherever its pin currently stands (#2243).
+ *
+ * Its own composable so that the two flows it needs — where the pin is, and how to project it — are
+ * collected *here* rather than in the screen's shared scope: the offer comes and goes often, and neither
+ * fact concerns anything else on the screen. [onNavigate] is handed the pinned point, since taking the
+ * offer is a trip-planning act the host owns; retiring the pin is the map's own business either way.
+ */
+@Composable
+private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoint) -> Unit) {
+    val pin by mapViewModel.navigateHerePin.collectAsStateWithLifecycle()
+    val projector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
+    pin?.let { point ->
+        NavigateHereBubble(
+            point = point,
+            projector = projector,
+            onNavigate = {
+                mapViewModel.setNavigateHerePin(null)
+                onNavigate(point)
+            },
+            onDismiss = { mapViewModel.setNavigateHerePin(null) }
+        )
+    }
+}
+
+/**
+ * Take the rider to [destination]: enter directions with it as the trip's far end and the rider's own
+ * position paired into the near one, which plans the trip on the spot (see `setEndpointPaired`).
+ *
+ * The one path behind every "take me there" gesture on the map — the long press's bubble (#2243) and the
+ * focused stop's menu item (#2272). They differ only in what the destination *is*, and they say so by
+ * handing a different [TripEndpoint]; everything after that is the same act, so it is spelled out once
+ * here rather than at each gesture.
+ */
+private fun navigateTo(
+    destination: TripEndpoint,
+    homeViewModel: HomeViewModel,
+    mapViewModel: MapViewModel,
+    tripPlanViewModel: TripPlanViewModel
+) {
+    homeViewModel.enterDirections(mapViewModel.viewport)
+    tripPlanViewModel.setEndpointPaired(TripEndpointSlot.TO, destination)
 }
 
 /**
@@ -1029,8 +1373,8 @@ private fun BoxScope.HomeMapOverlays(
     onCloseFocus: () -> Unit,
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
-    onClearSubordinateRoute: () -> Unit,
     onRecenterStop: () -> Unit,
+    stopMenu: StopFocusMenu?,
     onSelectRouteDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
@@ -1076,13 +1420,14 @@ private fun BoxScope.HomeMapOverlays(
             onClose = onCloseFocus,
             onToggleFavorite = onToggleFavorite,
             onShowAlerts = onShowAlerts,
-            onClearSubordinateRoute = onClearSubordinateRoute,
             onRecenterStop = onRecenterStop,
+            stopMenu = stopMenu,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,
             // Same destination as the arrivals drawer's route menu, wired locally rather than through
             // HomeActivityActions — the browser hand-off needs nothing but a Context.
             onShowSchedule = { url -> ExternalIntents.goToUrl(context, url) },
+            onShowStopList = { routeId -> RouteInfoLauncher.start(context, routeId) },
             onHeight = { h -> onFocusBannerBottom(h + focusBannerTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -1094,16 +1439,26 @@ private fun BoxScope.HomeMapOverlays(
     }
 }
 
+/** Air between the parked-trip button and whatever top-of-map overlay it is stacking below (#2229). */
+private val TOP_OVERLAY_STACK_GAP = 8.dp
+
+/**
+ * How much of the screen's width the parked-trip button may take before its route summary wraps (#2229).
+ *
+ * A ceiling rather than a width: a short trip's button is only as wide as the trip, and a long one grows
+ * to here and then wraps. A fraction rather than a fixed dp so it reads the same on every display, and
+ * generous because this is the only chrome on the map standing for something the rider put there
+ * themselves. The remaining fifth keeps even the widest one clear of both edges, so it still reads as a
+ * button floating over the map rather than a bar across it.
+ */
+private const val PINNED_TRIP_FAB_WIDTH_FRACTION = 0.8f
+
 @OptIn(ExperimentalMaterial3Api::class)
 private fun SheetValue.toArrivalsSheetState() = when (this) {
     SheetValue.Hidden -> ArrivalsSheetState.Hidden
     SheetValue.PartiallyExpanded -> ArrivalsSheetState.Collapsed
     SheetValue.Expanded -> ArrivalsSheetState.Expanded
 }
-
-// The collapsed drawer peek is capped at this fraction of the screen height (short stops shrink to
-// fit their content below it). A starting value to tune by eye.
-private const val PEEK_HEIGHT_FRACTION = 0.30f
 
 /**
  * The arrivals sheet's drag handle: a short grab bar tinted to sit on the panel surface (paired with

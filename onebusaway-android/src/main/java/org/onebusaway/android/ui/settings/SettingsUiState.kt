@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.ui.settings
 
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.home.FocusTimeout
+import org.onebusaway.android.ui.searchresults.SearchResultMode
+
 /*
  * Pure (Android-free) state + derivation for the Compose settings screens. The ViewModels read the
  * raw preference values + the current region into the snapshot/info holders below and call the
@@ -36,18 +40,20 @@ data class SettingsPrefSnapshot(
     val showNegativeArrivals: Boolean,
     val hideAlerts: Boolean,
     val showZoomControls: Boolean,
+    val compactStopIcons: Boolean,
+    val showRentalButton: Boolean,
     val displayWeatherView: Boolean,
     val showAvailableStudies: Boolean,
-    val showTutorialScreens: Boolean,
     val leftHandMode: Boolean,
-    val showHeaderArrivals: Boolean,
     val vibrateAllowed: Boolean,
     val tripPlanNotifications: Boolean,
     val analyticsEnabled: Boolean,
-    val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
-    val appTheme: String?
+    val appTheme: String?,
+    val searchResultMode: SearchResultMode = SearchResultMode.MAP,
+    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
+    val focusTimeout: FocusTimeout = FocusTimeout.DEFAULT
 )
 
 /** What the screen needs to know about the current region; null means no region (custom API). */
@@ -57,33 +63,40 @@ data class RegionSummaryInfo(val name: String, val hasOtp: Boolean)
 data class SettingsEnvironment(
     val useFixedRegion: Boolean,
     val sdkInt: Int,
-    val isObaFlavor: Boolean
+    val isObaFlavor: Boolean,
+    val isGoogleMaps: Boolean
 )
 
 data class SettingsUiState(
     val showRegionCategory: Boolean,
-    val showNotificationsCategory: Boolean,
+    val showLegacyNotificationControls: Boolean,
     val showTripPlanNotifications: Boolean,
     val showDonate: Boolean,
+    val showCompactStopIcons: Boolean,
     val showPoweredByOba: Boolean,
     val regionSummary: String,
     val autoSelectRegion: Boolean,
     val showNegativeArrivals: Boolean,
     val hideAlerts: Boolean,
     val showZoomControls: Boolean,
+    val compactStopIcons: Boolean,
+    val showRentalButton: Boolean,
     val displayWeatherView: Boolean,
     val showAvailableStudies: Boolean,
-    val showTutorialScreens: Boolean,
     val leftHandMode: Boolean,
-    val showHeaderArrivals: Boolean,
     val vibrateAllowed: Boolean,
     val tripPlanNotifications: Boolean,
     val analyticsEnabled: Boolean,
-    val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
-    val appTheme: String?
-)
+    val appTheme: String?,
+    val searchResultMode: SearchResultMode = SearchResultMode.MAP,
+    val arrivalDisplayDefault: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
+    val focusTimeout: FocusTimeout = FocusTimeout.DEFAULT
+) {
+    val showNotificationsCategory: Boolean
+        get() = showLegacyNotificationControls || showTripPlanNotifications
+}
 
 /**
  * @param customApiRegionSummary the "Custom API" region summary string, shown when [region] is null.
@@ -95,30 +108,33 @@ fun buildSettingsUiState(
     customApiRegionSummary: String
 ): SettingsUiState = SettingsUiState(
     showRegionCategory = !env.useFixedRegion,
-    // Android 8+ manages notification channels itself, so the legacy category is dropped there.
-    showNotificationsCategory = env.sdkInt < SDK_O,
+    // Android 8+ owns sound/vibration via channels; the in-app trip toggle still applies on every SDK.
+    showLegacyNotificationControls = env.sdkInt < SDK_O,
     // Trip-plan notifications are dropped only when a region is set but has no OTP endpoint.
     showTripPlanNotifications = region == null || region.hasOtp,
     // OBA-branded builds solicit donations; white-label builds show "powered by OneBusAway" instead.
     showDonate = env.isObaFlavor,
+    showCompactStopIcons = env.isGoogleMaps,
     showPoweredByOba = !env.isObaFlavor,
     regionSummary = region?.name ?: customApiRegionSummary,
     autoSelectRegion = prefs.autoSelectRegion,
     showNegativeArrivals = prefs.showNegativeArrivals,
     hideAlerts = prefs.hideAlerts,
     showZoomControls = prefs.showZoomControls,
+    compactStopIcons = prefs.compactStopIcons,
+    showRentalButton = prefs.showRentalButton,
     displayWeatherView = prefs.displayWeatherView,
     showAvailableStudies = prefs.showAvailableStudies,
-    showTutorialScreens = prefs.showTutorialScreens,
     leftHandMode = prefs.leftHandMode,
-    showHeaderArrivals = prefs.showHeaderArrivals,
     vibrateAllowed = prefs.vibrateAllowed,
     tripPlanNotifications = prefs.tripPlanNotifications,
     analyticsEnabled = prefs.analyticsEnabled,
-    mapMode = prefs.mapMode,
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,
-    appTheme = prefs.appTheme
+    appTheme = prefs.appTheme,
+    searchResultMode = prefs.searchResultMode,
+    arrivalDisplayDefault = prefs.arrivalDisplayDefault,
+    focusTimeout = prefs.focusTimeout
 )
 
 // ---------------------------------------------------------------------------------------------

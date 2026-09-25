@@ -1,0 +1,1150 @@
+{
+ "agency": {
+  "disclaimer": "",
+  "email": "",
+  "fareUrl": "https://kingcounty.gov/en/dept/metro/fares-and-payment/prices",
+  "id": "1",
+  "lang": "EN",
+  "name": "Metro Transit",
+  "phone": "206-553-3000",
+  "privateService": false,
+  "timezone": "America/Los_Angeles",
+  "url": "https://kingcounty.gov/en/dept/metro"
+ },
+ "anchorStopId": "1_11140",
+ "routeStops": {
+  "1_100002": {
+   "directionId": "0",
+   "name": "Capitol Hill Via 15th Ave E",
+   "polyline": {
+    "length": 114,
+    "points": "enraHlatiVDLj@jBFPd@tA?Dl@nBn@lBl@nBl@lBb@zA@BFLj@jBp@pBDNFRPf@X`APh@HPDTFRf@|Al@jBdEsDo@oBc@{AISm@oB[cAEMEMEMm@oBo@mBk@mBe@yAISm@oBm@oBs@yBg@cB}A}Eo@mBQi@Oi@Ws@oAeEm@mB]eAQi@Uu@ESC]@}AaF??{B?eCAqD?_@AqE@aGAgB?[?iB?[A{C?mBAeGAgG?eAA{DAgG?eHsA?uC?kFAqDCu@?mDA{@?iBAw@CgAEaDC[?oDC[?_@?cECc@?C?cDA_@?aCCaD?i@?kB?yCAy@?i@?{IEe@?kHG?oBe@CuHAI?AnCTO^GRE|FB"
+   },
+   "stopDistances": [
+    0.0,
+    339.1,
+    478.5,
+    950.2,
+    1153.8,
+    1316.7,
+    1733.7,
+    2119.4,
+    2345.9,
+    2730.6,
+    3055.7,
+    3399.9,
+    3620.3,
+    3863.5,
+    4137.2,
+    4323.3,
+    4524.0,
+    4738.8,
+    4968.6,
+    5141.6,
+    5383.4
+   ],
+   "stopIds": [
+    "1_1085",
+    "1_1110",
+    "1_1120",
+    "1_1180",
+    "1_1190",
+    "1_1195",
+    "1_11133",
+    "1_11140",
+    "1_11150",
+    "1_11520",
+    "1_11569",
+    "1_11567",
+    "1_11565",
+    "1_11570",
+    "1_11590",
+    "1_11600",
+    "1_11610",
+    "1_11620",
+    "1_11630",
+    "1_11640",
+    "1_11370"
+   ],
+   "totalDistance": 5384.4
+  },
+  "1_100018": {
+   "directionId": "0",
+   "name": "Interlaken Park Via 19th Ave",
+   "polyline": {
+    "length": 119,
+    "points": "enraHlatiVDLj@jBFPd@tA?Dl@nBn@lBl@nBl@lBb@zA@BFLj@jBp@pBDNFRPf@X`APh@HPDTFRf@|Al@jBdEsDo@oBc@{AISm@oB[cAEMEMEMm@oBo@mBk@mBe@yAISm@oBm@oBs@yBg@cB}A}Eo@mBQi@Oi@Ws@oAeEm@mB]eAQi@Uu@ESC]@}AaF??{B?eCAqD?_@AqE@aGAgB?[?iB?[A{C?mBAeGAgG?eAA{DAgG?eH?aC?s@@s@DYRm@EKsAkE]kAmAyD]iAyAsEmDCsDAe@?}@?eCAg@CyB?g@AkFCg@?eFCe@?]?kDCcDDo@?sGAe@?eIEe@?}ICg@?}FCk@?UIG?AH@H@D?@BBFCNQ"
+   },
+   "stopDistances": [
+    0.0,
+    339.1,
+    478.5,
+    950.2,
+    1153.8,
+    1316.7,
+    1733.7,
+    2119.4,
+    2345.9,
+    2730.6,
+    3078.3,
+    3256.8,
+    3370.7,
+    3683.0,
+    3813.7,
+    3903.8,
+    4034.7,
+    4206.1,
+    4436.0,
+    4611.4,
+    4813.3,
+    5029.5,
+    5223.9,
+    5224.9
+   ],
+   "stopIds": [
+    "1_1085",
+    "1_1110",
+    "1_1120",
+    "1_1180",
+    "1_1190",
+    "1_1195",
+    "1_11133",
+    "1_11140",
+    "1_11150",
+    "1_11520",
+    "1_11535",
+    "1_107",
+    "1_12373",
+    "1_13310",
+    "1_13320",
+    "1_13330",
+    "1_13340",
+    "1_13350",
+    "1_13360",
+    "1_13370",
+    "1_13380",
+    "1_13381",
+    "1_13190",
+    "1_13200"
+   ],
+   "totalDistance": 5242.5
+  },
+  "1_100447": {
+   "directionId": "0",
+   "name": "U-District Station Capitol Hill",
+   "polyline": {
+    "length": 158,
+    "points": "gzqaHr|tiVEMEMEMm@oBo@mBk@mBe@yAISm@oBm@oBs@yBg@cB}A}Eo@mBQi@Oi@Ws@oAeEm@mB]eAQi@Uu@ESC]@}AaF??{B?eCAqD?_@AqE@aGAgB?[?iB?[iFBO?uC?cA@wBBqB?mE@[BgF@wD@g@?{DBaFBeAAiA?MG{@aBMMOMKAQCiFAqJAe@?cI?yI?K?]Ck@Su@YYEcB?[DkAXo@BqCCoD?E?y@?iE?gFCcFAoH?y@?{D?W?I?E?Q?S?M?K?[?o@?AR@rB?T?zB@zBcGBcF?qF?Q?o@?e@?}ACyA?wA?sF?]?s@?c@?yDoCYS]WUSQIaAs@GEmBsAGEaAs@_@WEEUOw@k@UOc@[OMe@[IIICeBoAm@c@IGWQ_@YcBaA@cB?eC@aF@gF@yA?[@oB?Y?yA@mB?Mo@?wBCiHGgA?_FE?F?rBA|A?R?LA`B?jA"
+   },
+   "stopDistances": [
+    1.1,
+    204.7,
+    367.6,
+    784.5,
+    1170.3,
+    1396.8,
+    1962.1,
+    2231.8,
+    2500.5,
+    2993.1,
+    3365.9,
+    3816.8,
+    4354.6,
+    4641.2,
+    5186.6,
+    5494.5,
+    6541.5,
+    6984.0,
+    7266.9
+   ],
+   "stopIds": [
+    "1_1180",
+    "1_1190",
+    "1_1195",
+    "1_11133",
+    "1_11140",
+    "1_11150",
+    "1_11180",
+    "1_11190",
+    "1_11200",
+    "1_11230",
+    "1_11250",
+    "1_11270",
+    "1_11290",
+    "1_11300",
+    "1_11330",
+    "1_10915",
+    "1_9580",
+    "1_11352",
+    "1_9587"
+   ],
+   "totalDistance": 7267.1
+  }
+ },
+ "routes": [
+  {
+   "agencyId": "1",
+   "color": "FDB71A",
+   "description": "Capitol Hill - Downtown Seattle",
+   "id": "1_100002",
+   "longName": "",
+   "nullSafeShortName": "10",
+   "shortName": "10",
+   "textColor": "000000",
+   "type": 3,
+   "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/010.html"
+  },
+  {
+   "agencyId": "1",
+   "color": "FDB71A",
+   "description": "Interlaken Park - Capitol Hill - Downtown Seattle",
+   "id": "1_100018",
+   "longName": "",
+   "nullSafeShortName": "12",
+   "shortName": "12",
+   "textColor": "000000",
+   "type": 3,
+   "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/012.html"
+  },
+  {
+   "agencyId": "1",
+   "color": "FDB71A",
+   "description": "Univ District - Broadway - Downtown Seattle",
+   "id": "1_100447",
+   "longName": "",
+   "nullSafeShortName": "49",
+   "shortName": "49",
+   "textColor": "000000",
+   "type": 3,
+   "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/049.html"
+  }
+ ],
+ "stops": [
+  {
+   "code": "107",
+   "direction": "NE",
+   "id": "1_107",
+   "lat": 47.615696,
+   "locationType": 0,
+   "lon": -122.309723,
+   "name": "E Madison St & 17th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100018",
+    "1_102745"
+   ],
+   "staticRouteIds": [
+    "1_100018",
+    "1_102745"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "1085",
+   "direction": "SW",
+   "id": "1_1085",
+   "lat": 47.613377,
+   "locationType": 0,
+   "lon": -122.332603,
+   "name": "Pine St & 9th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "10915",
+   "direction": "N",
+   "id": "1_10915",
+   "lat": 47.64994,
+   "locationType": 0,
+   "lon": -122.321999,
+   "name": "Harvard Ave E & Eastlake Ave E",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "1110",
+   "direction": "SW",
+   "id": "1_1110",
+   "lat": 47.611767,
+   "locationType": 0,
+   "lon": -122.336456,
+   "name": "Pine St & 5th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11133",
+   "direction": "NE",
+   "id": "1_11133",
+   "lat": 47.613785,
+   "locationType": 0,
+   "lon": -122.327957,
+   "name": "Pike St & Minor Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11140",
+   "direction": "E",
+   "id": "1_11140",
+   "lat": 47.615158,
+   "locationType": 0,
+   "lon": -122.324638,
+   "name": "E Pine St & Summit Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100002",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100002",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11150",
+   "direction": "E",
+   "id": "1_11150",
+   "lat": 47.615162,
+   "locationType": 0,
+   "lon": -122.321617,
+   "name": "E Pine St & Harvard Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100002",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100002",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11180",
+   "direction": "N",
+   "id": "1_11180",
+   "lat": 47.619774,
+   "locationType": 0,
+   "lon": -122.32077,
+   "name": "Broadway  E & E John St - Bay 3",
+   "parent": "",
+   "routeIds": [
+    "1_100289",
+    "1_100447",
+    "1_100249"
+   ],
+   "staticRouteIds": [
+    "1_100289",
+    "1_100447",
+    "1_100249"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11190",
+   "direction": "N",
+   "id": "1_11190",
+   "lat": 47.622196,
+   "locationType": 0,
+   "lon": -122.320816,
+   "name": "Broadway  E & E Harrison St",
+   "parent": "",
+   "routeIds": [
+    "1_100289",
+    "1_100447",
+    "1_100249"
+   ],
+   "staticRouteIds": [
+    "1_100289",
+    "1_100447",
+    "1_100249"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "1120",
+   "direction": "W",
+   "id": "1_1120",
+   "lat": 47.611103,
+   "locationType": 0,
+   "lon": -122.338028,
+   "name": "Pine St & 4th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447",
+    "1_102715"
+   ],
+   "staticRouteIds": [
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447",
+    "1_102715"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11200",
+   "direction": "N",
+   "id": "1_11200",
+   "lat": 47.624611,
+   "locationType": 0,
+   "lon": -122.320839,
+   "name": "Broadway  E & E Mercer St",
+   "parent": "",
+   "routeIds": [
+    "1_100289",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100289",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11230",
+   "direction": "N",
+   "id": "1_11230",
+   "lat": 47.628861,
+   "locationType": 0,
+   "lon": -122.320114,
+   "name": "10th Ave E & E Prospect St",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11250",
+   "direction": "N",
+   "id": "1_11250",
+   "lat": 47.632214,
+   "locationType": 0,
+   "lon": -122.320099,
+   "name": "10th Ave E & E Galer St",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11270",
+   "direction": "N",
+   "id": "1_11270",
+   "lat": 47.636231,
+   "locationType": 0,
+   "lon": -122.319992,
+   "name": "10th Ave E & E Howe St",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11290",
+   "direction": "N",
+   "id": "1_11290",
+   "lat": 47.641067,
+   "locationType": 0,
+   "lon": -122.319969,
+   "name": "10th Ave E & E Miller St",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11300",
+   "direction": "W",
+   "id": "1_11300",
+   "lat": 47.643261,
+   "locationType": 0,
+   "lon": -122.320747,
+   "name": "E Roanoke St & Broadway  E",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11330",
+   "direction": "N",
+   "id": "1_11330",
+   "lat": 47.647171,
+   "locationType": 0,
+   "lon": -122.321999,
+   "name": "Harvard Ave E & E Shelby St",
+   "parent": "",
+   "routeIds": [
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11352",
+   "direction": "N",
+   "id": "1_11352",
+   "lat": 47.658668,
+   "locationType": 0,
+   "lon": -122.311905,
+   "name": "15th Ave NE & NE 42nd St",
+   "parent": "",
+   "routeIds": [
+    "1_100224",
+    "1_100228",
+    "1_100447",
+    "1_100264",
+    "1_102768",
+    "1_102766",
+    "1_100162",
+    "1_100214",
+    "40_100511",
+    "40_100451"
+   ],
+   "staticRouteIds": [
+    "1_100224",
+    "1_100228",
+    "1_100447",
+    "1_100264",
+    "1_102768",
+    "1_102766",
+    "1_100162",
+    "1_100214",
+    "40_100511",
+    "40_100451"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11370",
+   "direction": "S",
+   "id": "1_11370",
+   "lat": 47.6325,
+   "locationType": 0,
+   "lon": -122.312607,
+   "name": "15th Ave E & E Galer St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11520",
+   "direction": "E",
+   "id": "1_11520",
+   "lat": 47.6152,
+   "locationType": 0,
+   "lon": -122.316483,
+   "name": "E Pine St & 12th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100002",
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100002",
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11535",
+   "direction": "E",
+   "id": "1_11535",
+   "lat": 47.615212,
+   "locationType": 0,
+   "lon": -122.311852,
+   "name": "E Pine St & 15th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11565",
+   "direction": "N",
+   "id": "1_11565",
+   "lat": 47.620773,
+   "locationType": 0,
+   "lon": -122.312607,
+   "name": "15th Ave E & E Thomas St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11567",
+   "direction": "N",
+   "id": "1_11567",
+   "lat": 47.618794,
+   "locationType": 0,
+   "lon": -122.312645,
+   "name": "15th Ave E & E Denny Way",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11569",
+   "direction": "N",
+   "id": "1_11569",
+   "lat": 47.6157,
+   "locationType": 0,
+   "lon": -122.312668,
+   "name": "15th Ave & E Pine St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11570",
+   "direction": "N",
+   "id": "1_11570",
+   "lat": 47.622963,
+   "locationType": 0,
+   "lon": -122.312538,
+   "name": "15th Ave E & E Republican St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11590",
+   "direction": "N",
+   "id": "1_11590",
+   "lat": 47.625423,
+   "locationType": 0,
+   "lon": -122.312492,
+   "name": "15th Ave E & E Roy St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11600",
+   "direction": "N",
+   "id": "1_11600",
+   "lat": 47.627098,
+   "locationType": 0,
+   "lon": -122.312469,
+   "name": "15th Ave E & E Aloha St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11610",
+   "direction": "N",
+   "id": "1_11610",
+   "lat": 47.628902,
+   "locationType": 0,
+   "lon": -122.312454,
+   "name": "15th Ave E & E Prospect St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11620",
+   "direction": "N",
+   "id": "1_11620",
+   "lat": 47.630833,
+   "locationType": 0,
+   "lon": -122.312424,
+   "name": "15th Ave E & E Highland Dr",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11630",
+   "direction": "N",
+   "id": "1_11630",
+   "lat": 47.632523,
+   "locationType": 0,
+   "lon": -122.311821,
+   "name": "Grandview Pl E & E Galer St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "11640",
+   "direction": "N",
+   "id": "1_11640",
+   "lat": 47.634079,
+   "locationType": 0,
+   "lon": -122.311798,
+   "name": "Grandview Pl E & E Garfield St",
+   "parent": "",
+   "routeIds": [
+    "1_100002"
+   ],
+   "staticRouteIds": [
+    "1_100002"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "1180",
+   "direction": "NE",
+   "id": "1_1180",
+   "lat": 47.610073,
+   "locationType": 0,
+   "lon": -122.336838,
+   "name": "Pike St & 4th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "1190",
+   "direction": "E",
+   "id": "1_1190",
+   "lat": 47.611034,
+   "locationType": 0,
+   "lon": -122.334526,
+   "name": "Pike St & 6th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447",
+    "40_100239"
+   ],
+   "staticRouteIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447",
+    "40_100239"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "1195",
+   "direction": "E",
+   "id": "1_1195",
+   "lat": 47.611809,
+   "locationType": 0,
+   "lon": -122.332687,
+   "name": "Pike St & 7th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "staticRouteIds": [
+    "1_100173",
+    "1_100002",
+    "1_100009",
+    "1_100018",
+    "1_100447"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "12373",
+   "direction": "NE",
+   "id": "1_12373",
+   "lat": 47.61623,
+   "locationType": 0,
+   "lon": -122.308426,
+   "name": "E Madison St & 18th Ave",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13190",
+   "direction": "SW",
+   "id": "1_13190",
+   "lat": 47.632507,
+   "locationType": 0,
+   "lon": -122.307373,
+   "name": "Interlaken Turnback Loop & 19th Ave E",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13200",
+   "direction": "S",
+   "id": "1_13200",
+   "lat": 47.631897,
+   "locationType": 0,
+   "lon": -122.307327,
+   "name": "19th Ave E & E Galer St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13310",
+   "direction": "N",
+   "id": "1_13310",
+   "lat": 47.618698,
+   "locationType": 0,
+   "lon": -122.307274,
+   "name": "19th Ave E & E Denny Way",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13320",
+   "direction": "N",
+   "id": "1_13320",
+   "lat": 47.619873,
+   "locationType": 0,
+   "lon": -122.307259,
+   "name": "19th Ave E & E John St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13330",
+   "direction": "N",
+   "id": "1_13330",
+   "lat": 47.620682,
+   "locationType": 0,
+   "lon": -122.307251,
+   "name": "19th Ave E & E Thomas St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13340",
+   "direction": "N",
+   "id": "1_13340",
+   "lat": 47.62186,
+   "locationType": 0,
+   "lon": -122.307236,
+   "name": "19th Ave E & E Harrison St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13350",
+   "direction": "N",
+   "id": "1_13350",
+   "lat": 47.623402,
+   "locationType": 0,
+   "lon": -122.307205,
+   "name": "19th Ave E & E Republican St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13360",
+   "direction": "N",
+   "id": "1_13360",
+   "lat": 47.625469,
+   "locationType": 0,
+   "lon": -122.30722,
+   "name": "19th Ave E & E Roy St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13370",
+   "direction": "N",
+   "id": "1_13370",
+   "lat": 47.627045,
+   "locationType": 0,
+   "lon": -122.30719,
+   "name": "19th Ave E & E Aloha St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13380",
+   "direction": "N",
+   "id": "1_13380",
+   "lat": 47.628861,
+   "locationType": 0,
+   "lon": -122.307167,
+   "name": "19th Ave E & E Prospect St",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "13381",
+   "direction": "N",
+   "id": "1_13381",
+   "lat": 47.630806,
+   "locationType": 0,
+   "lon": -122.307152,
+   "name": "19th Ave E & E Highland Dr",
+   "parent": "",
+   "routeIds": [
+    "1_100018"
+   ],
+   "staticRouteIds": [
+    "1_100018"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "9580",
+   "direction": "E",
+   "id": "1_9580",
+   "lat": 47.655922,
+   "locationType": 0,
+   "lon": -122.31398,
+   "name": "NE Campus Pkwy & Brooklyn Ave NE - Bay 1",
+   "parent": "",
+   "routeIds": [
+    "1_100447",
+    "1_100264",
+    "1_102732"
+   ],
+   "staticRouteIds": [
+    "1_100447",
+    "1_100264",
+    "1_102732"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  },
+  {
+   "code": "9587",
+   "direction": "W",
+   "id": "1_9587",
+   "lat": 47.659878,
+   "locationType": 0,
+   "lon": -122.314117,
+   "name": "U District Station - Bay 1",
+   "parent": "",
+   "routeIds": [
+    "1_100224",
+    "1_100447",
+    "1_100264",
+    "1_102768",
+    "1_100214"
+   ],
+   "staticRouteIds": [
+    "1_100224",
+    "1_100447",
+    "1_100264",
+    "1_102768",
+    "1_100214"
+   ],
+   "wheelchairBoarding": "ACCESSIBLE"
+  }
+ ]
+}

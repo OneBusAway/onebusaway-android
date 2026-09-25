@@ -21,6 +21,7 @@ import java.io.IOException
 import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.WeatherWebService
+import org.onebusaway.android.api.contract.sidecarV1RegionUrl
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -52,9 +53,11 @@ class DefaultWeatherRepository @Inject constructor(
     override suspend fun currentForecast(regionId: Long): Result<WeatherData> = runCatchingCancellable {
         val base = regionRepository.region.value?.sidecarBaseUrl
             ?: throw IOException("No sidecar base URL for region $regionId")
-        val url = base +
-            context.getString(R.string.weather_api_endpoint)
-                .replace("regionID", regionId.toString())
+        val url = sidecarV1RegionUrl(
+            sidecarBaseUrl = base,
+            endpoint = context.getString(R.string.weather_api_endpoint),
+            regionId = regionId.toString()
+        )
         val forecast = weatherService.getWeather(url).current_forecast
             ?: throw IOException("No weather forecast for region $regionId")
         WeatherData(forecast.icon ?: "", forecast.temperature, forecast.summary)

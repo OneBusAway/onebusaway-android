@@ -29,8 +29,8 @@ import org.onebusaway.android.region.Region
  * separately-published bike-rental support (see [Region.supportsOtpGraphqlBikeshare]):
  *  - [isTripPlanningEnabled] — can a *plan* use bikeshare? Answered by whichever server the plan will
  *    hit ([Region.usesOtp2]).
- *  - [isStationLayerEnabled] — can we *draw bike stations*? Always the OTP1 flag, since the station
- *    overlay reads OTP1 REST `/bike_rental` regardless of the planning protocol.
+ *  - [isStationLayerEnabled] — can we *draw rentals*? Either server will do, since the rental map
+ *    layer reads whichever one publishes them (#2168).
  *
  * A custom OTP API URL enables both, unchanged: it's the advanced-setting hatch for testing against a
  * bikeshare-capable OTP, and there's no [Region] to carry a capability flag for a hand-entered server.
@@ -59,11 +59,19 @@ object BikeshareAvailability {
     fun isStationLayerEnabled(context: Context): Boolean = isStationLayerEnabled(region(context), customOtpApiUrl(context))
 
     /**
-     * Whether the map's bike-station overlay has anything to show. Deliberately still the OTP1 flag:
-     * the overlay's only data source is OTP1 REST `/bike_rental` (see `BikeStationsRepository`), so an
-     * OTP2-only bikeshare region has no stations to draw even though it can plan bike trips.
+     * Whether the map's rental overlay has anything to show — **either** flag, because since #2168 the
+     * layer reads either server: OTP2's `vehicleRentalsByBbox` where the region publishes a
+     * bikeshare-capable GraphQL endpoint, else OTP1 REST `/bike_rental`. `RentalPlacesRepository`
+     * makes the same choice with the same two flags, and this predicate answers "is there any server
+     * to ask" for the layer toggle and the loader's own gate.
+     *
+     * Before #2168 this was deliberately the OTP1 flag alone, since the overlay's only data source was
+     * OTP1 REST — which meant an OTP2-only bikeshare region could plan bike trips but drew no rentals.
      */
-    fun isStationLayerEnabled(region: Region?, customOtpApiUrl: String?): Boolean = enabled(region?.supportsOtpBikeshare ?: false, customOtpApiUrl)
+    fun isStationLayerEnabled(region: Region?, customOtpApiUrl: String?): Boolean = enabled(
+        region?.let { it.supportsOtpBikeshare || (it.supportsOtpGraphqlBikeshare && it.usesOtp2) } ?: false,
+        customOtpApiUrl
+    )
 
     /**
      * The shape both predicates share: the region's own per-server flag, or the custom-OTP-URL hatch.

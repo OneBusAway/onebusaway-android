@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home.directions
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -64,8 +65,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -90,12 +91,12 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.arrivals.components.EtaPillFocus
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
+import org.onebusaway.android.ui.arrivals.components.countBefore
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
-import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
-import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
-import org.onebusaway.android.ui.compose.components.MenuRow
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
@@ -111,7 +112,6 @@ import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
 import org.onebusaway.android.ui.tripplan.TripDateTimeDialog
-import org.onebusaway.android.ui.tripplan.TripEndpointDotIcon
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanError
@@ -122,6 +122,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
 import org.onebusaway.android.ui.tripresults.FocusedLeg
+import org.onebusaway.android.ui.tripresults.ReachStop
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripLogEntry
@@ -129,6 +130,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
+import org.onebusaway.android.ui.tripresults.resolvedAt
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.DisplayFormat
@@ -143,9 +145,11 @@ import org.onebusaway.android.util.PreferenceUtils
  * point directly on the home map). The itinerary itself renders on the shared home map via the
  * [MapViewModel] directions controller — driven by [TripResultsSheet]'s selection.
  *
- * The address-book (contacts) picker was removed (#1936 tracks accepting place intents from other apps
- * instead). Map-pick is hoisted to the caller ([DirectionsFormCard]'s `onPickEndpoint`);
- * current-location, date/time, and advanced settings are wired here.
+ * The address-book (contacts) picker was removed; the app instead accepts place intents from other apps
+ * (#1936), so the address book hands OneBusAway an address rather than OneBusAway reading the contacts —
+ * see [org.onebusaway.android.ui.nav.PlaceIntents]. Map-pick is hoisted to the caller
+ * ([DirectionsFormCard]'s `onPickEndpoint`); current-location, date/time, and advanced settings are
+ * wired here.
  */
 
 /**
@@ -205,6 +209,7 @@ fun DirectionsFormCard(
                     PreferenceUtils.saveString(streetModePreference, street.name)
                 },
                 onReverse = viewModel::reverseTrip,
+                onRefresh = viewModel::refreshPlan,
                 onAdvancedSettings = { showAdvanced = true }
             )
         }
@@ -267,9 +272,11 @@ private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.4f
 @Composable
 fun DirectionsResultsSheet(
     resultsViewModel: TripResultsViewModel,
+    planGeneration: Long,
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     showItinerary: (TripItinerary) -> Unit,
+    restoreItinerary: (TripItinerary) -> Unit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
@@ -279,13 +286,22 @@ fun DirectionsResultsSheet(
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
     // would otherwise type-check.
     rideBadgeTaps: Flow<Set<Int>>,
+    // A pending pinned-trip resume; null means a fresh plan or a remount (#2053, #2274).
+    resumeIndex: Int?,
+    fromSnapshot: Boolean,
+    pinnedOptionIndex: Int?,
+    // Null when this plan carries no request to pin, so a card offers no long press rather than a menu
+    // item that does nothing — the same rule the unwired picker follows.
+    onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
+    onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // The system nav-bar inset: the sheet reaches the bottom edge (continuous background), but its
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
     // stranded under the gesture pill / 3-button bar. The peek includes it so the handle clears it.
     val navBottom = navigationBarBottomPadding()
-    val peekHeight = DRAG_HANDLE_TOUCH_TARGET_HEIGHT + navBottom
+    val peekHeight = DRAG_HANDLE_HEIGHT + navBottom
     // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
     //
     // Floored at the peek, because a sheet shorter than its own peek inverts the two states: M3 anchors
@@ -340,25 +356,33 @@ fun DirectionsResultsSheet(
         sheetTonalElevation = 2.dp,
         sheetShadowElevation = 8.dp,
         // The scaffold supplies the drag gesture and the tap/accessibility actions around whatever handle
-        // it's given, so this is the app's own bar — the same one the arrivals sheet shows — in the 48dp
-        // band [DRAG_HANDLE_TOUCH_TARGET_HEIGHT] measures for the peek above.
+        // it's given, so this is the app's own bar — the same one the arrivals sheet shows, in the same
+        // [DRAG_HANDLE_HEIGHT] band the peek above measures for (#2240).
         sheetDragHandle = { SheetDragHandle() },
         sheetContent = {
             // Sized so handle + content == fullHeight, which is what sets the sheet's expanded anchor.
             // Non-negative by construction: fullHeight is floored at the peek, which is this same
             // handle band plus navBottom, so the subtraction leaves at least the nav padding below.
             TripResultsSheet(
+                planGeneration = planGeneration,
                 itineraries = itineraries,
                 params = params,
                 resultsViewModel = resultsViewModel,
                 showItinerary = showItinerary,
+                restoreItinerary = restoreItinerary,
                 onFocusRouteLeg = onFocusRouteLeg,
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 stopEtaStrip = stopEtaStrip,
+                resumeIndex = resumeIndex,
+                fromSnapshot = fromSnapshot,
+                pinnedOptionIndex = pinnedOptionIndex,
+                onTogglePin = onTogglePin,
+                onUnpinTrip = onUnpinTrip,
+                onOptionsSeeded = onOptionsSeeded,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(fullHeight - DRAG_HANDLE_TOUCH_TARGET_HEIGHT)
+                    .height(fullHeight - DRAG_HANDLE_HEIGHT)
                     .navigationBarsPadding()
             )
         },
@@ -384,28 +408,42 @@ fun DirectionsResultsSheet(
  * An alternative with no OBA id, or with nothing upcoming at this stop, is simply left out — its name
  * still appears on the card's "or …" line.
  *
- * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStopTime] —
- * when the plan has them reach this stop — is ruled across it (#2125): departures before it are ones
- * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
+ * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStop] — how
+ * the plan gets them to this stop — is ruled across it (#2125): departures before it are ones they
+ * can't be here for, and the first pill after the rule is the soonest one they can actually board.
  * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
  * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
+ *
+ * When the feed holds departures but none at or after that rule — a plan that leaves later than the
+ * arrivals window reaches, so every pill would be dimmed and the rule would close the strip — the strip
+ * collapses to one line saying so, with a tap to show it anyway (#2228). The line is not a threshold
+ * on how soon the trip must be: it is exactly the case where the feed has departures but none the rider
+ * can board, and a later poll that brings a boardable one puts the strip back on its own. A poll with no
+ * departures at all keeps its own "no upcoming arrivals" line — there is nothing behind a "Show" there.
  */
 @Composable
 internal fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
-    reachStopTime: ServerTime?,
+    reachStop: ReachStop?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
     onFocusVehicle: (ShowRouteRequest) -> Unit,
     modifier: Modifier = Modifier,
-    hoistedSession: ArrivalsSession? = null
+    hoistedSession: ArrivalsSession? = null,
+    /**
+     * The trip this strip's stop is drilled into on the map, if any (#2224) — the directions half of the
+     * treatment a stop's arrivals row gives its focused pill. Only ever non-null on the focused leg's
+     * boarding-stop strip, which is the one the map's vehicle was tapped from; every other strip on the
+     * itinerary is showing some other stop's departures and has no drilled-into vehicle to mark.
+     */
+    pillFocus: EtaPillFocus? = null
 ) {
     val stopId = stop.stopId
     val point = stop.point
-    // Left-justified to the content column; the old start indent was a holdover from the indented-sub-row design.
-    val rowPadding = Modifier.fillMaxWidth().padding(end = 12.dp, top = 2.dp, bottom = 8.dp)
+    // Edge to edge: the log row already insets its content from the sheet's edges (#2228).
+    val rowPadding = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp)
     // Without an OBA id + location there is no stop to query, so draw nothing at all. "No upcoming
     // arrivals" is reserved for a stop we *did* look up (below) — saying it here would report an
     // unidentifiable stop as one with no service.
@@ -436,10 +474,11 @@ internal fun DirectionStopEtaStrip(
     val session = hoistedSession ?: ownSession ?: return
     DirectionStopEtaStripContent(
         routeLeg = routeLeg,
-        reachStopTime = reachStopTime,
+        reachStop = reachStop,
         session = session,
-        rowPadding = rowPadding,
-        modifier = modifier
+        pillFocus = pillFocus,
+        modifier = modifier,
+        rowPadding = rowPadding
     )
 }
 
@@ -447,10 +486,12 @@ internal fun DirectionStopEtaStrip(
 @Composable
 private fun DirectionStopEtaStripContent(
     routeLeg: RouteLegRef,
-    reachStopTime: ServerTime?,
+    reachStop: ReachStop?,
     session: ArrivalsSession,
-    rowPadding: Modifier,
-    modifier: Modifier
+    pillFocus: EtaPillFocus?,
+    modifier: Modifier = Modifier,
+    // The shared per-row inset every branch below composes onto [modifier].
+    rowPadding: Modifier = Modifier
 ) {
     val state by session.viewModel.state.collectAsStateWithLifecycle()
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
@@ -468,8 +509,21 @@ private fun DirectionStopEtaStripContent(
         }
     }
     val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
-    if (interleaved.isEmpty()) {
-        NoEtasText(rowPadding)
+    // The rule as of this poll: the strip resolves it again on its own live clock (#2227), which only
+    // ever carries a walk rule *forward*, so this reading collapses the strip no sooner than the strip's
+    // own rule would and the next poll settles it either way. Null when the plan puts nothing before this
+    // ride, and when the poll brought no pill to read its server clock off.
+    val ruleAt = reachStop?.let { stop -> interleaved.firstOrNull()?.let { stop.resolvedAt(it.first.serverNow) } }
+    // Held above the branches so a poll that empties the strip doesn't forget that the rider asked to see
+    // it; a strip that has come to hold a boardable pill needs no reveal in the first place.
+    var revealed by rememberSaveable { mutableStateOf(false) }
+    val stripState = stopEtaStripState(interleaved, ruleAt) { it.first.displayTime }
+    if (stripState == StopEtaStripState.NO_ARRIVALS) {
+        NoEtasText(modifier.then(rowPadding))
+        return
+    }
+    if (stripState == StopEtaStripState.NOTHING_BOARDABLE && !revealed) {
+        NoBoardableDeparturesLine(modifier = modifier.then(rowPadding), onReveal = { revealed = true })
         return
     }
     val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
@@ -479,21 +533,77 @@ private fun DirectionStopEtaStripContent(
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
         routeBadgeFor = { badgesByTrip[it] },
-        marker = reachStopTime?.let { rememberReachStopMarker(it) }
+        marker = reachStop?.let { rememberReachStopMarker(it) },
+        focus = pillFocus
     )
 }
 
-/** The strip's "you get here at …" rule for [reachStopTime]. The clock string is memoized because the
- *  format call is locale work that only changes with the plan, not with each arrivals poll. */
+/**
+ * The strip's "you get here at …" rule for [reachStop].
+ *
+ * The rule is handed to [EtaStrip] as a *resolver* against the strip's own live clock rather than as
+ * an instant: a [ReachStop.OnFoot] is the walk added to when the rider sets off (#2227), so it has to
+ * move with the clock, and the strip is the one place already ticking one (#1781) — its pills and this
+ * rule then read the same now. That reads as the rule holding still at the rider's walking distance
+ * while the pills flow past it, which is exactly what it means: everything left of the rule is a
+ * departure they can no longer walk to in time. A walk a depart-at plan hasn't started yet holds at the
+ * planned departure plus the walk instead, until the clock reaches it (#2248) — a plan hours out rules
+ * where the plan put it, not where the rider happened to open it. A [ReachStop.OnArrival] is an absolute
+ * moment and ignores the clock it is handed.
+ *
+ * Remembered so the marker is one stable object per plan: the strip keys its per-minute spoken text on
+ * it, and the strip's own callers are already stable between polls.
+ */
 @Composable
-private fun rememberReachStopMarker(reachStopTime: ServerTime): EtaStripMarker {
+private fun rememberReachStopMarker(reachStop: ReachStop): EtaStripMarker {
+    // The context is still needed for the *time* format (a device setting, not a resource); the
+    // resource read goes through LocalResources so it isn't stale after a configuration change
+    // (lint: LocalContextResourcesRead).
     val context = LocalContext.current
-    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
-    return EtaStripMarker(
-        at = reachStopTime,
-        contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
-        passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
-    )
+    val resources = LocalResources.current
+    val passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
+    return remember(reachStop, context, resources, passedStateDescription) {
+        EtaStripMarker(
+            at = reachStop::resolvedAt,
+            contentDescription = { at ->
+                resources.getString(R.string.directions_stop_eta_reach_stop, DisplayFormat.formatTime(context, at.epochMs))
+            },
+            passedStateDescription = passedStateDescription
+        )
+    }
+}
+
+/** What a stop's ETA strip has to show for one poll — see [stopEtaStripState] for the precedence. */
+internal enum class StopEtaStripState {
+
+    /** The departures themselves, ruled at the moment the rider gets here when the plan says one. */
+    PILLS,
+
+    /** The poll holds no departure at this stop at all, boardable or not. */
+    NO_ARRIVALS,
+
+    /** It holds departures, and the rider reaches the stop after every one of them (#2228). */
+    NOTHING_BOARDABLE
+}
+
+/**
+ * Which state [items] and the reach rule [ruleAt] put the strip in. Pure, so the precedence between the
+ * two empty-ish states is tested rather than only readable off a pair of early returns.
+ *
+ * [NO_ARRIVALS][StopEtaStripState.NO_ARRIVALS] wins over
+ * [NOTHING_BOARDABLE][StopEtaStripState.NOTHING_BOARDABLE]: a poll with no departures at all has nothing
+ * to reveal, so the collapsed line's "Show" would promise the rider a strip and hand them back the same
+ * sentence. The collapsed line is for a feed that *does* hold departures, every one of them before the
+ * rider can get here.
+ *
+ * Nothing-boardable is decided by the very count the strip places its rule by ([countBefore]), so the
+ * line and the rule can't disagree about what is boardable. Without a rule ([ruleAt] null — the plan
+ * puts nothing before this ride) no departure is out of reach and the pills always stand.
+ */
+internal fun <T> stopEtaStripState(items: List<T>, ruleAt: ServerTime?, timeOf: (T) -> ServerTime): StopEtaStripState = when {
+    items.isEmpty() -> StopEtaStripState.NO_ARRIVALS
+    ruleAt != null && countBefore(items, ruleAt, timeOf) == items.size -> StopEtaStripState.NOTHING_BOARDABLE
+    else -> StopEtaStripState.PILLS
 }
 
 /**
@@ -520,6 +630,26 @@ internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge =
  *  selection resolve a leg to the same direction group by construction. */
 private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? = pickRideDirection(routeId, headsign, routeIdOf = { it.routeId }, headsignOf = { it.headsign })
 
+/**
+ * The collapsed strip for a stop the feed has nothing boardable at yet: the rider gets there after
+ * every departure the poll knows about. Tapping "Show" hands over to the strip proper via [onReveal].
+ * The line names only the fact — the row's own time column already says when the rider boards.
+ */
+@Composable
+internal fun NoBoardableDeparturesLine(modifier: Modifier = Modifier, onReveal: () -> Unit) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(R.string.directions_stop_eta_none_boardable),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onReveal) {
+            Text(stringResource(R.string.directions_stop_eta_show_anyway))
+        }
+    }
+}
+
 @Composable
 private fun NoEtasText(modifier: Modifier) {
     Text(
@@ -528,57 +658,6 @@ private fun NoEtasText(modifier: Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
     )
-}
-
-/**
- * Stable handles for [DirectionsLongPressMenu]'s endpoint dots, so a render can sample the dot
- * itself rather than guessing at Material's menu-row padding.
- */
-object DirectionsLongPressMenuTestTags {
-    const val FROM_DOT = "directionsFromHereDot"
-    const val TO_DOT = "directionsToHereDot"
-}
-
-/**
- * The menu shown when the user long-presses the map: "directions from here" / "directions to here",
- * each of which enters directions focus and fills that endpoint with the pressed point.
- *
- * The same centered dialog every other long-press menu in the app uses (#2112), rather than the
- * bottom sheet it was: a long press means the same thing wherever the rider does it, and the map is
- * the one surface where a sheet rising from the bottom also covers what was just pressed. The rows
- * are marked with the trip-plan rail's own endpoint dots, so the row names the end of the trip it
- * fills by the same green/red the form will show once it is filled.
- *
- * Always expanded — the host renders this only while there is a pressed point, and dismissal clears
- * it (see HomeScreen).
- */
-@Composable
-fun DirectionsLongPressMenu(
-    onChooseSlot: (TripEndpointSlot) -> Unit,
-    onDismiss: () -> Unit
-) {
-    CenteredLongPressMenu(expanded = true, onDismissRequest = onDismiss) {
-        MenuRow(
-            textRes = R.string.directions_from_here,
-            leadingIcon = {
-                TripEndpointDotIcon(
-                    TripEndpointSlot.FROM,
-                    Modifier.testTag(DirectionsLongPressMenuTestTags.FROM_DOT)
-                )
-            },
-            onClick = { onChooseSlot(TripEndpointSlot.FROM) }
-        )
-        MenuRow(
-            textRes = R.string.directions_to_here,
-            leadingIcon = {
-                TripEndpointDotIcon(
-                    TripEndpointSlot.TO,
-                    Modifier.testTag(DirectionsLongPressMenuTestTags.TO_DOT)
-                )
-            },
-            onClick = { onChooseSlot(TripEndpointSlot.TO) }
-        )
-    }
 }
 
 /**
@@ -641,11 +720,27 @@ fun DirectionsErrorSnackbar(
  * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
  * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
  *
- * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
- * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
+ * [onPinAndLeave] parks the trip on the way out — offered **only when nothing is pinned yet**, and that
+ * condition is the whole design. An earlier version offered it unconditionally and had to be withdrawn:
+ * a rider who already had a trip pinned could not tell whether the button meant pin this one again,
+ * replace what they had, or something else, because the question is asked at the one moment the pin
+ * state is off screen. With nothing pinned there is exactly one thing it can mean.
+ *
+ * The trip *this* dialog is about is never the pinned one, so the two cases don't overlap: a pinned trip
+ * costs nothing to leave and so never reaches this dialog at all (see
+ * [org.onebusaway.android.ui.home.HomeViewModel.setDrawnTripRecoverable]). What null therefore means here
+ * is "some *other* trip is pinned, or there is no request to pin" — both cases where an offer would be a
+ * worse answer than silence. It is also why the message can still say flatly that the trip is discarded.
+ *
+ * Note the seam: this dialog only *reports* the choice. Leaving is the caller's half of "pin and leave",
+ * and [onPinAndLeave] is expected to do both — nothing here invokes [onConfirm] on the rider's behalf.
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK", and
+ * the constructive answer sits before it; dismissing — cancel, an outside tap, or Back — keeps the trip.
  */
 @Composable
 fun DirectionsExitConfirmDialog(
+    onPinAndLeave: (() -> Unit)?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -653,9 +748,18 @@ fun DirectionsExitConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
         text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
+        // Material 3 gives a dialog two action slots and this one has up to three answers, so both ways
+        // *out* share the confirm slot; the dismiss slot stays the single way to stay.
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.directions_exit_confirm_discard))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                onPinAndLeave?.let { pinAndLeave ->
+                    TextButton(onClick = pinAndLeave) {
+                        Text(stringResource(R.string.directions_exit_confirm_pin))
+                    }
+                }
+                TextButton(onClick = onConfirm) {
+                    Text(stringResource(R.string.directions_exit_confirm_discard))
+                }
             }
         },
         dismissButton = {
@@ -808,12 +912,14 @@ private fun DirectionsAdvancedSettingsDialog(
                 SwitchRow(
                     label = stringResource(R.string.minimize_transfers),
                     checked = minimizeTransfers,
-                    onCheckedChange = { minimizeTransfers = it }
+                    onCheckedChange = { minimizeTransfers = it },
+                    modifier = Modifier.padding(top = 12.dp)
                 )
                 SwitchRow(
                     label = stringResource(R.string.wheelchair_accessible),
                     checked = wheelchair,
-                    onCheckedChange = { wheelchair = it }
+                    onCheckedChange = { wheelchair = it },
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         },

@@ -19,7 +19,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.Extrapolator
-import org.onebusaway.android.extrapolation.GammaExtrapolator
+import org.onebusaway.android.extrapolation.FirstPassageExtrapolator
 import org.onebusaway.android.extrapolation.ScheduleReplayExtrapolator
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTripSchedule
@@ -102,7 +102,7 @@ data class TripState(
             if (routeType != null && ObaRoute.isGradeSeparated(routeType)) {
                 ScheduleReplayExtrapolator(this)
             } else {
-                GammaExtrapolator(this)
+                FirstPassageExtrapolator(this)
             }
         }
 

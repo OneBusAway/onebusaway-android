@@ -135,3 +135,44 @@ class CorrectionSmoother(private val durationMs: Long = DEFAULT_DURATION_MS) {
         const val MAX_CORRECTION_METERS = 2000.0
     }
 }
+
+/**
+ * A [CorrectionSmoother] for a marker that shows **one subject at a time** — the selected vehicle's
+ * fast-estimate marker, whose correction belongs to the vehicle it is drawn for.
+ *
+ * Changing subject is a change of *what* is being shown, not a fresh fix on the same thing. So the
+ * previous subject's correction is dropped and the marker jumps to the new one, instead of reading its
+ * position as a fix that moved and easing across the map to it — which looked like the uncertainty band
+ * being re-drawn on every tap (#2222). Between fixes on one subject nothing is dropped, so a fresh fix
+ * still smooths exactly as before.
+ *
+ * Wrapping the keyed smoother rather than asking each caller to `retainOnly` its own key is what makes
+ * that mistake unrepresentable: forgetting the call *was* #2222. Callers that genuinely track several
+ * markers at once (the route's vehicles) key [CorrectionSmoother] directly.
+ */
+class SingleSubjectSmoother(private val smoother: CorrectionSmoother = CorrectionSmoother()) {
+
+    private var subject: String? = null
+
+    /** Record [subject]'s initial shown position — see [CorrectionSmoother.prime]. */
+    fun prime(subject: String, point: GeoPoint, fixTimeMs: Long) {
+        switchTo(subject)
+        smoother.prime(subject, point, fixTimeMs)
+    }
+
+    /** The position to display for [subject] this tick — see [CorrectionSmoother.displayPosition]. */
+    fun displayPosition(subject: String, target: GeoPoint, fixTimeMs: Long, nowMs: Long): GeoPoint {
+        switchTo(subject)
+        return smoother.displayPosition(subject, target, fixTimeMs, nowMs)
+    }
+
+    /** Forget the current subject: its marker is gone (nothing is selected). */
+    fun clear() = switchTo(null)
+
+    // Only an actual change touches the state, so the steady per-frame case is one reference compare.
+    private fun switchTo(next: String?) {
+        if (next == subject) return
+        smoother.retainOnly(emptySet())
+        subject = next
+    }
+}

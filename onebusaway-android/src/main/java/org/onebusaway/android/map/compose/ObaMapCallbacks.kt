@@ -15,9 +15,9 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.util.GeoPoint
 
@@ -25,7 +25,7 @@ import org.onebusaway.android.util.GeoPoint
  * Map interaction a flavor's [ObaComposeMapAdapter] reports back to its host. Flavor-neutral (no
  * map-SDK types — [onMapClick] takes a [GeoPoint], not a Google/maplibre `LatLng`), so it lives in
  * `src/main` and both flavor adapters/hosts share it. A stop tap focuses the stop, a map tap clears
- * focus, a bike tap reports bike focus, and the two info-window taps deep link via the host.
+ * focus, a rental tap reports rental focus, and the two info-window taps deep link via the host.
  *
  * Adapters that own their own marker-click dispatch (the maplibre classic API, where the host wires
  * listeners on the raw map) may ignore this and receive null instead.
@@ -35,12 +35,18 @@ interface ObaMapCallbacks {
 
     fun onMapClick(point: GeoPoint?)
 
-    /** A long-press on the map at [point] — the host offers "directions from/to here". */
+    /** A long-press on the map at [point] — the host offers to navigate there (#2243). */
     fun onMapLongClick(point: GeoPoint) {}
 
-    fun onBikeClick(station: BikeStation)
+    fun onRentalClick(place: RentalPlace)
 
-    /** A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker). */
+    /**
+     * A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker), and opens
+     * its trip details when the same vehicle is tapped again (#2194).
+     *
+     * Every tap arrives here; whether one is a re-tap is the host's to know, since the host owns the
+     * selection. The flavors report taps, they don't interpret them.
+     */
     fun onVehicleClick(status: ObaTripStatus) {}
 
     /** The route-continuation badge tap (#1691) — the host navigates the map to [routeId]'s [directionId]. */
@@ -58,9 +64,6 @@ interface ObaMapCallbacks {
      */
     fun onRouteBadgeClick(badge: RouteBadge) {}
 
-    /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
-    fun onVehicleInfoWindowClick(status: ObaTripStatus)
-
-    /** The bike info-window "more info" tap — the host navigates (e.g. the bikeshare deep link). */
-    fun onBikeInfoWindowClick(station: BikeStation)
+    /** The rental info-window tap — the host opens the operator (app, deep link, or site). */
+    fun onRentalInfoWindowClick(place: RentalPlace)
 }

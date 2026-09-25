@@ -69,6 +69,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.mylists.RecentItem
 import org.onebusaway.android.ui.mylists.filterRecents
+import org.onebusaway.android.ui.nav.StopReveal
 
 /**
  * Home's floating map chrome that replaces the old solid `TopAppBar`: the map now runs edge-to-edge and
@@ -91,7 +92,7 @@ fun MapTopChrome(
     onSearch: (String) -> Unit,
     // The unified recent stops+routes list for the search dropdown, and the row-tap handlers.
     recents: List<RecentItem>,
-    onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
+    onRecentStop: (StopReveal) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
     // Opaque anchor a host may attach to the menu (☰) FAB (e.g. for an onboarding spotlight).
     menuModifier: Modifier = Modifier,
@@ -143,9 +144,9 @@ fun MapTopChrome(
                     focusManager.clearFocus()
                     onSearch(query)
                 },
-                onRecentStop = { id, lat, lon ->
+                onRecentStop = { reveal ->
                     focusManager.clearFocus()
-                    onRecentStop(id, lat, lon)
+                    onRecentStop(reveal)
                 },
                 onRecentRoute = { routeId ->
                     focusManager.clearFocus()
@@ -176,7 +177,7 @@ private fun SearchField(
     focused: Boolean,
     onFocusChange: (Boolean) -> Unit,
     onSubmit: (String) -> Unit,
-    onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
+    onRecentStop: (StopReveal) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier

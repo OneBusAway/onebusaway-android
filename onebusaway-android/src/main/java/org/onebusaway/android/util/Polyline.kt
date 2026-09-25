@@ -49,6 +49,12 @@ class Polyline(points: List<GeoPoint>) {
             .toDoubleArray()
 
     /**
+     * The whole line's length in metres — zero for a line of fewer than two distinct points, which is
+     * what a caller measuring one has to handle anyway rather than a length it can divide by.
+     */
+    val lengthMeters: Double get() = cumulativeDistances.last()
+
+    /**
      * Returns the index of the segment start for the given distance, or -1 if the polyline has
      * fewer than 2 points. The distance is clamped to the polyline bounds. Reuse the result across
      * [interpolate] and [bearingAt] to avoid repeated binary searches.

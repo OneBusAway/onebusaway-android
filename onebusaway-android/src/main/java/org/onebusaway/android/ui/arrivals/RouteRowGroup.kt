@@ -120,6 +120,37 @@ fun <T : RouteDirectionItem> groupByRouteDirection(
 }
 
 /**
+ * Groups [items] into (route, direction, **stop**) rows for the transit-centre drawer (#2107), which
+ * merges many bays into one list — the sibling of [groupByRouteDirection], which groups one stop's
+ * arrivals and so needs no stop in its key.
+ *
+ * **The stop is part of the identity on purpose.** A route+direction boarding from two bays inside one
+ * transit centre is two rows, not one: a merged row would either have to name both bays (the
+ * stop-by-stop scan this drawer exists to remove) or pick one, which is a claim that can be false on
+ * the ground — and sending a rider to the wrong bay is the exact failure the feature is meant to
+ * prevent. Two bays for one route is real at precisely the places this targets: rail platforms,
+ * bay-numbered centres, and construction reroutes that add a temporary boarding point.
+ *
+ * Ordering is [groupByRouteDirection]'s (agency, line, headsign) key — the same stable,
+ * non-ETA-driven order, so a row doesn't move as its countdown ticks — with [stopSortKeyOf] as a
+ * final tiebreak so the two-bay case is deterministic rather than left to incoming order.
+ */
+fun <T : RouteDirectionItem> groupByRouteDirectionAndStop(
+    items: List<T>,
+    agencyNameOf: (T) -> String?,
+    stopIdOf: (T) -> String,
+    stopSortKeyOf: (T) -> String?
+): List<List<T>> {
+    val groups = LinkedHashMap<String, MutableList<T>>()
+    for (item in items) {
+        groups.getOrPut("${stopIdOf(item)}\u0000${item.groupKey()}") { mutableListOf() }.add(item)
+    }
+    val order = routeSortComparator(agencyNameOf)
+        .thenBy(BLANK_LAST_COMPARATOR) { group: List<T> -> stopSortKeyOf(group.first()) }
+    return groups.values.sortedWith(order)
+}
+
+/**
  * Builds the (agency, line, headsign)-ordered route rows for the arrivals list (#1822; see
  * [groupByRouteDirection]). [agencyNameOf] resolves an arrival's agency display name — not carried on
  * [ArrivalInfo] itself, only resolvable from the loaded snapshot's route/agency refs (see
@@ -171,9 +202,13 @@ internal fun promoteSelectedRouteGroup(
 }
 
 /**
- * Resolve a map selection against the rows the arrivals response actually contains. Direction labels
- * can differ between the route response and arrivals feed; in that case a sole row for the route is
- * unambiguous. Multiple rows still require an exact direction match rather than guessing.
+ * Resolve a map selection against the rows the arrivals response actually contains — the single
+ * identity→row resolution every stop-focus surface shares, so a map route-label tap and an
+ * arrivals-row tap that name the same (route, direction) can never disagree on the row they select.
+ *
+ * Direction labels can differ between the route response and arrivals feed; in that case a sole row
+ * for the route is unambiguous. Multiple rows still require an exact direction match rather than
+ * guessing.
  */
 internal fun resolveSelectedRouteGroupKey(
     groups: List<RouteRowGroup>,
@@ -183,20 +218,4 @@ internal fun resolveSelectedRouteGroupKey(
     groups.firstOrNull { it.key == requestedKey }?.let { return it.key }
     if (routeId == null) return null
     return groups.filter { it.routeId == routeId }.singleOrNull()?.key
-}
-
-/**
- * The selected row's *group* (not just its key) — the single identity→row resolution every stop-focus
- * surface shares. The drawer promotes this row and the focus banner reads its shown headsign from the
- * same resolver, so a map route-label tap and an arrivals-row tap that name the same (route, direction)
- * can never disagree on the headsign shown: it's projected from the resolved row, never carried on the
- * selection. Null when the selection resolves to no row (see [resolveSelectedRouteGroupKey]).
- */
-internal fun resolveSelectedRouteGroup(
-    groups: List<RouteRowGroup>,
-    requestedKey: String?,
-    routeId: String?
-): RouteRowGroup? {
-    val key = resolveSelectedRouteGroupKey(groups, requestedKey, routeId) ?: return null
-    return groups.firstOrNull { it.key == key }
 }

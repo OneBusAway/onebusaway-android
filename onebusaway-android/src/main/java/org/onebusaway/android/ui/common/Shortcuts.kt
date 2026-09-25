@@ -30,7 +30,7 @@ import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
+import org.onebusaway.android.ui.arrivals.StopLauncher
 import org.onebusaway.android.ui.routeinfo.RouteInfoLauncher
 import org.onebusaway.android.util.ViewUtils
 import org.onebusaway.android.util.requireDrawable
@@ -44,13 +44,13 @@ object Shortcuts {
      * Creates a new shortcut for the provided stop, and returns the ShortcutInfo for that shortcut
      * @param context Context used to create the shortcut
      * @param shortcutName the shortcutName for the stop shortcut
-     * @param builder Instance of ArrivalsListLauncher.Builder for the provided stop
+     * @param builder Instance of StopLauncher.Builder for the provided stop
      * @return the ShortcutInfo for the created shortcut
      */
     fun createStopShortcut(
         context: Context,
         shortcutName: String?,
-        builder: ArrivalsListLauncher.Builder
+        builder: StopLauncher.Builder
     ): ShortcutInfoCompat {
         val shortcut = makeShortcutInfo(
             context,

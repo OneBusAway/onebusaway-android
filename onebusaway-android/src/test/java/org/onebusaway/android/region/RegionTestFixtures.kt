@@ -89,18 +89,29 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     }
 }
 
-/** Minimal [Region] fixture — only the id matters to the selection logic (compared by id). */
+/**
+ * Minimal [Region] fixture — only the id matters to the selection logic (compared by id).
+ *
+ * The two OTP endpoints are parameters rather than fixed nulls because whether a region publishes a
+ * planner at all is itself behaviour under test (#2264), and every combination of the two is a real
+ * region in the directory: OTP1 only, GraphQL only, both, and neither.
+ */
 internal fun region(
     id: Long,
+    obaBaseUrl: String? = null,
     supportsOtpBikeshare: Boolean = false,
     twitterUrl: String? = null,
     otpContactEmail: String? = null,
-    custom: Boolean = false
+    custom: Boolean = false,
+    sidecarBaseUrl: String? = null,
+    sidecarRegionId: Long? = null,
+    otpBaseUrl: String? = null,
+    otpBaseGraphqlUrl: String? = null
 ): Region = Region(
     id = id,
     name = "Region $id",
     active = true,
-    obaBaseUrl = null,
+    obaBaseUrl = obaBaseUrl,
     siriBaseUrl = null,
     bounds = emptyArray(),
     open311Servers = emptyArray(),
@@ -112,17 +123,18 @@ internal fun region(
     twitterUrl = twitterUrl,
     experimental = false,
     stopInfoUrl = null,
-    otpBaseUrl = null,
+    otpBaseUrl = otpBaseUrl,
     otpContactEmail = otpContactEmail,
     supportsOtpBikeshare = supportsOtpBikeshare,
-    otpBaseGraphqlUrl = null,
+    otpBaseGraphqlUrl = otpBaseGraphqlUrl,
     supportsOtpGraphqlBikeshare = false,
     supportsEmbeddedSocial = false,
     paymentAndroidAppId = null,
     paymentWarningTitle = null,
     paymentWarningBody = null,
-    sidecarBaseUrl = null,
+    sidecarBaseUrl = sidecarBaseUrl,
     plausibleAnalyticsServerUrl = null,
     umamiAnalytics = null,
-    custom = custom
+    custom = custom,
+    sidecarRegionId = sidecarRegionId
 )

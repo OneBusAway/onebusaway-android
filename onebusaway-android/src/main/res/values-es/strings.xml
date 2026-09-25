@@ -29,7 +29,7 @@
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_open_source">Visitanos en GitHub</string>
-    <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
+    <string name="navdrawer_item_plan_trip">Planea un Viaje</string>
     <string name="navdrawer_item_pay_fare">Pagar mi pasaje</string>
 
     <!-- Permissions -->
@@ -100,7 +100,7 @@
     <string name="map_option_search">Buscar</string>
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
-    <string name="main_help_whatsnew">• <b>Correcciones de errores</b> Varias correcciones de errores y mejoras en el acabado. - Ver https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Un aspecto nuevo y atrevido para una nueva era\n&#8226;\u0020Las llegadas ahora se agrupan por ruta\n&#8226;\u0020Micromovilidad añadida a la capa de bicicletas\n&#8226;\u0020Toca una parada para ver sus rutas\n&#8226;\u0020Amplía el mapa para ver las rutas cercanas\n&#8226;\u0020Posiciones de los vehículos extrapoladas y animadas\n&#8226;\u0020Sigue tu autobús con notificaciones en vivo\n&#8226;\u0020Mejoras importantes en el planificador de viajes\n&#8226;\u0020Varias correcciones de errores menores\n\nVer https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
     <string name="main_help_legend_ontime">Verde significa “A tiempo”</string>
@@ -250,7 +250,6 @@
     <string name="stop_info_option_showonmap">Mostrar sobre el Mapa</string>
     <string name="menu_option_sort_by">Ordenar por</string>
     <string name="stop_info_option_refresh">Refrescar</string>
-    <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
     <string name="stop_info_option_hide_alerts">Ocultar alertas</string>
@@ -308,8 +307,6 @@
     <string name="stop_info_item_options_title">Opciones de bus</string>
     <string name="stop_info_clear">Limpiar</string>
     <string name="stop_info_favorite">Parada Favorita</string>
-    <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
-    <string name="stop_info_route_ids_label">Rutas:</string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Parada # %1$s</string>
@@ -317,8 +314,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Mostrar información de llegadas</string>
-    <string name="route_info_context_showonmap">Mostrar sobre el mapa</string>
     <string name="route_info_no_shape_data">Lo sentimos, no esta disponible la información del mapa para esta ruta
     </string>
 
@@ -412,9 +407,10 @@
     <string name="trip_info_separator">-</string>
 
     <!-- Occupancy -->
-
-
-
+    <string name="realtime_empty">Vacío</string>
+    <string name="realtime_many_seats_available">Asientos disponibles</string>
+    <string name="realtime_standing_room">Estar de pie</string>
+    <string name="realtime_full">Lleno</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">No tienes ningún recordatorio.\n\nPuedes crear recordatorios al
@@ -572,19 +568,9 @@
     <string name="preferences_show_zoom_controls_summary">Mostrar los controles de Zoom en el mapa
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Ver llegadas sobre el nombre de parada</string>
-    <string name="preferences_show_header_arrivals_summary">Cuando se visualizan paradas favoritas,
-        muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
-    </string>
-
     <string name="preferences_trip_plan_notifications_title">Notificaciones del Planeador de Viajes (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Después de que planeas un viaje, enviar
         notificaciones sobre si el viaje esta atrasado o ya no es recomendado.
-    </string>
-
-    <string name="preferences_show_tutorial_screens_title">Mostrar las pantallas del tutorial</string>
-    <string name="preferences_show_tutorial_screens_summary">Desplegar las ventanas emergentes informacionales explicando
-        como usar las funciones
     </string>
 
     <string name="preferences_left_hand_mode_title">Modo de mano izquierda</string>
@@ -624,8 +610,6 @@
     </string>
     <string name="preferences_analytics_title">Enviar datos anónimos de uso</string>
     <string name="preferences_analytics_summary">Ayudanos a mejorar la aplicación</string>
-    <string name="preferences_tutorial_title">Mostrar tutorial</string>
-    <string name="preferences_tutorial_summary">Aprende a utilizar la aplicación con este tutorial</string>
     <string name="preferences_donate_title">Donar</string>
     <string name="preferences_donate_summary">Apoyar el proyecto de código abierto %1$s</string>
     <string name="preferences_powered_by_oba_title">Desarrollado por %1$s</string>
@@ -740,7 +724,6 @@
         <item quantity="many">Datos acualizados hace %1$d min %2$d seg</item>
         <item quantity="other">Datos acualizados hace %1$d min %2$d seg</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Posición calculada a partir de la planificación</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>
@@ -753,10 +736,6 @@
     <string name="night_light_cancel">Cancelar luz de noche</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">¡Bienvenido a %1$s!</string>
-    <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
-        de llegada.
-    </string>
     <string name="tutorial_opt_out_dialog_title">¿Mostrar el tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">¿Te gustaría ver las ventanas emergentes que describen como
         usar %1$s? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el
@@ -767,15 +746,6 @@
     <string name="tutorial_arrival_header_arrival_info_text">¡Mucho tiempo! El color de fondo te indica
         si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Desliza hacia arriba para ver más llegadas
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o desliza el panel hacia arriba
-        para ver mas llegadas de buses en esta parada.
-    </string>
-    <string name="tutorial_recent_stops_routes_title">Paradas y rutas recientes</string>
-    <string name="tutorial_recent_stops_routes_text">Encuentra las paradas y rutas que recientemente has mirado
-        en el menú.
     </string>
 
     <!-- Permissions -->
@@ -1010,11 +980,8 @@
     <string name="transit_directions_bikeshare_label">Bicicleta Compartida</string>
 
     <!-- Bikeshare info window -->
-    <string name="bike_info_window_bikes_title">Bicicletas</string>
 
     <!-- Bikeshare preference option -->
-    <string name="bike_info_window_spaces_title">Lugares</string>
-    <string name="layers_speedial_bikeshare_label">Bicicleta Compartida</string>
     <string name="bike_station_title">Toca para reservar una bicicleta</string>
     <string name="floating_bike_title">Toca para reservar esta bicicleta</string>
 
@@ -1036,10 +1003,6 @@
     <string name="preferences_reset_donation_timestamps_title">Restablecer las marcas de tiempo de donación</string>
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de ’Recuérdame más tarde’ y ’No me molestes’ asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
-    <string name="preferences_preferred_maps_title">Tipo de Mapa Preferido</string>
-    <string name="preferences_preferred_map_option_normal2d">Mapa predeterminado</string>
-    <string name="preferences_preferred_map_option_normal3d">Mapa predeterminado con edificios 3D</string>
-    <string name="preferences_preferred_map_option_satellite">Mapa satelital</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Mostrar estudios disponibles</string>
@@ -1067,7 +1030,6 @@
     <string name="close_donation_card">Cerrar tarjeta de donación</string>
     <string name="map_option_zoom_out">Alejar</string>
     <string name="map_option_zoom_in">Acercar</string>
-    <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
 
     <!-- Destination reminder -->
     <string name="destination_reminder_title">Recordatorio de destino</string>
@@ -1091,9 +1053,6 @@
     <string name="feedback_notify_title">Comentarios sobre el recordatorio</string>
     <string name="feedback_notify_dialog_msg">¿El recordatorio de destino te fue útil?</string>
     <string name="feedback_notify_confirmation">Gracias por compartir tus comentarios</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
-    <string name="map_option_layers">Botón de capas del mapa</string>
 
     <!-- Travel behavior study -->
 

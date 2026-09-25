@@ -72,6 +72,7 @@ Note that the paths in these files always use the Unix path separator `/`, even 
 Before doing each release build, you'll need to:
 1. Set `versionName` in `onebusaway-android/build.gradle.kts` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
 2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
+3. Update the Play Store "What's new" text in `onebusaway-android/src/oba/play/release-notes/en-US/default.txt` to match `main_help_whatsnew`. Play caps this at 500 characters per locale.
 
 Then, to build all flavors run:
 
@@ -85,11 +86,13 @@ The APK files will show up in the `onebusaway-android/build/outputs/apk` folder.
 
 We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) (GPP) to automate building, versioning, and uploading releases to Google Play.
 
+**Releases normally ship from CI**, not from a workstation: the *Release to Google Play* GitHub Actions workflow runs these same tasks with the signing key and Play credentials held as repository secrets. See [RELEASING.md](RELEASING.md) for how to cut a release, and use the local setup below when CI isn't an option.
+
 #### Setup
 
 1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account under IAM & Admin → Service Accounts and download the JSON key file.
 2. Enable the [Google Play Android Developer API](https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com) in Google Cloud Console.
-3. In [Google Play Console](https://play.google.com/console), go to Users & permissions, invite the service account email, and grant "Release manager" permissions. Note: it can take up to 36 hours for credentials to become active.
+3. In [Google Play Console](https://play.google.com/console), go to Users & permissions, invite the service account email, and grant it app permissions. For a CI credential grant only *View app information* and *Manage testing tracks*, so it cannot reach production — see [RELEASING.md](RELEASING.md#the-play-service-account). A workstation credential used for production promotion additionally needs *Manage production releases*. Note: it can take up to 36 hours for credentials to become active.
 4. Add the path to `gradle.properties`:
    ```
    PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
@@ -101,7 +104,7 @@ We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher
 |---|---|
 | `./gradlew publishObaGoogleReleaseBundle` | Build release AAB, auto-increment `versionCode`, and upload to the open testing (beta) track |
 | `./gradlew publishObaGoogleReleaseApps` | Same as above, plus upload all Play Store metadata (listing, screenshots, etc.) |
-| `./gradlew promoteObaGoogleReleaseArtifact` | Promote the current beta release to production (e.g., alpha → beta → production) |
+| `./gradlew promoteObaGoogleReleaseArtifact --from-track beta --promote-track production` | Promote the current beta release to production. Name both tracks explicitly: the defaults promote the configured track (`beta`) onto itself. Needs a credential with production rights — the CI service account has testing-track permission only. |
 
 #### Managing Play Store metadata
 

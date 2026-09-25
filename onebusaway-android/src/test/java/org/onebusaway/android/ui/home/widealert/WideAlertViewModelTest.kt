@@ -29,7 +29,11 @@ import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
 
 private class FakeWideAlertsRepository(private val alerts: List<WideAlert>) : WideAlertsRepository {
+    /** The region id of each `wideAlerts` *subscription*, in order — one per stream the VM starts. */
+    val subscriptions = mutableListOf<String>()
+
     override fun wideAlerts(regionId: String): Flow<WideAlert> = flow {
+        subscriptions.add(regionId)
         alerts.forEach { emit(it) }
     }
 }
@@ -57,5 +61,43 @@ class WideAlertViewModelTest {
 
         vm.dismiss()
         assertNull(vm.wideAlert.value)
+    }
+
+    /**
+     * The stream is keyed on the whole [org.onebusaway.android.region.Region.SidecarTarget], not on the
+     * sidecar id alone: a deep-link-added region carries the id its *own* sidecar knows it by (#2165), so
+     * it can equal a directory region's id while pointing at a different host. Keyed on the id alone,
+     * `distinctUntilChanged` swallows the switch and the rider keeps seeing the old host's alert.
+     */
+    @Test
+    fun `switching to a different sidecar host restarts the stream even when the sidecar id matches`() = runTest {
+        val repo = FakeWideAlertsRepository(listOf(WideAlert("Title", "Message", null)))
+        val regions = FakeRegionRepository()
+        WideAlertViewModel(repo, regions)
+
+        regions.emit(region(19, sidecarBaseUrl = "https://a.example.org/"))
+        advanceUntilIdle()
+        regions.emit(
+            region(-2, custom = true, sidecarBaseUrl = "https://b.example.org/", sidecarRegionId = 19)
+        )
+        advanceUntilIdle()
+
+        // Same id on the wire both times — two subscriptions is the whole point.
+        assertEquals(listOf("19", "19"), repo.subscriptions)
+    }
+
+    /** The complement: a re-emission of the *same* endpoint must not restart the stream. */
+    @Test
+    fun `re-emitting the same region does not restart the stream`() = runTest {
+        val repo = FakeWideAlertsRepository(listOf(WideAlert("Title", "Message", null)))
+        val regions = FakeRegionRepository()
+        WideAlertViewModel(repo, regions)
+
+        regions.emit(region(19, sidecarBaseUrl = "https://a.example.org/"))
+        advanceUntilIdle()
+        regions.emit(region(19, sidecarBaseUrl = "https://a.example.org/"))
+        advanceUntilIdle()
+
+        assertEquals(listOf("19"), repo.subscriptions)
     }
 }

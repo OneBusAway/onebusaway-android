@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map
 
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.FocusedTrip
@@ -34,7 +35,15 @@ internal data class RouteMapPresentation(
     val framingPolylines: List<RoutePolyline>,
     val routeModeScalesStopsWithZoom: Boolean,
     val badges: List<RouteBadge>,
-    val stopPresentation: RouteStopPresentation?
+    val stopPresentation: RouteStopPresentation?,
+    /**
+     * The colour this plan drew the selected trip's own line in, or null when no selected trip line was
+     * drawn. Reported rather than left implicit because the uncertainty band is tinted to contrast the
+     * line it lies over, and the line's colour is decided here — a selection inside stop focus takes an
+     * adjacency hue, not the shown route's ([selectedTripStyle]), so the controller re-deriving it would
+     * be a second copy of that rule, free to disagree (#1990).
+     */
+    val selectedTripColor: Int? = null
 )
 
 /** A selected vehicle's exact trip, as read fresh after its shape/schedule resolve. */
@@ -49,9 +58,9 @@ internal data class SelectedTripPresentation(
  * must resolve from IO/retained state: the [presentation] itself (from the trip-observation store) and
  * the GTFS-colour fallback ([routeColorFallback]) when the selected route carries no adjacency colour,
  * both cheap and always needed to decide drawability; plus the selected direction's thinned
- * [directionUnderlay] and the projected-onto-shape [stopPresentation], each of which the assembler uses
+ * [directionUnderlay] and the scheduled [stopPresentation], each of which the assembler uses
  * on only some branches — so they're deferred as thunks and computed only when that branch is taken
- * (the underlay does a per-segment copy, the stop presentation a `Location` projection). Bundled so the
+ * (the underlay copies segments, the stop presentation resolves scheduled stop IDs). Bundled so the
  * pure function stays a function of plain data + lazily-resolved dependencies.
  */
 internal data class SelectedTripRenderInput(
@@ -70,28 +79,34 @@ internal data class SelectedTripRenderInput(
  *    otherwise, but the thinned direction underlay is gated on stop-focus being active at all, not on
  *    whether an adjacency colour happened to be found for this exact direction. (The #1899 regression
  *    was exactly that: the underlay decision proxied off the colour lookup instead of the real
- *    stop-focus state, see #1902.)
+ *    stop-focus state, see #1902.) What it replaces is a *route's* geometry — see [baseIsRideApproach]
+ *    for the ride focus, whose base is not that and stays (#2239).
  * 2. **No stop-focus session** ([focusTrips] null): the plain base route (or ordinary nearby stops).
  * 3. **Stop-focus session**: adjacency geometry for the focused stop's trips, drawn over the emphasized
  *    base route only when that route isn't itself one of the focused trips ([showBaseRoute]).
  *
- * Pure so the precedence table is unit-tested without standing up the controller. The `Location`-backed
- * work enters lazily so the merge policy itself stays plain data, JVM-testable across every branch: the
- * focused-stop projection as the [projectedFocusStops] thunk, the selected-trip underlay/stop projection
- * as thunks on [SelectedTripRenderInput]. That projection geometry is covered by instrumented tests.
+ * Pure so the precedence table is unit-tested without standing up the controller. Selected-trip
+ * underlay and stop resolution stay lazy because only the selected-vehicle branch needs them.
+ *
+ * @param baseIsRideApproach what [basePolylines] *is*, which decides what a drilled-into vehicle does to
+ * it (#2239). False for an ordinary route session, where it is the shown route's own corridor — one
+ * route's geometry, which the exact trip line is a better answer for, and which the trip's own thinned
+ * underlay stands in for. True in a directions ride focus, where it is the ride's approach set: the
+ * upstream lead-in of every route the rider may board (#2010), only one of which the selected vehicle
+ * runs — so it stays drawn, and brings its own route context, leaving the corridor underlay off.
  */
 internal fun assembleRouteMapPresentation(
     isActive: Boolean,
     emphasizedRoute: RouteDirectionKey?,
     basePolylines: List<RoutePolyline>,
+    baseIsRideApproach: Boolean,
     baseStopPresentation: RouteStopPresentation?,
     focusTrips: Set<FocusedTrip>?,
     focusedGeometry: FocusedTripGeometry,
     focusedStops: FocusedTripStops,
     focusedRoutes: List<ObaRoute>,
     routeColors: Map<RouteDirectionKey, Int>,
-    selected: SelectedTripRenderInput?,
-    projectedFocusStops: () -> Map<String, GeoPoint>
+    selected: SelectedTripRenderInput?
 ): RouteMapPresentation {
     // Route badges accompany adjacency geometry; a whole-route emphasis has no adjacency entry to badge.
     val badges = if (emphasizedRoute == null) {
@@ -101,30 +116,39 @@ internal fun assembleRouteMapPresentation(
     }
 
     // 1. Selected vehicle: draw its exact trip in place of the direction geometry. Stop focus alone
-    // gates the underlay, not whether an adjacency color happened to be found for this exact
-    // direction — see selectedTripStyle (#1902).
+    // gates the underlay's stop-focus case, not whether an adjacency color happened to be found for
+    // this exact direction — see selectedTripStyle (#1902).
     if (selected != null) {
         val style = selectedTripStyle(
-            focusTrips != null,
-            selected.presentation.routeDirection,
-            routeColors,
-            selected.routeColorFallback
+            stopFocusActive = focusTrips != null,
+            rideApproachActive = baseIsRideApproach,
+            selectedRouteDirection = selected.presentation.routeDirection,
+            routeColors = routeColors,
+            routeColorFallback = selected.routeColorFallback
         )
         val selectedTrip = selected.presentation.points
             .takeIf { it.size >= 2 }
             ?.let { points -> focusedRoutePolyline(style.color, points, directional = true) }
         if (selectedTrip != null) {
+            // A ride's approach set survives the vehicle drawn over it (see [baseIsRideApproach]); a
+            // route's own corridor is what the exact trip replaces. Kept first, so the trip reads over it.
+            val keptBase = if (baseIsRideApproach) basePolylines else emptyList()
             return RouteMapPresentation(
-                polylines = focusedGeometry.toTripFocusedRoutePolylines(
-                    selected.presentation.routeDirection,
-                    routeColors,
-                    if (style.includeUnderlay) selected.directionUnderlay() else emptyList(),
-                    selectedTrip
-                ),
+                polylines = keptBase +
+                    focusedGeometry.toTripFocusedRoutePolylines(
+                        selected.presentation.routeDirection,
+                        routeColors,
+                        if (style.includeUnderlay) selected.directionUnderlay() else emptyList(),
+                        selectedTrip
+                    ),
                 framingPolylines = listOf(selectedTrip),
                 routeModeScalesStopsWithZoom = isActive,
                 badges = badges,
-                stopPresentation = selected.stopPresentation()
+                stopPresentation = selected.stopPresentation().copy(
+                    keepNearbyStops = focusTrips != null,
+                    routeColors = mapOf(selected.presentation.routeDirection to style.color)
+                ),
+                selectedTripColor = style.color
             )
         }
         // A resolved-but-undrawable (< 2-point) trip falls through to the base/focus branches.
@@ -153,7 +177,22 @@ internal fun assembleRouteMapPresentation(
     val showBaseRoute = isActive &&
         emphasizedRoute != null &&
         focusTrips.none { it.routeDirection == emphasizedRoute }
-    val routesByStopId = focusedStops.routeDirectionsByStopId(focusTrips, emphasizedRoute)
+    val stopPresentation = if (showBaseRoute) {
+        baseStopPresentation?.copy(keepNearbyStops = true)
+    } else {
+        val routesByStopId = focusedStops.routeDirectionsByStopId(focusTrips, emphasizedRoute)
+        RouteStopPresentation(
+            stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
+            routes = focusedRoutes,
+            routeDirectionsByStopId = routesByStopId,
+            routeColors = routesByStopId.values.flatten().distinct().associateWith { key ->
+                routeColors[key] ?: mapRouteLineColorOrNull(
+                    focusedGeometry.shapes.firstOrNull { it.routeDirection == key }?.routeColor
+                ) ?: DEFAULT_ROUTE_LINE_COLOR
+            },
+            keepNearbyStops = true
+        )
+    }
     return RouteMapPresentation(
         polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
             if (showBaseRoute) basePolylines else emptyList(),
@@ -162,15 +201,6 @@ internal fun assembleRouteMapPresentation(
         framingPolylines = if (isActive) basePolylines else emptyList(),
         routeModeScalesStopsWithZoom = isActive,
         badges = badges,
-        stopPresentation = if (showBaseRoute) {
-            baseStopPresentation
-        } else {
-            RouteStopPresentation(
-                stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
-                routes = focusedRoutes,
-                routeDirectionsByStopId = routesByStopId,
-                projectedPoints = projectedFocusStops()
-            )
-        }
+        stopPresentation = stopPresentation
     )
 }

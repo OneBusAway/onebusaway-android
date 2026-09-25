@@ -38,12 +38,9 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
-import org.onebusaway.android.map.compose.formatDataAge
+import org.onebusaway.android.map.compose.rentalContentDescription
 import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BadgedRoute
-import org.onebusaway.android.map.render.BikeBand
-import org.onebusaway.android.map.render.BikeBitmaps
-import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.MapPing
@@ -51,20 +48,27 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.RentalBand
+import org.onebusaway.android.map.render.RentalBitmaps
+import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
+import org.onebusaway.android.map.render.SingleSubjectSmoother
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
-import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.formatDataAge
+import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
-import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.map.render.vehicleTitle
+import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -85,8 +89,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
  *    identity set changes; the band's polylines, which carry no interaction state, are remove+re-added.
  *
- * maplibre markers have no per-marker anchor and the classic info window is title/snippet, so the rich
- * Google Compose info windows degrade to a title + snippet here (a deliberate flavor gap).
+ * maplibre markers have no per-marker anchor, so what the Google flavor anchors precisely sits by
+ * maplibre's own convention here (a deliberate flavor gap).
  *
  * The classic annotation API (Marker/Polyline/Icon/IconFactory) is deprecated in maplibre 11.x but
  * still fully functional. This whole renderer — and the tap/info-window layer it feeds — is built on
@@ -105,7 +109,7 @@ class MapLibreRenderer(
     // the basemap it separates its line from does (see [mapRouteLineCaseColor]). Shared by everything that
     // draws in it — the case itself, and the interline cut, which is why they can't drift apart.
     private val caseColorOf: (RoutePolyline) -> Int =
-        { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) }
+        { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context), it.case) }
 
     // The marks on a route line's ends, drawn as style layers because the classic polyline annotation has no
     // configurable cap: the endpoint bulbs, and the interline cutover slashes (#2127). Rendered together
@@ -117,7 +121,11 @@ class MapLibreRenderer(
         context.resources.displayMetrics.density,
         caseColorOf = caseColorOf
     )
-    private val bikeByMarker = HashMap<Marker, BikeMarker>()
+    private val rentalByMarker = HashMap<Marker, RentalMarker>()
+
+    // Native sprites for the rental markers, keyed by everything that varies the artwork. Bounded by
+    // (layers x kinds x charge buckets) + 1, so a plain map rather than an LruCache.
+    private val rentalIcons = HashMap<String, Icon>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -160,7 +168,11 @@ class MapLibreRenderer(
     // operations below are supplied here.
     private val routePolylineReconciler = RoutePolylineReconciler<Polyline>(
         widthOf = ::routeWidth,
-        createLine = { polyline, width ->
+        // The mark inset the reconciler offers is ignored here: the classic annotation draws no caps, and
+        // the bulbs are their own circle layer drawn from the canonical lines rather than from these
+        // strokes (see [MapLibreRouteEndpointBulbLayer]) — so nothing on a maplibre line is sized from a
+        // stroke it would have to be restated against.
+        createLine = { polyline, width, _ ->
             map.addPolyline(
                 PolylineOptions()
                     .color(polyline.resolvedColor)
@@ -169,30 +181,30 @@ class MapLibreRenderer(
             )
         },
         removeLines = { lines -> map.removeAnnotations(lines) },
-        setWidth = { line, width -> line.width = width },
+        setWidth = { line, _, width, _ -> line.width = width },
         caseColorOf = caseColorOf,
         // maplibre annotation widths are already in dp, so no density conversion is involved.
         caseExtraWidth = { it.case.extraWidthDp }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
-    // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
-    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
-    // each vehicle-set reconcile and read by [vehicleResponse].
+    // vehicles keyed by active trip id, the selected vehicle's single fast-estimate marker, and the
+    // band's (interaction-free) polylines re-added each frame.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
-    private val tripMarkersByRole = HashMap<String, Marker>()
-    private val bandPolylines = mutableListOf<Polyline>()
-    private var lastVehicleResponse: RouteTrips? = null
+    private var fastEstimateMarker: Marker? = null
 
-    // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id, so the hot path can
-    // re-stamp the direction arrow as a vehicle glides — only when its heading octant flips, not every frame.
-    private val vehicleIconDirection = HashMap<String, Int>()
+    // The fill the fast-estimate marker's icon is currently stamped with, so it's re-stamped only when
+    // its band colour changes (#1990). 0 whenever there is no marker.
+    private var fastEstimateFill: Int = 0
+    private val bandPolylines = mutableListOf<Polyline>()
+
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
-    // doesn't pop. Route vehicles keyed by trip id; the trip-focus estimate markers keyed by role.
+    // doesn't pop. Route vehicles are keyed by trip id; the fast-estimate marker shows one vehicle at a
+    // time, so it takes the smoother that scopes the correction to that vehicle (#2222).
     private val vehicleSmoother = CorrectionSmoother()
-    private val tripSmoother = CorrectionSmoother()
+    private val fastEstimateSmoother = SingleSubjectSmoother()
 
     // The selected vehicle's most-recent-data dot: a marker at its last actual AVL fix (where the live
     // estimate was last corrected from), shown while a vehicle is selected, with a "Most recent data"
@@ -203,7 +215,39 @@ class MapLibreRenderer(
     private var dotFixTimeMs: Long = 0L
     private var dotAgeSeconds: Long = -1L
 
+    // The fill the dot's icon is currently stamped with (the band's colour, #1990), so it's re-stamped
+    // only when that colour actually changes. 0 whenever there is no dot — not a colour any fill can be.
+    private var dotFillColor: Int = 0
+
     private val iconFactory = IconFactory.getInstance(context)
+
+    // Trip-marker icons by (drawable, fill). Cached because every `iconFactory.fromBitmap` carries a full
+    // ARGB copy of its bitmap and mints a fresh native sprite id, and these sit on the per-frame path.
+    //
+    // An LRU rather than a plain map, for the same reason [routeBadgeIcons] is one: the fill dimension of
+    // the key is the band's colour, which turns over with every route and every stop-focus adjacency slot
+    // the session shows, so unbounded this retains a bitmap and a sprite per colour it ever drew. Only one
+    // selection exists at a time, so the live working set is two entries — the slack is what keeps
+    // flipping between recently-visited selections off the render path. Evicting is safe for the reason it
+    // is there: a marker holds its own reference to the Icon it was given. Freed in [dispose].
+    private val tripCircleIcons = LruCache<Pair<Int, Int>, Icon>(TRIP_ICON_CACHE_SIZE)
+
+    // Vehicle marker icons by [VehicleBitmaps.iconKey] — the maplibre counterpart of the Google flavor's
+    // descriptorCache on the same path, keyed the same way, and cached for the reason [routeBadgeIcons]
+    // and [tripCircleIcons] are: `iconFactory.fromBitmap` mints a fresh native sprite id per call (two
+    // icons made from equal bitmaps never dedupe) and `Marker.icon =` does not release the icon it
+    // replaces. [VehicleBitmaps]'s own LRU bounds the *bitmaps*, which is why this flavor got away
+    // without a second level for so long — but that cache hands back the same Bitmap, and re-wrapping it
+    // still registers another sprite. So a reconcile re-stamping every retained vehicle each poll, and
+    // [updateVehicleScale] re-stamping them on each camera settle, leaked a sprite per vehicle per pass
+    // for the life of the map — an unbounded climb toward the SDK's TooManyIconsException on a long
+    // session in route mode. Freed in [dispose].
+    //
+    // Sized like the badges rather than the trip glyphs: a busy route's vehicles span several fullness
+    // states per disc colour, and a stop-focus or continuation view draws several routes' worth at once.
+    // Evicting is safe for the same reason it is there — a marker holds its own reference to the Icon it
+    // was given, so a still-drawn vehicle keeps its sprite and an evicted key is merely re-minted.
+    private val vehicleIcons = LruCache<String, Icon>(VEHICLE_ICON_CACHE_SIZE)
 
     // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION],
     // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
@@ -213,12 +257,11 @@ class MapLibreRenderer(
     private var pingStart: WallTime? = null
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
     private val density = context.resources.displayMetrics.density
-    private val routeStopCircleLayer = MapLibreRouteStopCircleLayer(
+    private val routeStopLayer = MapLibreRouteStopBitmapLayer(
         map,
         mapStyle,
         density,
         ContextCompat.getColor(context, R.color.route_stop_fill),
-        ContextCompat.getColor(context, R.color.map_stop_focus),
         ContextCompat.getColor(context, R.color.route_stop_outline)
     )
 
@@ -237,37 +280,37 @@ class MapLibreRenderer(
         }
         // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
         // the bike / route-badge tap maps are cleared here.
-        bikeByMarker.clear()
+        rentalByMarker.clear()
+        rentalIcons.clear()
         routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
-        routeStopCircleLayer.render(
+        routeStopLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,
             snapshot.routeStopsScaleWithZoom,
             snapshot.stopFocusRecedesAdjacent
         )
 
-        if (snapshot.bikeshareVisible) {
-            val band = bikeZoomBand(map.cameraPosition.zoom.toFloat())
-            if (band != BikeBand.HIDDEN) {
-                for (bike in snapshot.bikeStations) {
-                    val bitmap = when {
-                        band == BikeBand.BIG && bike.isFloatingBike -> BikeBitmaps.bigFloating(context)
-                        band == BikeBand.BIG -> BikeBitmaps.bigStation(context)
-                        else -> BikeBitmaps.small(context)
-                    }
-                    val station = bike.station
-                    // Title is kept only so a marker tap opens the info window; the InfoWindowAdapter
-                    // renders the shared BikeInfoWindow composable instead of the title/snippet.
+        if (snapshot.rentalsVisible) {
+            val band = rentalZoomBand(map.cameraPosition.zoom.toFloat())
+            if (band != RentalBand.HIDDEN) {
+                val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
+                for (rental in snapshot.rentals) {
+                    val icon = rentalIcon(rental, band)
+                    // Title is kept only so a marker tap opens the info window (the InfoWindowAdapter
+                    // renders the shared RentalInfoWindow composable instead of the title/snippet); the
+                    // snippet is the marker's content description, so a rider using TalkBack hears the
+                    // occupancy and charge (#2168).
                     val marker = map.addMarker(
                         MarkerOptions()
-                            .position(bike.point.toLatLng())
-                            .icon(iconFactory.fromBitmap(bitmap))
-                            .title(station.name)
+                            .position(rental.point.toLatLng())
+                            .icon(icon)
+                            .title(rental.place.name)
+                            .snippet(rentalContentDescription(context, rental.place, metric))
                     )
                     staticAnnotations.add(marker)
-                    bikeByMarker[marker] = bike
+                    rentalByMarker[marker] = rental
                 }
             }
         }
@@ -305,10 +348,9 @@ class MapLibreRenderer(
     }
 
     /**
-     * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102). A label on the
-     * fixed profile — every one but a directions itinerary's — resolves to the same scale either side of
-     * the move and is left alone, as is a scheduled one whose camera stayed within a flat end of its ramp
-     * or moved less than one quantization step (see [RouteBadgeScaleProfile.scaleAt]).
+     * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102, #2195). A label
+     * whose camera stayed within a flat end of its ramp, or moved less than one quantization step, resolves
+     * to the same scale either side of the move and is left alone (see [RouteBadgeScaleProfile.scaleAt]).
      */
     private fun updateRouteBadgeScale(zoom: Float) {
         val previous = renderedBadgeZoom
@@ -362,18 +404,21 @@ class MapLibreRenderer(
      * across a fresh fix via [nowMs]); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
-        moveVehicles(vehicles, nowMs)
+        // The dot is the band's origin marker, so it is filled with the band's colour (#1990) — carried on
+        // the overlay even when that frame has no band to draw. Only a selection with no overlay at all
+        // (nothing selected, so no dot either) reaches the default.
+        moveVehicles(vehicles, overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR, nowMs)
         updateTripOverlay(overlay, nowMs)
     }
 
     /** Releases renderer-owned annotations and extracted style layers before MapView destruction. */
     fun dispose() {
         vehicleSmoother.retainOnly(emptySet())
-        tripSmoother.retainOnly(emptySet())
+        fastEstimateSmoother.clear()
         dotSmoother.retainOnly(emptySet())
         clearPing()
         stopMarkerLayer.dispose()
-        routeStopCircleLayer.dispose()
+        routeStopLayer.dispose()
         routeEndpointBulbLayer.dispose()
         interlineSeamLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
@@ -382,15 +427,17 @@ class MapLibreRenderer(
 
         staticAnnotations.clear()
         vehicleMarkersByTripId.clear()
-        tripMarkersByRole.clear()
+        fastEstimateMarker = null
+        fastEstimateFill = 0
+        tripCircleIcons.evictAll()
         bandPolylines.clear()
         vehicleByMarker.clear()
-        bikeByMarker.clear()
+        vehicleIcons.evictAll()
+        rentalByMarker.clear()
+        rentalIcons.clear()
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
-        vehicleIconDirection.clear()
         mostRecentDataMarker = null
-        lastVehicleResponse = null
     }
 
     /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
@@ -455,31 +502,24 @@ class MapLibreRenderer(
      * published rather than being inferred from the per-frame motion sample.
      */
     fun reconcileVehicles(set: MapVehicles?) {
-        reconcileVehicleMarkers(set?.markers.orEmpty(), set?.response)
-        lastVehicleResponse = set?.response
+        reconcileVehicleMarkers(set?.markers.orEmpty())
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
-    // diffing or icon work on the hot path, only an icon re-stamp when a vehicle's heading octant flips.
+    // diffing or icon work on the hot path, and no icon work at all.
     // Markers not yet reconciled are skipped.
-    private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
-        val response = vehicles?.response
-        val markers = vehicles?.markers.orEmpty()
-        for (vehicle in markers) {
+    //
+    // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;
+    // since #2194 removed that arrow, nothing about the icon varies between polls (see
+    // [VehicleBitmaps.iconKey]), so the whole per-frame icon path is gone.
+    private fun moveVehicles(vehicles: MapVehicles?, dotFill: Int, nowMs: Long) {
+        for (vehicle in vehicles?.markers.orEmpty()) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.moveTo(
                 vehicleSmoother.displayPosition(vehicle.activeTripId, vehicle.point, vehicle.fixTimeMs, nowMs).toLatLng()
             )
-            // Re-stamp the direction arrow as the vehicle glides, but only when its heading octant flips
-            // (the only thing that changes the icon between polls) — keeping icon work off the every-frame path.
-            if (response != null) {
-                val direction = VehicleBitmaps.directionIndex(vehicle)
-                if (vehicleIconDirection.put(vehicle.activeTripId, direction) != direction) {
-                    marker.icon = vehicleIcon(vehicle, response)
-                }
-            }
         }
-        updateMostRecentDataDot(nowMs)
+        updateMostRecentDataDot(dotFill, nowMs)
     }
 
     /**
@@ -492,8 +532,12 @@ class MapLibreRenderer(
      * As on Google, the marker is touched only on an actual change or while a fix correction is still
      * settling — never an unconditional per-tick set, which would redraw an open bubble; the age is
      * refreshed only while the bubble is closed.
+     *
+     * [fillColor] is the uncertainty band's colour: the dot marks the band's origin, so it is filled with
+     * it (#1990), and re-stamped whenever that colour changes — which is only when the selected trip's
+     * line recolours, not per tick.
      */
-    private fun updateMostRecentDataDot(nowMs: Long) {
+    private fun updateMostRecentDataDot(fillColor: Int, nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
         // Read the dot's inputs from the reconciled (per-poll) set, not the per-frame motion samples:
         // the fix point + age are discrete, changing only when a new poll lands, and the set is where the
@@ -510,6 +554,7 @@ class MapLibreRenderer(
             dotSmoother.retainOnly(emptySet())
             dotSelectedId = null
             dotAgeSeconds = -1L
+            dotFillColor = 0
             return
         }
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
@@ -518,11 +563,12 @@ class MapLibreRenderer(
             mostRecentDataMarker = map.addMarker(
                 MarkerOptions()
                     .position(target.toLatLng())
-                    .icon(dataAgeIcon)
+                    .icon(dataAgeIcon(fillColor))
                     .title(context.getString(R.string.marker_most_recent_data))
                     .snippet(formatDataAge(context.resources, ageSeconds))
             )
             dotAgeSeconds = ageSeconds
+            dotFillColor = fillColor
             // The dot is created only after a no-selection gap cleared the smoother, so just prime it
             // (records the shown position; no correction).
             dotSmoother.prime(selectedId, target, selected.fixTimeMs)
@@ -538,16 +584,19 @@ class MapLibreRenderer(
                 existing.snippet = formatDataAge(context.resources, ageSeconds)
                 dotAgeSeconds = ageSeconds
             }
+            if (fillColor != dotFillColor) {
+                existing.icon = dataAgeIcon(fillColor)
+                dotFillColor = fillColor
+            }
         }
         dotSelectedId = selectedId
         dotFixTimeMs = selected.fixTimeMs
     }
 
     /** Add/remove vehicle markers to match [markers], (re)setting their icons, titles, and tap data. */
-    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
+    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
-        vehicleIconDirection.keys.retainAll(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
         while (gone.hasNext()) {
             val entry = gone.next()
@@ -557,40 +606,41 @@ class MapLibreRenderer(
                 gone.remove()
             }
         }
-        if (response == null) return
         for (vehicle in markers) {
             val existing = vehicleMarkersByTripId[vehicle.activeTripId]
             if (existing == null) {
                 val marker = map.addMarker(
                     MarkerOptions().position(vehicle.point.toLatLng())
-                        .icon(vehicleIcon(vehicle, response))
-                        .title(vehicleTitle(vehicle, response))
+                        .icon(vehicleIcon(vehicle))
+                        .title(vehicleTitle(context, vehicle))
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
-                existing.icon = vehicleIcon(vehicle, response)
-                existing.title = vehicleTitle(vehicle, response)
+                existing.icon = vehicleIcon(vehicle)
+                existing.title = vehicleTitle(context, vehicle)
                 vehicleByMarker[existing] = vehicle
             }
-            // The poll refreshes the icon (color + heading); record the stamped octant so the hot path
-            // doesn't redundantly re-stamp it this frame.
-            vehicleIconDirection[vehicle.activeTripId] = VehicleBitmaps.directionIndex(vehicle)
         }
     }
 
     // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
-    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon = iconFactory.fromBitmap(
-        VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
-    )
+    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752). That
+    // no-adjustment-available constraint is why the bitmap reserves the occupancy tab's depth above the
+    // disc as well as below: it keeps the disc on the bitmap's center even for a marker whose tab hangs
+    // off the bottom, so this flavor needs no anchor it cannot express (see [VehicleBitmaps]).
+    private fun vehicleIcon(vehicle: VehicleMarker): Icon {
+        val key = VehicleBitmaps.iconKey(context, vehicle, renderedVehicleScale)
+        return vehicleIcons.get(key)
+            ?: iconFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, renderedVehicleScale))
+                .also { vehicleIcons.put(key, it) }
+    }
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
         if (scale == renderedVehicleScale) return
         renderedVehicleScale = scale
-        val response = lastVehicleResponse ?: return
-        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle, response)
+        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle)
     }
 
     /**
@@ -601,12 +651,6 @@ class MapLibreRenderer(
     private fun Marker.moveTo(latLng: LatLng) {
         position = latLng
         if (isInfoWindowShown) getInfoWindow()?.update()
-    }
-
-    private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
-        val trip = response.trip(vehicle.status.activeTripId) ?: return ""
-        val route = response.route(trip.routeId) ?: return ""
-        return getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
     }
 
     private fun updateTripOverlay(overlay: TripOverlay?, nowMs: Long) {
@@ -632,54 +676,90 @@ class MapLibreRenderer(
         while (bandPolylines.size > band.size) {
             map.removeAnnotation(bandPolylines.removeAt(bandPolylines.size - 1))
         }
-        // The fast-estimate marker moves in place (keeping any open info window); the fix instant drives
-        // the smoother's correction.
-        updateTripMarker("fast", overlay?.fastEstimatePoint, fastEstimateIcon, "Fast estimate", overlay?.fixTimeMs ?: 0L, nowMs)
-        // Drop smoother state for the marker's role once it's gone (overlay went null on deselect).
-        tripSmoother.retainOnly(tripMarkersByRole.keys)
+        updateFastEstimateMarker(overlay, nowMs)
     }
 
-    private fun updateTripMarker(
-        role: String,
-        point: GeoPoint?,
-        icon: Icon,
-        title: String,
-        fixTimeMs: Long,
-        nowMs: Long
-    ) {
-        val existing = tripMarkersByRole[role]
-        if (point == null) {
-            existing?.let {
-                map.removeAnnotation(it)
-                tripMarkersByRole.remove(role)
-            }
+    /**
+     * The selected vehicle's fast-estimate marker: created on the first overlay with a point, removed
+     * when there is none, and moved in place otherwise (keeping any open info window). Its correction is
+     * smoothed per vehicle by [fastEstimateSmoother], so a fresh fix on the trip it draws glides while a
+     * tap onto another trip jumps (#2222). The icon resolves lazily from the band's colour and is
+     * re-stamped only when that colour changes (#1990) — never per frame.
+     */
+    private fun updateFastEstimateMarker(overlay: TripOverlay?, nowMs: Long) {
+        val point = overlay?.fastEstimatePoint
+        val existing = fastEstimateMarker
+        if (overlay == null || point == null) {
+            existing?.let { map.removeAnnotation(it) }
+            fastEstimateMarker = null
+            fastEstimateFill = 0
+            fastEstimateSmoother.clear()
             return
         }
+        val fillColor = overlay.markerColorArgb
         if (existing == null) {
-            tripMarkersByRole[role] =
-                map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon).title(title))
-            tripSmoother.prime(role, point, fixTimeMs)
+            fastEstimateMarker = map.addMarker(
+                MarkerOptions()
+                    .position(point.toLatLng())
+                    .icon(fastEstimateIcon(fillColor))
+                    .title(FAST_ESTIMATE_TITLE)
+            )
+            fastEstimateFill = fillColor
+            fastEstimateSmoother.prime(overlay.tripId, point, overlay.fixTimeMs)
         } else {
-            existing.moveTo(tripSmoother.displayPosition(role, point, fixTimeMs, nowMs).toLatLng())
-            if (existing.title != title) existing.title = title
+            if (fastEstimateFill != fillColor) {
+                existing.icon = fastEstimateIcon(fillColor)
+                fastEstimateFill = fillColor
+            }
+            existing.moveTo(
+                fastEstimateSmoother.displayPosition(overlay.tripId, point, overlay.fixTimeMs, nowMs).toLatLng()
+            )
         }
     }
 
-    private val fastEstimateIcon: Icon by lazy {
-        iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate))
-    }
+    // Both trip-marker discs are filled with the band's colour, and both glyphs are tinted to read on it
+    // by the shared bitmap factory — so the band, its origin and its leading end are visibly one object
+    // (#1990). Each distinct fill mints a native sprite id, so they're cached rather than rebuilt.
+    private fun fastEstimateIcon(fillColor: Int): Icon = tripCircleIcon(R.drawable.ic_fast_estimate, fillColor)
 
-    // The signal glyph is light, so tint it gray to read on the white disc (the most-recent-data dot).
-    private val dataAgeIcon: Icon by lazy {
-        iconFactory.fromBitmap(
-            TripMarkerBitmaps.circle(context, R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
-        )
+    private fun dataAgeIcon(fillColor: Int): Icon = tripCircleIcon(R.drawable.ic_signal_indicator, fillColor)
+
+    private fun tripCircleIcon(drawableRes: Int, fillColor: Int): Icon {
+        val key = drawableRes to fillColor
+        return tripCircleIcons.get(key)
+            ?: iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, drawableRes, fillColor))
+                .also { tripCircleIcons.put(key, it) }
     }
     fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker)
 
-    fun routeStopAt(point: LatLng): StopMarker? = routeStopCircleLayer.stopAt(point)
+    fun routeStopAt(point: LatLng): StopMarker? = routeStopLayer.stopAt(point)
 
-    fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
+    /**
+     * The [Icon] for [rental] at [band] — the layer's colour and glyph, filled by its charge ring.
+     *
+     * Cached, because `renderStatic` rebuilds every annotation on every snapshot and each
+     * `iconFactory.fromBitmap` mints a fresh native sprite id: minting per marker per redraw would
+     * accumulate native textures for icons that are, at most, `bands x layers x kinds x charge buckets`
+     * distinct. The key mirrors what actually varies the artwork — `RentalBitmaps` quantizes the charge
+     * itself, so the bucket, not the raw reading, is what belongs in the key.
+     *
+     * maplibre centres every marker icon on its point, which is exactly where a badge belongs, so there
+     * is no per-marker anchor to set here, unlike the Google flavor.
+     */
+    private fun rentalIcon(rental: RentalMarker, band: RentalBand): Icon {
+        if (band != RentalBand.BIG) {
+            return rentalIcons.get(SMALL_RENTAL_ICON_KEY)
+                ?: iconFactory.fromBitmap(RentalBitmaps.small(context))
+                    .also { rentalIcons.put(SMALL_RENTAL_ICON_KEY, it) }
+        }
+        val charge = rentalChargeFraction(rental.place)
+        val key = "${rental.layer}/${rental.place.kind}/${RentalBitmaps.chargeBucket(charge)}"
+        return rentalIcons.get(key)
+            ?: iconFactory.fromBitmap(RentalBitmaps.big(context, rental.layer, rental.place.kind, charge))
+                .also { rentalIcons.put(key, it) }
+    }
+
+    fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
@@ -697,20 +777,36 @@ class MapLibreRenderer(
      */
     fun vehicleMarkerUnderPing(marker: Marker): Marker? = if (marker == pingMarker) pingTripId?.let { vehicleMarkersByTripId[it] } else null
 
-    /** The current trips-for-route response, needed to render a vehicle's info window. */
-    fun vehicleResponse(): RouteTrips? = lastVehicleResponse
-
     companion object {
         private const val ROUTE_WIDTH_DP = 3f
         private const val TRIP_BAND_WIDTH_DP = 6f
 
+        // The fast-estimate marker's info-window title, fixed at creation (the marker's subject changes,
+        // its job on the map doesn't). Mirrors the Google flavor's TripEstimateMarker title.
+        private const val FAST_ESTIMATE_TITLE = "Fast estimate"
+
         // Sized to hold a whole zoom session's worth of the labels currently on the map, so panning the
-        // ramp end to end never evicts a label that is still drawn: a directions itinerary shows on the
-        // order of ten distinct pills, each of which can be asked for at any of the nine sizes
-        // [RouteBadgeScaleProfile.scaleAt]'s sixteenths quantize its ramp to, in either theme. Matches the
-        // Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges alongside its other icons.
+        // ramp end to end never evicts a label that is still drawn: a directions itinerary, or a focused
+        // stop's adjacent routes, shows on the order of ten distinct pills, each of which can be asked for
+        // at any of the nine sizes [RouteBadgeScaleProfile.scaleAt]'s sixteenths quantize its ramp to, in
+        // either theme. Matches the Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges
+        // alongside its other icons.
         private const val BADGE_ICON_CACHE_SIZE = 256
+
+        // Two glyphs (the fast estimate, the most-recent-data dot) across the last several band colours.
+        // Far smaller than the badge cache because only one vehicle is selected at a time, so exactly two
+        // of these are ever on the map at once; this is reuse across selections, not a working set.
+        private const val TRIP_ICON_CACHE_SIZE = 16
+
+        // A busy route's vehicles span the five fullness states across the handful of disc colours a
+        // stop-focus or continuation view draws at once, times the settle-time detail scales
+        // [routeLineWidthScale] resolves to. Sized like the badges rather than the trip glyphs because
+        // this is a genuine working set, not reuse across selections.
+        private const val VEHICLE_ICON_CACHE_SIZE = 256
     }
 }
 
 internal fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+
+/** Cache key for the band-independent small rental dot — see MapLibreRenderer.rentalIcon. */
+private const val SMALL_RENTAL_ICON_KEY = "small"

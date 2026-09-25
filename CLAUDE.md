@@ -82,32 +82,39 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
     **fix them, or opt that check out** in the `lint {}` block with a one-line rationale — don't
     reintroduce a whole-project baseline.
 
-## Automated Publishing (gradle-play-publisher)
+## Releasing (gradle-play-publisher, via CI)
 
-Uses [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) to auto-increment `versionCode`, build, and upload to Google Play.
+Releases ship from the **Release to Google Play** workflow (`.github/workflows/release.yml`):
+manual dispatch only, builds a signed `obaGoogle` release App Bundle, and uploads it with
+[gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher). Full procedure — cutting
+a release, the six repository secrets, the Play service account and how to rotate its key — is in
+**`docs/RELEASING.md`**; local publishing is in `docs/BUILD.md`.
 
-### Setup
-1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account (IAM & Admin → Service Accounts) and download the JSON key
-2. Enable the Google Play Android Developer API in Google Cloud Console
-3. In [Google Play Console](https://play.google.com/console), invite the service account email under Users & permissions and grant "Release manager" permissions
-4. Add to `gradle.properties`: `PLAY_STORE_JSON_KEY=/path/to/service-account-key.json`
+A release climbs the tracks one rung at a time, each rung a human decision: `alpha` (closed testing,
+the default, and the only track with testers attached) → `beta` → `production`. **`beta` is Play's
+*open* testing track**, and enrolment there is per-programme and sticky, not per-release — everyone
+who ever joined gets beta builds as silent automatic updates. So a full (`completed`) rollout to
+`beta` or `production` is refused by a guard step; those tracks take a staged (`inProgress`) release
+that can be halted from the Console. Production promotion isn't possible from CI at all: the service
+account has testing-track permission only.
 
-### Commands
-```bash
-# Build AAB, auto-increment versionCode, upload to open testing (beta) track
-./gradlew publishObaGoogleReleaseBundle
+Two things that bite:
 
-# Same as above + upload all Play Store metadata
-./gradlew publishObaGoogleReleaseApps
-
-# Promote beta release to production
-./gradlew promoteObaGoogleReleaseArtifact
-
-# Download existing Play Store listing metadata into repo
-./gradlew bootstrapObaGoogleReleaseListing
-```
-
-Configuration is in the `play {}` block of `onebusaway-android/build.gradle.kts`. Default: App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`.
+- **`versionCode` is not yours to edit; only `versionName` is.** `resolutionStrategy = AUTO` in the
+  `play {}` block auto-increments `versionCode` from the highest code on Play. AUTO is consulted on
+  every release *assemble*, not just `publish*` tasks — without credentials the block falls back to
+  `IGNORE` and the checked-in `versionCode` is used, so the build works but its output must not be
+  uploaded.
+- **`versionName` is `YY.RELEASE.PATCH`** — the year, then which release it is within that year. The
+  minor is **not** the month: `26.1.0` shipped in March. Tagging only became reliable at `v26.2.0`;
+  earlier releases went out untagged (`26.1.0`/code 154 is live on Play with no tag behind it), so
+  for anything older ask Play rather than git.
+- **Release notes live in two places and must agree**: `main_help_whatsnew` in
+  `src/main/res/values/strings.xml` (the in-app what's-new dialog, translated) and
+  `src/oba/play/release-notes/en-US/default.txt` (the Play listing, 500-char cap). The Play tree is
+  under `src/oba/` so the sample and third-party brands don't inherit OneBusAway's listing, and
+  `en-US` is the only locale because it is the only one the live store listing declares — Play
+  rejects release notes for any other, failing the publish. See the README there.
 
 ## Build Variants
 
@@ -123,12 +130,6 @@ Default variant: `obaGoogleDebug`
 Add to `onebusaway-android/gradle.properties`:
 ```
 Pelias_oba=YOUR_API_KEY
-```
-
-### Required for Push Notifications (OneSignal)
-Add to `onebusaway-android/gradle.properties`:
-```
-ONESIGNAL_APP_ID=YOUR_APP_ID
 ```
 
 ### Release Builds
@@ -308,6 +309,28 @@ refreshed its region cache.
   drift; that's the checker's job. Keep it the only such pin.
 - Branching on a **new** region field means adding it to `CHECKED_FIELDS` in that script, with the
   default `RegionDto` decodes for it.
+
+### Not every region has a trip planner (#2264)
+
+Trip planning is the one feature whose server is **per region and published by a third party**, so it
+can be missing or dead in one region while everything else there works. Three of the seven directory
+regions today — Washington, D.C., MTA New York, Davis — publish neither `otpBaseUrl` nor
+`otpBaseGraphqlUrl`, and Tampa Bay publishes an `otpBaseUrl` whose host no longer resolves.
+
+- **One gate, asked everywhere**: `OtpTarget.isAvailable` (custom URL → region OTP2 → region OTP1).
+  Every affordance that can start a plan — the nav-drawer row, the map long-press "navigate here"
+  offer, a `geo:` place shared in from another app — asks `tripPlanningUnavailableMessage(context)`
+  and refuses with its message rather than opening a form that can only fail. Don't restate the
+  branch: a duplicate check is what left the drawer blind to OTP2-only regions.
+- A planner-less region is **not** "no region selected" — say which one it is. That contradiction is
+  the whole of #2264.
+- **`tools/check-region-routing.py`** asks every region's planner for a real plan, building the
+  endpoints exactly as the app does (`otpPlanUrl` / `otp2GraphQlEndpoint`). On-demand, not CI —
+  it depends on servers this project doesn't run, so a third party's outage must not redden the
+  nightly. Run it when routing is reported broken somewhere, or when a region's OTP config changes.
+  Exit `1` is a broken planner; exit `2` is the run not being a complete answer — the check couldn't
+  start, or a region publishing a planner had no bounds to plan between, so it got no verdict. Only
+  `0` means every published planner actually answered.
 
 ## White-Label / Branding
 

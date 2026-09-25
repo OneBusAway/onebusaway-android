@@ -41,6 +41,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -79,18 +80,29 @@ import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
 /** Height of one endpoint row. Android's minimum touch target — the rows are tap-to-edit. */
 private val ENDPOINT_ROW_HEIGHT = 48.dp
 
 /**
- * Width of the leading rail — sized so the dot's leading edge lands exactly on Material's 16dp
- * keyline. Reused as the dividers' inset, so the hairline starts where the text does.
+ * Material's content keyline: where the card's content begins, in both bands — the endpoint dot's
+ * leading edge above, the "when" sentence's first character below. Written once and derived from,
+ * rather than restated per band, for the same reason [TRAILING_GUTTER] is: two bands that lay
+ * themselves out independently land on one keyline only if the keyline itself is one value.
  */
-private val RAIL_WIDTH = 44.dp
+private val CONTENT_KEYLINE = 16.dp
 
 /** Diameter of the endpoint dot, in the rail and in the suggestion row that fills that endpoint. */
 private val ENDPOINT_DOT_SIZE = 12.dp
+
+/**
+ * Width of the leading rail — the dot centred in it, which is what puts its leading edge on
+ * [CONTENT_KEYLINE]. Reused as the dividers' inset, so the hairline starts where the text does.
+ */
+private val RAIL_WIDTH = CONTENT_KEYLINE * 2 + ENDPOINT_DOT_SIZE
 
 /** The box the endpoint dot occupies when it stands in a menu row's leading icon slot. */
 private val ENDPOINT_DOT_ICON_SIZE = 22.dp
@@ -109,6 +121,19 @@ private val ICON_BUTTON_SIZE = 40.dp
  * regardless, because Material expands it beyond their bounds.
  */
 private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
+
+/** [SegmentButton]'s own horizontal padding, held apart because [ACTION_BAR_START_INSET] subtracts it. */
+private val SEGMENT_TEXT_INSET = 6.dp
+
+/**
+ * Where the action bar's content starts, now that the bar carries no leading glyph of its own (#2135).
+ *
+ * The band above opens with [RAIL_WIDTH] of endpoint rail; this one opens with the "when" sentence, so
+ * it reaches [CONTENT_KEYLINE] by padding — less the padding [SegmentButton] already applies, since it
+ * is the sentence's *text* that belongs on the keyline and not its press surface. The rest of what the
+ * retired glyph gives back is what pays for the refresh button.
+ */
+private val ACTION_BAR_START_INSET = CONTENT_KEYLINE - SEGMENT_TEXT_INSET
 
 /**
  * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
@@ -164,8 +189,14 @@ object TripPlanTestTags {
     const val VEHICLE_MODE = "tripPlanVehicleMode"
     const val STREET_MODE = "tripPlanStreetMode"
 
+    /** The pinned instant, stated in full at the head of the time segment's menu. */
+    const val WHEN_TIME_HEADER = "tripPlanWhenTimeHeader"
+
     /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
+
+    /** The action bar's re-plan-this-same-trip button. */
+    const val REFRESH = "tripPlanRefresh"
 
     /** The action bar's trailing button, which reverse is column-aligned with. */
     const val ADVANCED_SETTINGS = "tripPlanAdvancedSettings"
@@ -227,6 +258,7 @@ fun TripPlanForm(
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
     onReverse: () -> Unit,
+    onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -270,13 +302,16 @@ fun TripPlanForm(
             departNow = state.departNow,
             dateLabel = state.dateLabel,
             timeLabel = state.timeLabel,
+            dayRelation = state.dayRelation,
             modes = state.modes,
             availableStreetModes = availableStreetModes,
+            canRefresh = state.canSubmit,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
             onPickDateTime = onPickDateTime,
             onVehicleModeSelected = onVehicleModeSelected,
             onStreetModeSelected = onStreetModeSelected,
+            onRefresh = onRefresh,
             onAdvancedSettings = onAdvancedSettings
         )
     }
@@ -292,14 +327,20 @@ private fun FormIconButton(
     painter: Painter,
     contentDescription: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
-    IconButton(onClick = onClick, modifier = modifier.size(ICON_BUTTON_SIZE)) {
-        Icon(
-            painter = painter,
-            contentDescription = contentDescription,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        // The tint travels as the button's content colour rather than being set on the Icon, so the
+        // disabled case comes from Material's own token instead of an alpha restated here.
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        modifier = modifier.size(ICON_BUTTON_SIZE)
+    ) {
+        Icon(painter = painter, contentDescription = contentDescription)
     }
 }
 
@@ -578,10 +619,10 @@ private fun CurrentLocationDotIcon() {
 }
 
 /**
- * [EndpointDotIcon] for a row elsewhere that offers to fill one named end of the trip — the map
- * long-press menu's "directions from/to here" (#2112). Takes a [modifier] rather than tagging
- * itself: the tag belongs to whichever feature draws the row, since more than one of them can be
- * on screen at once.
+ * [EndpointDotIcon] for an offer elsewhere to fill one named end of the trip — the map's "navigate
+ * here" bubble, which carries the destination dot the point it names will be given (#2243). Takes a
+ * [modifier] rather than tagging itself: the tag belongs to whichever feature draws the offer, since
+ * more than one of them can be on screen at once.
  */
 @Composable
 fun TripEndpointDotIcon(slot: TripEndpointSlot, modifier: Modifier = Modifier) {
@@ -613,9 +654,13 @@ private fun PinnedActionIcon(painter: Painter) {
  * The bottom band: when the trip is for, and how it may be travelled.
  *
  * The time reads as one sentence — "Depart · now" — split into two separately-tappable segments, each
- * opening its own menu. The mode pickers and additional preferences sit at the trailing edge; reverse
- * is not here, because it acts on the two endpoints rather than on the trip's terms, and so lives
- * beside them (#2110).
+ * opening its own menu. The mode pickers, refresh and additional preferences sit at the trailing edge;
+ * reverse is not here, because it acts on the two endpoints rather than on the trip's terms, and so
+ * lives beside them (#2110).
+ *
+ * The bar opened with a clock glyph in a [RAIL_WIDTH] rail until #2135. It said nothing the sentence
+ * beside it didn't already say in words, and the bar had no width to spare for the refresh button, so
+ * it is the glyph that went — see [ACTION_BAR_START_INSET] for what keeps the sentence on its keyline.
  */
 @Composable
 private fun TripActionBar(
@@ -623,30 +668,28 @@ private fun TripActionBar(
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
+    dayRelation: TripDay,
     modes: TripModeSelection,
     availableStreetModes: List<StreetMode>,
+    canRefresh: Boolean,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
     onPickDateTime: () -> Unit,
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
+    onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit
 ) {
     Row(
-        modifier = Modifier.formBand().height(ACTION_BAR_HEIGHT),
+        modifier = Modifier
+            .formBand()
+            .padding(start = ACTION_BAR_START_INSET)
+            .height(ACTION_BAR_HEIGHT)
+            // The scripted tour's "narrow it down" step rings this row (#2164) — the when/mode/advanced
+            // controls, not the endpoints above them.
+            .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_OPTIONS),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.width(RAIL_WIDTH).height(ACTION_BAR_HEIGHT),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrival_time),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-        }
         WhenModeSegment(arriving = arriving, onSetArriving = onSetArriving)
         Text(
             text = "·",
@@ -663,6 +706,7 @@ private fun TripActionBar(
             departNow = departNow,
             dateLabel = dateLabel,
             timeLabel = timeLabel,
+            dayRelation = dayRelation,
             onDepartNow = onDepartNow,
             onPickDateTime = onPickDateTime
         )
@@ -686,6 +730,15 @@ private fun TripActionBar(
             label = { streetModeLabel(it) },
             testTag = TripPlanTestTags.STREET_MODE,
             onSelected = onStreetModeSelected
+        )
+        FormIconButton(
+            painter = painterResource(R.drawable.ic_action_navigation_refresh),
+            contentDescription = stringResource(R.string.trip_plan_refresh),
+            onClick = onRefresh,
+            // Nothing to re-plan until the form names both ends of a trip. Disabled rather than absent,
+            // so the bar's trailing buttons don't shuffle sideways as the rider fills the form in.
+            enabled = canRefresh,
+            modifier = Modifier.testTag(TripPlanTestTags.REFRESH)
         )
         FormIconButton(
             painter = rememberVectorPainter(AppIcons.Settings),
@@ -810,6 +863,7 @@ private fun WhenTimeSegment(
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
+    dayRelation: TripDay,
     onDepartNow: () -> Unit,
     onPickDateTime: () -> Unit
 ) {
@@ -817,16 +871,27 @@ private fun WhenTimeSegment(
     val nowLabel = stringResource(R.string.trip_plan_now)
     Box(modifier) {
         SegmentButton(
-            text = if (departNow) {
-                nowLabel
-            } else {
-                stringResource(R.string.trip_plan_date_time, dateLabel, timeLabel)
-            },
+            text = if (departNow) nowLabel else whenLabel(dayRelation, dateLabel, timeLabel),
             emphasized = false,
             testTag = TripPlanTestTags.WHEN_TIME,
             onClick = { expanded = true }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (!departNow) {
+                // The pinned instant in full, stated once at the head of the menu. The callout is the
+                // action bar's one elastic slot and routinely ellipsizes — its abbreviated label is
+                // what fits, not necessarily what the rider needs to check — so the menu it opens is
+                // where the whole date and time are legible. A "now" trip has no such instant to state.
+                Text(
+                    text = stringResource(R.string.trip_plan_date_time, dateLabel, timeLabel),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .testTag(TripPlanTestTags.WHEN_TIME_HEADER)
+                )
+                HorizontalDivider()
+            }
             DropdownMenuItem(
                 text = { Text(nowLabel) },
                 trailingIcon = if (departNow) {
@@ -867,6 +932,20 @@ private fun WhenTimeSegment(
     }
 }
 
+/**
+ * A pinned instant as the callout states it (#2185): the time first, then the day — but only when the
+ * day needs saying at all. Most pinned trips are for later today, where the date was pure noise
+ * crowding out the one part the rider is reading for; tomorrow has a word, so it gets the word; and
+ * anything further out falls back to its date. The full instant is still one tap away, at the head of
+ * the menu this segment opens.
+ */
+@Composable
+private fun whenLabel(dayRelation: TripDay, dateLabel: String, timeLabel: String): String = when (dayRelation) {
+    TripDay.TODAY -> timeLabel
+    TripDay.TOMORROW -> stringResource(R.string.trip_plan_time_tomorrow, timeLabel)
+    TripDay.OTHER -> stringResource(R.string.trip_plan_time_date, timeLabel, dateLabel)
+}
+
 /** One tappable half of the "when" sentence: text plus a small chevron, on a rounded press surface. */
 @Composable
 private fun SegmentButton(
@@ -882,7 +961,7 @@ private fun SegmentButton(
             // The value is the label, so TalkBack reads it as-is; the click label supplies the verb the
             // bare text can't ("Depart" alone doesn't say it's changeable).
             .clickable(onClickLabel = stringResource(R.string.trip_plan_change_when), onClick = onClick)
-            .padding(horizontal = 6.dp)
+            .padding(horizontal = SEGMENT_TEXT_INSET)
             .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -907,10 +986,19 @@ private fun SegmentButton(
 
 /** The user-visible label for an endpoint; fixed kinds resolve a string resource. */
 @Composable
-private fun endpointLabel(endpoint: TripEndpoint): String = endpoint.displayText ?: when (endpoint) {
-    is TripEndpoint.MapPoint -> stringResource(R.string.trip_plan_map_location)
+private fun endpointLabel(endpoint: TripEndpoint): String = endpoint.displayText ?: stringResource(endpoint.fixedLabelRes())
+
+/**
+ * The string resource naming an endpoint that carries no text of its own — the two fixed-label kinds.
+ * A pure rule rather than a `when` inside a composable, so the pinned-trip card
+ * ([org.onebusaway.android.ui.tripplan.pinned.pinnedDestinationLabel]) names the same place the form
+ * does without either restating it.
+ */
+@StringRes
+internal fun TripEndpoint.fixedLabelRes(): Int = when (this) {
+    is TripEndpoint.MapPoint -> R.string.trip_plan_map_location
     // Only the fixed-label kinds (CurrentLocation/MapPoint) have a null displayText.
-    else -> stringResource(R.string.tripplanner_current_location)
+    else -> R.string.tripplanner_current_location
 }
 
 @Composable
@@ -941,7 +1029,7 @@ private fun TripPlanFormPreview() {
             onPickDateTime = {},
             availableStreetModes = StreetMode.entries,
             onVehicleModeSelected = {}, onStreetModeSelected = {},
-            onReverse = {}, onAdvancedSettings = {}
+            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}
         )
     }
 }

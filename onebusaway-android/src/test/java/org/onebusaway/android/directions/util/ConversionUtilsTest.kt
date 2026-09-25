@@ -73,6 +73,19 @@ class ConversionUtilsTest {
     }
 
     @Test
+    fun formattedDistanceResolution_metric_isMetresThenTenthsOfAKilometre() {
+        assertEquals(1.0, ConversionUtils.getFormattedDistanceResolution(999.0, metric = true), 1e-9)
+        assertEquals(100.0, ConversionUtils.getFormattedDistanceResolution(1000.0, metric = true), 1e-9)
+    }
+
+    @Test
+    fun formattedDistanceResolution_imperial_isFeetThenTenthsOfAMile() {
+        // The switch is at 1000 ft, so it is a distance in metres either side of 1000/3.281 = 304.8.
+        assertEquals(1 / 3.281, ConversionUtils.getFormattedDistanceResolution(300.0, metric = false), 1e-9)
+        assertEquals(528 / 3.281, ConversionUtils.getFormattedDistanceResolution(310.0, metric = false), 1e-9)
+    }
+
+    @Test
     fun isToday_and_isTomorrow() {
         val today = LocalDate.of(2024, 6, 30)
         assertTrue(ConversionUtils.isToday(LocalDate.of(2024, 6, 30), today))

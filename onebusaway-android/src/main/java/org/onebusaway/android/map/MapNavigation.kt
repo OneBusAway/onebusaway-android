@@ -20,8 +20,11 @@ import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.map.bike.BikeStation
+import org.onebusaway.android.map.rental.RentalKind
+import org.onebusaway.android.map.rental.RentalPlace
+import org.onebusaway.android.map.rental.rentalDetailOf
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.ui.compose.components.openRental
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.RegionUtils
@@ -44,18 +47,21 @@ object MapNavigation {
     }
 
     /**
-     * The bike info-window "more info" tap: a proof-of-concept deep link hard-coded to the Tampa
-     * region's Hopr app (preserved verbatim from the legacy BikeStationOverlay.onInfoWindowClick).
+     * The rental info-window tap: opens the operator the feed named, in the order the directions rows
+     * offer them (their deep link to this vehicle, then their app, then their site) — one definition of
+     * "where a rental tap goes", shared via [openRental]. Nothing here claims a reservation was made
+     * (#2138).
+     *
+     * Falls back to the pre-#2168 behaviour when the feed named no operator, which is the whole OTP1
+     * path: a deep link hard-coded to the Tampa region's Hopr app, preserved verbatim from the legacy
+     * `BikeStationOverlay.onInfoWindowClick`. Everywhere else on that path there is genuinely nowhere
+     * to send the rider, and the tap does nothing, exactly as before.
      */
-    fun openBikeDeepLink(context: Context, station: BikeStation) {
-        val region = RegionEntryPoint.get(context).currentRegion() ?: return
-        if (region.id != RegionUtils.TAMPA_REGION_ID.toLong()) {
-            return
-        }
+    fun openRentalLink(context: Context, place: RentalPlace) {
         AnalyticsEntryPoint.get(context).reportUiEvent(
             PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
             context.getString(
-                if (station.isFloatingBike) {
+                if (place.kind == RentalKind.STATION) {
                     R.string.analytics_label_bike_station_balloon_clicked
                 } else {
                     R.string.analytics_label_floating_bike_balloon_clicked
@@ -63,6 +69,15 @@ object MapNavigation {
             ),
             null
         )
-        ExternalIntents.launchTampaHoprApp(context)
+        val pickup = rentalDetailOf(place).pickup
+        val link = pickup?.link
+        if (link != null) {
+            openRental(context, link, pickup.fallback)
+            return
+        }
+        val region = RegionEntryPoint.get(context).currentRegion() ?: return
+        if (region.id == RegionUtils.TAMPA_REGION_ID.toLong()) {
+            ExternalIntents.launchTampaHoprApp(context)
+        }
     }
 }

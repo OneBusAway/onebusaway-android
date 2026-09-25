@@ -26,7 +26,7 @@
     <string name="navdrawer_item_help">Ohjeet</string>
     <string name="navdrawer_item_send_feedback">Lähetä palautetta</string>
     <string name="navdrawer_item_open_source">Vieraile GitHubissa</string>
-    <string name="navdrawer_item_plan_trip">Suunnittele matka (beta)</string>
+    <string name="navdrawer_item_plan_trip">Suunnittele matka</string>
     <string name="navdrawer_item_pay_fare">Maksa matkalippu</string>
     <string name="navdrawer_item_starred_routes">Tähdellä merkityt linjat</string>
 
@@ -96,7 +96,7 @@
     <string name="map_option_search">Haku</string>
     <string name="main_help_title">Ohje</string>
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
-    <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> Useita ohjelmistovirheiden korjauksia ja viimeistelyparannuksia. - Katso https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Rohkea uusi ulkoasu rohkeaan uuteen aikaan\n&#8226;\u0020Saapumiset on nyt ryhmitelty reiteittäin\n&#8226;\u0020Mikroliikkuminen lisätty pyörätasoon\n&#8226;\u0020Näet pysäkin reitit napauttamalla sitä\n&#8226;\u0020Lähennä nähdäksesi lähellä olevat reitit\n&#8226;\u0020Ajoneuvojen sijainnit ekstrapoloidaan ja animoidaan\n&#8226;\u0020Seuraa bussiasi reaaliaikaisilla ilmoituksilla\n&#8226;\u0020Merkittäviä parannuksia matkasuunnittelijaan\n&#8226;\u0020Useita pieniä virhekorjauksia\n\nKatso https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Sulje</string>
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Vihreä tarkoittaa “ajoissa”</string>
@@ -214,14 +214,12 @@
     <string name="stop_info_option_showonmap">Näytä kartalla</string>
     <string name="menu_option_sort_by">Järjestä</string>
     <string name="stop_info_option_refresh">Päivitä</string>
-    <string name="stop_info_option_show_details">Pysäkin tiedot</string>
     <string name="stop_info_option_night_light">Yövalo</string>
     <string name="stop_info_option_hide_alerts">Piilota aktiiviset hälytykset</string>
     <string name="stop_info_option_report_problem">Ilmoita pysäkkiongelma</string>
     <string name="stop_info_canceled">PERUTTU</string>
     <string name="stop_info_canceled_arrival">PERUTTU saapuminen</string>
     <string name="stop_info_canceled_departure">PERUTTU lähtö</string>
-    <string name="stop_info_official_stop_name_label">Virallinen nimi: %1$s</string>
     <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -261,7 +259,6 @@
     <string name="stop_info_item_options_title">Toiminnot</string>
     <string name="stop_info_clear">Tyhjennä</string>
     <string name="stop_info_favorite">Suosikkipysäkki</string>
-    <string name="stop_info_route_ids_label">Reitit:</string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Pysäkki # %1$s</string>
@@ -269,8 +266,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Näytä saapuvien tiedot</string>
-    <string name="route_info_context_showonmap">Näytä kartalla</string>
     <string name="route_info_no_shape_data">Tämän reitin karttatietoja ei ole saatavilla
     </string>
 
@@ -466,12 +461,6 @@
         negatiivisina saapumisaikoina
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Näytä saapuvat bussit pysäkin yläpuolella</string>
-    <string name="preferences_show_header_arrivals_summary">Näyttää suosikkipysäkeille
-        saapuvien bussien tiedot otsikosssa (ei vaikuta karttaan)
-    </string>
-
-
     <string name="preferences_oba_api_servername_title">%1$s API palvelin</string>
     <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen %1$s
         API kutsuille
@@ -499,8 +488,6 @@
     </string>
     <string name="preferences_analytics_title">Lähetä anonyymeja käyttötietoja</string>
     <string name="preferences_analytics_summary">Auta meitä parantamaan sovellusta. Tiedot lähetetään anonyymisti.</string>
-    <string name="preferences_tutorial_title">Näytä ohje</string>
-    <string name="preferences_tutorial_summary">Tarkemmat ohjeet kuinka käyttää tätä sovellusta</string>
     <string name="preferences_donate_title">Lahjoita</string>
     <string name="preferences_donate_summary">Tue %1$sn avoimen lähdekoodin projektia</string>
     <string name="preferences_powered_by_oba_title">Powered by %1$s</string>
@@ -519,8 +506,6 @@
     <string name="preferences_left_hand_mode_summary">Siirtää joidenkin painikkeiden sijainnin näytön vasemmalle puolelle</string>
     <string name="preferences_show_zoom_controls_title">Näytä zoomaussäätimet</string>
     <string name="preferences_show_zoom_controls_summary">Näytä zoomaussäätimet kartalla</string>
-    <string name="preferences_show_tutorial_screens_title">Näytä opastusnäytöt</string>
-    <string name="preferences_show_tutorial_screens_summary">Näytä tiedottavat ponnahdusikkunat, jotka selittävät ominaisuuksien käyttöä</string>
     <string name="preferences_otp_api_servername_title">OpenTripPlanner API -palvelin</string>
     <string name="preferences_otp_api_servername_summary">Määrittää OpenTripPlanner API-kutsuissa käytettävän palvelimen</string>
     <string name="preferences_otp_api_servername_hint">esimerkki.opentripplanner.org/otp</string>
@@ -586,7 +571,6 @@
         <item quantity="one">Tiedot päivitetty %1$d min %2$d s sitten</item>
         <item quantity="other">Tiedot päivitetty %1$d min %2$d s sitten</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Sijainti laskettu aikataulun perusteella</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Älä myöhästy bussista enää öisin!</string>
@@ -599,24 +583,11 @@
     <string name="night_light_cancel">Peruuta</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_welcome_title">Tervetuloa %1$siin!</string>
-    <string name="tutorial_welcome_text">Napsauta pysäkkiä (vihreä piste kartallla) nähdäksesi
-        saapumisajat.
-    </string>
     <string name="tutorial_arrival_header_arrival_info_title">Kuinka kauan kunnes bussini saapuu?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">Näin kauan! Taustaväri kertoo onko 
         bussi etuajassa (punainen) vai myöhässä (sininen). Ajallaan = vihreä taustaväri. Jos bussin 
         sijaintia ei tiedetä, näytetään aikataulun mukainen saapumisaika (harmaa taustaväri).
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Liu’uta nähdäksesi lisää saapuvia
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Napsauta nuolta tai liikuta paneelia ylöspäin
-        nähdäksesi lisää tälle pysäkille saapuvia vuoroja.
-    </string>
-    <string name="tutorial_recent_stops_routes_title">Viimeisimmät pysäkit ja reitit</string>
-    <string name="tutorial_recent_stops_routes_text">Valikon avulla löydät pysäkit ja reitit
-        joita olet viimeksi katsellut.
     </string>
     <string name="tutorial_opt_out_dialog_title">Näytetäänkö opas?</string>
     <string name="tutorial_opt_out_dialog_text">Haluatko nähdä ponnahdusikkunoiden kuvaukset %1$sn käytöstä? Voit aina ottaa ponnahdusikkunat käyttöön tai poistaa ne käytöstä asetuksista, tai näyttää oppaan myöhemmin Ohje-valikon kautta.</string>
@@ -683,10 +654,6 @@
     <string name="preferences_reset_donation_timestamps_title">Nollaa Lahjoituksen Aikaleimat</string>
     <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä ’Muistuta minua myöhemmin’ että ’Älä vaivaudu’ aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
-    <string name="preferences_preferred_maps_title">Ensisijainen Karttatyyppi</string>
-    <string name="preferences_preferred_map_option_normal2d">Oletuskartta</string>
-    <string name="preferences_preferred_map_option_normal3d">Oletuskartta 3D-rakennuksilla</string>
-    <string name="preferences_preferred_map_option_satellite">Satelliitti kartta</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Näytä saatavilla olevat tutkimukset</string>
@@ -717,24 +684,20 @@
     <string name="trip_plan_date">Päivämäärä</string>
     <string name="map_option_zoom_out">Loitontaa</string>
     <string name="map_option_zoom_in">Lähentää</string>
-    <string name="map_option_layers_close">Sulje karttatasojen painike</string>
 
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Kyllä, minulle ilmoitettiin oikeaan aikaan</string>
     <string name="feedback_dislike_button_description">Ei, minulle ei ilmoitettu oikeaan aikaan</string>
 
-    <!-- Accessibility content descriptions for ETA rows -->
-
-    <string name="map_option_layers">Karttatasojen painike</string>
-
     <!-- Occupancy -->
+    <string name="realtime_empty">Tyhjä</string>
+    <string name="realtime_many_seats_available">Paljon istumapaikkoja vapaana</string>
+    <string name="realtime_standing_room">Seisomatilaa</string>
+    <string name="realtime_full">Täynnä</string>
 
     <!-- Bikeshare -->
-    <string name="bike_info_window_bikes_title">Pyörät</string>
-    <string name="bike_info_window_spaces_title">Paikkoja</string>
     <string name="bike_station_title">Napauta varataksesi pyörän</string>
     <string name="floating_bike_title">Napauta varataksesi tämän pyörän</string>
-    <string name="layers_speedial_bikeshare_label">Kaupunkipyörät</string>
     <string name="transit_directions_bikeshare_label">Kaupunkipyörä</string>
 
     <!-- Foreground service -->

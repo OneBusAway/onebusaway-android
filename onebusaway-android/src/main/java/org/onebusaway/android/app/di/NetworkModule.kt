@@ -32,6 +32,7 @@ import org.onebusaway.android.api.contract.PushRegistrationWebService
 import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.contract.SurveyWebService
+import org.onebusaway.android.api.contract.VehicleSearchWebService
 import org.onebusaway.android.api.contract.WeatherWebService
 import org.onebusaway.android.api.net.ApiParamsInterceptor
 import org.onebusaway.android.api.net.JsonCharsetInterceptor
@@ -107,6 +108,14 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideWeatherWebService(json: Json): WeatherWebService = plainRetrofit(json).create(WeatherWebService::class.java)
+
+    /**
+     * The coach-number (vehicle-ID) search client. Targets the region's sidecar host via `@Url` (like
+     * weather), so it uses a plain client without [ApiParamsInterceptor].
+     */
+    @Provides
+    @Singleton
+    fun provideVehicleSearchWebService(json: Json): VehicleSearchWebService = plainRetrofit(json).create(VehicleSearchWebService::class.java)
 
     /**
      * The arrivals-reminders client. Targets the region's sidecar host via `@Url`, so like surveys

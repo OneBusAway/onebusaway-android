@@ -45,6 +45,11 @@ object ConversionUtils {
 
     private const val FEET_PER_METER = 3.281
 
+    private const val FEET_PER_MILE = 5280.0
+
+    /** The distance at which [getFormattedDistanceParts] switches from the small unit to the large one. */
+    private const val LARGE_UNIT_THRESHOLD = 1000.0
+
     /**
      * Return a formatted String for a distance, in [metric] or imperial units.
      *
@@ -78,7 +83,7 @@ object ConversionUtils {
         metric: Boolean
     ): List<DisplayFormat.EtaPart> {
         val (value, unitRes) = if (metric) {
-            if (meters < 1000) {
+            if (meters < LARGE_UNIT_THRESHOLD) {
                 String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, meters) to
                     R.string.meters_abbreviation
             } else {
@@ -87,11 +92,11 @@ object ConversionUtils {
             }
         } else {
             val feet = meters * FEET_PER_METER
-            if (feet < 1000) {
+            if (feet < LARGE_UNIT_THRESHOLD) {
                 String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, feet) to
                     R.string.feet_abbreviation
             } else {
-                String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet / 5280) to
+                String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet / FEET_PER_MILE) to
                     R.string.miles_abbreviation
             }
         }
@@ -99,6 +104,26 @@ object ConversionUtils {
             DisplayFormat.EtaPart(value, emphasized = true),
             DisplayFormat.EtaPart(applicationContext.resources.getString(unitRes), emphasized = false)
         )
+    }
+
+    /**
+     * The smallest change in distance [getFormattedDistance] can actually show at [meters], in meters
+     * — its display resolution. Two distances closer together than this format to the same string.
+     *
+     * A caller that *chooses* the distances it renders — an axis picking tick values, say — needs this
+     * to avoid asking for labels the formatter cannot tell apart: the format is fixed-precision in the
+     * display unit (whole feet or metres, tenths of a mile or kilometre), so the resolution depends on
+     * both [metric] and which side of the unit switch [meters] falls on. Mirrors the branches in
+     * [getFormattedDistanceParts]; keep the two in step.
+     *
+     * @param meters distance in meters
+     * @param metric whether distances are rendered in metric units
+     */
+    fun getFormattedDistanceResolution(meters: Double, metric: Boolean): Double = if (metric) {
+        if (meters < LARGE_UNIT_THRESHOLD) 1.0 else 100.0 // 1 m, then 0.1 km
+    } else {
+        // 1 ft, then 0.1 mi.
+        if (meters * FEET_PER_METER < LARGE_UNIT_THRESHOLD) 1.0 / FEET_PER_METER else 0.1 * FEET_PER_MILE / FEET_PER_METER
     }
 
     /**

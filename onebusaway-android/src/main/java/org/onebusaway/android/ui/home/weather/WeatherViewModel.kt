@@ -19,15 +19,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 
 /**
@@ -47,6 +53,7 @@ data class WeatherUiState(
  * `HomeEnvironment.weatherHidden` gate). The NEARBY-tab gate stays in HomeScreen, like the other chrome;
  * the chip's tap (toast the summary) is handled in [WeatherFeature].
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
     private val weatherRepo: WeatherRepository,
@@ -57,15 +64,25 @@ class WeatherViewModel @Inject constructor(
     private val _state = MutableStateFlow(WeatherUiState())
     val state: StateFlow<WeatherUiState> = _state.asStateFlow()
 
-    // Guard so the forecast is fetched once per region (not on every region emission).
-    private var fetchedRegionId: Long? = null
-
     init {
-        // Self-subscribe to the current region: fetch the forecast once per region id, clear when none.
-        // Keyed on the region id, so weather follows the *region* (not the map viewport — panning out of
-        // range no longer clears it). Replaces the host's MapFeature setRegion push.
+        // Self-subscribe to the current region: fetch the forecast once per sidecar endpoint, clear when
+        // none. Keyed on the region, so weather follows the *region* (not the map viewport — panning out
+        // of range no longer clears it). Replaces the host's MapFeature setRegion push. The key is the
+        // whole Region.sidecarTarget rather than the id alone, because a deep-link-added region's sidecar
+        // id (#2165) can collide with a directory region's on a different host — see sidecarTarget.
+        //
+        // flatMapLatest — the shape WideAlertViewModel already uses — is what makes the endpoint the sole
+        // owner of the displayed forecast: switching endpoints cancels the previous one's in-flight fetch,
+        // so a superseded load can neither outlive its endpoint nor land its forecast on top of a newer
+        // one. Each endpoint clears first and then emits its own result, because a forecast belongs to the
+        // sidecar that served it: holding the previous host's temperature on screen while the new host is
+        // still loading (or has failed) is the same "showing the old endpoint's data" bug in slow motion.
         viewModelScope.launch {
-            regionRepo.region.map { it?.id }.distinctUntilChanged().collect { setRegion(it) }
+            regionRepo.region
+                .map { it?.sidecarTarget }
+                .distinctUntilChanged()
+                .flatMapLatest { target -> forecastFor(target) }
+                .collect { data -> _state.update { it.copy(data = data) } }
         }
         // Observe the hide-weather preference reactively (replaces the on-resume refreshHiddenPref poll).
         // The pref stores "weather enabled" (default true), so hidden = !enabled.
@@ -84,21 +101,17 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
-    /** Fetch the forecast once per region, or clear it when [regionId] is null. */
-    private fun setRegion(regionId: Long?) {
-        if (regionId == null) {
-            fetchedRegionId = null
-            _state.update { it.copy(data = null) }
-            return
-        }
-        if (fetchedRegionId == regionId) {
-            return
-        }
-        fetchedRegionId = regionId
-        viewModelScope.launch {
-            weatherRepo.currentForecast(regionId).onSuccess { data ->
-                _state.update { it.copy(data = data) }
-            }
+    /**
+     * What the chip should show for [target]: nothing at all when there is no region, otherwise a clear
+     * followed by that endpoint's forecast if it arrives. A failed fetch emits only the clear — the chip
+     * goes empty rather than keeping a stale reading from whichever endpoint was current before.
+     */
+    private fun forecastFor(target: Region.SidecarTarget?): Flow<WeatherData?> = if (target == null) {
+        flowOf(null)
+    } else {
+        flow {
+            emit(null)
+            weatherRepo.currentForecast(target.regionId).onSuccess { emit(it) }
         }
     }
 }

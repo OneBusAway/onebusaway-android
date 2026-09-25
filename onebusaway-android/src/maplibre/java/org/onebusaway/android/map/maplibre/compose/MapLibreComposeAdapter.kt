@@ -32,7 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -55,13 +58,14 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.map.MapHost
-import org.onebusaway.android.map.compose.BikeInfoWindow
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
-import org.onebusaway.android.map.compose.VehicleInfoWindow
+import org.onebusaway.android.map.compose.RentalInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.MapProjector
+import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
@@ -132,6 +136,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
             }
         }
 
+        var mapRootOffset by remember { mutableStateOf(Offset.Zero) }
         var mapLibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
         var renderer by remember { mutableStateOf<MapLibreRenderer?>(null) }
         var loadedStyle by remember { mutableStateOf<Style?>(null) }
@@ -196,7 +201,9 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
             // stop-only emissions still cannot touch the independently collected route layer below.
             LaunchedEffect(activeRenderer) {
                 renderState.snapshot
-                    .map { it.copy(routePolylines = emptyList()) }
+                    // Both polyline slices are dropped here: they have their own change boundary below,
+                    // and leaving either in would re-run the whole static render on every line update.
+                    .map { it.copy(routePolylines = emptyList(), pinnedTripPolylines = emptyList()) }
                     .distinctUntilChanged()
                     .collect { activeRenderer.renderStatic(it) }
             }
@@ -262,6 +269,15 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
         // than deferred through a host flag; null clears it (no framing to apply).
         val map = mapLibreMap
         if (map != null) {
+            DisposableEffect(map, renderState) {
+                renderState.setProjector(
+                    MapProjector { point ->
+                        val screen = map.projection.toScreenLocation(LatLng(point.latitude, point.longitude))
+                        ScreenOffset(screen.x + mapRootOffset.x, screen.y + mapRootOffset.y)
+                    }
+                )
+                onDispose { renderState.setProjector(null) }
+            }
             LaunchedEffect(map) {
                 renderState.cameraGestures.collect { command -> applyCameraCommand(command, map, renderState) }
             }
@@ -270,16 +286,17 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
             }
         }
 
-        AndroidView(factory = { mapView }, modifier = modifier)
+        AndroidView(factory = { mapView }, modifier = modifier.onGloballyPositioned { mapRootOffset = it.positionInRoot() })
     }
 }
 
 /**
  * Wires map/marker/info-window taps to [callbacks] (the home-screen tap policy the host used to
- * install): a stop tap focuses + recenters via [callbacks]; a tap on empty map clears focus; a
- * vehicle/bike tap pre-renders its shared info window (via [infoWindows]) and opens it; a tap on the
- * open window deep links. The bike content is wrapped in a white bubble ([VehicleInfoWindow] draws its
- * own card, [BikeInfoWindow] is background-free), matching the Google flavor.
+ * install): a stop tap focuses + recenters via [callbacks]; a tap on empty map clears focus; a vehicle
+ * tap reports through to the host, which selects it and opens its trip details on a second tap (#2194);
+ * a rental tap pre-renders its shared info window (via [infoWindows]) and opens it, and a tap on that
+ * window deep links. The rental content is wrapped in a white bubble ([RentalInfoWindow] is
+ * background-free), matching the Google flavor.
  */
 @Suppress("DEPRECATION") // classic Marker/InfoWindow click API; migration tracked in #1728
 private fun wireClicks(
@@ -295,7 +312,7 @@ private fun wireClicks(
             return@addOnMapClickListener true
         }
         infoWindows.clear()
-        callbacks.onMapClick(null)
+        callbacks.onMapClick(GeoPoint(point.latitude, point.longitude))
         false
     }
     map.addOnMapLongClickListener { point ->
@@ -313,17 +330,16 @@ private fun wireClicks(
             return@setOnMarkerClickListener true
         }
         val vehicle = renderer.vehicleForMarker(marker)
-        val response = renderer.vehicleResponse()
-        if (vehicle != null && response != null) {
+        if (vehicle != null) {
+            infoWindows.clear() // dismisses any open bubble (a rental's, a dot's), as a stop tap does
             callbacks.onVehicleClick(vehicle.status) // selects it -> renderer shows the most-recent-data dot
-            infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, vehicle.isRealtime, response) }
             return@setOnMarkerClickListener true
         }
-        val bike = renderer.bikeForMarker(marker)
-        if (bike != null) {
+        val rental = renderer.rentalForMarker(marker)
+        if (rental != null) {
             infoWindows.open(marker) {
                 Surface(color = Color.White, shape = RoundedCornerShape(8.dp), shadowElevation = 2.dp) {
-                    BikeInfoWindow(bike.station)
+                    RentalInfoWindow(rental.place)
                 }
             }
             return@setOnMarkerClickListener true
@@ -341,14 +357,9 @@ private fun wireClicks(
         marker.title.isNullOrEmpty()
     }
     map.setOnInfoWindowClickListener { marker ->
-        val vehicle = renderer.vehicleForMarker(marker)
-        if (vehicle != null) {
-            callbacks.onVehicleInfoWindowClick(vehicle.status)
-            return@setOnInfoWindowClickListener true
-        }
-        val bike = renderer.bikeForMarker(marker)
-        if (bike != null) {
-            callbacks.onBikeInfoWindowClick(bike.station)
+        val rental = renderer.rentalForMarker(marker)
+        if (rental != null) {
+            callbacks.onRentalInfoWindowClick(rental.place)
             return@setOnInfoWindowClickListener true
         }
         false

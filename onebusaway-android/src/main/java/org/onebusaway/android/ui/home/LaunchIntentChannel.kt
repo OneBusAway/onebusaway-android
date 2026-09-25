@@ -22,14 +22,14 @@ import kotlinx.coroutines.flow.receiveAsFlow
 /**
  * The Activity's queue of external launch intents (deep links, FCM, launcher shortcuts) awaiting the
  * NavHost. Backed by an UNLIMITED-buffered [Channel] so:
- *  - a [submit] made before the NavHost composes (the cold-launch intent staged in `onCreate`) isn't
+ *  - a [submit] made before the NavHost composes (a warm intent arriving in `onNewIntent`) isn't
  *    lost, and
  *  - rapid, distinct back-to-back intents are each delivered exactly once, in order, rather than one
  *    overwriting another before [items] is collected (#1582 — the bug a conflating latch reintroduces).
  *
  * Generic in [T] purely so the no-drop / in-order contract is unit-testable on the JVM without an Android
  * `Intent`; the Activity uses `LaunchIntentChannel<Intent>`. [items] is a cold [receiveAsFlow] with a
- * single intended collector: the NavHost's `LaunchIntentEffect`.
+ * single intended collector: the NavHost's `launchIntentEffect`.
  */
 class LaunchIntentChannel<T> {
 

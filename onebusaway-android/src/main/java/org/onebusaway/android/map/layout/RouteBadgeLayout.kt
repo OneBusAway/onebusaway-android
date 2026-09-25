@@ -20,7 +20,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import org.onebusaway.android.map.render.BadgedRoute
-import org.onebusaway.android.map.render.FIXED_ROUTE_BADGE_SCALE_PROFILE
+import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeScaleProfile
 import org.onebusaway.android.map.render.RouteBadgeTap
@@ -89,14 +89,14 @@ fun <K> layoutRouteBadges(
 /**
  * One route label to place: the route(s) it names (stacked, in reading order — see [RouteBadge.routes]),
  * what a tap on it does (null for an inert label — see [RouteBadge.tap]), how its size answers the camera
- * (fixed unless the caller says otherwise — see [RouteBadge.scale]), and the shapes it may be anchored on.
- * List order is collision priority, as in [layoutRouteBadges].
+ * (the map's one label schedule unless the caller says otherwise — see [RouteBadge.scale]), and the shapes
+ * it may be anchored on. List order is collision priority, as in [layoutRouteBadges].
  */
 internal data class RouteBadgeRequest(
     val routes: List<BadgedRoute>,
     val paths: List<RouteBadgePath>,
     val tap: RouteBadgeTap? = null,
-    val scale: RouteBadgeScaleProfile = FIXED_ROUTE_BADGE_SCALE_PROFILE
+    val scale: RouteBadgeScaleProfile = ROUTE_BADGE_SCALE_PROFILE
 )
 
 /**

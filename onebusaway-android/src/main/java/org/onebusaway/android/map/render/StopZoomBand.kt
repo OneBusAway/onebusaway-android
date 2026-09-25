@@ -39,9 +39,15 @@ const val STOP_ROUTES_ZOOM_THRESHOLD = 17.5f
 /** Smallest focused route-stop circle scale at the zoomed-out end of the detail ramp. */
 const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f
 
+/** Nearby alternatives during stop focus are 15% smaller than their ordinary marker. */
+const val NEARBY_STOP_ICON_SCALE = 0.85f
+
 /**
- * Marker-group ordering. Native map SDKs always place markers above route polylines, but adjacent
- * route stops must still win every marker overlap; favorites remain above ordinary nearby stops.
+ * Marker-group ordering **within the stop group**. Native map SDKs always place markers above route
+ * polylines, but adjacent route stops must still win every overlap with another *stop*; favorites remain
+ * above ordinary nearby stops. Vehicles and the selected trip's estimate markers deliberately outrank the
+ * whole group — see the Google renderer's `VEHICLE_Z_INDEX`, which derives from
+ * [STOP_ROUTE_LABEL_Z_INDEX] for exactly that reason.
  */
 fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
     routeStop -> 0.75f
@@ -53,6 +59,11 @@ fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
  * A stop's route label (#2107) draws above every stop marker — including the enlarged focused one, whose
  * icon would otherwise cover the label of the stop behind it. Below the route labels a selected line
  * carries (`ROUTE_BADGE_Z_INDEX`), which name the map's current subject rather than what's merely nearby.
+ *
+ * Being the highest thing the stop group draws, this is also the group's **ceiling** for anything that has
+ * to stay tappable over a stop: the label is a wide pill floating above its point and is itself a tap
+ * target for that stop, so clearing [stopZIndex] alone doesn't clear the group. The renderers place the
+ * vehicle + trip-estimate markers relative to this constant rather than to a literal.
  */
 const val STOP_ROUTE_LABEL_Z_INDEX = 1f
 
@@ -63,6 +74,20 @@ const val STOP_ROUTE_LABEL_Z_INDEX = 1f
  * [stopIconKind] treats the two alike.
  */
 enum class StopBand { DOT, FULL, ROUTES }
+
+/**
+ * Whether this band is close enough in for the transit-centre arrivals drawer (#2107) — the zoom at
+ * which route *labels* appear is the zoom at which their *departures* are worth listing.
+ *
+ * One definition, read by both the query that asks and the sheet decision that shows the answer: if
+ * they disagreed, the drawer could gate on a band the query does not serve (an empty drawer) or the
+ * query could poll a band nothing displays (wasted requests every minute).
+ *
+ * An ordering rather than equality, so a band added above [StopBand.ROUTES] keeps the drawer instead
+ * of silently switching it off at the zoom that wants it most — the rule `stopRouteLabel` follows for
+ * the same reason.
+ */
+val StopBand.showsNearbyArrivals: Boolean get() = this >= StopBand.ROUTES
 
 /**
  * The [StopBand] a stop falls in at [zoom]: a dot below [STOP_DOT_ZOOM_THRESHOLD], its full icon from
@@ -90,11 +115,13 @@ fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
 /**
  * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each
  * normal/focused), the distinctive star a starred (favorite) stop gets in place of either (#1680),
- * likewise normal/focused. Route stops are native circles owned by the flavor-specific circle layer.
+ * likewise normal/focused. Unselected route stops use the shared ring artwork in each map provider's route-stop layer.
  */
 enum class StopIconKind {
     FULL,
     FULL_FOCUSED,
+    COMPACT,
+    COMPACT_FOCUSED,
     DOT,
     DOT_FOCUSED,
     FAVORITE,
@@ -112,16 +139,19 @@ enum class StopIconKind {
  *
  * [StopBand.ROUTES] takes the same icon as [StopBand.FULL]: what that band adds is the separate route
  * label beside the marker (#2107, see [stopRouteLabel]), not a different icon.
+ * [compact] replaces only full ordinary icons with the smaller, glyph-free circle and arrow (#2284).
  */
 fun stopIconKind(
     focused: Boolean,
     band: StopBand,
-    favorite: Boolean = false
+    favorite: Boolean = false,
+    compact: Boolean = false
 ): StopIconKind = when {
     favorite && band == StopBand.DOT ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
     favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE
     band == StopBand.DOT -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
+    compact -> if (focused) StopIconKind.COMPACT_FOCUSED else StopIconKind.COMPACT
     focused -> StopIconKind.FULL_FOCUSED
     else -> StopIconKind.FULL
 }

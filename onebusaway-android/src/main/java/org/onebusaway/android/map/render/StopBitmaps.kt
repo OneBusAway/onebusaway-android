@@ -36,7 +36,7 @@ import kotlin.math.sin
 /**
  * Shared builder for the small "dot" bus-stop marker shown at distant zoom (the full-icon ⇄ dot
  * collapse). Lives in src/main so both map flavors share one definition — the Google flavor wraps the
- * bitmap as a `BitmapDescriptor`, maplibre as an `Icon` — mirroring [BikeBitmaps]. Directionless and
+ * bitmap as a `BitmapDescriptor`, maplibre as an `Icon` — mirroring [RentalBitmaps]. Directionless and
  * route-type agnostic; the dot's [color][dot] distinguishes a normal vs focused stop.
  */
 object StopBitmaps {
@@ -45,7 +45,7 @@ object StopBitmaps {
      * stays visibly larger than its neighbours even in the zoomed-out dot band (#1679). Mirrors the
      * full-icon focus enlargement the flavour factories apply up close (their `FOCUS_ICON_SCALE`).
      */
-    const val FOCUSED_DOT_SCALE = 1.5f
+    const val FOCUSED_DOT_SCALE = 1.25f
 
     /**
      * How much larger the starred-stop [star] is drawn relative to the base dot/full-icon size, so the

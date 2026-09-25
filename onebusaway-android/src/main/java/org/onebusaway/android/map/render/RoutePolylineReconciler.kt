@@ -35,24 +35,38 @@ package org.onebusaway.android.map.render
  * case weights differ, in whatever width unit that flavor's [widthOf] returns). Everything else — the
  * bookkeeping the fixes were about — is shared.
  *
+ * [createLine] and [setWidth] are both handed the stroke *and* the mark inset that goes with it (see
+ * [markInset]), and [setWidth] the line's model besides: a mark whose size is not simply proportional to
+ * the stroke has to be restated when the stroke changes, so a width patch is a mark patch too. A renderer
+ * whose marks all scale with the line can ignore both and just set the width.
+ *
  * Not thread-safe: every method mutates native map state and must run on the map's main thread, which
  * is where both renderers already call it.
  */
 class RoutePolylineReconciler<NativeLine>(
     private val widthOf: (RoutePolyline, Float) -> Float,
-    private val createLine: (RoutePolyline, Float) -> NativeLine,
+    private val createLine: (RoutePolyline, Float, Float) -> NativeLine,
     private val removeLines: (List<NativeLine>) -> Unit,
-    private val setWidth: (NativeLine, Float) -> Unit,
+    private val setWidth: (NativeLine, RoutePolyline, Float, Float) -> Unit,
     private val caseColorOf: (RoutePolyline) -> Int,
     private val caseExtraWidth: (RoutePolyline) -> Float
 ) {
+    /** One drawn case: the native stroke and the model it was drawn from, paired so a width patch can
+     *  restate the marks on it (see [markInset]) rather than only its width. */
+    private class DrawnCase<NativeLine>(val native: NativeLine, val polyline: RoutePolyline)
+
     /**
      * One drawn line: its stroke, plus the wider case (halo) stroke beneath it when the line asked for one.
      * Held as a pair so a case cannot outlive its line or drift out of sync with its width.
      */
-    private class Drawn<NativeLine>(val case: NativeLine?, val line: NativeLine, val caseExtraWidth: Float) {
+    private class Drawn<NativeLine>(
+        val case: DrawnCase<NativeLine>?,
+        val line: NativeLine,
+        val polyline: RoutePolyline,
+        val caseExtraWidth: Float
+    ) {
         /** Both strokes, case first — the order they were added, and so the order they draw. */
-        val natives: List<NativeLine> get() = listOfNotNull(case, line)
+        val natives: List<NativeLine> get() = listOfNotNull(case?.native, line)
     }
 
     // The lines currently drawn, positionally aligned with [renderedPolylines]/[renderedWidths].
@@ -122,9 +136,11 @@ class RoutePolylineReconciler<NativeLine>(
      */
     private fun create(polyline: RoutePolyline, width: Float): Drawn<NativeLine> {
         val extra = caseExtraWidth(polyline)
+        val casePolyline = polyline.takeIf { it.case != RouteLineCase.NONE }?.asCase(caseColorOf(polyline))
         return Drawn(
-            case = if (polyline.case != RouteLineCase.NONE) createLine(polyline.asCase(caseColorOf(polyline)), width + extra) else null,
-            line = createLine(polyline, width),
+            case = casePolyline?.let { DrawnCase(createLine(it, width + extra, markInset(extra)), it) },
+            line = createLine(polyline, width, NO_MARK_INSET),
+            polyline = polyline,
             // Retained with the pair: a width resync patches the case from the line's new width, and the
             // amount to add is a property of the case that was drawn, not of the reconcile doing the patching.
             caseExtraWidth = extra
@@ -132,8 +148,25 @@ class RoutePolylineReconciler<NativeLine>(
     }
 
     private fun Drawn<NativeLine>.applyWidth(width: Float) {
-        setWidth(line, width)
-        case?.let { setWidth(it, width + caseExtraWidth) }
+        setWidth(line, polyline, width, NO_MARK_INSET)
+        case?.let { setWidth(it.native, it.polyline, width + caseExtraWidth, markInset(caseExtraWidth)) }
+    }
+
+    private companion object {
+        /** A line's own marks are drawn at its full stroke — only a case insets them. */
+        const val NO_MARK_INSET = 0f
+
+        /**
+         * How far a case's end marks are drawn *inside* its own stroke: half its extra width, which is the
+         * weight the case shows along the line.
+         *
+         * Without it a bulb's halo comes out at twice the weight of the case beside it. A bulb is a circle
+         * of the line's own stroke width, so the case's copy of it is a circle of the *case's* stroke width
+         * — wider by the whole extra, while the case shows only half of that on each side of the line it
+         * wraps. The halo is the one place a case's weight is set by the mark's size rather than by the
+         * line's, so it is the one place that has to be told (#2241).
+         */
+        fun markInset(caseExtraWidth: Float) = caseExtraWidth / 2f
     }
 }
 

@@ -61,6 +61,9 @@ class Otp2PlanDecodeTest {
             duration = 120.0,
             distance = 123.4,
             realTime = null,
+            // The approach walk to a hired bike is not itself ridden on one — OTP flags it false, and
+            // this leg's `to` isn't a rental place either.
+            rentedBike = false,
             interlineWithPreviousLeg = null,
             start = PlanQuery.Start(scheduledTime = "2026-07-11T10:00:00-07:00", estimated = null),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:02:00-07:00", estimated = null),
@@ -99,6 +102,9 @@ class Otp2PlanDecodeTest {
             duration = 600.0,
             distance = null,
             realTime = true,
+            // Null on every transit leg: OTP's `rentedVehicle` is a street-leg fact and defaults to
+            // null elsewhere, which the adapter reads as "not a hired vehicle".
+            rentedBike = null,
             interlineWithPreviousLeg = true,
             start = PlanQuery.Start(
                 scheduledTime = "2026-07-11T10:02:00-07:00",
@@ -315,6 +321,46 @@ class Otp2PlanDecodeTest {
     }
 
     /**
+     * The rental flag is read as OTP states it, on the leg itself (#2159) — the fact that separates a
+     * bikeshare ride from one on the rider's own bike, which `mode` cannot (OTP calls both `BICYCLE`).
+     * Null is not a leg whose rental status is unknown: OTP leaves it null on exactly the legs that
+     * aren't street legs, where the question doesn't arise, so it maps to false.
+     */
+    @Test
+    fun mapsTheRentedVehicleFlagAsStated() {
+        fun rentedVehicleOf(rentedBike: Boolean?) = planDataWithSingleLeg(mode = Mode.BICYCLE, rentedBike = rentedBike)
+            .toTripItineraries()[0]
+            .legs[0]
+            .rentedVehicle
+
+        assertTrue(rentedVehicleOf(true))
+        assertFalse(rentedVehicleOf(false))
+        assertFalse(rentedVehicleOf(null))
+        // ...and it doesn't come from the endpoints: a leg that starts at a rental station but wasn't
+        // flagged is the rider's own bike, parked beside a dock.
+        val atADockButNotFlagged = planDataWithSingleLeg(
+            mode = Mode.BICYCLE,
+            fromPlace = place(
+                name = "Pine St & 3rd Ave",
+                lat = 47.61,
+                lon = -122.33,
+                vehicleRentalStation = PlaceFields.VehicleRentalStation(
+                    stationId = "seattle_bikes:42",
+                    name = "Pine St & 3rd Ave",
+                    rentalNetwork = PlaceFields.RentalNetwork1(
+                        __typename = "VehicleRentalNetwork",
+                        rentalNetworkFields = network("seattle_bikes")
+                    ),
+                    rentalUris = null
+                )
+            ),
+            rentedBike = false
+        ).toTripItineraries()[0].legs[0]
+        assertFalse(atADockButNotFlagged.rentedVehicle)
+        assertEquals(TripVertexType.BIKESHARE, atADockButNotFlagged.from.vertexType)
+    }
+
+    /**
      * A docked pickup — OTP's other rental shape. Both shapes land on one domain type, and the
      * station's name is what survives of the difference: it is the dock the row sends the rider to.
      */
@@ -398,13 +444,15 @@ class Otp2PlanDecodeTest {
         mode: Mode,
         itineraryStart: String? = "2026-07-11T10:00:00-07:00",
         stopCalls: List<PlanQuery.StopCall> = emptyList(),
-        fromPlace: PlaceFields = place(name = "X", lat = 1.0, lon = 2.0)
+        fromPlace: PlaceFields = place(name = "X", lat = 1.0, lon = 2.0),
+        rentedBike: Boolean? = null
     ): PlanQuery.Data {
         val leg = PlanQuery.Leg(
             mode = mode,
             duration = 60.0,
             distance = 10.0,
             realTime = false,
+            rentedBike = rentedBike,
             interlineWithPreviousLeg = null,
             start = PlanQuery.Start(scheduledTime = "2026-07-11T10:00:00-07:00", estimated = null),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:01:00-07:00", estimated = null),

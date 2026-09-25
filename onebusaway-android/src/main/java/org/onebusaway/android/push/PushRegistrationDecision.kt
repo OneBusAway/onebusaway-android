@@ -178,7 +178,7 @@ fun deriveDesiredRegistration(
         ?.takeIf { it.isNotEmpty() }
     return DesiredRegistration.Wanted(
         PushRegistration(
-            regionId = region.id,
+            regionId = region.sidecarId,
             sidecarBaseUrl = base,
             token = token,
             locale = locale,

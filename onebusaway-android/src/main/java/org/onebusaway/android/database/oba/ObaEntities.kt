@@ -141,7 +141,11 @@ data class RegionRecord(
     // row from the OBA regions directory. It is the flag that keeps the row out of the directory
     // refresh's blast radius: RegionDao.replaceAll deletes only `custom = 0` rows, so a custom region
     // survives every refresh, and custom ids are negative so they can never collide with directory ids.
-    @ColumnInfo(name = "custom", defaultValue = "0") val custom: Int = 0
+    @ColumnInfo(name = "custom", defaultValue = "0") val custom: Int = 0,
+    // The id the sidecar knows this deployment by, when the `add-region` link named one (#2165). NULL
+    // for every directory row, where [id] already *is* the sidecar's id. Deliberately not the primary
+    // key: see the id-space comment in CustomRegions.kt.
+    @ColumnInfo(name = "sidecar_region_id") val sidecarRegionId: Long? = null
 )
 
 @Entity(

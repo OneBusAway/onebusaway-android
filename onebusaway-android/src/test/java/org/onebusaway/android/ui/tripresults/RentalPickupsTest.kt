@@ -158,6 +158,7 @@ class RentalPickupsTest {
     fun `the pickup endpoint wins over the drop-off one`() {
         val leg = TripLeg(
             mode = TripMode.BICYCLE,
+            rentedVehicle = true,
             from = place(rental(networkId = "lime_seattle")),
             to = place(rental(networkId = "some_city_bikes", stationName = "Dock"))
         )
@@ -172,6 +173,7 @@ class RentalPickupsTest {
         // with no rental record of its own; the row then has the dock to name.
         val leg = TripLeg(
             mode = TripMode.BICYCLE,
+            rentedVehicle = true,
             from = TripPlace(name = "Origin"),
             to = place(rental(networkId = "some_city_bikes", stationName = "Dock"))
         )
@@ -182,12 +184,40 @@ class RentalPickupsTest {
     fun `a plain walk or an own-bike leg has no rental`() {
         assertNull(TripLeg(mode = TripMode.WALK, from = TripPlace(name = "Origin")).rentalPickup())
         assertNull(TripLeg(mode = TripMode.BICYCLE, from = TripPlace(name = "Home")).rentalPickup())
+        // Not even one that ends where a bike happens to be parked: OTP says whether the rider hired
+        // one, and on this leg it said no (#2159).
+        assertNull(
+            TripLeg(
+                mode = TripMode.BICYCLE,
+                from = TripPlace(name = "Home"),
+                to = place(rental(networkId = "lime_seattle"))
+            ).rentalPickup()
+        )
+    }
+
+    /**
+     * The deliberate degradation of reading OTP's flag instead of the endpoints (#2159): the leg is a
+     * rental — it gets the bikeshare glyph — but everything the row *says* about the vehicle lives on
+     * the endpoint places, so with none there is no operator to chip and no unlock to offer.
+     */
+    @Test
+    fun `a rental leg with no rental endpoint draws the bikeshare glyph and no chip`() {
+        val leg = TripLeg(
+            mode = TripMode.BICYCLE,
+            rentedVehicle = true,
+            from = TripPlace(name = "Origin"),
+            to = TripPlace(name = "Destination")
+        )
+        assertEquals(StreetMode.BIKESHARE, leg.streetMode())
+        assertNull(leg.rentalPickup())
     }
 
     @Test
     fun `the walk to the bike is not itself a rental row`() {
         // Its `to` *is* the rental vehicle — OTP ends the approach walk there — but the rider is told
-        // whose bike it is on the row where they ride it, once, not on both legs that touch it.
+        // whose bike it is on the row where they ride it, once, not on both legs that touch it. OTP
+        // agrees: on the live deployment the approach walk comes back `rentedBike: false` even though
+        // it ends at the hired vehicle (#2159), which is exactly the leg it is.
         val walk = TripLeg(
             mode = TripMode.WALK,
             from = TripPlace(name = "Origin"),

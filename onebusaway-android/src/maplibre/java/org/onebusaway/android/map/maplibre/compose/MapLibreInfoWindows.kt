@@ -30,8 +30,8 @@ import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.map.compose.ComposeBitmapRenderer
 
 /**
- * Renders the shared vehicle/bike info-window composables as the maplibre info window (replacing the
- * classic title/snippet), so both map flavors show identical content.
+ * Renders the shared rental / pinned-trip info-window composables as the maplibre info window
+ * (replacing the classic title/snippet), so both map flavors show identical content.
  *
  * maplibre's classic [InfoWindow][org.maplibre.android.annotations.InfoWindow] **measures the content
  * view synchronously when it opens** to anchor it (bottom-center) over the marker, but a ComposeView

@@ -25,11 +25,14 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,8 +49,13 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.backup.BackupUtils
 import org.onebusaway.android.ui.HomeActivity
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.SegmentedChoice
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.home.FocusTimeout
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
 import org.onebusaway.android.ui.settings.components.ListPreferenceItem
 import org.onebusaway.android.ui.settings.components.PreferenceCategory
@@ -65,7 +74,6 @@ fun SettingsRoute(
     onNavigateToAdvanced: () -> Unit,
     onBack: () -> Unit,
     onRecreate: () -> Unit,
-    onGoHomeResetTutorial: () -> Unit,
     onOpenDonate: () -> Unit,
     onOpenPoweredByOba: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
@@ -108,7 +116,6 @@ fun SettingsRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 SettingsEffect.RecreateActivity -> onRecreate()
-                SettingsEffect.GoHomeResetTutorial -> onGoHomeResetTutorial()
             }
         }
     }
@@ -131,19 +138,21 @@ fun SettingsRoute(
     }
 
     val actions = SettingsActions(
+        onSearchResultMode = viewModel::onSearchResultModeChanged,
+        onArrivalDisplayDefault = viewModel::onArrivalDisplayDefaultChanged,
+        onFocusTimeout = viewModel::onFocusTimeoutChanged,
         onAutoSelectRegion = viewModel::onAutoSelectRegionChanged,
         onShowNegativeArrivals = viewModel::onShowNegativeArrivalsChanged,
         onHideAlerts = viewModel::onHideAlertsChanged,
         onShowZoomControls = viewModel::onShowZoomControlsChanged,
+        onCompactStopIcons = viewModel::onCompactStopIconsChanged,
+        onShowRentalButton = viewModel::onShowRentalButtonChanged,
         onDisplayWeatherView = viewModel::onDisplayWeatherViewChanged,
         onShowAvailableStudies = viewModel::onShowAvailableStudiesChanged,
-        onShowTutorialScreens = viewModel::onShowTutorialScreensChanged,
         onLeftHandMode = viewModel::onLeftHandModeChanged,
-        onShowHeaderArrivals = viewModel::onShowHeaderArrivalsChanged,
         onVibrateAllowed = viewModel::onVibrateAllowedChanged,
         onTripPlanNotifications = viewModel::onTripPlanNotificationsChanged,
         onAnalytics = viewModel::onAnalyticsChanged,
-        onMapMode = viewModel::onMapModeChanged,
         onPreferredUnits = viewModel::onPreferredUnitsChanged,
         onPreferredTempUnits = viewModel::onPreferredTempUnitsChanged,
         onAppTheme = viewModel::onAppThemeChanged,
@@ -154,7 +163,6 @@ fun SettingsRoute(
         onSaveBackup = { saveBackupLauncher.launch(BackupUtils.buildCreateBackupFileIntent()) },
         onRestoreBackup = { restoreBackupLauncher.launch(BackupUtils.buildSelectBackupFileIntent()) },
         onAdvancedClick = onNavigateToAdvanced,
-        onTutorialClick = viewModel::onTutorialClicked,
         onDonateClick = onOpenDonate,
         onPoweredByObaClick = {
             viewModel.onPoweredByObaClicked()
@@ -171,19 +179,21 @@ fun SettingsRoute(
 
 /** All the user actions the [SettingsScreen] can fire, wired by [SettingsRoute]. */
 class SettingsActions(
+    val onSearchResultMode: (SearchResultMode) -> Unit = {},
+    val onArrivalDisplayDefault: (ArrivalDisplayMode) -> Unit = {},
+    val onFocusTimeout: (FocusTimeout) -> Unit = {},
     val onAutoSelectRegion: (Boolean) -> Unit,
     val onShowNegativeArrivals: (Boolean) -> Unit,
     val onHideAlerts: (Boolean) -> Unit,
     val onShowZoomControls: (Boolean) -> Unit,
+    val onCompactStopIcons: (Boolean) -> Unit,
+    val onShowRentalButton: (Boolean) -> Unit,
     val onDisplayWeatherView: (Boolean) -> Unit,
     val onShowAvailableStudies: (Boolean) -> Unit,
-    val onShowTutorialScreens: (Boolean) -> Unit,
     val onLeftHandMode: (Boolean) -> Unit,
-    val onShowHeaderArrivals: (Boolean) -> Unit,
     val onVibrateAllowed: (Boolean) -> Unit,
     val onTripPlanNotifications: (Boolean) -> Unit,
     val onAnalytics: (Boolean) -> Unit,
-    val onMapMode: (String) -> Unit,
     val onPreferredUnits: (String) -> Unit,
     val onPreferredTempUnits: (String) -> Unit,
     val onAppTheme: (String) -> Unit,
@@ -192,7 +202,6 @@ class SettingsActions(
     val onSaveBackup: () -> Unit,
     val onRestoreBackup: () -> Unit,
     val onAdvancedClick: () -> Unit,
-    val onTutorialClick: () -> Unit,
     val onDonateClick: () -> Unit,
     val onPoweredByObaClick: () -> Unit,
     val onAboutClick: () -> Unit
@@ -232,7 +241,42 @@ fun SettingsScreen(
                 }
             }
 
+            PreferenceCategory(stringResource(R.string.preferences_category_behavior)) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    val title = stringResource(R.string.search_result_mode_title)
+                    Text(title, style = MaterialTheme.typography.bodyLarge)
+                    SegmentedChoice(
+                        // Classic layout on the left, new on the right, as in Arrival display default.
+                        options = listOf(SearchResultMode.LISTS, SearchResultMode.MAP),
+                        selected = state.searchResultMode,
+                        onChange = actions.onSearchResultMode,
+                        label = title,
+                        optionLabel = { if (it == SearchResultMode.MAP) R.string.search_result_mode_map else R.string.search_result_mode_list },
+                        modifier = Modifier.padding(top = 8.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    )
+                }
+                ListPreferenceItem(
+                    title = stringResource(R.string.preferences_focus_timeout_title),
+                    entries = FocusTimeout.entries.map { stringResource(it.labelRes) },
+                    entryValues = FocusTimeout.entries.map { it.value },
+                    selectedValue = state.focusTimeout.value,
+                    onValueSelected = { actions.onFocusTimeout(FocusTimeout.fromPreference(it)) }
+                )
+            }
+
             PreferenceCategory(stringResource(R.string.preferences_category_display)) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    val title = stringResource(R.string.arrival_display_default)
+                    Text(title, style = MaterialTheme.typography.bodyLarge)
+                    ArrivalDisplayModeSwitch(
+                        mode = state.arrivalDisplayDefault,
+                        onChange = actions.onArrivalDisplayDefault,
+                        modifier = Modifier.padding(top = 8.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        label = title
+                    )
+                }
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_negative_arrivals_title),
                     summary = stringResource(R.string.preferences_show_negative_arrivals_summary),
@@ -251,13 +295,21 @@ fun SettingsScreen(
                     checked = state.showZoomControls,
                     onCheckedChange = actions.onShowZoomControls
                 )
-                val mapOptions = stringArrayResource(R.array.preferred_map_options).toList()
-                ListPreferenceItem(
-                    title = stringResource(R.string.preferences_preferred_maps_title),
-                    entries = mapOptions,
-                    entryValues = mapOptions,
-                    selectedValue = state.mapMode,
-                    onValueSelected = actions.onMapMode
+                if (state.showCompactStopIcons) {
+                    SwitchPreferenceItem(
+                        title = stringResource(R.string.preferences_compact_stop_icons_title),
+                        summary = stringResource(R.string.preferences_compact_stop_icons_summary),
+                        checked = state.compactStopIcons,
+                        onCheckedChange = actions.onCompactStopIcons
+                    )
+                }
+                // The map's own long-press menu is the other way to turn this off, and the only way a
+                // rider is likely to find it; this row is how it comes back (#2168).
+                SwitchPreferenceItem(
+                    title = stringResource(R.string.preferences_show_rental_button_title),
+                    summary = stringResource(R.string.preferences_show_rental_button_summary),
+                    checked = state.showRentalButton,
+                    onCheckedChange = actions.onShowRentalButton
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_weather_view),
@@ -272,22 +324,10 @@ fun SettingsScreen(
                     onCheckedChange = actions.onShowAvailableStudies
                 )
                 SwitchPreferenceItem(
-                    title = stringResource(R.string.preferences_show_tutorial_screens_title),
-                    summary = stringResource(R.string.preferences_show_tutorial_screens_summary),
-                    checked = state.showTutorialScreens,
-                    onCheckedChange = actions.onShowTutorialScreens
-                )
-                SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_left_hand_mode_title),
                     summary = stringResource(R.string.preferences_left_hand_mode_summary),
                     checked = state.leftHandMode,
                     onCheckedChange = actions.onLeftHandMode
-                )
-                SwitchPreferenceItem(
-                    title = stringResource(R.string.preferences_show_header_arrivals_title),
-                    summary = stringResource(R.string.preferences_show_header_arrivals_summary),
-                    checked = state.showHeaderArrivals,
-                    onCheckedChange = actions.onShowHeaderArrivals
                 )
                 val unitOptions = stringArrayResource(R.array.preferred_units_options).toList()
                 ListPreferenceItem(
@@ -317,17 +357,19 @@ fun SettingsScreen(
 
             if (state.showNotificationsCategory) {
                 PreferenceCategory(stringResource(R.string.preferences_category_notifications)) {
-                    ClickPreferenceItem(
-                        title = stringResource(R.string.preferences_preferred_sound_title),
-                        summary = stringResource(R.string.preferences_preferred_sound_summary, appName),
-                        onClick = actions.onRingtoneClick
-                    )
-                    SwitchPreferenceItem(
-                        title = stringResource(R.string.preferences_preferred_vibration_title),
-                        summary = stringResource(R.string.preferences_preferred_vibration_summary, appName),
-                        checked = state.vibrateAllowed,
-                        onCheckedChange = actions.onVibrateAllowed
-                    )
+                    if (state.showLegacyNotificationControls) {
+                        ClickPreferenceItem(
+                            title = stringResource(R.string.preferences_preferred_sound_title),
+                            summary = stringResource(R.string.preferences_preferred_sound_summary, appName),
+                            onClick = actions.onRingtoneClick
+                        )
+                        SwitchPreferenceItem(
+                            title = stringResource(R.string.preferences_preferred_vibration_title),
+                            summary = stringResource(R.string.preferences_preferred_vibration_summary, appName),
+                            checked = state.vibrateAllowed,
+                            onCheckedChange = actions.onVibrateAllowed
+                        )
+                    }
                     if (state.showTripPlanNotifications) {
                         SwitchPreferenceItem(
                             title = stringResource(R.string.preferences_trip_plan_notifications_title),
@@ -366,11 +408,6 @@ fun SettingsScreen(
                     summary = stringResource(R.string.preferences_analytics_summary),
                     checked = state.analyticsEnabled,
                     onCheckedChange = actions.onAnalytics
-                )
-                ClickPreferenceItem(
-                    title = stringResource(R.string.preferences_tutorial_title),
-                    summary = stringResource(R.string.preferences_tutorial_summary),
-                    onClick = actions.onTutorialClick
                 )
                 if (state.showDonate) {
                     ClickPreferenceItem(

@@ -70,11 +70,20 @@ class TripTrajectoryTest {
 
     @Test
     fun `pdf bins span the quantile window and normalize to the peak`() {
-        val bins = pdfBins(UniformDist(1500.0))
+        // Uniform(0, width), so quantile(p) is just p * width and the window's edges are known
+        // exactly. Derived from the window constants rather than written out, so widening the
+        // window is a change of behaviour rather than a test that has to be edited to match.
+        val width = 1500.0
+        val bins = pdfBins(UniformDist(width))
+        val lo = width * PDF_BIN_LOW_QUANTILE
+        val hi = width * PDF_BIN_HIGH_QUANTILE
+        val halfBin = (hi - lo) / PDF_BIN_COUNT / 2
+
         assertEquals(PDF_BIN_COUNT, bins.size)
         bins.forEach { assertEquals("constant PDF -> all bins at the peak", 1.0, it.normalizedHeight, 1e-9) }
-        assertTrue("first bin center is just inside the low quantile", bins.first().distanceMeters > 0.0)
-        assertTrue("last bin center is below the 95th pct (1425)", bins.last().distanceMeters < 1425.0)
+        // Centers, so they sit half a bin inside each edge of the window.
+        assertEquals("first bin center", lo + halfBin, bins.first().distanceMeters, 1e-9)
+        assertEquals("last bin center", hi - halfBin, bins.last().distanceMeters, 1e-9)
     }
 
     @Test

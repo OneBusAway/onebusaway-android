@@ -21,6 +21,13 @@ updates:
         update-types:
           - minor
           - patch
+    # Navigation 2.10.0 raised its own minSdk to 24; the app is minSdk 23, so the
+    # manifest merge fails outright. The grouped bump has proposed it three times
+    # (#2280, #2298, #2300) and been reverted each time. Drop this once minSdk
+    # reaches 24.
+    ignore:
+      - dependency-name: "androidx.navigation:*"
+        versions: [">=2.10.0"]
     labels:
       - dependencies
 

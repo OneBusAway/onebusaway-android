@@ -16,6 +16,7 @@
 package org.onebusaway.android.extrapolation.math.prob
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DiracDistributionTest {
@@ -52,4 +53,6 @@ class DiracDistributionTest {
     }
 
     @Test fun `median equals value`() = assertEquals(5.0, dist.median(), 0.0)
+
+    @Test fun `reports itself as a point mass`() = assertTrue(dist.isPointMass)
 }

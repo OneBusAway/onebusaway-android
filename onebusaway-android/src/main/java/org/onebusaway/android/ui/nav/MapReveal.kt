@@ -15,10 +15,64 @@
  */
 package org.onebusaway.android.ui.nav
 
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
+import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.searchresults.SearchResultMode
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.geoPointOrNull
+
+/** A directly launched board/list exits on Back, without exposing the map underneath. */
+const val LAUNCH_ROOT = "navigation.launchRoot"
+
+fun NavController.navigateBackOrFinish() {
+    if (currentBackStackEntry?.savedStateHandle?.get<Boolean>(LAUNCH_ROOT) == true) {
+        context.findActivity().finish()
+    } else {
+        popBackStack()
+    }
+}
+
+/** Toolbar Up stays in the app, even when Android Back would exit a shortcut/launcher root. */
+fun NavController.navigateUpFromArrivals(parentRoute: String) {
+    if (currentBackStackEntry?.savedStateHandle?.get<Boolean>(LAUNCH_ROOT) == true) {
+        navigateFromHome(parentRoute)
+        // A shortcut has no list underneath it. Its parent becomes the new launch root, so
+        // system Back still exits from that list without unexpectedly opening the map.
+        if (parentRoute != NavRoutes.HOME) {
+            currentBackStackEntry?.savedStateHandle?.set(LAUNCH_ROOT, true)
+        }
+    } else {
+        popBackStack()
+    }
+}
+
+/** An explicit map visit returns to its source page before undoing map gestures. */
+internal fun NavController.mapReturnAction(): (() -> Unit)? = if (previousBackStackEntry?.destination?.route in setOf(NavRoutes.ARRIVALS, NavRoutes.ROUTE_INFO, NavRoutes.TRIP_DETAILS)) {
+    { popBackStack() }
+} else {
+    null
+}
+
+/** Open a board without discarding the list that led to it. */
+fun NavController.showArrivals(reveal: StopReveal) = navigate(NavRoutes.arrivals(reveal.stopId, reveal.name)) {
+    launchSingleTop = true
+}
+
+/** Push the map above the board so Back returns to its existing state. */
+fun NavController.showStopMapFromArrivals(reveal: StopReveal) {
+    navigate(NavRoutes.HOME)
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal.copy(useDefaultZoom = true))
+}
+
+fun NavController.showRouteMapFromArrivals(request: ShowRouteRequest) {
+    navigate(NavRoutes.HOME)
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putRouteReveal(request)
+}
 
 /**
  * Navigate to an in-app [route], popping up to HOME and de-duping the top — the single navigation
@@ -47,8 +101,10 @@ const val RESULT_MAP_ROUTE_DIRECTION_STOP_ID = "mapReveal.routeDirectionStopId"
 const val RESULT_MAP_ROUTE_FOCUS_TRIP_ID = "mapReveal.routeFocusTripId"
 const val RESULT_MAP_ROUTE_INITIAL_DIRECTION_ID = "mapReveal.routeInitialDirectionId"
 const val RESULT_MAP_STOP_ID = "mapReveal.stopId"
+const val RESULT_MAP_STOP_NAME = "mapReveal.stopName"
 const val RESULT_MAP_STOP_LAT = "mapReveal.stopLat"
 const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
+private const val RESULT_MAP_STOP_DEFAULT_ZOOM = "mapReveal.stopDefaultZoom"
 
 /**
  * Reveal the map in route mode for [request], popping back to HOME. The [ShowRouteRequest] is serialized
@@ -89,35 +145,158 @@ fun SavedStateHandle.consumeRouteReveal(): ShowRouteRequest? {
     return routeId?.let { ShowRouteRequest(it, directionStopId, focusTripId, initialDirectionId) }
 }
 
-/** Reveal the map focused on [stopId] at [lat]/[lon], popping back to HOME. */
-fun NavController.revealStopOnMap(stopId: String, lat: Double, lon: Double) {
-    getBackStackEntry(NavRoutes.HOME).savedStateHandle.apply {
-        set(RESULT_MAP_STOP_ID, stopId)
-        set(RESULT_MAP_STOP_LAT, lat)
-        set(RESULT_MAP_STOP_LON, lon)
-    }
+/**
+ * "Show me this stop" — the one currency every stop affordance in the app speaks, whether it is a
+ * navigation hand-back ([revealStopOnMap]), an external launch translated at the entry boundary
+ * ([IntentRouteMapper.routeForIntent]), or a list row handing one to its host.
+ *
+ * Only [stopId] is required, because it is the only thing every requester has: a deep link, an FCM
+ * arrival push, a pinned shortcut and a reminder row carry nothing else. [name] is the arrivals sheet's
+ * pre-load title and [point] completes the focus before its arrivals land (the recenter button, the
+ * banner star, "report a problem"); both are filled in from the loaded stop by
+ * `HomeViewModel.onArrivalsLoaded` when a requester couldn't supply them, so passing them is a
+ * head start rather than a requirement.
+ */
+data class StopReveal(
+    val stopId: String,
+    val name: String? = null,
+    val point: GeoPoint? = null,
+    /** A deliberate map visit from a board should frame the stop at street level. */
+    val useDefaultZoom: Boolean = false
+)
+
+/**
+ * The one way to focus a stop from outside the map (#2319). Every requester says whether it would
+ * rather show the map ([prefersMap]) — a trip's stop list or a search hit does, a saved-stop row does
+ * not (#2297) — and the rider's "Open search results in" choice ([mode]) has the last word: Lists
+ * mode opens the mapless board for everyone, so a rider who chose it is never dropped onto the map
+ * by a screen that forgot to ask. Map mode honours the requester.
+ *
+ * [revealStopOnMap] is private so this is the only road to the map; a board-only requester may still
+ * call [showArrivals] directly, since the board is right in both modes. The one deliberate map visit a
+ * rider makes *from* a board goes through [showStopMapFromArrivals] instead.
+ */
+fun NavController.openStop(stop: StopReveal, mode: SearchResultMode, prefersMap: Boolean) {
+    if (prefersMap && mode == SearchResultMode.MAP) revealStopOnMap(stop) else showArrivals(stop)
+}
+
+/** The route counterpart of [openStop]: Lists mode opens the route's stop list, Map mode honours [prefersMap]. */
+fun NavController.openRoute(routeId: String, mode: SearchResultMode, prefersMap: Boolean) {
+    if (prefersMap && mode == SearchResultMode.MAP) revealRouteOnMap(routeId) else navigate(NavRoutes.routeInfo(routeId))
+}
+
+/** Reveal the map focused on [reveal]'s stop, popping back to HOME. Reached only through [openStop]. */
+private fun NavController.revealStopOnMap(reveal: StopReveal) {
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putStopReveal(reveal)
     popBackStack(NavRoutes.HOME, false)
 }
 
-/** A complete stop reveal read back off the HOME [SavedStateHandle] — the typed counterpart of the
- *  three [RESULT_MAP_STOP_ID]/[RESULT_MAP_STOP_LAT]/[RESULT_MAP_STOP_LON] keys [revealStopOnMap] writes. */
-data class StopReveal(val stopId: String, val point: GeoPoint)
+internal fun SavedStateHandle.putStopReveal(reveal: StopReveal) {
+    set(RESULT_MAP_STOP_ID, reveal.stopId)
+    set(RESULT_MAP_STOP_NAME, reveal.name)
+    set(RESULT_MAP_STOP_LAT, reveal.point?.latitude)
+    set(RESULT_MAP_STOP_LON, reveal.point?.longitude)
+    set(RESULT_MAP_STOP_DEFAULT_ZOOM, reveal.useDefaultZoom)
+}
 
 /**
  * Reads and consumes a pending stop reveal from the HOME [SavedStateHandle] — the symmetric typed *read*
- * for [revealStopOnMap], keeping the `RESULT_MAP_STOP_*` keys and their `Double` types in this one file
- * rather than re-naming them in the consumer. All three keys are cleared together regardless of
- * completeness (so a stale lat/lon pair can't linger past the reveal); returns null when no stop id is
- * present, or — the corrupted/half-restored case the producer never writes — an id without both
- * coordinates.
+ * for [revealStopOnMap], keeping the `RESULT_MAP_STOP_*` keys and their types in this one file rather
+ * than re-naming them in the consumer. Every key is cleared together regardless of completeness (so a
+ * stale name or lat/lon pair can't linger past the reveal); returns null when no stop id is present.
+ * A lone coordinate — which the producer never writes — reads as no location at all rather than half
+ * of one.
  */
 fun SavedStateHandle.consumeStopReveal(): StopReveal? {
     val stopId = get<String>(RESULT_MAP_STOP_ID)
+    val name = get<String>(RESULT_MAP_STOP_NAME)
     val lat = get<Double>(RESULT_MAP_STOP_LAT)
     val lon = get<Double>(RESULT_MAP_STOP_LON)
+    val useDefaultZoom = get<Boolean>(RESULT_MAP_STOP_DEFAULT_ZOOM) ?: false
     set(RESULT_MAP_STOP_ID, null)
+    set(RESULT_MAP_STOP_NAME, null)
     set(RESULT_MAP_STOP_LAT, null)
     set(RESULT_MAP_STOP_LON, null)
-    if (stopId == null || lat == null || lon == null) return null
-    return StopReveal(stopId, GeoPoint(lat, lon))
+    set(RESULT_MAP_STOP_DEFAULT_ZOOM, null)
+    return stopId?.let { StopReveal(it, name, geoPointOrNull(lat, lon), useDefaultZoom) }
 }
+
+/**
+ * The route half of a stop-scoped reveal: which of a focused stop's rows to select inside it.
+ *
+ * Deliberately *not* standalone route focus. Framing the route alone drops the rider onto the whole
+ * line with no drawer and no sense of where they are on it; what a tracked row means is "this route,
+ * at my stop", which is a route selected subordinate to a stop focus (`CurrentFocus.Stop` carrying a
+ * `StopRouteSelection`). The two look similar from the outside and are easy to confuse.
+ *
+ * Only the route half, because the stop half of the same intent is already parsed by
+ * `FocusedStop.fromIntent` — one contract wants one reader, and two of them drift.
+ */
+data class RouteRevealExtras(
+    val routeId: String,
+    /** Labels the selected row's leg; the drawer resolves everything else off the arrivals row. */
+    val routeShortName: String,
+    val headsign: String?
+) {
+    /**
+     * The request that selects this row *within* the stop focused at [stopId]. Carrying
+     * `directionStopId` is what makes it stop-scoped rather than standalone — see
+     * `HomeViewModel.selectArrivalRoute`, which branches on exactly that.
+     */
+    fun request(stopId: String): ShowRouteRequest = ShowRouteRequest(
+        routeId = routeId,
+        directionStopId = stopId,
+        directionHeadsign = headsign
+    )
+}
+
+/**
+ * Writes a stop-scoped route reveal onto an intent bound for `HomeActivity`, so a launch from
+ * *outside* the NavHost — a notification's PendingIntent — can open the map on [stop] with one of its
+ * routes selected.
+ *
+ * The saved-state round trips above cannot serve that: they hand a reveal between destinations that
+ * already exist, and a PendingIntent fired from the shade has no NavController to hand it to. So this
+ * is the same reveal in the only vocabulary an Intent has, over the [MapParams] keys the map's other
+ * intent state already lives under — the stop half deliberately in the exact shape
+ * `FocusedStop.fromIntent` reads, so that stays the one parser of it.
+ */
+fun Intent.putStopRouteReveal(stop: FocusedStop, route: RouteRevealExtras): Intent = apply {
+    putExtra(MapParams.STOP_ID, stop.id)
+    putExtra(MapParams.STOP_NAME, stop.name)
+    putExtra(MapParams.STOP_CODE, stop.code)
+    // Only when the stop's location is known: `FocusedStop.fromIntent` reads the absence of these two
+    // keys as "not resolved yet" and lets the arrivals load supply it. Omitting them is what makes that
+    // readable — a written 0.0 pair is a real location (null island) and must not stand in for "none".
+    stop.point?.let {
+        putExtra(MapParams.CENTER_LAT, it.latitude)
+        putExtra(MapParams.CENTER_LON, it.longitude)
+    }
+    putExtra(MapParams.ROUTE_ID, route.routeId)
+    putExtra(EXTRA_ROUTE_SHORT_NAME, route.routeShortName)
+    putExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN, route.headsign)
+}
+
+/**
+ * The route half a launch intent carries, or null when it is not a route reveal. The stop half is
+ * read by `FocusedStop.fromIntent`; a caller needs both. See [putStopRouteReveal].
+ */
+fun Intent.readRouteReveal(): RouteRevealExtras? {
+    val routeId = getStringExtra(MapParams.ROUTE_ID) ?: return null
+    val routeShortName = getStringExtra(EXTRA_ROUTE_SHORT_NAME) ?: return null
+    return RouteRevealExtras(
+        routeId = routeId,
+        routeShortName = routeShortName,
+        headsign = getStringExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN)
+    )
+}
+
+/**
+ * The two extras only this file writes and reads. Their neighbours in [MapParams] are genuinely
+ * shared — HomeActivity, MapViewModel and the focus persistence all read STOP_ID/ROUTE_ID/CENTER_* —
+ * but nothing in the map subsystem reads these, and the headsign reaches it through
+ * [ShowRouteRequest.directionHeadsign] rather than by being parsed there. Keeping them here means
+ * changing the map's intent handling does not require proving they are unused.
+ */
+private const val EXTRA_ROUTE_DIRECTION_HEADSIGN = ".RouteDirectionHeadsign"
+private const val EXTRA_ROUTE_SHORT_NAME = ".RouteShortName"

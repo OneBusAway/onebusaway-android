@@ -109,7 +109,8 @@ class ExternalDeepLinksTest {
                     "otp-url" to "https://otp.example.com",
                     "sidecar-url" to "https://sidecar.example.com",
                     "umami-url" to "https://umami.example.com",
-                    "umami-id" to "abc123"
+                    "umami-id" to "abc123",
+                    "region-id" to "19"
                 )
             ),
             schemes
@@ -122,11 +123,37 @@ class ExternalDeepLinksTest {
                     otpBaseUrl = "https://otp.example.com",
                     sidecarBaseUrl = "https://sidecar.example.com",
                     umamiAnalyticsUrl = "https://umami.example.com",
-                    umamiAnalyticsId = "abc123"
+                    umamiAnalyticsId = "abc123",
+                    regionId = 19L
                 )
             ),
             target
         )
+    }
+
+    @Test
+    fun `add-region without a region-id still parses, carrying none`() {
+        // The sidecar only started emitting `region-id` (#2165) and the parameter is optional on both
+        // ends, so every link written before it must keep working exactly as it did.
+        val target = parse(
+            appLink("add-region", mapOf("name" to "Test", "oba-url" to "https://api.example.com")),
+            schemes
+        )
+        assertNull((target as Target.AddRegion).request.regionId)
+    }
+
+    @Test
+    fun `add-region ignores a region-id that is not a number`() {
+        // Ignored, not rejected: the region is still perfectly usable without a sidecar id, so dropping
+        // the whole link over one unreadable parameter would be the worse failure.
+        val target = parse(
+            appLink(
+                "add-region",
+                mapOf("name" to "Test", "oba-url" to "https://api.example.com", "region-id" to "nineteen")
+            ),
+            schemes
+        )
+        assertNull((target as Target.AddRegion).request.regionId)
     }
 
     @Test

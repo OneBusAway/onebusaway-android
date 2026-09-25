@@ -31,6 +31,17 @@ import org.onebusaway.android.util.GeoPoint
 class MapRevealTest {
 
     @Test
+    fun `trip reveal retains stop and row identity and is consumed once`() {
+        val handle = SavedStateHandle()
+        val reveal = TripMapReveal("trip", "route", "65", "Downtown / Center", 1, "stop", true)
+        handle.putTripMapReveal(reveal)
+        // A restored handle must read only the saved representation, not a retained object.
+        val restored = SavedStateHandle(mapOf(RESULT_MAP_TRIP to handle.get<String>(RESULT_MAP_TRIP)))
+        assertEquals(reveal, restored.consumeTripMapReveal())
+        assertNull(restored.consumeTripMapReveal())
+    }
+
+    @Test
     fun `route reveal round-trips every ShowRouteRequest field`() {
         val handle = SavedStateHandle()
         val request = ShowRouteRequest(
@@ -70,10 +81,11 @@ class MapRevealTest {
     }
 
     @Test
-    fun `reads a complete stop reveal and clears all three keys`() {
+    fun `reads a complete stop reveal and clears every key`() {
         val handle = SavedStateHandle(
             mapOf(
                 RESULT_MAP_STOP_ID to "stop_1",
+                RESULT_MAP_STOP_NAME to "Pike St & 3rd Ave",
                 RESULT_MAP_STOP_LAT to 47.6,
                 RESULT_MAP_STOP_LON to -122.3
             )
@@ -81,21 +93,44 @@ class MapRevealTest {
 
         val reveal = handle.consumeStopReveal()
 
-        assertEquals(StopReveal("stop_1", GeoPoint(47.6, -122.3)), reveal)
+        assertEquals(StopReveal("stop_1", "Pike St & 3rd Ave", GeoPoint(47.6, -122.3)), reveal)
         assertNull(handle.get<String>(RESULT_MAP_STOP_ID))
+        assertNull(handle.get<String>(RESULT_MAP_STOP_NAME))
         assertNull(handle.get<Double>(RESULT_MAP_STOP_LAT))
         assertNull(handle.get<Double>(RESULT_MAP_STOP_LON))
     }
 
     @Test
-    fun `drops a partial reveal but still consumes the keys`() {
-        // The corrupted / half-restored case: a stop id without its coordinates.
+    fun `stop zoom request survives the navigation handoff and is consumed with it`() {
+        val handle = SavedStateHandle()
+        val reveal = StopReveal("stop_1", useDefaultZoom = true)
+        handle.putStopReveal(reveal)
+        assertEquals(reveal, handle.consumeStopReveal())
+        assertNull(handle.consumeStopReveal())
+        handle[RESULT_MAP_STOP_ID] = "stop_2"
+        assertEquals(StopReveal("stop_2"), handle.consumeStopReveal())
+    }
+
+    @Test
+    fun `reads an id-only reveal, which is all an external launch carries`() {
+        // A deep link / FCM push / pinned shortcut knows the stop id and nothing else; the arrivals
+        // load resolves the rest, so this is a complete reveal rather than a dropped one.
         val handle = SavedStateHandle(mapOf(RESULT_MAP_STOP_ID to "stop_1"))
 
         val reveal = handle.consumeStopReveal()
 
-        assertNull(reveal)
+        assertEquals(StopReveal("stop_1"), reveal)
         assertNull(handle.get<String>(RESULT_MAP_STOP_ID))
+    }
+
+    @Test
+    fun `a lone coordinate reads as no location rather than half of one`() {
+        val handle = SavedStateHandle(
+            mapOf(RESULT_MAP_STOP_ID to "stop_1", RESULT_MAP_STOP_LAT to 47.6)
+        )
+
+        assertEquals(StopReveal("stop_1"), handle.consumeStopReveal())
+        assertNull(handle.get<Double>(RESULT_MAP_STOP_LAT))
     }
 
     @Test

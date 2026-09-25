@@ -18,7 +18,8 @@ package org.onebusaway.android.ui.home
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.models.WheelchairBoarding
-import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.geoPointOrNull
 
 /** Mechanical SavedStateHandle encoding for [CurrentFocus], kept out of focus transition logic. */
 internal object CurrentFocusPersistence {
@@ -37,6 +38,8 @@ internal object CurrentFocusPersistence {
     private const val KEY_ROUTE_LEG_IDS = "home.currentFocus.route.legIds"
     private const val KEY_ROUTE_LEG_NAMES = "home.currentFocus.route.legNames"
     private const val KEY_ROUTE_LEG_DIRECTIONS = "home.currentFocus.route.legDirections"
+    private const val KEY_ROUTE_SELECTED_TRIP = "home.currentFocus.route.selectedTripId"
+    private const val KEY_LAST_ACTIVE = "home.currentFocus.lastActiveEpochMs"
 
     private const val FOCUS_NONE = "none"
     private const val FOCUS_STOP = "stop"
@@ -50,11 +53,14 @@ internal object CurrentFocusPersistence {
         return when (state.get<String>(KEY_FOCUS_KIND)) {
             FOCUS_STOP -> stop?.let { CurrentFocus.Stop(it, readStopRoute(state)) }
                 ?: CurrentFocus.None
-            FOCUS_ROUTE -> readRouteTarget(state)?.let { CurrentFocus.Route(it) } ?: CurrentFocus.None
+            FOCUS_ROUTE -> readRouteTarget(state)
+                ?.let { CurrentFocus.Route(it, state[KEY_ROUTE_SELECTED_TRIP]) }
+                ?: CurrentFocus.None
             FOCUS_BIKE -> state.get<String>(KEY_BIKE_STATION)?.let { CurrentFocus.BikeStation(it) }
                 ?: CurrentFocus.None
             // A restored directions focus returns to the itinerary overview; the transient leg
-            // sub-focus isn't persisted.
+            // sub-focus isn't persisted — and with it goes the trip rung it would have carried, since
+            // there is no leg left to have drilled into.
             FOCUS_DIRECTIONS -> CurrentFocus.Directions()
             FOCUS_NONE -> CurrentFocus.None
             else -> readLegacyFocus(state, stop)
@@ -90,6 +96,17 @@ internal object CurrentFocusPersistence {
         state[KEY_ROUTE_LEG_DIRECTIONS] = selected?.legs
             ?.map { it.directionId ?: NO_DIRECTION }
             ?.toIntArray()
+        // The drilled-into trip off whichever focus holds it (#2224) — one key, because the focus kinds
+        // that can carry the rung are mutually exclusive and only the current one is ever written.
+        state[KEY_ROUTE_SELECTED_TRIP] = focus.selectedTripId
+    }
+
+    /** Last recorded activity timestamp, or null if none has been recorded. */
+    fun readLastActive(state: SavedStateHandle): WallTime? = state.get<Long>(KEY_LAST_ACTIVE)?.let(::WallTime)
+
+    /** Persist beside the focus, using wall time so the timestamp remains valid across reboots. */
+    fun markActive(state: SavedStateHandle, now: WallTime) {
+        state[KEY_LAST_ACTIVE] = now.epochMs
     }
 
     private fun readLegacyFocus(state: SavedStateHandle, stop: FocusedStop?): CurrentFocus {
@@ -135,7 +152,8 @@ internal object CurrentFocusPersistence {
         if (legs.isEmpty()) return null
         return StopRouteSelection(
             originHeadsign = state[KEY_ROUTE_ORIGIN_HEADSIGN],
-            legs = legs
+            legs = legs,
+            selectedTripId = state[KEY_ROUTE_SELECTED_TRIP]
         )
     }
 
@@ -145,10 +163,9 @@ internal object CurrentFocusPersistence {
             id = id,
             name = state[KEY_STOP_NAME],
             code = state[KEY_STOP_CODE],
-            point = GeoPoint(
-                state.get<Double>(KEY_STOP_LAT) ?: 0.0,
-                state.get<Double>(KEY_STOP_LON) ?: 0.0
-            ),
+            // Absent when the focus was restored before its arrivals resolved a location for it; null
+            // says so, where the old 0,0 fallback quietly claimed the stop stood off the coast of Ghana.
+            point = geoPointOrNull(state[KEY_STOP_LAT], state[KEY_STOP_LON]),
             wheelchairBoarding = WheelchairBoarding.fromString(state[KEY_STOP_WHEELCHAIR])
         )
     }

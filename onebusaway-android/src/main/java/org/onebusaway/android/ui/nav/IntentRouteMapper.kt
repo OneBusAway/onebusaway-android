@@ -23,10 +23,9 @@ import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.ReminderUtils
 
 /**
- * Translates an incoming external [Intent] into the in-app NavHost route it should open, or null to
- * leave the home/map path untouched. Lifted out of `HomeActivity` so the route
- * precedence/dispatch is a pure, JVM-testable decision ([decide]) sitting behind the thin Android
- * `Intent`/`Uri`/JSON reads ([routeForIntent] -> [read]).
+ * Translates an incoming external [Intent] into what it asks the app to show: the in-app NavHost route
+ * to open ([routeForIntent]), or null for an ordinary home/map launch. Lifted out of `HomeActivity` so the precedence/dispatch is a pure,
+ * JVM-testable decision ([decide]) sitting behind the thin Android `Intent`/`Uri`/JSON reads ([read]).
  *
  * Routing only — side-effect free: the domain mutations some intents imply (the `add-region` URL apply,
  * the FCM arrival-reminder clear) run in `HomeActivity.applyIntentSideEffects`, which reads the same
@@ -77,7 +76,9 @@ object IntentRouteMapper {
         object None : RouteDecision
         data class Verbatim(val route: String) : RouteDecision
         data class Search(val query: String) : RouteDecision
-        data class Arrivals(val stopId: String, val stopName: String? = null) : RouteDecision
+
+        /** Open the mapless board, including legacy pinned stop shortcuts. */
+        data class Arrivals(val reveal: StopReveal) : RouteDecision
         data class RouteInfo(val routeId: String) : RouteDecision
         data class TripDetails(val tripId: String, val stopId: String?, val scrollMode: String?) : RouteDecision
         object NightLight : RouteDecision
@@ -95,12 +96,13 @@ object IntentRouteMapper {
     fun decide(input: RouteIntent): RouteDecision {
         // In-app / cross-screen launches carry their destination route verbatim (see [navIntent]).
         input.navRoute?.let { return RouteDecision.Verbatim(it) }
-        // The exported (iOS-parity) deep links. A web trip link names the stop it was shared from, so
-        // open the trip scrolled to that stop; add-region is staged for the rider's confirmation as a
-        // side effect (HomeActivity) and for routing stays on the home/map path.
+        // The exported (iOS-parity) deep links. A stop link opens its arrivals board; a web trip
+        // link names the stop it was shared from, so open the trip scrolled to that stop; add-region is
+        // staged for the rider's confirmation as a side effect (HomeActivity) and for routing stays on
+        // the home/map path.
         input.deepLink?.let { target ->
             return when (target) {
-                is ExternalDeepLinks.Target.Stop -> RouteDecision.Arrivals(target.stopId)
+                is ExternalDeepLinks.Target.Stop -> RouteDecision.Arrivals(StopReveal(target.stopId))
                 is ExternalDeepLinks.Target.Trip -> RouteDecision.TripDetails(
                     tripId = target.tripId,
                     stopId = target.stopId,
@@ -111,10 +113,12 @@ object IntentRouteMapper {
         }
         // System search (HomeActivity is the default_searchable target): open the search destination.
         if (input.isSearch) return RouteDecision.Search(input.searchQuery)
-        // The FCM arrival payload clears its fired reminder as a side effect; here it just opens arrivals
-        // (or stays put if the stop id couldn't be parsed). Its presence short-circuits the later branches.
+        // The FCM arrival payload clears its fired reminder as a side effect; here it opens the
+        // stop board (or stays put if the stop id couldn't be parsed). Its presence short-circuits the later
+        // branches.
         if (input.hasArrivalPayload) {
-            return input.arrivalStopId?.let { RouteDecision.Arrivals(it) } ?: RouteDecision.None
+            return input.arrivalStopId?.let { RouteDecision.Arrivals(StopReveal(it)) }
+                ?: RouteDecision.None
         }
         // Trip details carries its args as extras (no data URI).
         input.tripDetailsId?.let {
@@ -128,11 +132,12 @@ object IntentRouteMapper {
         }
         // Explicit-component screen intents carrying a content://<authority>/<path>/{id} data URI (read by
         // path segment, since the authority is flavor-specific). MapParams.* focus / route-mode launches
-        // have no data URI and resolve to None — they stay map behavior.
+        // have no data URI and resolve to None, while stop URIs open the mapless board.
         return when (input.pathSegments.firstOrNull()) {
             DeepLinkUris.STOPS_PATH ->
                 input.pathSegments.lastOrNull()
-                    ?.let { RouteDecision.Arrivals(it, input.arrivalsStopName) } ?: RouteDecision.None
+                    ?.let { RouteDecision.Arrivals(StopReveal(it, input.arrivalsStopName)) }
+                    ?: RouteDecision.None
             DeepLinkUris.ROUTES_PATH ->
                 input.pathSegments.lastOrNull()?.let { RouteDecision.RouteInfo(it) } ?: RouteDecision.None
             else -> RouteDecision.None
@@ -141,10 +146,11 @@ object IntentRouteMapper {
 
     /** Encodes a [RouteDecision] into its navigable [NavRoutes] string (or null for [RouteDecision.None]). */
     private fun RouteDecision.toRoute(): String? = when (this) {
+        // Stop links open the board; explicit map extras still resolve to None.
         RouteDecision.None -> null
+        is RouteDecision.Arrivals -> NavRoutes.arrivals(reveal.stopId, reveal.name)
         is RouteDecision.Verbatim -> route
         is RouteDecision.Search -> NavRoutes.search(query)
-        is RouteDecision.Arrivals -> NavRoutes.arrivals(stopId, stopName)
         is RouteDecision.RouteInfo -> NavRoutes.routeInfo(routeId)
         is RouteDecision.TripDetails -> NavRoutes.tripDetails(tripId, stopId, scrollMode)
         RouteDecision.NightLight -> NavRoutes.NIGHT_LIGHT

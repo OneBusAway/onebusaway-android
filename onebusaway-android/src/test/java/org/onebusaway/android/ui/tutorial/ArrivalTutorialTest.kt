@@ -15,11 +15,14 @@
  */
 package org.onebusaway.android.ui.tutorial
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.testing.FakePreferencesRepository
+import org.onebusaway.android.ui.home.arrivals.maybeStartArrivalTutorial
 
 /**
  * Unit tests for [ArrivalTutorial]'s pure gating: which onboarding steps are still owed given the
@@ -28,19 +31,51 @@ import org.onebusaway.android.testing.FakePreferencesRepository
 class ArrivalTutorialTest {
 
     @Test
+    fun startupOptOutWhileWaitingForTheSheetPreventsArrivalSpotlight() = runTest {
+        val prefs = FakePreferencesRepository()
+        val tutorial = TutorialState()
+        var waited = false
+
+        maybeStartArrivalTutorial(prefs, tutorial, hasArrivals = true) {
+            waited = true
+            prefs.setBoolean(R.string.preference_key_show_tutorial_screens, false)
+        }
+
+        assertTrue(waited)
+        assertFalse(tutorial.active)
+    }
+
+    @Test
+    fun arrivalSpotlightStartsOnceTheSheetIsVisibleWhenStillEnabled() = runTest {
+        val prefs = FakePreferencesRepository()
+        val tutorial = TutorialState()
+
+        maybeStartArrivalTutorial(prefs, tutorial, hasArrivals = true) {
+            assertFalse(tutorial.active)
+        }
+
+        assertTrue(tutorial.active)
+        assertEquals(ArrivalTutorial.KEY_ETA, tutorial.current?.id)
+    }
+
+    @Test
     fun pendingSteps_freshInstall_returnsAllStepsInOrder() {
         val prefs = FakePreferencesRepository()
 
         val pending = ArrivalTutorial.pendingSteps(prefs)
 
-        assertEquals(
-            listOf(
-                ArrivalTutorial.KEY_ETA,
-                ArrivalTutorial.KEY_PANEL,
-                ArrivalTutorial.KEY_MORE_MENU
-            ),
-            pending.map { it.id }
-        )
+        assertEquals(listOf(ArrivalTutorial.KEY_ETA), pending.map { it.id })
+    }
+
+    /**
+     * The panel and Recent-stops spotlights were dropped once the scripted tour took over onboarding:
+     * it drives the arrivals sheet and opens the drawer itself, so those two fired straight after a
+     * finished tour to re-explain what it had just shown. Pinned as a count rather than left implicit,
+     * because re-adding a step here is re-adding a popup a tour-taker sees for the second time.
+     */
+    @Test
+    fun theSequenceIsJustTheEtaSpotlight() {
+        assertEquals(listOf(ArrivalTutorial.KEY_ETA), ArrivalTutorial.steps.map { it.id })
     }
 
     @Test
@@ -56,10 +91,7 @@ class ArrivalTutorialTest {
         val prefs = FakePreferencesRepository()
         prefs.setBoolean(ArrivalTutorial.KEY_ETA, true)
 
-        assertEquals(
-            listOf(ArrivalTutorial.KEY_PANEL, ArrivalTutorial.KEY_MORE_MENU),
-            ArrivalTutorial.pendingSteps(prefs).map { it.id }
-        )
+        assertTrue(ArrivalTutorial.pendingSteps(prefs).isEmpty())
     }
 
     @Test
@@ -74,5 +106,26 @@ class ArrivalTutorialTest {
     @Test
     fun resetKeys_coverEveryStep() {
         assertEquals(ArrivalTutorial.steps.map { it.id }, ArrivalTutorial.resetKeys())
+    }
+
+    @Test
+    fun isSpotlightAnchor_matchesThisSequencesOwnAnchorsOnly() {
+        ArrivalTutorial.steps.forEach { assertTrue(it.id, ArrivalTutorial.isSpotlightAnchor(it.id)) }
+        assertFalse(ArrivalTutorial.isSpotlightAnchor(ScriptedTutorial.KEY_ROUTE_BADGE))
+        assertFalse(ArrivalTutorial.isSpotlightAnchor("nothing_at_all"))
+    }
+
+    /**
+     * The tour covers this sequence completely — it rings [ArrivalTutorial.KEY_ETA] itself — so taking
+     * the tour retires the whole thing via the shared anchor, and nothing is left to pop up afterwards.
+     * That is the property that broke when the tour only covered part of the sequence.
+     */
+    @Test
+    fun theScriptedTourReusesEverySpotlightInTheSequence() {
+        val reused = ArrivalTutorial.steps
+            .map { it.id }
+            .filter { anchor -> ScriptedTutorial.steps.any { it.anchorId == anchor } }
+
+        assertEquals(ArrivalTutorial.steps.map { it.id }, reused)
     }
 }

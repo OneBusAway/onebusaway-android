@@ -16,6 +16,8 @@
 package org.onebusaway.android.ui.tripplan
 
 import java.io.IOException
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -67,10 +69,12 @@ class TripPlanViewModelTest {
         var reverseResult: Result<String?> = Result.success(null)
     ) : GeocodeRepository {
         var lastQuery: String? = null
+        var suggestCalls = 0
         val reverseCalls = mutableListOf<Pair<Double, Double>>()
 
         override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> {
             lastQuery = query
+            suggestCalls++
             return result
         }
 
@@ -78,6 +82,15 @@ class TripPlanViewModelTest {
             reverseCalls.add(lat to lon)
             return reverseResult
         }
+    }
+
+    /** A geocoder whose forward lookup answers only when the test completes [pending]. */
+    private class DeferredGeocodeRepository(
+        private val pending: CompletableDeferred<Result<List<TripEndpoint.Geocoded>>>
+    ) : GeocodeRepository {
+        override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> = pending.await()
+
+        override suspend fun reverse(lat: Double, lon: Double): Result<String?> = Result.success(null)
     }
 
     /** A geocoder whose reverse lookup never answers, to exercise the plan's naming timeout. */
@@ -119,6 +132,17 @@ class TripPlanViewModelTest {
         override fun now(): Long = nowMillis
     }
 
+    /**
+     * A clock that moves *between reads*, walking [readings] and then holding the last one. Where
+     * [FakeClock] holds still — and so cannot tell one read apart from two — this makes the number of
+     * reads a helper takes observable.
+     */
+    private class TickingClock(var readings: List<Long>) : TimeProvider {
+        var index = 0
+
+        override fun now(): Long = readings[minOf(index++, readings.lastIndex)]
+    }
+
     private fun viewModel(
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
@@ -137,6 +161,13 @@ class TripPlanViewModelTest {
             FakeAdvancedSettingsRepository()
         )
     }
+
+    /**
+     * A wall-clock instant on [date], in the device's own zone — the zone the form reasons about days
+     * in, so a fixed epoch millis would place these cases on a different date depending on where the
+     * test runs.
+     */
+    private fun millisOn(date: LocalDate, hour: Int): Long = date.atTime(hour, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */
     private fun setBothEndpoints(vm: TripPlanViewModel) {
@@ -295,7 +326,7 @@ class TripPlanViewModelTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
-        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpointPaired(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
         val state = vm.formState.value
@@ -314,11 +345,102 @@ class TripPlanViewModelTest {
         vm.setEndpoint(TripEndpointSlot.FROM, origin)
         advanceUntilIdle()
 
-        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpointPaired(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
         assertTrue(vm.formState.value.canSubmit)
         assertEquals(1, plan.calls)
+    }
+
+    // --- a place another app named as text (#1936) ---------------------------------------------------
+
+    @Test
+    fun `a place named as text resolves to the geocoder's top match and plans`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val geocode = FakeGeocodeRepository(Result.success(listOf(destination, origin)))
+        val vm = viewModel(geocode = geocode, plan = plan)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
+        advanceUntilIdle()
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        advanceUntilIdle()
+
+        assertEquals("400 Broad St", geocode.lastQuery)
+        assertEquals(destination, vm.formState.value.to)
+        assertEquals(1, plan.calls)
+    }
+
+    /** The text is on screen before the geocoder answers, so the form says what the app was opened for. */
+    @Test
+    fun `a place named as text shows its text while the lookup is out`() = runTest {
+        val pending = CompletableDeferred<Result<List<TripEndpoint.Geocoded>>>()
+        val vm = viewModel(geocode = DeferredGeocodeRepository(pending))
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        runCurrent()
+
+        assertEquals(TripEndpoint.FreeText("400 Broad St"), vm.formState.value.to)
+
+        pending.complete(Result.success(listOf(destination)))
+        advanceUntilIdle()
+        assertEquals(destination, vm.formState.value.to)
+    }
+
+    /** A rider who types over the field while the lookup is out keeps what they typed. */
+    @Test
+    fun `an edit during the lookup is not overwritten by its result`() = runTest {
+        val pending = CompletableDeferred<Result<List<TripEndpoint.Geocoded>>>()
+        val vm = viewModel(geocode = DeferredGeocodeRepository(pending))
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        runCurrent()
+        vm.onQueryChange(TripEndpointSlot.TO, "Space Needle")
+        pending.complete(Result.success(listOf(destination)))
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText("Space Needle"), vm.formState.value.to)
+    }
+
+    /**
+     * A lookup that succeeded with nothing has already given its answer, so the question isn't repeated
+     * through the field's debounced pipeline — the geocoder is asked exactly once.
+     */
+    @Test
+    fun `a place named as text that resolves to nothing is left in the field for the rider`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val geocode = FakeGeocodeRepository(Result.success(emptyList()))
+        val vm = viewModel(geocode = geocode, plan = plan)
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "nowhere at all")
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText("nowhere at all"), vm.formState.value.to)
+        assertEquals(1, geocode.suggestCalls)
+        assertEquals(0, plan.calls)
+    }
+
+    /** A lookup that *failed*, by contrast, is worth retrying — the field's own pipeline is armed. */
+    @Test
+    fun `a failed lookup leaves the text in the field and retries`() = runTest {
+        val geocode = FakeGeocodeRepository(Result.failure(IOException("offline")))
+        val vm = viewModel(geocode = geocode)
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "400 Broad St")
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText("400 Broad St"), vm.formState.value.to)
+        assertEquals(2, geocode.suggestCalls)
+    }
+
+    @Test
+    fun `a blank place name asks the geocoder nothing`() = runTest {
+        val geocode = FakeGeocodeRepository(Result.success(emptyList()))
+        val vm = viewModel(geocode = geocode)
+
+        vm.setEndpointFromQuery(TripEndpointSlot.TO, "   ")
+        advanceUntilIdle()
+
+        assertEquals(0, geocode.suggestCalls)
     }
 
     @Test
@@ -557,6 +679,82 @@ class TripPlanViewModelTest {
     }
 
     @Test
+    fun `switching regions clears both endpoints and the plan`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1))
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertTrue(vm.planState.value is PlanResult.Success)
+
+        regionRepo.emit(region(id = 2))
+        advanceUntilIdle()
+
+        // A trip is a pair of places in one transit system; neither end survives the move to another.
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.from)
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.to)
+        assertTrue(vm.planState.value is PlanResult.Idle)
+    }
+
+    /**
+     * The region *resolving* — null until the directory lands — is not a switch. Treating it as one
+     * would wipe a trip a notification restore or a pinned resume put here while it was still settling.
+     */
+    @Test
+    fun `the first region to resolve leaves an existing trip alone`() = runTest {
+        val regionRepo = FakeRegionRepository()
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+
+        regionRepo.emit(region(id = 1))
+        advanceUntilIdle()
+
+        assertEquals(origin, vm.formState.value.from)
+        assertEquals(destination, vm.formState.value.to)
+        assertTrue(vm.planState.value is PlanResult.Success)
+    }
+
+    /**
+     * Losing the region *is* a switch away from one: deleting the custom region you are on leaves the
+     * trip with no transit system behind it, exactly as moving to another region would.
+     */
+    @Test
+    fun `losing the region clears the trip`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1))
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertTrue(vm.planState.value is PlanResult.Success)
+
+        regionRepo.emit(null)
+        advanceUntilIdle()
+
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.from)
+        assertEquals(TripEndpoint.FreeText(), vm.formState.value.to)
+        assertTrue(vm.planState.value is PlanResult.Idle)
+    }
+
+    /** Re-emitting the same region (a directory refresh) is not a switch either. */
+    @Test
+    fun `re-emitting the same region leaves the trip alone`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1))
+        val vm = viewModel(region = regionRepo)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        val planned = vm.planState.value
+        assertTrue(planned is PlanResult.Success)
+
+        regionRepo.emit(region(id = 1, otpContactEmail = "refreshed@example.com"))
+        advanceUntilIdle()
+
+        assertEquals(origin, vm.formState.value.from)
+        assertEquals(destination, vm.formState.value.to)
+        // The drawn result survives too: clearing the endpoints would drop it back to Idle, so
+        // asserting only the endpoints would pass on a refresh that had quietly wiped the plan.
+        assertEquals(planned, vm.planState.value)
+    }
+
+    @Test
     fun `setDateTime refreshes the date and time labels`() = runTest {
         val vm = viewModel()
         vm.setDateTime(1_700_000_000_000L)
@@ -564,6 +762,23 @@ class TripPlanViewModelTest {
         assertTrue(state.dateLabel.isNotBlank())
         assertTrue(state.timeLabel.isNotBlank())
         assertEquals(1_700_000_000_000L, state.dateTimeMillis)
+    }
+
+    /**
+     * A single-digit hour isn't padded — "6:44 PM", not "06:44 PM". Asserted as the absence of the
+     * pad rather than against a literal, which would pin the runner's locale: the padding is the
+     * pattern's doing (`h`, not `hh`) and so is locale-independent, but the digits aren't.
+     */
+    @Test
+    fun `the time label does not zero-pad the hour`() = runTest {
+        val vm = viewModel()
+
+        vm.setDateTime(millisOn(LocalDate.of(2026, 6, 10), hour = 6))
+
+        assertFalse(
+            "expected an unpadded hour, but the label was ${vm.formState.value.timeLabel}",
+            vm.formState.value.timeLabel.startsWith("0")
+        )
     }
 
     @Test
@@ -624,6 +839,91 @@ class TripPlanViewModelTest {
         assertEquals(120_000L, (vm.planState.value as PlanResult.Success).params?.dateTimeMillis)
     }
 
+    /**
+     * Refresh's whole reason for existing (#2135): a "depart now" trip is planned against a clock that
+     * keeps moving, and until this there was no way to ask for the same trip against the current one
+     * without editing the trip.
+     */
+    @Test
+    fun `refreshing a depart-now trip re-plans it against the current clock`() = runTest {
+        val clock = FakeClock(0L)
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan, clock = clock)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(1, plan.calls)
+        assertEquals(0L, plan.lastParams?.dateTimeMillis)
+
+        clock.nowMillis = 600_000L
+        vm.refreshPlan()
+        advanceUntilIdle()
+
+        assertEquals(2, plan.calls)
+        assertEquals(600_000L, plan.lastParams?.dateTimeMillis)
+    }
+
+    /** A pinned trip is re-planned, not re-timed — refresh must not quietly move what the rider asked for. */
+    @Test
+    fun `refreshing a pinned trip re-plans the same instant`() = runTest {
+        val clock = FakeClock(0L)
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan, clock = clock)
+        setBothEndpoints(vm)
+        vm.setDateTime(1_700_000_000_000L)
+        advanceUntilIdle()
+        val callsBefore = plan.calls
+
+        clock.nowMillis = 600_000L
+        vm.refreshPlan()
+        advanceUntilIdle()
+
+        assertEquals(callsBefore + 1, plan.calls)
+        assertEquals(1_700_000_000_000L, plan.lastParams?.dateTimeMillis)
+        assertFalse(vm.formState.value.departNow)
+    }
+
+    /**
+     * A refresh that comes back with the very same itineraries is still a new plan: the results sheet
+     * keys its seeding on `generation`, so an equal re-plan that kept its number would never re-seed
+     * (the case CodeRabbit raised on #2277). Every publish, wire or snapshot, must advance it.
+     */
+    @Test
+    fun `every published plan carries a new generation, equal results included`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan, clock = FakeClock(0L))
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        val first = vm.planState.value as PlanResult.Success
+
+        vm.refreshPlan()
+        advanceUntilIdle()
+        val refreshed = vm.planState.value as PlanResult.Success
+
+        vm.restorePinned(pinnedParams(), departNow = false, itineraries = listOf(TripItinerary()))
+        val resumed = vm.planState.value as PlanResult.Success
+
+        assertEquals(first.itineraries, refreshed.itineraries)
+        assertTrue(refreshed.generation > first.generation)
+        assertTrue(resumed.generation > refreshed.generation)
+    }
+
+    /**
+     * Refresh on a form that names only one end has no trip to re-plan. The button is disabled there,
+     * so this pins the ViewModel's own half: it must not issue a request for an incomplete form.
+     */
+    @Test
+    fun `refreshing an incomplete form plans nothing`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
+        advanceUntilIdle()
+
+        vm.refreshPlan()
+        advanceUntilIdle()
+
+        assertEquals(0, plan.calls)
+    }
+
     @Test
     fun `a restored trip stays pinned to the instant it was planned for`() = runTest {
         val vm = viewModel(clock = FakeClock(0L))
@@ -638,6 +938,97 @@ class TripPlanViewModelTest {
         assertFalse(state.departNow)
         assertEquals(1_700_000_000_000L, state.dateTimeMillis)
     }
+
+    @Test
+    fun `a resumed pin carries the request that produced it, unlike a notification re-entry`() = runTest {
+        // The difference that makes a resumed trip refreshable: PlanResult.Success.params is what the
+        // change monitor re-plans and what the itinerary's terminus pins are derived from.
+        val vm = viewModel(clock = FakeClock(0L))
+        val params = pinnedParams()
+
+        vm.restorePinned(params, departNow = false, itineraries = listOf(TripItinerary()))
+
+        val success = vm.planState.value as PlanResult.Success
+        assertEquals(params, success.params)
+        assertTrue("a redrawn snapshot must not re-arm the change monitor", success.fromSnapshot)
+    }
+
+    @Test
+    fun `resuming a pin re-plans nothing`() = runTest {
+        // The whole point of the stored snapshot: resume draws it, and the Refresh button is the only
+        // thing that goes to the network.
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+
+        vm.restorePinned(pinnedParams(), departNow = false, itineraries = listOf(TripItinerary()))
+        advanceUntilIdle()
+
+        assertEquals(0, plan.calls)
+    }
+
+    @Test
+    fun `a trip pinned on the now anchor comes back on it, with the clock re-read`() = runTest {
+        // The stored instant is when the request was *submitted*. Handing it back as the rider's
+        // starting point would be the moving-anchor bug departNow exists to prevent.
+        val vm = viewModel(clock = FakeClock(9_000_000L))
+
+        vm.restorePinned(pinnedParams(), departNow = true, itineraries = listOf(TripItinerary()))
+
+        val state = vm.formState.value
+        assertTrue(state.departNow)
+        assertEquals(9_000_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `a trip pinned to a stated instant comes back on that instant`() = runTest {
+        val vm = viewModel(clock = FakeClock(9_000_000L))
+
+        vm.restorePinned(pinnedParams(), departNow = false, itineraries = listOf(TripItinerary()))
+
+        val state = vm.formState.value
+        assertFalse(state.departNow)
+        assertEquals(1_700_000_000_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `a resumed pin restores the options the trip was planned with`() = runTest {
+        // Not just the endpoints: a Refresh has to re-plan the same trip, and it reads these off the
+        // form. restoreFrom, the notification path, genuinely doesn't know them.
+        val vm = viewModel(clock = FakeClock(0L))
+        val params = pinnedParams().copy(
+            modes = TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE),
+            wheelchair = true,
+            maxWalkMeters = 800.0,
+            walkPreference = WalkPreference.MINIMUM,
+            cyclingPreference = CyclingPreference.FLATTEST,
+            bikePreference = BikePreference.MAXIMUM
+        )
+
+        vm.restorePinned(params, departNow = false, itineraries = listOf(TripItinerary()))
+
+        // Every option the request carries, not a sample of them: restorePinned copies each field by
+        // hand, so one left out (or crossed with its neighbour) is exactly the mistake this catches.
+        val state = vm.formState.value
+        assertEquals(TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE), state.modes)
+        assertTrue(state.wheelchair)
+        assertEquals(800.0, state.maxWalkMeters!!, 0.0)
+        assertEquals(WalkPreference.MINIMUM, state.walkPreference)
+        assertEquals(CyclingPreference.FLATTEST, state.cyclingPreference)
+        assertEquals(BikePreference.MAXIMUM, state.bikePreference)
+        assertFalse("optimizeTransfers must arrive as the request stated it", state.optimizeTransfers)
+        assertEquals(params.arriving, state.arriving)
+    }
+
+    private fun pinnedParams() = TripPlanParams(
+        from = origin,
+        to = destination,
+        dateTimeMillis = 1_700_000_000_000L,
+        arriving = false,
+        modes = TripModeSelection(),
+        wheelchair = false,
+        optimizeTransfers = false,
+        maxWalkMeters = null
+    )
 
     /**
      * "Arrive by now" asks for a trip that has already finished, so choosing *arriving* leaves the
@@ -656,6 +1047,72 @@ class TripPlanViewModelTest {
         assertFalse(state.departNow)
         // Pinned to the clock at the moment of the switch, not to the stale construction stamp.
         assertEquals(60_000L, state.dateTimeMillis)
+    }
+
+    /**
+     * The callout names the day in words where there is a word for it (#2185), so the ViewModel
+     * settles which day a pinned instant falls on alongside the labels it formats.
+     */
+    @Test
+    fun `a pinned instant is classified by the day it falls on`() = runTest {
+        val today = LocalDate.of(2026, 6, 10)
+        val vm = viewModel(clock = FakeClock(millisOn(today, hour = 9)))
+
+        vm.setDateTime(millisOn(today, hour = 17))
+        assertEquals(TripDay.TODAY, vm.formState.value.dayRelation)
+
+        vm.setDateTime(millisOn(today.plusDays(1), hour = 8))
+        assertEquals(TripDay.TOMORROW, vm.formState.value.dayRelation)
+
+        vm.setDateTime(millisOn(today.plusDays(2), hour = 8))
+        assertEquals(TripDay.OTHER, vm.formState.value.dayRelation)
+
+        // Yesterday is a different day, not a near-enough one — the relation is about the calendar,
+        // not about how far off the instant is.
+        vm.setDateTime(millisOn(today.minusDays(1), hour = 23))
+        assertEquals(TripDay.OTHER, vm.formState.value.dayRelation)
+    }
+
+    /**
+     * Calendar days, not elapsed hours: half an hour past midnight is *tomorrow* to a rider standing
+     * there at 23:30, and would be "today" to any rule that measured the gap instead of the date.
+     */
+    @Test
+    fun `the day a pinned instant falls on is measured in dates, not hours`() = runTest {
+        val today = LocalDate.of(2026, 6, 10)
+        val vm = viewModel(clock = FakeClock(millisOn(today, hour = 23)))
+
+        vm.setDateTime(millisOn(today.plusDays(1), hour = 0))
+
+        assertEquals(TripDay.TOMORROW, vm.formState.value.dayRelation)
+    }
+
+    /** A trip anchored to "now" is by definition for today. */
+    @Test
+    fun `a form starts on today`() = runTest {
+        assertEquals(TripDay.TODAY, viewModel().formState.value.dayRelation)
+    }
+
+    /**
+     * Pinning the clock takes *one* reading, which then serves as both the instant pinned and the
+     * reference its day is measured against. Two readings can straddle midnight, and the trip the
+     * rider just pinned to "now" would come back labelled with a different day than the clock it was
+     * taken from — so the clock is read at the call site and passed down, never inside the helper.
+     */
+    @Test
+    fun `pinning the clock takes a single reading, even across midnight`() = runTest {
+        val midnight = LocalDate.of(2026, 6, 11).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val clock = TickingClock(listOf(midnight - 1))
+        val vm = viewModel(clock = clock)
+
+        // From here the clock ticks over midnight on its second read, so a helper that reads it again
+        // mid-write lands on the next day and labels 23:59:59.999 as something other than today.
+        clock.readings = listOf(midnight - 1, midnight)
+        clock.index = 0
+        vm.setDepartNow()
+
+        assertEquals(TripDay.TODAY, vm.formState.value.dayRelation)
+        assertEquals(midnight - 1, vm.formState.value.dateTimeMillis)
     }
 
     @Test

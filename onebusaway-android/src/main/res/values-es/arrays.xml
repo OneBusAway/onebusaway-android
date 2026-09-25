@@ -19,6 +19,7 @@
         <item>Aprende con el tutorial</item>
         <item>Leyenda</item>
         <item>Novedades en esta versión</item>
+        <item>Elige tu diseño</item>
         <item>Agencias Soportadas</item>
         <item>Twitter</item>
         <item>Contactanos</item>
@@ -27,6 +28,7 @@
         <item>Aprende con el tutorial</item>
         <item>Leyenda</item>
         <item>Novedades en esta versión</item>
+        <item>Elige tu diseño</item>
         <item>Agencias Soportadas</item>
         <item>Twitter</item>
     </string-array>
@@ -69,11 +71,6 @@
         <item>@string/preferences_preferred_units_option_automatic</item>
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
-    </string-array>
-    <string-array name="preferred_map_options">
-        <item>@string/preferences_preferred_map_option_normal2d</item>
-        <item>@string/preferences_preferred_map_option_normal3d</item>
-        <item>@string/preferences_preferred_map_option_satellite</item>
     </string-array>
 
     <!-- Spoken directions based on 16 compass points, but pointing from the user's current location

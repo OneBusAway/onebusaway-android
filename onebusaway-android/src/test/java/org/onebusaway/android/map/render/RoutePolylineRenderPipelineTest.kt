@@ -53,6 +53,45 @@ class RoutePolylineRenderPipelineTest {
     }
 
     @Test
+    fun `a pinned trip draws beneath the current view, and survives it being cleared`() = runTest {
+        // The whole reason the ghost is its own slice: every mode transition clears routePolylines, and
+        // a parked trip that vanished on the first stop the rider tapped would be no use at all.
+        val ghost = RoutePolyline(0xFF00FF00.toInt(), listOf(point(0.0, 0.0), point(0.0, 1.0)))
+        val current = RoutePolyline(0xFFFF0000.toInt(), listOf(point(1.0, 0.0), point(1.0, 1.0)))
+        val snapshot = MutableStateFlow(
+            MapRenderSnapshot(routePolylines = listOf(current), pinnedTripPolylines = listOf(ghost))
+        )
+        val viewport = MutableStateFlow<CameraSnapshot?>(null)
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+
+        // Ghost first: earlier in the list is drawn first, so it sits underneath.
+        assertEquals(
+            listOf(ghost, current),
+            routePolylineRenderFlow(snapshot, viewport, dispatcher).first()
+        )
+
+        snapshot.value = snapshot.value.copy(routePolylines = emptyList())
+
+        assertEquals(
+            listOf(ghost),
+            routePolylineRenderFlow(snapshot, viewport, dispatcher).first()
+        )
+    }
+
+    @Test
+    fun `no pinned trip leaves the rendered list exactly as the current view's`() = runTest {
+        val current = RoutePolyline(0xFFFF0000.toInt(), listOf(point(1.0, 0.0), point(1.0, 1.0)))
+        val snapshot = MutableStateFlow(MapRenderSnapshot(routePolylines = listOf(current)))
+        val viewport = MutableStateFlow<CameraSnapshot?>(null)
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+
+        assertEquals(
+            listOf(current),
+            routePolylineRenderFlow(snapshot, viewport, dispatcher).first()
+        )
+    }
+
+    @Test
     fun `render flow processes a copy while canonical geometry stays complete`() = runTest {
         val raw = viewportLine(point(0.0, -4.0), point(0.0, 4.0))
         val snapshot = MutableStateFlow(MapRenderSnapshot(routePolylines = listOf(raw)))

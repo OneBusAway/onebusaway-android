@@ -28,7 +28,7 @@
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
     <string name="navdrawer_item_open_source">Visit us on GitHub</string>
-    <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
+    <string name="navdrawer_item_plan_trip">Plan a trip</string>
     <string name="navdrawer_item_pay_fare">Pay my fare</string>
 
     <!-- Permissions -->
@@ -38,6 +38,8 @@
     </string>
 
     <!-- Generic -->
+    <!-- Pill shown beside the name of a feature that is still in beta. -->
+    <string name="beta_pill">BETA</string>
     <string name="generic_comm_error">Sorry, there was a communication error and we can’t show this
         information. Try again and it might work.
     </string>
@@ -101,7 +103,7 @@
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What’s New?</string>
-    <string name="main_help_whatsnew">• <b>Bug fixes</b> Several bug fixes and fit and finish improvements. - See https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Bold new look for a bold new era\n&#8226;\u0020Arrivals are now grouped by route\n&#8226;\u0020Micromobility added to the bike overlay\n&#8226;\u0020Tap a stop to see its routes\n&#8226;\u0020Zoom in to see nearby routes\n&#8226;\u0020Vehicle locations extrapolated and animated\n&#8226;\u0020Track your bus with live notifications\n&#8226;\u0020Significant improvements to the trip planner\n&#8226;\u0020Several small bug fixes\n\nSee https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
     <string name="main_help_legend_ontime">Green means “On time” - within a minute and a half of
@@ -119,6 +121,25 @@
     <string name="main_help_legend_canceled">Gray with strikethrough means the trip has been
         canceled - this bus is NOT coming
     </string>
+    <!-- The two glyphs an ETA pill can carry; both mean the arrival is real-time -->
+    <string name="main_help_legend_on_map">A pin means the vehicle is on the map right now — tap the
+        arrival to jump to it.
+    </string>
+    <string name="main_help_legend_realtime">A broadcast icon means the arrival is tracked live, but
+        the vehicle isn’t drawn on the map.
+    </string>
+    <!-- The tutorial's inline legend: bare labels beside each swatch, since the caption above them
+         already says what the colours are for. The fuller main_help_legend_* wording above stays with
+         the Help dialog, which has the room and no surrounding explanation. -->
+    <string name="tutorial_legend_ontime">On time</string>
+    <string name="tutorial_legend_early">Running early</string>
+    <string name="tutorial_legend_late">Running late</string>
+    <string name="tutorial_legend_scheduled">No live data; scheduled departure</string>
+    <string name="tutorial_legend_on_map">The vehicle is on the map</string>
+    <string name="tutorial_legend_tracked">The vehicle for this trip is being tracked, but it’s not
+        yet on this route
+    </string>
+
     <string name="main_nolocation_title">Location not enabled</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="main_nolocation">%1$s would like your location, do you want to enable it now?</string>
@@ -135,6 +156,7 @@
     <string name="bus_options_menu_show_trip_details">Show trip status</string>
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
     <string name="bus_options_menu_show_route_on_map">Show route on map</string>
+    <string name="bus_options_menu_show_stop_list">Show stop list</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
     <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
@@ -216,6 +238,9 @@
     <string name="stop_info_time_departing_at">Departing at %1s</string>
     <string name="stop_info_time_arrived_at">Arrived at %1s</string>
     <string name="stop_info_time_departed_at">Departed at %1s</string>
+    <!-- Spoken form of a corrected clock time, whose strikethrough a screen reader cannot convey:
+         %1$s is the struck-through timetable time, %2$s the time now expected. -->
+    <string name="stop_info_clock_corrected">Scheduled %1$s, now expected %2$s</string>
 
     <plurals name="stop_info_frequency_from">
         <item quantity="one">Every %1$d min from %2$s</item>
@@ -227,10 +252,8 @@
     </plurals>
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_option_showonmap">Show on map</string>
-    <string name="stop_info_unselect_route">Unselect route</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
-    <string name="stop_info_option_show_details">Show stop details</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
@@ -282,8 +305,6 @@
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_favorite">Favorite stop</string>
-    <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
-    <string name="stop_info_route_ids_label">Routes:</string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Destination reminder (beta)</string>
@@ -350,6 +371,10 @@
     </string>
 
     <!-- Stop Details -->
+    <string name="map_choose_stop">Choose a stop</string>
+    <string name="map_stop_currently_selected">Currently selected</string>
+    <string name="map_stop_routes">Routes: %1$s</string>
+    <string name="map_stop_routes_unavailable">Routes unavailable</string>
     <string name="stop_details_code">Stop # %1$s</string>
     <string name="stop_wheelchair_accessible">Wheelchair accessible</string>
     <string name="stop_wheelchair_not_accessible">Not wheelchair accessible</string>
@@ -357,8 +382,6 @@
     <!-- Arrival Time Style B -->
 
     <!-- Route Info  -->
-    <string name="route_info_context_get_stop_info">Show arrival information</string>
-    <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_no_shape_data">Sorry, map information isn’t available for this route
     </string>
     <!-- Route map header: open the menu choosing which direction of the route is shown -->
@@ -447,6 +470,16 @@
     <string name="search_route_hint">Enter a route name/number</string>
     <string name="route_shortcut">Route</string>
     <string name="stop_shortcut">Stop</string>
+    <!-- A coach-number search hit. %1$s is the number painted on the vehicle, e.g. "Coach 4531". -->
+    <string name="search_result_coach">Coach %1$s</string>
+    <!-- Names the leading glyph on a coach-number search result, for screen readers. -->
+    <string name="search_result_coach_icon">Vehicle</string>
+    <!-- Shown under a matched coach number when the server says the vehicle isn't running a trip
+         right now, so there is no ride to open. -->
+    <string name="search_result_coach_not_in_service">Not in service</string>
+    <!-- Shown under a matched coach number when looking up what the vehicle is running failed, so
+         the app can't say whether it is in service. -->
+    <string name="search_result_coach_status_unavailable">Status unavailable</string>
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>
@@ -467,10 +500,16 @@
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
 
-    <!-- Occupancy -->
+    <!-- Occupancy. The map marker draws these as silhouettes; the text is what a screen reader
+         announces for that vehicle, so each names its own crowding level rather than a pip count. -->
+    <string name="realtime_empty">Empty</string>
+    <string name="realtime_many_seats_available">Many seats available</string>
+    <string name="realtime_standing_room">Standing room</string>
+    <string name="realtime_full">Full</string>
 
-
-
+    <!-- Screen-reader name for a vehicle marker whose route and destination the poll couldn't
+         resolve, so the marker draws the default glyph and has nothing else to be called. -->
+    <string name="vehicle_marker_unidentified">Vehicle</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">You don’t have any reminders.\n\nYou can create reminders by
@@ -609,6 +648,7 @@
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>
+    <string name="preferences_category_behavior">Behavior</string>
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_notifications">Notifications</string>
@@ -643,23 +683,25 @@
         list.
     </string>
 
+    <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
+    <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
+    <!-- Settings: how long the home screen keeps a selected stop after the rider last left it (#2294) -->
+    <string name="preferences_focus_timeout_title">Remember selected stop for</string>
+    <string name="preferences_focus_timeout_30_minutes">30 minutes</string>
+    <string name="preferences_focus_timeout_1_hour">1 hour</string>
+    <string name="preferences_focus_timeout_2_hours">2 hours</string>
+    <string name="preferences_focus_timeout_4_hours">4 hours</string>
+    <string name="preferences_focus_timeout_8_hours">8 hours</string>
+    <string name="preferences_focus_timeout_always">Always</string>
+    <string name="preferences_compact_stop_icons_title">Compact stop icons</string>
+    <string name="preferences_compact_stop_icons_summary">Use smaller stop markers without vehicle symbols</string>
     <string name="preferences_show_zoom_controls_title">Show zoom controls</string>
     <string name="preferences_show_zoom_controls_summary">Display zoom controls on map
-    </string>
-
-    <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
-    <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
-        show arrival info in the header at the top of the screen (doesn’t affect map view)
     </string>
 
     <string name="preferences_trip_plan_notifications_title">Trip plan notifications (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">After planning a trip, send
         notifications if the trip is delayed or no longer recommended.
-    </string>
-
-    <string name="preferences_show_tutorial_screens_title">Show tutorial screens</string>
-    <string name="preferences_show_tutorial_screens_summary">Display informational popups explaining
-        how to use features
     </string>
 
     <string name="preferences_left_hand_mode_title">Left hand mode</string>
@@ -699,6 +741,12 @@
     <string name="preferences_experimental_regions_summary">Enables regions that may be unstable
     </string>
     <string name="map_zoom_in_for_more_stops">Zoom in to see all stops</string>
+    <!-- Title at the head of the nearby-arrivals drawer, which lists the routes leaving every stop in
+         view at transit-centre zoom (#2107). "Routes", not "stops": the list is one row per route. -->
+    <string name="nearby_arrivals_title">Nearby routes</string>
+    <!-- Shown at the end of the nearby-arrivals drawer when the server truncated its response, so
+         some stops in view are missing from the list entirely (#2107). -->
+    <string name="nearby_arrivals_limit_exceeded">Some stops in view aren\'t listed. Zoom in to see them.</string>
     <string name="preferences_map_stop_cache_size_title">Map stop cache size</string>
     <string name="preferences_map_stop_cache_size_summary">Max bus stops kept on the map while panning (currently %1$d)</string>
     <!-- Not a plural candidate: "%1$d and %2$d" are the bounds of a range, not a count that inflects. -->
@@ -711,8 +759,6 @@
     </string>
     <string name="preferences_analytics_title">Send anonymous usage data</string>
     <string name="preferences_analytics_summary">Help us improve the app</string>
-    <string name="preferences_tutorial_title">Show tutorial</string>
-    <string name="preferences_tutorial_summary">Show instructions for using this app</string>
     <string name="preferences_donate_title">Donate</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="preferences_donate_summary">Support the %1$s open-source project</string>
@@ -832,15 +878,6 @@
         <item quantity="one">Data updated %1$d min %2$d sec ago</item>
         <item quantity="other">Data updated %1$d min %2$d sec ago</item>
     </plurals>
-    <plurals name="vehicle_estimate_from_update_sec">
-        <item quantity="one">Estimate from data updated %1$d sec ago</item>
-        <item quantity="other">Estimate from data updated %1$d sec ago</item>
-    </plurals>
-    <plurals name="vehicle_estimate_from_update_min_and_sec">
-        <item quantity="one">Estimate from data updated %1$d min %2$d sec ago</item>
-        <item quantity="other">Estimate from data updated %1$d min %2$d sec ago</item>
-    </plurals>
-    <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Never miss the bus at night again!</string>
@@ -854,10 +891,6 @@
 
     <!-- Tutorials -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="tutorial_welcome_title">Welcome to %1$s!</string>
-    <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
-        times.
-    </string>
     <string name="tutorial_opt_out_dialog_title">Show tutorial?</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="tutorial_opt_out_dialog_text">Would you like to see popup descriptions for how to use %1$s? You can always turn the popups on or off in Settings, or show the tutorial later via Help.</string>
@@ -868,23 +901,70 @@
         where the bus is, the scheduled time is shown (gray background). Gray with strikethrough text
         (a line through it) means the trip is canceled.
     </string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Slide up to show more arrivals
-    </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Drag the panel up
-        to see more arrivals for this stop.
-    </string>
-    <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
-    <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you’ve recently
-        looked at in the menu.
-    </string>
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>
     <string name="tutorial_button_finish">Finish</string>
-    <!-- The welcome onboarding step that spotlights a real stop on the map -->
-    <string name="tutorial_welcome_map_stop_title">Here’s a stop</string>
-    <string name="tutorial_welcome_map_stop_text">Tap a green dot like this one on the map to see its
-        arrival times.
+    <string name="tutorial_button_back">Back</string>
+
+    <!-- The scripted guided tour. It runs on a built-in demo transit system, so every step has
+         something to point at no matter where the rider is or whether they are online. -->
+    <!-- Note: %1$s is replaced with app_name for white-label support -->
+    <string name="tutorial_scripted_map_title">Welcome to %1$s</string>
+    <string name="tutorial_scripted_map_text">This is the map. It shows the transit stops around you,
+        and the vehicles running between them.
     </string>
+    <string name="tutorial_scripted_stop_title">Tap a stop</string>
+    <string name="tutorial_scripted_stop_text">Tapping a stop opens its arrivals and shows its routes
+        on the map.
+    </string>
+    <string name="tutorial_scripted_arrivals_title">Live arrivals</string>
+    <string name="tutorial_scripted_arrivals_text">Arrivals are grouped by route, with the soonest
+        departure on the left.
+    </string>
+    <string name="tutorial_scripted_route_title">Tap a route</string>
+    <string name="tutorial_scripted_route_text">Tap a route badge to draw the whole route and show
+        every vehicle running on it right now.
+    </string>
+    <string name="tutorial_scripted_vehicle_title">Tap an arrival</string>
+    <string name="tutorial_scripted_vehicle_text">Tap an arrival pill to highlight the associated
+        vehicle on the map.
+    </string>
+    <string name="tutorial_scripted_legend_title">What the colors mean</string>
+    <string name="tutorial_scripted_legend_text">A pill’s color shows if it’s running on schedule.</string>
+    <string name="tutorial_scripted_star_title">Save it for later</string>
+    <string name="tutorial_scripted_star_text">Stops and routes can be starred to save for later.</string>
+    <string name="tutorial_scripted_starred_list_title">Your starred items</string>
+    <string name="tutorial_scripted_starred_list_text">Everything you star ends up in this menu.</string>
+    <string name="tutorial_scripted_back_title">Backing out</string>
+    <string name="tutorial_scripted_back_text">Swipe back, or press Back, to unwind one step at a time
+        — vehicle, then route, then stop — until you’re looking at the plain map again.
+    </string>
+    <string name="tutorial_scripted_rentals_title">Bikes and scooters</string>
+    <string name="tutorial_scripted_rentals_text">Micromobility has its own layer. Switch it on here to
+        see the bikes, scooters and docks nearby.
+    </string>
+    <string name="tutorial_scripted_plan_press_title">Planning a trip</string>
+    <string name="tutorial_scripted_plan_press_text">Long-press anywhere on the map, then tap Navigate
+        here to plan a trip to that spot.
+    </string>
+    <string name="tutorial_scripted_plan_title">Here’s the trip</string>
+    <string name="tutorial_scripted_plan_text">Here are some routes to the chosen destination.</string>
+    <string name="tutorial_scripted_trip_options_title">Narrow it down</string>
+    <string name="tutorial_scripted_trip_options_text">Choose which kinds of transit you’ll take, how
+        far you’ll walk, and when you want to leave or arrive.
+    </string>
+    <string name="tutorial_scripted_itineraries_title">Several ways to go</string>
+    <string name="tutorial_scripted_itineraries_text">Each column is a different way to make the trip.</string>
+    <string name="tutorial_scripted_itinerary_detail_title">See it on the map</string>
+    <string name="tutorial_scripted_itinerary_detail_text">Tap a column to show trip details on the
+        map and in the directions drawer.
+    </string>
+    <string name="tutorial_scripted_leg_title">Focus route stage</string>
+    <string name="tutorial_scripted_leg_text">Tap on a route stage to show it on the map, along with
+        upcoming vehicles for that route segment.
+    </string>
+    <string name="tutorial_scripted_pin_title">Keep a trip</string>
+    <string name="tutorial_scripted_pin_text">Long-press a trip to easily return to it from the map.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Location permissions</string>
@@ -949,8 +1029,15 @@
     <!-- The directions form's time callout, e.g. "Leaving · now". Lowercase: it reads as part of a
          sentence next to Leaving/Arriving, not as a heading. -->
     <string name="trip_plan_now">now</string>
-    <!-- A pinned departure/arrival in the time callout: date, then time. -->
+    <!-- A pinned departure/arrival stated in full, at the head of the time callout's menu: date,
+         then time. -->
     <string name="trip_plan_date_time">%1$s, %2$s</string>
+    <!-- The same instant as the callout itself states it, leading with the time because that is what
+         a rider is reading for, and naming the day only when it isn't today. A trip later today is
+         just the time, with no suffix at all. Lowercase, like trip_plan_now: it reads as part of a
+         sentence next to Leaving/Arriving. %1$s is the time, %2$s the date. -->
+    <string name="trip_plan_time_tomorrow">%1$s, tomorrow</string>
+    <string name="trip_plan_time_date">%1$s, %2$s</string>
     <!-- The one row of the time callout's menu that opens the combined date/time picker. -->
     <string name="trip_plan_choose_date_time">Choose date and time…</string>
     <!-- The third row of that picker's day dropdown, which opens the calendar. -->
@@ -960,14 +1047,18 @@
     <string name="trip_plan_date_tomorrow">Tomorrow</string>
     <!-- Accessibility click label for either half of the time callout. -->
     <string name="trip_plan_change_when">Change when</string>
+    <!-- The directions action bar's button that re-plans the same trip against the current time and
+         the rider's current position. Glyph-only, so this names it for TalkBack and its tooltip. -->
+    <string name="trip_plan_refresh">Refresh directions</string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_date">Date</string>
     <string name="trip_plan_pick_on_map">Pick location on map</string>
     <string name="trip_plan_use_this_location">Use this location</string>
     <string name="trip_plan_map_location">Selected location</string>
-    <string name="directions_from_here">Directions from here</string>
-    <string name="directions_to_here">Directions to here</string>
+    <!-- The one option a long press on the map offers: plan a trip from where the rider is to the
+         point they pressed. Shown in a bubble at that point. -->
+    <string name="map_navigate_here">Navigate here</string>
     <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
     <string name="directions_stop_no_arrivals">No upcoming arrivals</string>
     <!-- Caption under a transit leg's route lines, when several routes go between the same two stops
@@ -979,6 +1070,12 @@
     <!-- Spoken state of each departure drawn before that rule: one leaving before the rider can be at
          the stop. Read on the departure itself, since its dimmed appearance says nothing aloud. -->
     <string name="directions_stop_eta_departure_missed">Leaves before you get here</string>
+    <!-- The one-line stand-in for a Board row's live ETA strip when the arrivals feed holds no departure at
+         or after the moment the plan has the rider reach that stop (a trip planned for later than the feed
+         reaches). -->
+    <string name="directions_stop_eta_none_boardable">No live departures yet</string>
+    <!-- Button on that line that shows the strip anyway (its departures all dimmed as already missed). -->
+    <string name="directions_stop_eta_show_anyway">Show</string>
     <!-- Content descriptions for the chevron on a service-alert banner above the directions, which
          expands the alert to its full description. -->
     <string name="directions_alert_show_details">Show alert details</string>
@@ -992,11 +1089,49 @@
          %1$s is the localized severity label, announced in place so it reads e.g.
          "1 Line, Severe service alert". -->
     <string name="directions_leg_service_alert">%1$s service alert</string>
+    <!-- The one-time full-screen safety notice, shown the first time a rider opens directions (#2218).
+         OTP plans walking legs from open map data whose crosswalk / signal / sidewalk coverage is
+         patchy, and riders arrive expecting parity with commercial map apps.
+         Note: %1$s is replaced with app_name for white-label support. -->
+    <string name="directions_safety_title">Directions may be wrong</string>
+    <!-- One string rather than a paragraph each: the two are never shown apart, and the caution banner
+         below expands to exactly this text, so splitting them would be an invariant with no owner. -->
+    <string name="directions_safety_body">%1$s builds walking directions from open map data that is often missing crosswalks, traffic signals and sidewalks. A route may send you across a busy street where there is no safe place to cross.\n\nAlways look for a marked crossing and use your own judgment. Do not rely on these directions to keep you safe.</string>
+    <!-- The button that acknowledges the notice; nothing else dismisses it into the planner. -->
+    <string name="directions_safety_acknowledge">I understand</string>
+    <!-- The caution at the head of every itinerary detail. Tapping it expands the same explanation the
+         one-time notice gave, which is the only way back to that text once acknowledged. -->
+    <string name="directions_caution_banner">Directions can be wrong. Always use caution.</string>
+    <!-- Content descriptions for that caution banner&#8217;s chevron. -->
+    <string name="directions_caution_show_details">Show safety details</string>
+    <string name="directions_caution_hide_details">Hide safety details</string>
     <!-- Confirmation shown when a gesture (Back, or a tap on the map background) would close directions
          while a planned trip is drawn on the map, since that discards the whole plan. -->
     <string name="directions_exit_confirm_title">Leave these directions?</string>
     <string name="directions_exit_confirm_message">Your planned trip will be discarded.</string>
     <string name="directions_exit_confirm_discard">Discard</string>
+    <!-- The third answer, offered only when nothing is pinned yet: park this trip on the way out, so
+         leaving costs nothing (#2053). Withheld once something *is* pinned, where it could only be read
+         as ambiguous — see DirectionsExitConfirmDialog. -->
+    <string name="directions_exit_confirm_pin">Pin &amp; leave</string>
+    <!-- The pinned-trip controls. "Pin" parks the chosen trip so the rider can leave directions and
+         come back to it; "Pinned" is the same control once it is. -->
+    <string name="trip_plan_pin">Pin this trip</string>
+    <string name="trip_plan_unpin">Unpin this trip</string>
+    <!-- Announced as what long-pressing an itinerary option card does. -->
+    <string name="trip_plan_pin_menu_label">Trip options</string>
+    <!-- Announced as the state of an option card that is the pinned one. -->
+    <string name="trip_plan_pinned_state">Pinned</string>
+    <!-- The FAB floating over the map that brings the rider back to their pinned trip. The first names
+         the trip on the button; the second is announced as what tapping it does. -->
+    <string name="trip_plan_pinned_trip_title">Pinned trip to %1$s</string>
+    <string name="trip_plan_pinned_resume">Resume this trip</string>
+    <!-- The confirmation the FAB's ✕ raises (its own label is trip_plan_unpin, shared with the results
+         sheet's control). Confirmed because the trip is gone for good: the plan is stored whole and
+         nothing else remembers it, so a mis-tap costs the whole journey. -->
+    <string name="trip_plan_pinned_unpin_title">Unpin this trip?</string>
+    <string name="trip_plan_pinned_unpin_message">You&#8217;ll need to plan it again to get it back.</string>
+    <string name="trip_plan_pinned_unpin_confirm">Unpin</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>
@@ -1051,6 +1186,16 @@
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>
+    <!-- Shown when the app knows perfectly well which region the rider is in, and that region simply
+         publishes no trip planner — the case that used to report "No region selected" with the region
+         plainly selected. The trip-plan error snackbar renders a bare string with no arguments, which
+         is why this one can't name the region the way trip_plan_unavailable_in_region does; the two
+         say the same thing and should read alike in a given locale. -->
+    <string name="tripplanner_error_region_no_planner">This region doesn&#8217;t offer trip planning</string>
+    <!-- Toast shown when a trip-planning gesture is made in a region with no trip planner; %1$s is the
+         region name, so the rider can see which region the app thinks they are in. The unnamed
+         sibling of tripplanner_error_region_no_planner — keep the two worded consistently. -->
+    <string name="trip_plan_unavailable_in_region">%1$s doesn&#8217;t offer trip planning</string>
     <!-- Errors -->
     <!-- Trip-plan error category headers (the consistent heading on the error snackbar; the specific
          wire message is shown as the reason line beneath). One header per category, so e.g. every
@@ -1281,14 +1426,29 @@
     <string name="street_mode_bicycle">My own bike</string>
     <string name="transit_directions_bikeshare_label">Bikeshare</string>
 
-    <!-- Bikeshare info window -->
-    <string name="bike_info_window_bikes_title">Bikes</string>
-
-    <!-- Bikeshare preference option -->
-    <string name="bike_info_window_spaces_title">Spaces</string>
-    <string name="layers_speedial_bikeshare_label">Bikeshare</string>
+    <!-- Bikeshare info window, on the OTP1 fallback path (no operator to name) -->
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
+
+    <!-- Rental vehicle map layer (bikes + scooters) -->
+    <string name="layers_rentals_show">Show bikes and scooters</string>
+    <string name="layers_rentals_hide">Hide bikes and scooters</string>
+    <string name="layers_rentals_loading">Loading bikes and scooters</string>
+    <string name="layers_rentals_hide_button">Hide this button</string>
+    <string name="layers_rentals_hidden_toast">Bike and scooter button hidden. Turn it back on in Settings.</string>
+    <string name="layers_bikes_label">Bikes</string>
+    <string name="layers_scooters_label">Scooters</string>
+    <string name="map_zoom_in_for_rentals">Zoom in to see bikes and scooters</string>
+    <string name="rental_window_vehicles_title">Available</string>
+    <string name="rental_window_docks_title">Docks</string>
+    <string name="rental_window_station">Docking station</string>
+    <string name="rental_window_not_in_service">Not in service</string>
+    <string name="rental_window_no_pickup">Not available to rent right now</string>
+    <string name="rental_window_no_dropoff">Not accepting returns right now</string>
+    <!-- %1$d is a whole-number percentage, e.g. 62 -->
+    <string name="rental_window_battery">%1$d%% battery</string>
+    <!-- Marker accessibility text: %1$s is what the vehicle is, %2$s is everything else about it -->
+    <string name="rental_marker_description">%1$s. %2$s</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 
@@ -1316,10 +1476,6 @@
     <string name="preferences_reset_donation_timestamps_title">Reset Donation Timestamps</string>
     <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the ’Remind Me Later’ and ’Don’t Bother Me’ timestamps associated with donation requests.</string>
     <string name="preferences_show_weather_view">Show weather view</string>
-    <string name="preferences_preferred_maps_title">Preferred Map Type</string>
-    <string name="preferences_preferred_map_option_normal2d">Default Map</string>
-    <string name="preferences_preferred_map_option_normal3d">Default Map with 3D Buildings</string>
-    <string name="preferences_preferred_map_option_satellite">Satellite Map</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Show available studies</string>
@@ -1353,14 +1509,66 @@
     <string name="close_donation_card">Close donation card</string>
     <string name="map_option_zoom_out">Zoom out</string>
     <string name="map_option_zoom_in">Zoom in</string>
-    <string name="map_option_layers_close">Close Map Layers Button</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
-    <string name="map_option_layers">Maps Layers Button</string>
 
     <!-- Supported agencies screen -->
     <string name="agencies_title">Supported Agencies</string>
     <string name="agencies_empty">No agencies found for the current region.</string>
     <string name="retry">Retry</string>
     <string name="navigate_up">Navigate up</string>
+
+    <!-- Trip tracking: the live countdown notification for a bus the rider chose to track (#2166) -->
+    <!-- Content description for the eye on a route badge whose row has a live countdown running -->
+    <string name="stop_info_arrival_tracked">Tracking this route</string>
+    <string name="bus_options_menu_track_route">Track route arrivals</string>
+    <string name="bus_options_menu_untrack_route">Stop tracking route arrivals</string>
+    <!-- Route name, then headsign: "40 to Downtown Seattle" -->
+    <string name="trip_tracking_title">%1$s to %2$s</string>
+    <string name="trip_tracking_pending">Getting arrival times&#8230;</string>
+    <!-- A departure with no number to show, in the tracked row's strip and the Android 16+ status
+         bar chip. A countdown is formatted by DisplayFormat.formatEtaParts, which brings its own
+         localized units. -->
+    <string name="trip_tracking_short_now">Now</string>
+    <string name="trip_tracking_canceled">Canceled</string>
+    <string name="trip_tracking_stop_action">Stop tracking</string>
+    <string name="trip_tracking_started">Tracking %1$s</string>
+    <string name="trip_tracking_stopped">Stopped tracking %1$s</string>
+    <string name="trip_tracking_notifications_disabled">Turn on notifications to track a bus</string>
+    <string name="trip_tracking_unavailable">This route cannot be tracked</string>
+    <string name="arrival_display_switch">Arrival display</string>
+    <string name="arrival_display_time">Time</string>
+    <string name="arrival_display_route">Route</string>
+    <string name="arrival_display_default">Arrival display default</string>
+    <string name="arrival_display_choose_title">Group arrivals by route?</string>
+    <string name="arrival_display_choose_body">Do you want to see the arrivals for a stop grouped together by &lt;b&gt;route&lt;/b&gt; or ordered by &lt;b&gt;time&lt;/b&gt;? You can change this later in Settings.</string>
+    <string name="arrival_display_time_description">Each departure in time order, across all routes.</string>
+    <string name="arrival_display_route_description">Departures grouped by route and direction.</string>
+    <string name="tutorial_scripted_arrival_time_title">See what comes next</string>
+    <string name="tutorial_scripted_arrival_time_text">Time shows one departure per row, with the earliest first. Use Time and Route to switch views whenever you like. Settings controls which view new drawers open in.</string>
+    <string name="arrival_display_sample_downtown">Downtown</string>
+    <string name="arrival_display_sample_northgate">Northgate</string>
+    <string name="view_arrivals_only">View arrivals only</string>
+    <string name="arrivals_board_title">Arrivals</string>
+    <string name="home_map">Map</string>
+    <string name="stop_add_star">Add star to stop</string>
+    <string name="stop_remove_star">Remove star from stop</string>
+    <string name="search_result_mode_title">Open stop/route info in</string>
+    <string name="search_result_mode_map">Map</string>
+    <string name="search_result_mode_list">List</string>
+    <string name="search_result_mode_migration_title">Map-first navigation?</string>
+    <string name="search_result_mode_migration_body">When you tap on a stop or a route, do you want to see it represented as a &lt;b&gt;list&lt;/b&gt; or as a &lt;b&gt;map&lt;/b&gt;? You can change this later in Settings.</string>
+    <string name="search_result_mode_migration_map">Map navigation</string>
+    <string name="search_result_mode_migration_lists">List navigation</string>
+    <string name="search_result_mode_map_description">See the route or stop on a map, with arrivals below.</string>
+    <string name="search_result_mode_lists_description">Choose a direction and stop from lists, then read arrivals without using a map.</string>
+    <string name="migration_back">Back</string>
+    <string name="migration_page">Page %1$d of %2$d</string>
+    <string name="migration_continue">Continue</string>
+    <string name="migration_previous_layout">Classic layout</string>
+    <string name="migration_new_layout">New layout</string>
+    <string name="search_result_mode_sample_direction">Mount Baker Transit Center</string>
+    <string name="search_result_mode_sample_first_stop">Denny Way &amp; Dexter Ave</string>
+    <string name="search_result_mode_sample_street">Denny Way</string>
+    <string name="search_result_mode_sample_avenue">Westlake Ave</string>
+    <string name="search_result_mode_sample_water">Lake Union</string>
+    <string name="search_result_mode_sample_stop">Denny Way &amp; Westlake Ave</string>
 </resources>

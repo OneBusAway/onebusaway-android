@@ -261,14 +261,14 @@ class TripStateCacheTest {
         )
     }
 
-    // --- GammaExtrapolator tests ---
+    // --- Extrapolation through TripState (first-passage model for buses) ---
 
     // API-23 floor smoke subset (#1818): one deterministic method stands in for this large, mixed
     // class — it exercises the kotlin.time Duration math and the extrapolation core on the floor
     // runtime. The cache-eviction, polyline, and end-to-end tests stay out to keep the subset small.
     @SmokeTest
     @Test
-    fun testGammaExtrapolator_returnsDistanceDistribution() {
+    fun testExtrapolate_returnsDistanceDistribution() {
         val serviceDate = 1L
         val queryTime = 200_000L
 
@@ -294,7 +294,7 @@ class TripStateCacheTest {
     }
 
     @Test
-    fun testGammaExtrapolator_noScheduleReturnsMissingSchedule() {
+    fun testExtrapolate_noScheduleReturnsMissingSchedule() {
         val timestamp = 1000L
 
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, null, 5000.0, timestamp)

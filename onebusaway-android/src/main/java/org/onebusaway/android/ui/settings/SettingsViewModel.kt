@@ -38,7 +38,12 @@ import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.ui.tutorial.TutorialPrefs
+import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
+import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
+import org.onebusaway.android.ui.home.FocusTimeout
+import org.onebusaway.android.ui.home.focusTimeout
+import org.onebusaway.android.ui.searchresults.SearchResultMode
+import org.onebusaway.android.ui.searchresults.searchResultMode
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ThemeUtils
 
@@ -46,9 +51,6 @@ import org.onebusaway.android.util.ThemeUtils
 sealed interface SettingsEffect {
     /** Re-create the Activity so a just-applied app theme takes effect. */
     object RecreateActivity : SettingsEffect
-
-    /** Reset-tutorials was tapped: return home (and replay the tutorials there). */
-    object GoHomeResetTutorial : SettingsEffect
 }
 
 /**
@@ -70,7 +72,8 @@ class SettingsViewModel @Inject constructor(
     private val env = SettingsEnvironment(
         useFixedRegion = BuildConfig.USE_FIXED_REGION,
         sdkInt = Build.VERSION.SDK_INT,
-        isObaFlavor = BuildFlavorUtils.isOBABuildFlavor()
+        isObaFlavor = BuildFlavorUtils.isOBABuildFlavor(),
+        isGoogleMaps = BuildConfig.FLAVOR_platform == "google"
     )
 
     val state: StateFlow<SettingsUiState> =
@@ -92,22 +95,21 @@ class SettingsViewModel @Inject constructor(
     )
 
     private fun readSnapshot() = SettingsPrefSnapshot(
+        searchResultMode = prefs.searchResultMode(),
+        arrivalDisplayDefault = prefs.arrivalDisplayDefault(),
+        focusTimeout = prefs.focusTimeout(),
         autoSelectRegion = prefs.getBoolean(R.string.preference_key_auto_select_region, true),
         showNegativeArrivals = prefs.getBoolean(R.string.preference_key_show_negative_arrivals, true),
         hideAlerts = prefs.getBoolean(R.string.preference_key_hide_alerts, false),
         showZoomControls = prefs.getBoolean(R.string.preference_key_show_zoom_controls, false),
+        compactStopIcons = prefs.getBoolean(R.string.preference_key_compact_stop_icons, false),
+        showRentalButton = prefs.getBoolean(R.string.preference_key_show_rental_button, true),
         displayWeatherView = prefs.getBoolean(R.string.preference_key_display_weather_view, true),
         showAvailableStudies = prefs.getBoolean(R.string.preference_key_show_available_studies, true),
-        showTutorialScreens = prefs.getBoolean(R.string.preference_key_show_tutorial_screens, true),
         leftHandMode = prefs.getBoolean(R.string.preference_key_left_hand_mode, false),
-        showHeaderArrivals = prefs.getBoolean(R.string.preference_key_show_header_arrivals, false),
         vibrateAllowed = prefs.getBoolean(R.string.preference_key_preference_vibrate_allowed, true),
         tripPlanNotifications = prefs.getBoolean(R.string.preference_key_trip_plan_notifications, true),
         analyticsEnabled = prefs.getBoolean(R.string.preferences_key_analytics, true),
-        mapMode = prefs.getString(
-            R.string.preference_key_map_mode,
-            context.getString(R.string.preferences_preferred_map_option_normal2d)
-        ),
         preferredUnits = prefs.getString(
             R.string.preference_key_preferred_units,
             context.getString(R.string.preferences_preferred_units_option_automatic)
@@ -121,6 +123,18 @@ class SettingsViewModel @Inject constructor(
             context.getString(R.string.preferences_app_theme_option_system_default)
         )
     )
+
+    fun onSearchResultModeChanged(mode: SearchResultMode) {
+        prefs.setString(SearchResultMode.PREFERENCE_KEY, mode.value)
+    }
+
+    fun onArrivalDisplayDefaultChanged(mode: ArrivalDisplayMode) {
+        prefs.setString(ArrivalDisplayMode.PREFERENCE_KEY, mode.value)
+    }
+
+    fun onFocusTimeoutChanged(timeout: FocusTimeout) {
+        prefs.setString(FocusTimeout.PREFERENCE_KEY, timeout.value)
+    }
 
     // region Toggle actions
 
@@ -161,18 +175,18 @@ class SettingsViewModel @Inject constructor(
 
     fun onShowZoomControlsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_zoom_controls, value)
 
+    fun onCompactStopIconsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_compact_stop_icons, value)
+
+    fun onShowRentalButtonChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_rental_button, value)
+
     fun onDisplayWeatherViewChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_display_weather_view, value)
 
     fun onShowAvailableStudiesChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_available_studies, value)
-
-    fun onShowTutorialScreensChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_tutorial_screens, value)
 
     fun onLeftHandModeChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_left_hand_mode, value)
         obaAnalytics.setLeftHanded(value)
     }
-
-    fun onShowHeaderArrivalsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_header_arrivals, value)
 
     fun onVibrateAllowedChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_preference_vibrate_allowed, value)
 
@@ -186,8 +200,6 @@ class SettingsViewModel @Inject constructor(
     // endregion
 
     // region List actions
-
-    fun onMapModeChanged(value: String) = prefs.setString(R.string.preference_key_map_mode, value)
 
     fun onPreferredUnitsChanged(value: String) = prefs.setString(R.string.preference_key_preferred_units, value)
 
@@ -209,12 +221,6 @@ class SettingsViewModel @Inject constructor(
 
     /** Persists the ringtone the host's picker returned (empty string == silent). */
     fun onRingtonePicked(value: String) = prefs.setString(R.string.preference_key_notification_sound, value)
-
-    fun onTutorialClicked() {
-        reportPreferencesEvent(context, R.string.analytics_label_button_press_tutorial)
-        TutorialPrefs.resetAllTutorials(context)
-        _effects.trySend(SettingsEffect.GoHomeResetTutorial)
-    }
 
     fun onPoweredByObaClicked() = reportPreferencesEvent(context, R.string.analytics_label_button_press_powered_by_oba)
 

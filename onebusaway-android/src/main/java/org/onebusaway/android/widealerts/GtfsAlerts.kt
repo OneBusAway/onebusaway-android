@@ -11,6 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.sidecarV1RegionUrl
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
@@ -21,11 +22,15 @@ import org.onebusaway.android.util.PreferenceUtils
 class GtfsAlerts @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
-    private val fetchedRegions = ConcurrentHashMap.newKeySet<String>()
+    // Fetch-once memo, keyed on the resolved endpoint rather than on [regionId]. The id alone is not a
+    // sidecar identity: a deep-link-added region carries the id its own sidecar knows it by (#2165), so
+    // it can equal a directory region's id on a different host — and keying on it would then suppress
+    // the second region's fetch entirely. The URL embeds both host and id, so it is the honest key.
+    private val fetchedEndpoints = ConcurrentHashMap.newKeySet<String>()
 
     fun fetchAlerts(regionId: String, callback: GtfsAlertCallBack) {
         val pathUrl = getGtfsAlertsUrl(regionId) ?: return
-        if (!fetchedRegions.add(regionId)) {
+        if (!fetchedEndpoints.add(pathUrl)) {
             Log.d(TAG, "Alerts already fetched for region: $regionId")
             return
         }
@@ -47,14 +52,14 @@ class GtfsAlerts @Inject constructor(
                 // server/device crossing, resolved here at the boundary so the downstream check
                 // stays a pure function of its inputs.
                 val now = if (feed.hasHeader() && feed.header.hasTimestamp()) {
-                    ServerTime(feed.header.timestamp * 1_000L)
+                    GtfsAlertsHelper.serverTimeFromGtfsSeconds(feed.header.timestamp)
                 } else {
                     Log.w(TAG, "GTFS alert feed for region $regionId omitted its timestamp; using the device clock")
                     ServerTime(WallTime.now().epochMs)
                 }
                 processAlerts(feed.entityList, now, callback)
             } catch (error: Exception) {
-                fetchedRegions.remove(regionId)
+                fetchedEndpoints.remove(pathUrl)
                 Log.e(TAG, "Error fetching GTFS alert data for region: $regionId", error)
             }
         }.start()
@@ -66,7 +71,7 @@ class GtfsAlerts @Inject constructor(
         callback: GtfsAlertCallBack
     ) {
         for (entity in alerts) {
-            if (!GtfsAlertsHelper.isValidEntity(context, entity, now.epochMs)) continue
+            if (!GtfsAlertsHelper.isValidEntity(context, entity, now)) continue
             val alert = entity.alert
             val title = GtfsAlertsHelper.getAlertTitle(alert)
             val description = GtfsAlertsHelper.getAlertDescription(alert)
@@ -87,9 +92,11 @@ class GtfsAlerts @Inject constructor(
             context.getString(R.string.preferences_display_test_alerts),
             false
         )
-        return (baseUrl + context.getString(R.string.alerts_api_endpoint))
-            .replace("regionID", regionId)
-            .let { if (testAlert) "$it?test=1" else it }
+        return sidecarV1RegionUrl(
+            sidecarBaseUrl = baseUrl,
+            endpoint = context.getString(R.string.alerts_api_endpoint),
+            regionId = regionId
+        ).let { if (testAlert) "$it?test=1" else it }
     }
 
     private companion object {

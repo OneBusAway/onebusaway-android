@@ -1,0 +1,111 @@
+/*
+ * Copyright (C) 2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.api
+
+import java.io.File
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.onebusaway.android.api.adapters.toRentalPlaces
+import org.onebusaway.android.api.contract.BikeRentalStationsDto
+import org.onebusaway.android.map.rental.RentalKind
+
+/**
+ * Covers the OTP1 bike-rental decode + the mapping onto the app-owned
+ * [org.onebusaway.android.map.rental.RentalPlace] domain model the map overlay consumes. The wire is
+ * plain JSON whose keys match the DTO field names; extra keys (e.g. `networks`) must be ignored, not
+ * rejected.
+ */
+class RentalPlacesDecodeTest {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    @Test
+    fun decodesAndMapsStations() {
+        val body = """
+            {
+              "stations": [
+                {
+                  "id": "bike_1", "name": "Pine & 5th",
+                  "x": -122.334, "y": 47.611,
+                  "bikesAvailable": 4, "spacesAvailable": 6,
+                  "allowDropoff": true, "isFloatingBike": false,
+                  "networks": ["pronto"]
+                },
+                {
+                  "id": "float_2", "name": "Floating bike",
+                  "x": -122.30, "y": 47.62,
+                  "bikesAvailable": 1, "spacesAvailable": 0,
+                  "allowDropoff": false, "isFloatingBike": true
+                }
+              ],
+              "errorsByNetwork": {}
+            }
+        """.trimIndent()
+
+        val dto = json.decodeFromString<BikeRentalStationsDto>(body)
+        assertEquals(2, dto.stations.size)
+
+        val stations = dto.toRentalPlaces()
+        assertEquals(2, stations.size)
+
+        val first = stations[0]
+        assertEquals("bike_1", first.id)
+        assertEquals("Pine & 5th", first.name)
+        assertEquals(-122.334, first.longitude, 1e-6)
+        assertEquals(47.611, first.latitude, 1e-6)
+        assertEquals(4, first.vehiclesAvailableCount)
+        assertEquals(6, first.docksAvailableCount)
+        assertEquals(RentalKind.STATION, first.kind)
+
+        // `isFloatingBike` finally has a consumer (#2168): OTP1's free-floating vehicles arrive
+        // disguised as one-bike stations, and this is the flag that tells them apart. A vehicle
+        // reports no occupancy at all — it is one bike, not a dock holding one.
+        val floating = stations[1]
+        assertEquals(RentalKind.VEHICLE, floating.kind)
+        assertNull(floating.vehiclesAvailableCount)
+        assertNull(floating.docksAvailableCount)
+    }
+
+    /**
+     * Decodes the real OTP Tampa bike-rental fixture and maps it onto [org.onebusaway.android.map.rental.RentalPlace],
+     * porting the assertions from the retired live-network `BikeStationRequestTest`. Note the OTP
+     * server returns ids wrapped in literal quote characters (`"bike_3566"`), preserved verbatim.
+     */
+    @Test
+    fun decodesTampaFixture() {
+        val body = File("src/androidTest/res/raw/bike_rental_tampa_all.json").readText()
+        val stations = json.decodeFromString<BikeRentalStationsDto>(body).toRentalPlaces()
+
+        assertEquals(133, stations.size)
+        stations.forEach { assertNotNull(it.name) }
+
+        val first = stations[0]
+        val precision = 0.000001
+        assertEquals("\"bike_3566\"", first.id)
+        assertEquals("B-1165", first.name)
+        assertEquals(-82.40730666666667, first.longitude, precision)
+        assertEquals(28.066505, first.latitude, precision)
+        assertEquals(RentalKind.VEHICLE, first.kind)
+        assertNull(first.vehiclesAvailableCount)
+    }
+}

@@ -24,6 +24,7 @@ import org.onebusaway.android.api.data.AgenciesDataSource
 import org.onebusaway.android.api.data.DefaultAgenciesDataSource
 import org.onebusaway.android.api.data.DefaultLocationSearchDataSource
 import org.onebusaway.android.api.data.DefaultMapDataSource
+import org.onebusaway.android.api.data.DefaultNearbyArrivalsDataSource
 import org.onebusaway.android.api.data.DefaultProblemReportDataSource
 import org.onebusaway.android.api.data.DefaultRouteDataSource
 import org.onebusaway.android.api.data.DefaultStopArrivalsDataSource
@@ -31,8 +32,10 @@ import org.onebusaway.android.api.data.DefaultStopsForRouteRepository
 import org.onebusaway.android.api.data.DefaultSurveyDataSource
 import org.onebusaway.android.api.data.DefaultTripDetailsDataSource
 import org.onebusaway.android.api.data.DefaultTripVehiclesDataSource
+import org.onebusaway.android.api.data.DefaultVehicleSearchDataSource
 import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.api.data.NearbyArrivalsDataSource
 import org.onebusaway.android.api.data.ProblemReportDataSource
 import org.onebusaway.android.api.data.RouteDataSource
 import org.onebusaway.android.api.data.StopArrivalsDataSource
@@ -40,8 +43,13 @@ import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.api.data.SurveyDataSource
 import org.onebusaway.android.api.data.TripDetailsDataSource
 import org.onebusaway.android.api.data.TripVehiclesDataSource
+import org.onebusaway.android.api.data.VehicleSearchDataSource
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
+import org.onebusaway.android.demo.DemoModeController
+import org.onebusaway.android.demo.DemoModeState
+import org.onebusaway.android.demo.DemoRentalPlacesRepository
+import org.onebusaway.android.demo.DemoTripPlanRepository
 import org.onebusaway.android.extrapolation.data.DefaultTripObservationFetcher
 import org.onebusaway.android.extrapolation.data.DefaultTripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripObservationFetcher
@@ -53,8 +61,7 @@ import org.onebusaway.android.map.DefaultFocusedTripRepository
 import org.onebusaway.android.map.DefaultRouteMapRepository
 import org.onebusaway.android.map.FocusedTripRepository
 import org.onebusaway.android.map.RouteMapRepository
-import org.onebusaway.android.map.bike.BikeStationsRepository
-import org.onebusaway.android.map.bike.DefaultBikeStationsRepository
+import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.nav.AndroidNavigationFeedbackRepository
 import org.onebusaway.android.nav.AndroidReminderNotificationPresenter
 import org.onebusaway.android.nav.AndroidReminderSpeechController
@@ -102,9 +109,10 @@ import org.onebusaway.android.ui.tripinfo.TripInfoRepository
 import org.onebusaway.android.ui.tripplan.AdvancedSettingsRepository
 import org.onebusaway.android.ui.tripplan.DefaultAdvancedSettingsRepository
 import org.onebusaway.android.ui.tripplan.DefaultGeocodeRepository
-import org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository
 import org.onebusaway.android.ui.tripplan.GeocodeRepository
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripStore
+import org.onebusaway.android.ui.tripplan.pinned.RoomPinnedTripStore
 import org.onebusaway.android.ui.tripresults.DefaultTripResultsRepository
 import org.onebusaway.android.ui.tripresults.TripResultsRepository
 
@@ -121,6 +129,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     internal abstract fun bindReminderSessionStore(impl: RoomReminderSessionStore): ReminderSessionStore
+
+    @Binds
+    @Singleton
+    internal abstract fun bindPinnedTripStore(impl: RoomPinnedTripStore): PinnedTripStore
 
     @Binds
     internal abstract fun bindReminderNotificationPresenter(
@@ -162,6 +174,11 @@ abstract class RepositoryModule {
     ): StopArrivalsDataSource
 
     @Binds
+    abstract fun bindNearbyArrivalsDataSource(
+        impl: DefaultNearbyArrivalsDataSource
+    ): NearbyArrivalsDataSource
+
+    @Binds
     abstract fun bindTripDetailsDataSource(
         impl: DefaultTripDetailsDataSource
     ): TripDetailsDataSource
@@ -170,6 +187,11 @@ abstract class RepositoryModule {
     abstract fun bindTripVehiclesDataSource(
         impl: DefaultTripVehiclesDataSource
     ): TripVehiclesDataSource
+
+    @Binds
+    abstract fun bindVehicleSearchDataSource(
+        impl: DefaultVehicleSearchDataSource
+    ): VehicleSearchDataSource
 
     @Binds
     abstract fun bindSearchResultsRepository(impl: DefaultSearchResultsRepository): SearchResultsRepository
@@ -225,8 +247,20 @@ abstract class RepositoryModule {
     @Binds
     abstract fun bindGeocodeRepository(impl: DefaultGeocodeRepository): GeocodeRepository
 
+    // The read-only view of demo mode, for collaborators that react to it but must not switch it.
     @Binds
-    abstract fun bindTripPlanRepository(impl: DefaultTripPlanRepository): TripPlanRepository
+    @Singleton
+    abstract fun bindDemoModeState(impl: DemoModeController): DemoModeState
+
+    // The demo-aware decorators (#2164). Each wraps the real impl and answers from the bundled demo
+    // transit system only while the scripted tutorial has demo mode on, so the tutorial's trip-plan
+    // and bike-layer steps have guaranteed content while normal use is untouched. The OBA side needs
+    // no decorator: ObaApiProvider is a single seam and branches there.
+    // @Singleton because the demo side parses and caches the bundled plan on first use, and this is
+    // injected at more than one site: unscoped, each site would get its own instance and re-decode it.
+    @Binds
+    @Singleton
+    abstract fun bindTripPlanRepository(impl: DemoTripPlanRepository): TripPlanRepository
 
     @Binds
     abstract fun bindAdvancedSettingsRepository(
@@ -249,7 +283,7 @@ abstract class RepositoryModule {
     abstract fun bindRouteMapRepository(impl: DefaultRouteMapRepository): RouteMapRepository
 
     @Binds
-    abstract fun bindBikeStationsRepository(impl: DefaultBikeStationsRepository): BikeStationsRepository
+    abstract fun bindRentalPlacesRepository(impl: DemoRentalPlacesRepository): RentalPlacesRepository
 
     // HomeViewModel's collaborators (so it can become a plain @HiltViewModel — D6).
     @Binds

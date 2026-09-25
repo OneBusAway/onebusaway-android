@@ -31,10 +31,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.IntentCompat
+import androidx.lifecycle.DEFAULT_ARGS_KEY
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.toTripItineraries
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
@@ -53,7 +57,6 @@ import org.onebusaway.android.ui.home.HomeNavHost
 import org.onebusaway.android.ui.home.HomeScreen
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.LaunchIntentChannel
-import org.onebusaway.android.ui.home.LaunchIntentEffect
 import org.onebusaway.android.ui.home.PaymentWarningDialog
 import org.onebusaway.android.ui.home.RegionPickerHost
 import org.onebusaway.android.ui.home.ReportTarget
@@ -61,14 +64,23 @@ import org.onebusaway.android.ui.home.SettingsRehomeEffect
 import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
+import org.onebusaway.android.ui.home.launchDestination
+import org.onebusaway.android.ui.home.launchIntentEffect
+import org.onebusaway.android.ui.home.trackedStopBoardRoute
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.PlaceIntents
+import org.onebusaway.android.ui.nav.readRouteReveal
+import org.onebusaway.android.ui.nav.toEndpoint
 import org.onebusaway.android.ui.report.ReportLauncher
 import org.onebusaway.android.ui.survey.SurveyViewModel
+import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
+import org.onebusaway.android.ui.tripplan.refuseTripPlanIfUnavailable
 import org.onebusaway.android.ui.tripplan.toGeocoded
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
@@ -88,13 +100,9 @@ class HomeActivity : AppCompatActivity() {
     @Inject
     lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
 
-    // The launch-intent channel: the OS delivers external entry points (deep links, FCM, launcher
-    // shortcuts) to this Activity before/around the composition, so they're surfaced here for the NavHost's
-    // [LaunchIntentEffect] to translate (via IntentRouteMapper) and open once composed. Seeded on a fresh
-    // launch only (onCreate), fed warm relaunches via onNewIntent — the in-app navigation no longer flows
-    // through here (it uses the NavController directly). A [LaunchIntentChannel] (UNLIMITED queue, not a
-    // latch) so a fresh-launch intent staged before the NavHost composes isn't lost, and so rapid, distinct
-    // back-to-back intents are each delivered exactly once rather than overwriting one another (#1582).
+    // Warm external launches queue until the NavHost is started, without dropping rapid, distinct
+    // intents (#1582). launchIntentEffect handles the cold intent separately, using its saved readiness
+    // state to retry after recreation if the Activity was saved before collection started.
     private val launchIntents = LaunchIntentChannel<Intent>()
 
     private val viewModel: HomeViewModel by viewModels()
@@ -125,6 +133,19 @@ class HomeActivity : AppCompatActivity() {
     private val tripPlanViewModel: TripPlanViewModel by viewModels()
     private val tripResultsViewModel: TripResultsViewModel by viewModels()
 
+    // The parked trip plan (#2053). Activity-scoped for the same reason as the two above, and for one
+    // more: the pin is read from inside the results sheet *and* from the resume FAB over the map, and
+    // those two must never be looking at separate copies of it.
+    private val pinnedTripViewModel: PinnedTripViewModel by viewModels()
+
+    // Exported launches can carry another app's Parcelable classes (#2327). SavedStateHandle reads
+    // every default argument, so only seed the map fields we own; leave navigation extras on the
+    // Intent and retain the superclass's registry/store owners for real saved-state restoration.
+    override val defaultViewModelCreationExtras: CreationExtras
+        get() = MutableCreationExtras(super.defaultViewModelCreationExtras).apply {
+            this[DEFAULT_ARGS_KEY] = homeViewModelArgs(intent?.extras)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -133,18 +154,12 @@ class HomeActivity : AppCompatActivity() {
 
         val activityActions = buildActivityActions()
 
-        // Surface the launch intent for the NavHost's [LaunchIntentEffect] (it runs the side effects then
-        // opens the translated route once composed). Fresh launch only, so a rotation doesn't re-fire
-        // reminder deletes / URL applies.
-        if (savedInstanceState == null) {
-            launchIntents.submit(intent)
-        }
-
+        val initialIntent = intent
         setContent {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            LaunchIntentEffect(navController, launchIntents.items, ::applyLaunchIntentSideEffects)
+            val launchReady = launchIntentEffect(navController, initialIntent, launchIntents.items, ::applyLaunchIntentSideEffects)
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -154,6 +169,7 @@ class HomeActivity : AppCompatActivity() {
             Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                 HomeNavHost(
                     navController = navController,
+                    launchReady = launchReady,
                     home = HomeDestinationDeps(
                         homeViewModel = viewModel,
                         mapViewModel = mapViewModel,
@@ -163,6 +179,7 @@ class HomeActivity : AppCompatActivity() {
                         helpViewModel = helpViewModel,
                         tripPlanViewModel = tripPlanViewModel,
                         tripResultsViewModel = tripResultsViewModel,
+                        pinnedTripViewModel = pinnedTripViewModel,
                         arrivalsViewModelFactory = arrivalsViewModelFactory,
                         activityActions = activityActions
                     )
@@ -188,7 +205,8 @@ class HomeActivity : AppCompatActivity() {
         // The VM owns the startup region-check decision (defer to the map's permission result on a first
         // launch without permission, else check now). The permission read needs a Context, so it stays here.
         viewModel.onHomeStarted(
-            PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS)
+            hasLocationPermission = PermissionUtils.hasGrantedAtLeastOnePermission(this, PermissionUtils.LOCATION_PERMISSIONS),
+            mapless = launchDestination(intent, PreferencesEntryPoint.get(this)) != NavRoutes.HOME
         )
     }
 
@@ -211,10 +229,23 @@ class HomeActivity : AppCompatActivity() {
         onArrivalsLoaded = ::onArrivalsLoaded
     )
 
+    // The focus timeout's two lifecycle edges (#2294). The stamp goes in *before* super: ComponentActivity
+    // snapshots the ViewModels' SavedStateHandles inside super.onSaveInstanceState, and on API < 28 that
+    // snapshot is taken before onPause/onStop, so this is the one hook that precedes it on every level.
+    override fun onSaveInstanceState(outState: Bundle) {
+        viewModel.onSavingState()
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onHomeForegrounded()
+    }
+
     /**
      * A warm re-launch (singleTop) carrying an external screen intent — FCM CLEAR_TOP, the
-     * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [LaunchIntentEffect]
-     * (cold launches are seeded in onCreate).
+     * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [launchIntentEffect]
+     * (cold launches are handled from the Activity intent when composition starts).
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -223,16 +254,44 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * The domain mutations a launch intent implies, run by [LaunchIntentEffect] before it opens the
+     * The domain mutations a launch intent implies, run by [launchIntentEffect] before it opens the
      * translated route: the `add-region`/FCM side effects (see [applyIntentSideEffects]) and the
      * "show tutorials again" welcome re-request. Kept off [IntentRouteMapper] so it stays a pure translator.
      */
     private fun applyLaunchIntentSideEffects(intent: Intent) {
         applyIntentSideEffects(intent)
         maybeRestoreDirectionsFromIntent(intent)
+        maybePlanToPlaceFromIntent(intent)
+        if (intent.readRouteReveal() == null) {
+            FocusedStop.fromIntent(intent)?.let { viewModel.revealStop(it) }
+        }
+        maybeRevealTrackedRouteFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
+    }
+
+    /**
+     * Re-entry from a trip-tracking notification (#2166): focus the watched stop, then select the
+     * watched route row inside it — [HomeViewModel.selectArrivalRoute]'s stop-scoped branch, the same
+     * transition a tap in the arrivals drawer makes.
+     *
+     * Two calls rather than one because the second requires the first: selecting a route *within* a
+     * stop needs a stop focus to be subordinate to, and `selectArrivalRoute` returns without doing
+     * anything if the current focus is not one. Run here, with the other launch-intent focus changes,
+     * because this is where the [HomeViewModel] is — [IntentRouteMapper] stays a pure translator and
+     * correctly resolves this intent to no destination, since the reveal is map state and not a screen.
+     */
+    private fun maybeRevealTrackedRouteFromIntent(intent: Intent) {
+        val route = intent.readRouteReveal() ?: return
+        // Lists mode sends this launch to the board instead (launchDestination), which preselects the
+        // same row there; no map focus to set.
+        if (intent.trackedStopBoardRoute(PreferencesEntryPoint.get(this)) != null) return
+        // The stop half through the app's one reader of it, rather than a second parse of the same
+        // keys — which is also how the stop's code survives the trip.
+        val stop = FocusedStop.fromIntent(intent) ?: return
+        viewModel.revealStop(stop)
+        viewModel.selectArrivalRoute(route.request(stop.id), route.routeShortName, route.headsign)
     }
 
     /**
@@ -244,9 +303,9 @@ class HomeActivity : AppCompatActivity() {
      * results from those extras — the itineraries are injected as-is (no re-plan). Restores the behavior
      * the retired standalone screen's `maybeRestoreFromIntent` used to provide (#1939).
      *
-     * No re-restore guard is needed: the launch-intent channel submits each real intent exactly once
-     * (cold `onCreate` seed gated on a null `savedInstanceState`, warm `onNewIntent`), so a config change
-     * doesn't re-fire this — and the activity-scoped [tripPlanViewModel] keeps the restored results.
+     * No re-restore guard is needed here: launchIntentEffect saves whether the cold intent was handled,
+     * and the channel submits each warm `onNewIntent` once, so a config change doesn't re-fire this —
+     * and the activity-scoped [tripPlanViewModel] keeps the restored results.
      */
     // UnwrappedClockValue: the trip-plan time defaults to device "now" only when the intent carries none.
     @Suppress("UnwrappedClockValue")
@@ -274,6 +333,35 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
+     * A place another app handed us (#1936): a `geo:` URI — what the address book emits for a postal
+     * address, and what every maps app understands — or a maps link / address shared to us as text. See
+     * [PlaceIntents], which owns that vocabulary.
+     *
+     * Opens the directions focus with the place as the trip's **destination**, its other end paired with
+     * the device's fix by [TripPlanViewModel.setEndpointPaired], so a place that arrives with coordinates
+     * plans on the spot. The sender named one place, not a journey; "take me there" is what a rider who
+     * opens a transit app from an address means, and the form's own reverse button is the way to say the
+     * other thing.
+     *
+     * Runs here, with the other launch-intent focus changes, because this is where the ViewModels are:
+     * the directions focus is home-map state rather than a NavHost destination, so [IntentRouteMapper]
+     * correctly resolves these intents to no route at all.
+     */
+    private fun maybePlanToPlaceFromIntent(intent: Intent) {
+        val place = PlaceIntents.placeForIntent(intent) ?: return
+        // Opening the form on a shared address in a region with no planner would only walk the rider
+        // into a failure; say why instead (#2264).
+        if (refuseTripPlanIfUnavailable()) return
+        viewModel.enterDirections()
+        when (place) {
+            is PlaceIntents.Place.Point ->
+                tripPlanViewModel.setEndpointPaired(TripEndpointSlot.TO, place.toEndpoint())
+            is PlaceIntents.Place.Query ->
+                tripPlanViewModel.setEndpointFromQuery(TripEndpointSlot.TO, place.text)
+        }
+    }
+
+    /**
      * Runs the domain mutations implied by certain incoming intents, kept out of [IntentRouteMapper]'s
      * pure route mapping so that stays a side-effect-free translator: an `add-region` deep link is staged
      * for the rider's confirmation, an unroutable web link goes back to the browser, and the FCM payload
@@ -293,7 +381,7 @@ class HomeActivity : AppCompatActivity() {
         // The web intent-filter is necessarily broader than the parser (it can't see the query string,
         // and pathPattern globs span '/'), so we can be launched for a onebusaway.co URL that routes
         // nowhere. Give it back to the browser instead of stranding the user on the map. This activity
-        // deliberately stays alive behind it: the same call runs for warm relaunches (LaunchIntentEffect
+        // deliberately stays alive behind it: the same call runs for warm relaunches (launchIntentEffect
         // feeds it both cold and onNewIntent intents), and finishing there would tear down a session the
         // user is in the middle of. If no browser will take it we fall through and land on home/map.
         // `deepLink == null` short-circuits the check for anything that already routed — a link with a
@@ -352,8 +440,8 @@ class HomeActivity : AppCompatActivity() {
                 viewModel.reportMenuAnalytics(R.string.analytics_label_twitter)
             }
             HelpAction.CONTACT_US -> goToSendFeedBack()
-            // LEGEND / WHATS_NEW open dialogs — handled by HelpFeature against HelpViewModel.
-            HelpAction.LEGEND, HelpAction.WHATS_NEW -> Unit
+            // LEGEND / WHATS_NEW / LAYOUT open dialogs — handled by HelpFeature against HelpViewModel.
+            HelpAction.LEGEND, HelpAction.WHATS_NEW, HelpAction.LAYOUT -> Unit
         }
     }
 
@@ -373,7 +461,7 @@ class HomeActivity : AppCompatActivity() {
         // The VM picks the report target (focused stop → last location → nothing); the host just launches.
         when (val target = viewModel.reportTarget()) {
             is ReportTarget.Stop -> target.stop.let {
-                ReportLauncher.start(this, it.id, it.name, it.code, it.point.latitude, it.point.longitude)
+                ReportLauncher.start(this, it.id, it.name, it.code, target.point.latitude, target.point.longitude)
             }
             is ReportTarget.Location -> ReportLauncher.start(this, target.point.latitude, target.point.longitude)
             ReportTarget.Generic -> ReportLauncher.start(this)
@@ -422,15 +510,22 @@ fun Context.startHomeActivity(route: String) {
 }
 
 /**
- * The [FocusedStop] a launch intent deep-links into (makeIntent's STOP_ID + CENTER_LAT/LON), or null
- * when it carries no usable stop — an id plus a real (non-zero) location. A plain launch carries
- * neither, so focus stays null. Parsing lives here with the intent contract, off HomeModels.
+ * The [FocusedStop] a launch intent deep-links into (makeIntent's STOP_ID + optional CENTER_LAT/LON),
+ * or null when it names no stop — a plain launch carries no id, so focus stays null. The location is
+ * read by *key presence*, not by value: `putStopRouteReveal` omits both coordinate extras when the
+ * stop's location is unknown, so `containsKey` answers "was one carried?" exactly, where
+ * `getDouble`'s 0.0 default cannot tell an absent extra from a stop on the equator or the prime
+ * meridian. Without one the focus goes unlocated until its arrivals resolve it (see
+ * `HomeViewModel.onArrivalsLoaded`). Parsing lives here with the intent contract, off HomeModels.
  */
-private fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
+internal fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val extras = intent.extras ?: return null
     val id = extras.getString(MapParams.STOP_ID) ?: return null
-    val lat = extras.getDouble(MapParams.CENTER_LAT)
-    val lon = extras.getDouble(MapParams.CENTER_LON)
-    if (lat == 0.0 || lon == 0.0) return null
-    return FocusedStop(id, extras.getString(MapParams.STOP_NAME), extras.getString(MapParams.STOP_CODE), GeoPoint(lat, lon))
+    val hasPoint = extras.containsKey(MapParams.CENTER_LAT) && extras.containsKey(MapParams.CENTER_LON)
+    return FocusedStop(
+        id = id,
+        name = extras.getString(MapParams.STOP_NAME),
+        code = extras.getString(MapParams.STOP_CODE),
+        point = if (hasPoint) GeoPoint(extras.getDouble(MapParams.CENTER_LAT), extras.getDouble(MapParams.CENTER_LON)) else null
+    )
 }

@@ -20,12 +20,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -68,7 +65,7 @@ import org.onebusaway.android.util.toGeoPoint
  * route-header camera bias on programmatic focus is supplied by [routeActive] (the home map passes a
  * route-mode predicate; standalone stop maps leave it false).
  */
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StopsMapController(
     private val host: MapHost,
     private val mapDataSource: MapDataSource,
@@ -86,6 +83,11 @@ class StopsMapController(
     // with the network. Null disables read-through (the slim report/picker maps, which are transient
     // and would only add write churn), mirroring the favoriteStopIds no-op default.
     private val stopCache: StopCacheRepository? = null,
+    // Whether the scripted tutorial's demo transit system is answering (#2164). While it is, the cache
+    // is bypassed in both directions: the stops coming back are the demo deployment's, and saving them
+    // under the rider's real region would leave a stranger's city in the cache the next pan reads —
+    // while reading from it would mix their own cached stops into the tour's map.
+    private val demoActive: () -> Boolean = { false },
     // The device wall clock for the cache TTL (a purely local timer). Read once per load; injectable so
     // tests pin it. The default is the sanctioned WallTime.now() mint (inert for the slim maps, whose
     // cache is disabled so it's never read).
@@ -111,7 +113,7 @@ class StopsMapController(
     private var favoriteIds: Set<String> = emptySet()
 
     // Optional route-owned presentation over the canonical nearby-stop cache. A single route hides
-    // nearby stops; a focused stop combines them with exact scheduled trip stops and hides non-members.
+    // nearby stops; a focused stop combines them with exact scheduled trip stops and recedes non-members.
     private var routePresentation: RouteStopPresentation? = null
 
     private var loadJob: Job? = null
@@ -184,15 +186,7 @@ class StopsMapController(
         var lastHadResponse = false
         var lastLimitExceeded = false
 
-        host.camera
-            .filterNotNull()
-            .debounce(STOP_LOAD_DEBOUNCE_MS)
-            // Settle on drag-end: if the debounce elapses while a gesture is still in flight (the user is
-            // mid-pan, or a fling that emitted an intermediate idle is still going), drop this viewport —
-            // the gesture's terminating camera-idle re-arms the debounce and fires one load at the true
-            // drag-end. Combined with the debounce this keeps a whole pan to a single load + redraw
-            // instead of one per intermediate settle, killing the mid-pan jank.
-            .filter { !host.cameraInteracting.value }
+        host.settledCamera()
             .filterNot { next -> stopRequestFulfilled(lastLoad, lastHadResponse, lastLimitExceeded, next) }
             .flatMapLatest { snapshot ->
                 // flatMapLatest cancels an in-flight load when a newer viewport arrives, matching the
@@ -204,15 +198,20 @@ class StopsMapController(
                     // request, and the cache save all share the same viewport's values.
                     val maxStops = cacheSize()
                     val loadTime = now()
+                    // The cache this load may use, read once so the read below and the save further
+                    // down can't disagree about it. Null while the demo transit system is answering:
+                    // its stops belong to no region the rider has, so they are neither served from nor
+                    // written to a store that is keyed by one.
+                    val cache = stopCache?.takeUnless { demoActive() }
 
                     // 1. Serve the cache first so stops render before (or without) the network. Skipped
                     // when there's no cache (slim maps) or no region resolved yet (cold start); never a
                     // region-less query, which would mix feeds. Best-effort: a cache read failure must
                     // fall through to the network, not kill the loader (guardCache below).
                     var servedCache = false
-                    if (stopCache != null && regionId != null) {
+                    if (cache != null && regionId != null) {
                         val cached = guardCache("read") {
-                            stopCache.stopsFor(
+                            cache.stopsFor(
                                 snapshot.center.latitude,
                                 snapshot.center.longitude,
                                 snapshot.latSpan,
@@ -245,10 +244,10 @@ class StopsMapController(
 
                     // 3. Persist a usable, in-range, non-empty result (upsert + evict) for next time.
                     // Best-effort: a save failure must not abort the flow (leaving the spinner stuck).
-                    if (stopCache != null && regionId != null) {
+                    if (cache != null && regionId != null) {
                         result.getOrNull()?.let { nearby ->
                             if (!nearby.outOfRange && nearby.stops.isNotEmpty()) {
-                                guardCache("save") { stopCache.save(nearby, regionId, loadTime) }
+                                guardCache("save") { cache.save(nearby, regionId, loadTime) }
                             }
                         }
                     }
@@ -408,15 +407,17 @@ class StopsMapController(
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
-        animate: Boolean = false
+        animate: Boolean = false,
+        useDefaultZoom: Boolean = false
     ) {
         if (recenter) {
+            val point = stop.location.toGeoPoint()
             host.dispatchGesture(
-                CameraCommand.Recenter(
-                    stop.location.toGeoPoint(),
-                    animate = animate,
-                    applyRouteBias = routeActive() && overlayExpanded
-                )
+                if (useDefaultZoom) {
+                    CameraCommand.MoveToLocation(point, useDefaultZoom = true, animate = animate)
+                } else {
+                    CameraCommand.Recenter(point, animate = animate, applyRouteBias = routeActive() && overlayExpanded)
+                }
             )
         }
         setFocusStop(stop, routes)
@@ -607,7 +608,10 @@ internal data class RouteStopPresentation(
     val stops: List<ObaStop>,
     val routes: List<ObaRoute>,
     val routeDirectionsByStopId: Map<String, Set<RouteDirectionKey>>,
-    val projectedPoints: Map<String, GeoPoint>
+    /** Colors already resolved through the same palette as the displayed route lines. */
+    val routeColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    /** Stop focus keeps nearby alternatives available for comparison and selection (#2293, #2295). */
+    val keepNearbyStops: Boolean = false
 )
 
 /** Pure marker merge/style policy shared by base-route and exact-trip stop presentations. */
@@ -618,18 +622,24 @@ internal fun applyRouteStopPresentation(
     markerFor: (ObaStop) -> StopMarker
 ): List<StopMarker> {
     val source = LinkedHashMap<String, StopMarker>()
-    nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
-    presentation.stops.forEach { source.putIfAbsent(it.id, markerFor(it)) }
+    if (presentation.keepNearbyStops) {
+        nearby.forEach { source[it.id] = it }
+    } else {
+        nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
+    }
+    presentation.stops.forEach { stop -> source.getOrPut(stop.id) { markerFor(stop) } }
     return source.values.map { marker ->
+        val presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty()
         marker.copy(
-            point = presentation.projectedPoints[marker.id] ?: marker.point,
-            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
+            routeColor = presentedRoutes.map { presentation.routeColors[it] }.distinct().singleOrNull(),
+            presentedRoutes = presentedRoutes,
+            compact = presentation.keepNearbyStops && marker.id != focusedStopId && presentedRoutes.isEmpty(),
             // No transit-centre route labels (#2107) in a route presentation. A presentation names the
             // routes on screen itself — labelled on the lines they belong to, and in adjacency view
             // through a palette that deliberately assigns each one a distinct hue so they can be told
             // apart (#2043). A stop label built from the routes' own GTFS colours would name those same
             // routes a second time, in a second colour, right beside the line saying otherwise.
-            routes = emptyList()
+            showRouteLabel = false
         )
     }
 }

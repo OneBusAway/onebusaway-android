@@ -19,13 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
+
+/** Fixed server-clock instant for illustrative arrivals. Real arrivals keep the live clock. */
+internal val LocalIllustrationTime = staticCompositionLocalOf<ServerTime?> { null }
 
 /**
  * A live "now" in the **server** clock domain, anchored on [serverTime] (a poll's server-clock
  * reading) and advanced by the device's elapsed time since that reading was captured — the same
- * skew-free extrapolation `VehicleInfoWindow`'s "…ago" age text uses (#1612), generalized to the
+ * skew-free extrapolation the map's "…ago" data-age text uses (#1612), generalized to the
  * typed [ServerTime]/[ElapsedTime] domains so a live countdown (e.g. an ETA pill, issue #1781) never
  * measures against a bare device clock.
  *
@@ -35,6 +40,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun rememberLiveServerTime(serverTime: ServerTime): ServerTime {
+    LocalIllustrationTime.current?.let { return it }
     val anchorElapsed = remember(serverTime) { ElapsedTime.now() }
     val nowElapsed = rememberTickingElapsedTime()
     return liveServerTime(serverTime, anchorElapsed, nowElapsed)
@@ -62,3 +68,35 @@ private fun rememberTickingElapsedTime(): ElapsedTime {
  * as a pure function so it's JVM-unit-testable without Compose.
  */
 internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, nowElapsed: ElapsedTime): ServerTime = serverTime + (nowElapsed - anchorElapsed).coerceAtLeast(Duration.ZERO)
+
+/**
+ * The whole minutes between [now] and [displayTime]: each instant floored to its own minute
+ * ([wholeMinute]) and *then* subtracted — not the whole minutes of the difference, which disagrees for
+ * most of every minute. It is the number the arrivals ETA pill prints, so anything else showing an ETA
+ * for the same arrival has to compute it this way or be off by one; sharing the function is what makes
+ * that structural instead of a promise in a comment.
+ */
+fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.wholeMinute - now.wholeMinute
+
+/**
+ * The whole minute this instant falls in, counted from the epoch — the one minute-floor [etaMinutes]
+ * and [untilNextMinute] are both written in terms of.
+ *
+ * On its own it is a memo key: anything derived from a *ticking* clock but printed only to the minute
+ * (a formatted clock time, say) should recompute when this changes rather than on every tick.
+ */
+val ServerTime.wholeMinute: Long get() = epochMs / MS_PER_MINUTE
+
+/**
+ * How long from [now] until every [etaMinutes] measured against it prints one less — i.e. until this
+ * clock crosses into its next whole minute. Always positive: on the boundary itself, a whole minute
+ * remains until the *next* one.
+ *
+ * For a surface that recomputes on its own schedule rather than continuously. Countdowns only change
+ * at this instant, so waking here is both the least it can do and the most it needs to: anything
+ * coarser leaves the number one minute high for the rest of the interval, which is exactly how two
+ * surfaces showing the same arrival come to disagree by one.
+ */
+fun untilNextMinute(now: ServerTime): Duration = ((now.wholeMinute + 1) * MS_PER_MINUTE - now.epochMs).milliseconds
+
+private const val MS_PER_MINUTE = 60 * 1000L

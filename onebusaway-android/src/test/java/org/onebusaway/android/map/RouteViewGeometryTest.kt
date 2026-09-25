@@ -2,6 +2,7 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -9,10 +10,13 @@ import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
@@ -41,6 +45,65 @@ class RouteViewGeometryTest {
         assertEquals(line.dash, context.dash)
         assertEquals(line.transforms, context.transforms)
         assertEquals(false, context.directional)
+    }
+
+    @Test
+    fun `every reduction states its whole line, so a new feature reaches none of them`() {
+        // #2241/#2246: these used to be `copy()`-minus-a-few-fields, which made "keep it" the default for
+        // every field RoutePolyline gained — stripes (#2100) and end marks (#2084) both rode into views
+        // that had decided against them, and were noticed one incident at a time. Constructed lines make
+        // "drop it" the default instead. Asserted over a line carrying *everything*, so a field added to
+        // RoutePolyline and quietly passed through shows up here rather than on a rider's map.
+        val loaded = RoutePolyline(
+            color = 0xFF123456.toInt(),
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            stripeColors = listOf(0xFF654321.toInt()),
+            widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+            directional = true,
+            dash = RouteLineDash.TRAIL,
+            case = RouteLineCase.SELECTION,
+            startMark = RouteLineMark.INTERLINE_CUT,
+            endMark = RouteLineMark.BULB,
+            transforms = setOf(RoutePolylineTransform.ZOOM_SIMPLIFY)
+        )
+        val lines = listOf(loaded)
+
+        for ((name, reduced) in listOf(
+            "itinerary context" to lines.asItineraryContext().single(),
+            "pinned trip ghost" to lines.asPinnedTripGhost().single(),
+            "selected route approach" to lines.asSelectedRouteApproach().single(),
+            "deemphasized underlay" to lines.asDeemphasizedRouteUnderlay().single()
+        )) {
+            // Chevrons, stripes and end marks belong to the line being read at full weight. Every one of
+            // these says less than that, and none of them says any of the three.
+            assertEquals("$name kept its chevrons", false, reduced.directional)
+            assertEquals("$name kept its stripes", emptyList<Int>(), reduced.stripeColors)
+            assertEquals("$name kept a start mark", RouteLineMark.NONE, reduced.startMark)
+            assertEquals("$name kept an end mark", RouteLineMark.NONE, reduced.endMark)
+            // What every reduction is *for* is saying which line this is, so all of them keep the colour
+            // and the geometry, and none may keep the weight — that is the thing each one restates.
+            assertEquals("$name lost its colour", loaded.color, reduced.color)
+            assertEquals("$name lost its geometry", loaded.points, reduced.points)
+            assertNotEquals("$name kept its weight", loaded.widthProfile, reduced.widthProfile)
+        }
+    }
+
+    @Test
+    fun `only the itinerary context keeps the case that says what kind of line it is`() {
+        // The context is the rider's own journey, so a ride there still wears the hairline case every ride
+        // wears (#2041). The ghost drops it (a halo is exactly what a parked trip must not have, #2053),
+        // and the two route-view reductions state their own.
+        val ride = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            case = RouteLineCase.OUTLINE
+        )
+        val lines = listOf(ride)
+
+        assertEquals(RouteLineCase.OUTLINE, lines.asItineraryContext().single().case)
+        assertEquals(RouteLineCase.NONE, lines.asPinnedTripGhost().single().case)
+        assertEquals(RouteLineCase.APPROACH, lines.asSelectedRouteApproach().single().case)
+        assertEquals(RouteLineCase.NONE, lines.asDeemphasizedRouteUnderlay().single().case)
     }
 
     @Test
@@ -192,26 +255,43 @@ class RouteViewGeometryTest {
         // adjacency map to begin with.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), routeColorFallback = 99)
+            style(stopFocusActive = false, direction = direction, routeColors = emptyMap())
         )
         // Stop focus, no adjacency entry for this exact direction (e.g. an opposite-direction vehicle
         // whose direction isn't among the focused stop's own trips, #1902): underlay still drops, but
         // the color falls back to GTFS since there's no adjacency color to carry instead.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), routeColorFallback = 99)
+            style(stopFocusActive = true, direction = direction, routeColors = emptyMap())
         )
         // Whole-route mode with a stray adjacency entry (shouldn't occur in practice, since routeColors
         // is only ever populated during stop focus) still keeps the underlay — it is not proxied off
         // the color lookup.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, routeColorFallback = 99)
+            style(stopFocusActive = false, direction = direction, routeColors = withColor)
         )
         // Stop focus with a matching adjacency entry: the ordinary case — adjacency color, no underlay.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, routeColorFallback = 99)
+            style(stopFocusActive = true, direction = direction, routeColors = withColor)
+        )
+    }
+
+    @Test
+    fun `a ride focus drops the corridor underlay, whatever colour the trip takes`() {
+        val direction = RouteDirectionKey("45", 0)
+
+        // A directions ride already draws its own route context — each boardable route's lead-in — so
+        // the corridor underlay would put the whole route back over it (#2239). The colour is untouched
+        // by the gate: it still falls back to the GTFS one with no adjacency entry to carry.
+        assertEquals(
+            SelectedTripStyle(color = 99, includeUnderlay = false),
+            style(rideApproachActive = true, direction = direction, routeColors = emptyMap())
+        )
+        assertEquals(
+            SelectedTripStyle(color = 10, includeUnderlay = false),
+            style(rideApproachActive = true, direction = direction, routeColors = mapOf(direction to 10))
         )
     }
 
@@ -306,6 +386,20 @@ class RouteViewGeometryTest {
         assertEquals(listOf("known-route"), badges.map { it.showRouteTap?.routeId })
     }
 
+    @Test
+    fun `an adjacency label recedes with the map rather than holding a fixed size`() {
+        // A focused stop's routes all leave one point, so their labels are packed tightest exactly where a
+        // fixed-size label is largest against the lines it names — the overview zoom the rider opens the
+        // stop at (#2195). Asserted here, on the badges this view actually produces, rather than left to
+        // the RouteBadge default that supplies it: what the rider gets is the thing worth pinning.
+        val points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
+        val geometry = FocusedTripGeometry(listOf(FocusedTripShape("shape", "route", null, points)))
+
+        val badge = geometry.toRouteBadges(listOf(route("route", "A"))).single()
+
+        assertEquals(ROUTE_BADGE_SCALE_PROFILE, badge.scale)
+    }
+
     /** The route-direction an adjacency label opens; null if the label leads elsewhere or nowhere. */
     private val RouteBadge.showRouteTap: RouteDirectionKey?
         get() = (tap as? RouteBadgeTap.ShowRoute)?.route
@@ -321,4 +415,17 @@ class RouteViewGeometryTest {
         override val textColor: Int? = null
         override val agencyId = "agency"
     }
+
+    private fun style(
+        stopFocusActive: Boolean = false,
+        rideApproachActive: Boolean = false,
+        direction: RouteDirectionKey,
+        routeColors: Map<RouteDirectionKey, Int>
+    ) = selectedTripStyle(
+        stopFocusActive = stopFocusActive,
+        rideApproachActive = rideApproachActive,
+        selectedRouteDirection = direction,
+        routeColors = routeColors,
+        routeColorFallback = 99
+    )
 }

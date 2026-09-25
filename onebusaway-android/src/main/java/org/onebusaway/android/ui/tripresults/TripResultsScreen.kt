@@ -22,9 +22,12 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,14 +49,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,11 +70,16 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,6 +93,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
@@ -89,12 +101,16 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -111,6 +127,8 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.app.FeatureFlags
@@ -121,10 +139,12 @@ import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.LocalUnitsAreMetric
 import org.onebusaway.android.ui.compose.components.AlertSeverity
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.ROUTE_BADGE_HEIGHT
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
@@ -132,6 +152,8 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.alertAccentColor
+import org.onebusaway.android.ui.compose.components.openRental
+import org.onebusaway.android.ui.compose.components.rentalVehicleRes
 import org.onebusaway.android.ui.compose.components.routeLineColors
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -139,6 +161,9 @@ import org.onebusaway.android.ui.compose.theme.isDarkTheme
 import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.ScriptedTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
@@ -154,7 +179,12 @@ import org.onebusaway.android.util.parseObaHexColor
 fun TripResultsHeader(
     state: TripResultsUiState,
     onSelectOption: (Int) -> Unit,
-    scheduleWinnerMode: ScheduleWinnerMode = ScheduleWinnerMode.BOTH
+    scheduleWinnerMode: ScheduleWinnerMode = ScheduleWinnerMode.BOTH,
+    // The pin gesture (#2053). Null — the default — means this header has no pin behind it, and a card
+    // then carries no long press at all: a menu offering "Pin this trip" wired to nothing would be worse
+    // than no menu. That is the pre-#2053 behaviour, and it is what the render-only harnesses get.
+    pinnedOptionIndex: Int? = null,
+    onTogglePin: ((Int) -> Unit)? = null
 ) {
     val success = state as? TripResultsUiState.Success ?: return
     val winners = remember(success.options, scheduleWinnerMode) {
@@ -177,10 +207,33 @@ fun TripResultsHeader(
         val delta = if (forward) scrollState.viewportSize else -scrollState.viewportSize
         scope.launch { scrollState.animateScrollTo(scrollState.value + delta) }
     }
+    // Which card's long-press menu is open, if any. One menu for the whole strip rather than one per
+    // card: [CenteredLongPressMenu] is a Dialog, so it draws in the same place whichever card raised it,
+    // and the strip has no business composing three of them to show at most one.
+    var menuForIndex by remember(success.options) { mutableStateOf<Int?>(null) }
+    // Where each card sits inside the scrolling row, so the selected one can be brought into view.
+    val cardSpans = remember(success.options) { mutableStateMapOf<Int, ClosedFloatingPointRange<Float>>() }
+    // Selecting an option should never leave it hanging off an edge — the rider can't compare a card
+    // they can only see a sliver of. It matters most when the selection was *not* made by tapping a
+    // visible card: the scripted tour opens one further along the strip (#2164), and a restored pinned
+    // trip can be any option at all.
+    LaunchedEffect(success.selectedIndex, cardSpans[success.selectedIndex], scrollState.viewportSize) {
+        val span = cardSpans[success.selectedIndex] ?: return@LaunchedEffect
+        val viewport = scrollState.viewportSize.takeIf { it > 0 } ?: return@LaunchedEffect
+        val target = when {
+            span.start < scrollState.value -> span.start
+            span.endInclusive > scrollState.value + viewport -> span.endInclusive - viewport
+            else -> return@LaunchedEffect
+        }
+        scrollState.animateScrollTo(target.roundToInt().coerceAtLeast(0))
+    }
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            // The scripted tour rings this strip for three consecutive steps (#2164): comparing the
+            // options, opening a different one, and pinning one.
+            .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ITINERARIES),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ScrollChevronGutter(
@@ -196,13 +249,31 @@ fun TripResultsHeader(
                 .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val tutorialState = LocalTutorialState.current
             success.options.forEachIndexed { index, option ->
+                val selected = index == success.selectedIndex
                 OptionCard(
                     option = option,
                     winners = winners[index],
-                    selected = index == success.selectedIndex,
+                    selected = selected,
+                    pinned = index == pinnedOptionIndex,
                     summaryHeights = summaryHeights,
-                    onClick = { onSelectOption(index) }
+                    onClick = { onSelectOption(index) },
+                    onLongClick = onTogglePin?.let { { menuForIndex = index } },
+                    // The scripted tour's later trip steps are about one option — opening it, and
+                    // pinning it — so they ring the selected card rather than the whole strip (#2164).
+                    // Anchored on selection, so the outline follows when a step picks a different one.
+                    modifier = Modifier
+                        .onGloballyPositioned {
+                            cardSpans[index] = it.positionInParent().x..(it.positionInParent().x + it.size.width)
+                        }
+                        .then(
+                            if (selected) {
+                                Modifier.tutorialAnchor(tutorialState, ScriptedTutorial.KEY_ITINERARY_CARD)
+                            } else {
+                                Modifier
+                            }
+                        )
                 )
             }
         }
@@ -212,6 +283,22 @@ fun TripResultsHeader(
             contentDescriptionRes = R.string.trip_plan_options_scroll_more,
             onClick = { jump(forward = true) }
         )
+    }
+    val togglePin = onTogglePin
+    if (togglePin != null) {
+        menuForIndex?.let { index ->
+            CenteredLongPressMenu(expanded = true, onDismissRequest = { menuForIndex = null }) {
+                MenuRow(
+                    textRes = if (index == pinnedOptionIndex) R.string.trip_plan_unpin else R.string.trip_plan_pin,
+                    icon = ImageVector.vectorResource(
+                        if (index == pinnedOptionIndex) R.drawable.ic_pin_filled else R.drawable.ic_pin
+                    )
+                ) {
+                    menuForIndex = null
+                    togglePin(index)
+                }
+            }
+        }
     }
 }
 
@@ -355,13 +442,17 @@ private class SummaryHeights {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun OptionCard(
     option: ItineraryOption,
     winners: Set<WinnerCategory>,
     selected: Boolean,
+    pinned: Boolean,
     summaryHeights: SummaryHeights,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     val background = colorResource(
         if (selected) R.color.trip_plan_card_background_selected else R.color.trip_plan_card_background
@@ -372,19 +463,33 @@ private fun OptionCard(
     // Read off the categories themselves, in their declaration order, so a category added to the enum is
     // announced without a second list here having to be kept in step with it.
     val winnerDescriptions = WinnerCategory.entries.filter { it in winners }.map { stringResource(it.labelRes) }
+    val pinnedDescription = stringResource(R.string.trip_plan_pinned_state)
+    val states = winnerDescriptions + if (pinned) listOf(pinnedDescription) else emptyList()
     Surface(
         color = background,
         contentColor = textColor,
         shape = MaterialTheme.shapes.small,
+        // Pinned is drawn as an outline rather than another background: selection already owns the fill,
+        // and an outline costs no layout, so a pinned card can't be a different size from its neighbours.
+        // It also says *which* card is pinned when that isn't the one selected — long-pressing every card
+        // to find out would be the alternative.
+        border = if (pinned) BorderStroke(PINNED_CARD_BORDER, MaterialTheme.colorScheme.primary) else null,
         // Wrap to the content width (a sensible floor so short options aren't tiny); the row scrolls.
         // The ceiling is the summary line's own — it wraps at [OPTION_CARD_MAX_WIDTH] rather than the
         // card being cut to it (see [SymbolFlow]).
-        modifier = Modifier
+        modifier = modifier
             .widthIn(min = 104.dp)
-            .clickable(onClick = onClick)
+            // Tap selects; the card's secondary action (pin) is a long press, as it is on an arrivals
+            // row — the picker has no width for an overflow button and one here would crowd it.
+            .combinedClickable(
+                onClick = onClick,
+                // Both null together: a card with no secondary action must not announce one either.
+                onLongClickLabel = onLongClick?.let { stringResource(R.string.trip_plan_pin_menu_label) },
+                onLongClick = onLongClick
+            )
             .semantics {
-                if (winnerDescriptions.isNotEmpty()) {
-                    stateDescription = winnerDescriptions.joinToString()
+                if (states.isNotEmpty()) {
+                    stateDescription = states.joinToString()
                 }
             }
     ) {
@@ -393,52 +498,82 @@ private fun OptionCard(
         // nothing. The intrinsic pass asks the summary how wide it lands *after* wrapping — see
         // [SymbolFlow].
         Column(Modifier.width(IntrinsicSize.Max)) {
-            // The trip in travel order, as one symbol sequence: a glyph per on-street leg and a roundel
-            // per ride, chevron-separated (#2047). The gap between symbols is deliberately wide, so
-            // "two legs" and "one leg, two interchangeable routes" (which is one seamless chip) can't
-            // read as the same thing (#2010).
-            //
-            // Drawn from the symbols that actually render: a [StreetMode.CAR] leg has no glyph (see
-            // [streetModeIcon]) and is dropped here rather than in the model, so it can't leave a
-            // chevron pointing at nothing. The planner never asks OTP for car legs, so today this drops
-            // nothing a rider can be shown.
-            val drawn = remember(option.symbols) {
-                option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
-            }
-            // A trip with nothing drawable to say (see above) gets no summary at all — an empty tinted
-            // strip would be worse than the card simply starting at its stats.
-            if (drawn.isNotEmpty()) {
-                SymbolFlow(
-                    wrapAt = SUMMARY_WRAP_WIDTH,
-                    minHeight = summaryHeights.tallest,
-                    onNaturalHeight = summaryHeights::report,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
-                        .padding(CARD_SECTION_PADDING)
-                ) {
-                    drawn.forEachIndexed { index, symbol ->
-                        // A symbol travels with the chevron that follows it, as one unbreakable unit:
-                        // the wrap then never opens a line with a chevron pointing at the symbol above
-                        // it, and a broken line ends on the "and then" that carries the eye down.
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ModeSymbolContent(symbol)
-                            if (index < drawn.lastIndex) SymbolSeparator()
-                        }
-                    }
-                }
-            }
+            ModeSymbolSummary(
+                symbols = option.symbols,
+                minHeight = summaryHeights.tallest,
+                onNaturalHeight = summaryHeights::report,
+                // Named here because this card has no parent width to obey: the [Column] above measures
+                // it at [IntrinsicSize.Max] under the picker's horizontal scroll, so the line it wraps at
+                // is the card's own or nothing.
+                wrapAt = SUMMARY_WRAP_WIDTH,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
+                    .padding(CARD_SECTION_PADDING)
+            )
             StatsColumn(option, winners)
+        }
+    }
+}
+
+/** How boldly a pinned option card is outlined. Thick enough to read past the selected-card fill. */
+private val PINNED_CARD_BORDER = 2.dp
+
+/**
+ * The trip in travel order, as one symbol sequence: a glyph per on-street leg and a roundel per ride,
+ * chevron-separated (#2047). The gap between symbols is deliberately wide, so "two legs" and "one leg,
+ * two interchangeable routes" (which is one seamless chip) can't read as the same thing (#2010).
+ *
+ * Drawn from the symbols that actually render: a [StreetMode.CAR] leg has no glyph (see [streetModeIcon])
+ * and is dropped here rather than in the model, so it can't leave a chevron pointing at nothing. The
+ * planner never asks OTP for car legs, so today this drops nothing a rider can be shown. A trip with
+ * nothing drawable to say gets no summary at all — an empty tinted strip would be worse than the card
+ * simply starting at its stats.
+ *
+ * Shared by the option card and the pinned-trip resume FAB (#2053), which describes the parked trip in
+ * the same language the picker used to choose it.
+ *
+ * [wrapAt] is where the line breaks, and defaults to not choosing one — the ordinary Compose contract,
+ * where the width the parent gives is the only bound. The option card is the exception and says so at its
+ * own call site: it is measured at an unbounded width, so it has to name a line or it would never wrap.
+ */
+@Composable
+internal fun ModeSymbolSummary(
+    symbols: List<ModeSymbol>,
+    modifier: Modifier = Modifier,
+    minHeight: Int = 0,
+    onNaturalHeight: (Int) -> Unit = {},
+    wrapAt: Dp = Dp.Infinity
+) {
+    val drawn = remember(symbols) {
+        symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
+    }
+    if (drawn.isEmpty()) return
+    SymbolFlow(
+        wrapAt = wrapAt,
+        minHeight = minHeight,
+        onNaturalHeight = onNaturalHeight,
+        modifier = modifier
+    ) {
+        drawn.forEachIndexed { index, symbol ->
+            // A symbol travels with the chevron that follows it, as one unbreakable unit: the wrap then
+            // never opens a line with a chevron pointing at the symbol above it, and a broken line ends
+            // on the "and then" that carries the eye down.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ModeSymbolContent(symbol)
+                if (index < drawn.lastIndex) SymbolSeparator()
+            }
         }
     }
 }
 
 /**
  * The summary line's layout: its symbols packed left to right, wrapping onto the next line as soon as
- * the following one would carry the line past [wrapAt] (#2081).
+ * the following one would carry the line past [wrapAt] (#2081), or past the width the parent gives when
+ * [wrapAt] is [Dp.Infinity].
  *
  * Not a `FlowRow`, for one reason: every child here is measured **unbounded**, so a symbol that is by
  * itself wider than [wrapAt] takes a line of its own and widens the card rather than being measured into
@@ -485,7 +620,9 @@ private class SymbolFlowPolicy(
         // Measured unbounded — the point of the whole layout, see [SymbolFlow].
         val placeables = measurables.map { it.measure(Constraints()) }
         val widths = placeables.map { it.width }
-        // Whichever binds first: the line we chose, or a genuinely narrower parent.
+        // Whichever binds first: the line we chose, or a genuinely narrower parent. An infinite [wrapAt]
+        // chooses no line of its own — `roundToPx` carries it to `Constraints.Infinity` — leaving the
+        // parent's width the only thing that breaks one.
         val lines = packLines(widths, minOf(constraints.maxWidth, wrapAt.roundToPx()), gapX)
         val lineHeights = lines.map { line -> line.maxOf { placeables[it].height } }
         val width = constraints.constrainWidth(lines.maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0)
@@ -857,6 +994,13 @@ fun TripResultsList(
     onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit = { _, _ -> },
+    // Which option is pinned right now (#2053), or null when none of these is. Defaulted, like every
+    // other action here, so the render-only harnesses that call this directly stay unaffected: a list
+    // handed neither of these simply offers no pin affordance, which is the right rendering for them.
+    pinnedOptionIndex: Int? = null,
+    onTogglePin: ((Int) -> Unit)? = null,
+    // Non-null exactly while the trip on screen is the pinned one (#2053) — see [UnpinTripButton].
+    onUnpinTrip: (() -> Unit)? = null,
     reminderControl: @Composable () -> Unit = {}
 ) {
     // Resolved once for the whole drawer rather than by each distance row: the rows below run one per
@@ -865,6 +1009,10 @@ fun TripResultsList(
     CompositionLocalProvider(LocalUnitsAreMetric provides unitsAreMetric()) {
         Box(
             modifier
+                // The scripted tour rings the whole drawer when it shows what a trip plan came back
+                // with (#2164); the option strip has its own, tighter anchor for the steps that are
+                // about choosing between them.
+                .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_DRAWER)
                 .fillMaxSize()
                 .background(colorResource(R.color.md_theme_surfaceContainer))
         ) {
@@ -889,6 +1037,9 @@ fun TripResultsList(
                     onFocusLeg = onFocusLeg,
                     onFocusPoint = onFocusPoint,
                     stopEtaStrip = stopEtaStrip,
+                    pinnedOptionIndex = pinnedOptionIndex,
+                    onTogglePin = onTogglePin,
+                    onUnpinTrip = onUnpinTrip,
                     reminderControl = reminderControl
                 )
             }
@@ -909,41 +1060,66 @@ fun TripResultsList(
  */
 @Composable
 fun TripResultsSheet(
+    // Which plan [itineraries] are (`PlanResult.Success.generation`): the seeding effect keys on this,
+    // not on the list, so an equal re-plan still seeds and a rebuilt composition still doesn't.
+    planGeneration: Long,
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    // The re-mount half of [showItinerary] — see `HomeViewModel.restoreItineraryOnMap`.
+    restoreItinerary: (TripItinerary) -> Unit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
+    // A non-null index is an explicit pinned-trip resume, consumed after selecting that option.
+    // Null preserves the selection on remount and opens a fresh plan on option zero.
+    // Stored snapshots must not re-arm the trip-update monitor for an already departed trip.
+    resumeIndex: Int?,
+    fromSnapshot: Boolean,
+    // Which option is pinned, and the long-press action that toggles it (#2053). Pinning is a long
+    // press and nothing else — see [TripResultsHeader].
+    pinnedOptionIndex: Int?,
+    onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
+    onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp
 ) {
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
 
-    // Seed from the completed plan + point the map at the first itinerary (the old bindResults).
-    LaunchedEffect(itineraries) {
-        resultsViewModel.setItineraries(itineraries, initialIndex = 0)
-        itineraries.firstOrNull()?.let { showItinerary(it) }
-        maybeStartTripUpdates(activity, params, itineraries, index = 0)
-    }
-
-    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] and
-    // [params] through rememberUpdatedState so the long-lived collector always sees the latest plan —
-    // keying the effect on resultsViewModel alone would pin the first snapshot, so a later selection
-    // could arm trip updates with a stale itinerary list *or* a stale request after new results arrive
-    // (selectedItinerary is a no-replay SharedFlow, so keeping one collector — rather than restarting it
-    // — also can't drop a concurrent emission).
-    val currentItineraries by rememberUpdatedState(itineraries)
-    val currentParams by rememberUpdatedState(params)
-    LaunchedEffect(resultsViewModel) {
-        resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
-            showItinerary(itinerary)
-            maybeStartTripUpdates(activity, currentParams, currentItineraries, index)
+    // A new plan or explicit resume selects and frames an option. A remount only restores the map
+    // if needed, keeping the rider's selection and leg focus (#2274). Read the chosen itinerary from
+    // the ViewModel so the map and picker agree.
+    LaunchedEffect(planGeneration, resumeIndex) {
+        val seeded = resultsViewModel.seedPlan(planGeneration, itineraries, resumeIndex, params?.plannedStart)
+        val itinerary = resultsViewModel.currentItinerary()
+        if (seeded) {
+            itinerary?.let(showItinerary)
+            if (!fromSnapshot) maybeStartTripUpdates(activity, params, itinerary)
+            onOptionsSeeded()
+        } else {
+            itinerary?.let(restoreItinerary)
         }
     }
+
+    // Keep one collector for the non-replaying selection flow, with the latest plan inputs.
+    val currentParams by rememberUpdatedState(params)
+    val currentFromSnapshot by rememberUpdatedState(fromSnapshot)
+    LaunchedEffect(resultsViewModel) {
+        resultsViewModel.selectedItinerary.collect { itinerary ->
+            showItinerary(itinerary)
+            // Same gate as the seeding effect: picking a different option out of a *stored* plan is
+            // still a stored plan, and none of its departures are any fresher for having been tapped.
+            if (!currentFromSnapshot) {
+                maybeStartTripUpdates(activity, currentParams, itinerary)
+            }
+        }
+    }
+
+    val selectedIndex = (state as? TripResultsUiState.Success)?.selectedIndex ?: 0
 
     // The header (option-card picker) is folded into the list as its first item, so it scrolls away with
     // the steps instead of staying pinned above them.
@@ -961,12 +1137,15 @@ fun TripResultsSheet(
         onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
         stopEtaStrip = stopEtaStrip,
+        pinnedOptionIndex = pinnedOptionIndex,
+        onTogglePin = onTogglePin,
+        onUnpinTrip = onUnpinTrip,
         reminderControl = {
             // Destination reminders are off pending the navigation-mode rework; leaving the slot
             // empty removes the affordance rather than offering one that starts nothing.
             if (FeatureFlags.DESTINATION_REMINDERS) {
                 ItineraryReminderControl(
-                    itineraries.getOrNull((state as? TripResultsUiState.Success)?.selectedIndex ?: 0),
+                    itineraries.getOrNull(selectedIndex),
                     Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                 )
             }
@@ -975,18 +1154,17 @@ fun TripResultsSheet(
 }
 
 /**
- * Arms the trip-plan-change monitor ([TripPlanMonitor]) for the selected itinerary when trip-update
- * notifications are enabled. [params] is the request that produced [itineraries]; it's null when the
- * results were restored from a notification re-entry (the request isn't reconstructed there), in which
- * case there is nothing to re-plan, so monitoring isn't re-armed.
+ * Arms the trip-plan-change monitor ([TripPlanMonitor]) for [itinerary] when trip-update notifications
+ * are enabled. [params] is the request that produced it; it's null when the results were restored from a
+ * notification re-entry (the request isn't reconstructed there), in which case there is nothing to
+ * re-plan, so monitoring isn't re-armed.
  */
 private fun maybeStartTripUpdates(
     activity: Activity,
     params: TripPlanParams?,
-    itineraries: List<TripItinerary>,
-    index: Int
+    itinerary: TripItinerary?
 ) {
-    val itinerary = itineraries.getOrNull(index) ?: return
+    if (itinerary == null) return
     if (params == null) return
     if (!TripPlanNotifications.isEnabled(activity)) return
 
@@ -1008,10 +1186,46 @@ private val RAIL_WIDTH = 34.dp
 private val RAIL_SPLIT = 22.dp // node centre, measured from the row's top — where the spine's colour flips
 private val ROW_TOP = 10.dp
 private val ROW_BOTTOM = 10.dp
+private val CONTENT_START_GAP = 8.dp // between the spine cell and the content column
+private val CONTENT_END_INSET = 10.dp // the content column's (and a footer's) inset from the row's end
 private val RAIL_STROKE = 3.dp
 private val BAND_RADIUS = 13.dp
 private val BAND_INSET = 2.dp
 private val BAND_END = 4.dp
+
+/**
+ * "Unpin this trip" at the head of the directions drawer (#2053).
+ *
+ * The one obvious way out of a pin. Pinning is a long press on an option card — a gesture worth keeping
+ * quiet, since it is occasional and the map's marker already says a trip is parked — but *un*pinning had
+ * inherited that quietness and had no business doing so: a rider who wants rid of the pin is looking for
+ * a way to say so, and asking them to guess a hidden gesture makes the feature feel like a trap.
+ *
+ * Drawn only while the drawer is showing the pinned trip, which is what earns the word "this".
+ */
+@Composable
+private fun UnpinTripButton(onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .testTag(UNPIN_TRIP_TEST_TAG)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_pin_filled),
+            contentDescription = null,
+            modifier = Modifier.size(ButtonDefaults.IconSize)
+        )
+        Text(
+            text = stringResource(R.string.trip_plan_unpin),
+            modifier = Modifier.padding(start = ButtonDefaults.IconSpacing)
+        )
+    }
+}
+
+/** The tag the unpin button is driven by in instrumented tests. */
+const val UNPIN_TRIP_TEST_TAG = "unpinTrip"
 
 /** The minimum height of a row's content — the platform's 48dp target when the row is a tap target. */
 private val ROW_MIN_HEIGHT = 36.dp
@@ -1038,6 +1252,15 @@ private fun timelineScale(): Float = LocalDensity.current.fontScale.coerceIn(1f,
 private fun railSplit(): Dp = RAIL_SPLIT * timelineScale()
 
 /**
+ * Persists [TripLogList]'s set of opened legs — plain leg indices, so the whole set is a saveable
+ * `List<Int>`.
+ */
+private val EXPANDED_LEGS_SAVER = listSaver<SnapshotStateSet<Int>, Int>(
+    save = { it.toList() },
+    restore = { saved -> mutableStateSetOf<Int>().apply { addAll(saved) } }
+)
+
+/**
  * The itinerary as one continuous timeline, one lazy list row per event. Expansion is per-leg state,
  * keyed on the entries so a new plan resets it. The spine's per-node connector colours and each leg's
  * band are derived up front by [flattenLog] from the entry sequence; the rows themselves compose lazily,
@@ -1053,32 +1276,84 @@ private fun TripLogList(
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
+    pinnedOptionIndex: Int?,
+    onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
     reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
-    val expanded = remember(entries) { mutableStateSetOf<Int>() }
+    // Which legs the rider has opened inline. Saved, not merely remembered, so it survives HOME's
+    // composition being rebuilt under a pushed destination (#2274) instead of silently re-collapsing.
+    // Still keyed on [entries], so a different plan's log starts collapsed.
+    val expanded = rememberSaveable(entries, saver = EXPANDED_LEGS_SAVER) { mutableStateSetOf<Int>() }
     val onToggle: (Int) -> Unit = remember(expanded) { { i -> if (!expanded.add(i)) expanded.remove(i) } }
     // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
     // what makes a toggle recompose this list.
     val rows = rememberLogRows(entries, expanded.toSet())
+    val listState = rememberLazyListState()
+
+    // The scripted tour rings parts of this drawer, and the thing it rings has to be on screen (#2164).
+    // Resolved here, where the rows are already flattened, so the row composable stays unaware of it.
+    // The header is item 0, so the rows below it are offset by one.
+    val firstRideRow = rows.indexOfFirst { it.content is RowContent.BoardHeader }.takeIf { it >= 0 }
+    val ringing = LocalTutorialState.current?.current?.anchorId
+    LaunchedEffect(ringing, firstRideRow) {
+        when (ringing) {
+            // Bring the ride up off the bottom of the drawer, where the picker and the caution banner
+            // above it tend to leave it. Offset by a third of the viewport rather than scrolled flush
+            // to the top, so the row lands around the middle with its neighbours still in view — the
+            // step is about picking *one of* the stages.
+            ScriptedTutorial.KEY_ROUTE_LEG -> firstRideRow?.let {
+                listState.animateScrollToItem(it + 1, -listState.layoutInfo.viewportSize.height / 3)
+            }
+            // Back to the picker. The step before this one scrolled the drawer down to a ride, which
+            // left the option cards — the thing these steps ring, and the thing the last one asks the
+            // rider to long-press — off the top of the drawer.
+            ScriptedTutorial.KEY_ITINERARY_CARD -> listState.animateScrollToItem(0)
+            else -> Unit
+        }
+    }
 
     // The surface reaches the bottom edge; a bottom content padding lets the final leg row be scrolled
     // clear of the nav chrome without an empty strip below the list.
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = bottomInset + LOG_EDGE_GAP)
     ) {
         // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
         item {
-            TripResultsHeader(state, onSelectOption, scheduleWinnerMode)
+            // Above the picker rather than below it: the pin is a fact about the whole trip the drawer is
+            // showing, not about the option the rider is currently comparing, so it reads before them.
+            // Present only while that trip *is* the pinned one, which is what lets it say "this trip".
+            onUnpinTrip?.let { unpin -> UnpinTripButton(onClick = unpin) }
+            TripResultsHeader(
+                state = state,
+                onSelectOption = onSelectOption,
+                scheduleWinnerMode = scheduleWinnerMode,
+                pinnedOptionIndex = pinnedOptionIndex,
+                onTogglePin = onTogglePin
+            )
             reminderControl()
             HorizontalDivider()
+            Spacer(Modifier.height(LOG_EDGE_GAP))
+            // Below the picker, above the steps: the walking legs are what it qualifies, and it is
+            // true of every option rather than of the one being compared (#2218).
+            DirectionsCautionBanner()
             Spacer(Modifier.height(LOG_EDGE_GAP))
         }
         // Keyed by row identity, not position, so opening a leg doesn't discard the subcompositions of
         // every row below it — a board row's live ETA session survives the insert.
+        val firstRideKey = firstRideRow?.let { rows[it].key }
         items(rows, key = { it.key }) { row ->
-            LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+            val anchored = if (row.key == firstRideKey) {
+                Modifier.tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_ROUTE_LEG)
+            } else {
+                Modifier
+            }
+            Box(anchored) {
+                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+            }
         }
     }
 }
@@ -1153,12 +1428,21 @@ private fun LogRow(
 
         is RowContent.BoardHeader -> {
             val transit = content.entry
-            LogRowScaffold(model, onClick = null, onToggleExpand = { onToggle(i) }) {
+            LogRowScaffold(
+                model = model,
+                onClick = null,
+                onToggleExpand = { onToggle(i) },
+                // The board stop's live ETA strip, under the whole row rather than in the content
+                // column, so it runs to the row's edge instead of stopping short at the expand chevron
+                // (#2228). The whole ride, not just its route/stop: the strip also rules the plan's own
+                // arrival at this stop across the live ETAs (#2125), and a pill tap frames the ride's
+                // geometry on the map.
+                footer = transit.routeLeg.board?.let { stop -> { stopEtaStrip(transit, stop) } }
+            ) {
                 BoardContent(
                     entry = transit,
                     onFocus = { focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint) },
-                    onFocusPoint = onFocusPoint,
-                    stopEtaStrip = stopEtaStrip
+                    onFocusPoint = onFocusPoint
                 )
             }
         }
@@ -1222,6 +1506,11 @@ internal fun focusTransit(
  * The spine and the leg's band are drawn by the row itself ([drawRowChrome]) rather than by a
  * full-height child, so the row needs no intrinsic measurement and each one can stand alone as a lazy
  * list item.
+ *
+ * [footer] is a second band of content laid *under* the content column and the expand chevron's
+ * segment, spanning from the content column's start to the row's own end inset — for content that wants
+ * the row's full width and has no business being narrowed by the chevron (the board row's ETA strip,
+ * #2228). It stays inside the row's chrome, so the leg's band and spine run behind it as one.
  */
 @Composable
 private fun LogRowScaffold(
@@ -1230,6 +1519,7 @@ private fun LogRowScaffold(
     onClickLabel: String? = null,
     compact: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
+    footer: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -1247,7 +1537,7 @@ private fun LogRowScaffold(
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
         else -> null to null
     }
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             // drawWithCache, not drawBehind: the dash effect and every Dp→px conversion are resolved
@@ -1262,71 +1552,82 @@ private fun LogRowScaffold(
                 } else {
                     Modifier
                 }
-            ),
-        verticalAlignment = Alignment.Top
-    ) {
-        // Centered in the time column — halfway between the screen edge and the spine.
-        Column(
-            modifier = Modifier
-                .width(timeWidth)
-                .padding(top = rowTop),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            time?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    // The column is sized for the common short time; a locale with a wide am/pm marker
-                    // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
-                    maxLines = 2
-                )
-            }
-            delta?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.outline,
-                    maxLines = 1
-                )
-            }
-        }
-        Box(Modifier.width(RAIL_WIDTH)) {
-            LogNode(model.content, model.nodeColors)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .defaultMinSize(
-                    minHeight = when {
-                        compact -> 0.dp
-                        // A tappable row keeps the platform's minimum touch target.
-                        onClick != null -> ROW_MIN_TOUCH_HEIGHT
-                        else -> ROW_MIN_HEIGHT
-                    }
-                )
-                .padding(
-                    start = 8.dp,
-                    top = if (compact) 0.dp else rowTop,
-                    bottom = if (compact) 0.dp else ROW_BOTTOM,
-                    end = 10.dp
-                ),
-            content = content
-        )
-        // Its own segment at the row's right edge — centred on the row's full height, not just the
-        // header line's — rather than sharing the content column's Row and bumping that line's height
-        // out to the chevron's touch target (#2040).
-        if (model.expandable && onToggleExpand != null) {
-            ExpandChevron(
-                expanded = model.expanded,
-                onToggle = onToggleExpand,
-                label = expandLabel(model),
-                modifier = Modifier.align(Alignment.CenterVertically)
             )
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            // Centered in the time column — halfway between the screen edge and the spine.
+            Column(
+                modifier = Modifier
+                    .width(timeWidth)
+                    .padding(top = rowTop),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                time?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        // The column is sized for the common short time; a locale with a wide am/pm marker
+                        // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
+                        maxLines = 2
+                    )
+                }
+                delta?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1
+                    )
+                }
+            }
+            Box(Modifier.width(RAIL_WIDTH)) {
+                LogNode(model.content, model.nodeColors)
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(
+                        minHeight = when {
+                            compact -> 0.dp
+                            // A tappable row keeps the platform's minimum touch target.
+                            onClick != null -> ROW_MIN_TOUCH_HEIGHT
+                            else -> ROW_MIN_HEIGHT
+                        }
+                    )
+                    .padding(
+                        start = CONTENT_START_GAP,
+                        top = if (compact) 0.dp else rowTop,
+                        // A footer takes over the row's bottom inset, so the two read as one block.
+                        bottom = if (compact || footer != null) 0.dp else ROW_BOTTOM,
+                        end = CONTENT_END_INSET
+                    ),
+                content = content
+            )
+            // Its own segment at the row's right edge — centred on the content's full height, not just the
+            // header line's — rather than sharing the content column's Row and bumping that line's height
+            // out to the chevron's touch target (#2040). A footer sits below this segment, not beside it.
+            if (model.expandable && onToggleExpand != null) {
+                ExpandChevron(
+                    expanded = model.expanded,
+                    onToggle = onToggleExpand,
+                    label = expandLabel(model),
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+        }
+        footer?.let {
+            Box(
+                Modifier.padding(
+                    start = timeWidth + RAIL_WIDTH + CONTENT_START_GAP,
+                    end = CONTENT_END_INSET,
+                    bottom = ROW_BOTTOM
+                )
+            ) { it() }
         }
     }
 }
@@ -1748,27 +2049,6 @@ private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
  * custom-scheme deep link — whatever [fallback] the pickup kept for exactly that (see
  * [RentalPickup.fallback]).
  */
-private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
-    when (link) {
-        is RentalLink.Deep -> if (!ExternalIntents.openFeedUri(context, link.uri)) {
-            fallback?.let { openRental(context, it, fallback = null) }
-        }
-        is RentalLink.OperatorApp -> ExternalIntents.openAppOrStoreListing(context, link.packageName)
-        is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
-    }
-}
-
-/** What to call the rented vehicle — total over [RentalVehicleKind], so a new kind needs its word. */
-private fun rentalVehicleRes(kind: RentalVehicleKind): Int = when (kind) {
-    RentalVehicleKind.BIKE -> R.string.trip_plan_rental_bike
-    RentalVehicleKind.EBIKE -> R.string.trip_plan_rental_ebike
-    RentalVehicleKind.CARGO_BIKE -> R.string.trip_plan_rental_cargo_bike
-    RentalVehicleKind.ELECTRIC_CARGO_BIKE -> R.string.trip_plan_rental_electric_cargo_bike
-    RentalVehicleKind.SCOOTER -> R.string.trip_plan_rental_scooter
-    RentalVehicleKind.ESCOOTER -> R.string.trip_plan_rental_escooter
-    RentalVehicleKind.MOPED -> R.string.trip_plan_rental_moped
-    RentalVehicleKind.CAR -> R.string.trip_plan_rental_car
-}
 
 /**
  * A leg's service alerts, under its header (#2143), loudest first.
@@ -1813,13 +2093,12 @@ private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
 private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
     onFocus: () -> Unit,
-    onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
+    onFocusPoint: (GeoPoint) -> Unit
 ) {
     // The route/headsign block highlights the leg on the map; expanding its steps is the scaffold's
-    // own chevron segment (#2040), not a side effect of this tap. The board stop + ETA strip below is a
-    // third, separate tap target that zooms to the stop. Because this control is this inner block rather
-    // than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
+    // own chevron segment (#2040), not a side effect of this tap. The board stop below is a third,
+    // separate tap target that zooms to the stop. Because this control is this inner block rather than
+    // the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
     // content clears 48dp on its own in practice; this is the guarantee, not the usual case.)
     Column(
         Modifier
@@ -1853,9 +2132,6 @@ private fun ColumnScope.BoardContent(
             stopName = stop.name,
             onClick = { stop.point?.let(onFocusPoint) }
         )
-        // The whole ride, not just its route/stop: the strip also rules the plan's own arrival at this
-        // stop across the live ETAs (#2125), and a pill tap frames the ride's geometry on the map.
-        stopEtaStrip(entry, stop)
     }
 }
 
@@ -2106,7 +2382,7 @@ private fun previewTransitLeg(
     mode = mode,
     routeColorHex = routeColorHex,
     headsign = headsign,
-    reachStopTime = ServerTime(3 * 60_000L),
+    reachStop = ReachStop.OnFoot(3.minutes, notBefore = null),
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
     durationMinutes = 16,
@@ -2135,7 +2411,7 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     rideEvents = emptyList(),
     alerts = alerts
 ).copy(
-    reachStopTime = ServerTime(20 * 60_000L),
+    reachStop = ReachStop.OnFoot(20.minutes, notBefore = null),
     boardTime = ServerTime(24 * 60_000L),
     exitTime = ServerTime(84 * 60_000L),
     durationMinutes = 60,

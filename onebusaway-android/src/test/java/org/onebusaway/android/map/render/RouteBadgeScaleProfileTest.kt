@@ -18,17 +18,18 @@ package org.onebusaway.android.map.render
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.util.GeoPoint
 
-/** The zoom schedule a route label's drawn size follows (#2102). */
+/** The zoom schedule a route label's drawn size follows (#2102, #2195). */
 class RouteBadgeScaleProfileTest {
 
     @Test
-    fun `an itinerary label grows from half to full between zoom 11 and 16, flat outside`() {
-        assertEquals(0.5f, ITINERARY_ROUTE_BADGE_SCALE_PROFILE.scaleAt(8f), 0f)
-        assertEquals(0.5f, ITINERARY_ROUTE_BADGE_SCALE_PROFILE.scaleAt(11f), 0f)
-        assertEquals(0.75f, ITINERARY_ROUTE_BADGE_SCALE_PROFILE.scaleAt(13.5f), 0f)
-        assertEquals(1f, ITINERARY_ROUTE_BADGE_SCALE_PROFILE.scaleAt(16f), 0f)
-        assertEquals(1f, ITINERARY_ROUTE_BADGE_SCALE_PROFILE.scaleAt(20f), 0f)
+    fun `a line's label grows from half to full between zoom 11 and 16, flat outside`() {
+        assertEquals(0.5f, ROUTE_BADGE_SCALE_PROFILE.scaleAt(8f), 0f)
+        assertEquals(0.5f, ROUTE_BADGE_SCALE_PROFILE.scaleAt(11f), 0f)
+        assertEquals(0.75f, ROUTE_BADGE_SCALE_PROFILE.scaleAt(13.5f), 0f)
+        assertEquals(1f, ROUTE_BADGE_SCALE_PROFILE.scaleAt(16f), 0f)
+        assertEquals(1f, ROUTE_BADGE_SCALE_PROFILE.scaleAt(20f), 0f)
     }
 
     @Test
@@ -42,7 +43,7 @@ class RouteBadgeScaleProfileTest {
         for (zoom in listOf(8f, 11f, 13.5f, 16f, 20f)) {
             assertEquals(
                 ITINERARY_RIDE_WIDTH_PROFILE.multiplierAt(zoom),
-                ITINERARY_ROUTE_BADGE_SCALE_PROFILE.scaleAt(zoom),
+                ROUTE_BADGE_SCALE_PROFILE.scaleAt(zoom),
                 0f
             )
         }
@@ -55,7 +56,7 @@ class RouteBadgeScaleProfileTest {
         // handful of values, not one per camera idle. Sampled far more finely than a user could pinch.
         val scales = generateSequence(DETAIL_RAMP_START_ZOOM) { it + 0.01f }
             .takeWhile { it <= DETAIL_RAMP_END_ZOOM }
-            .map(ITINERARY_ROUTE_BADGE_SCALE_PROFILE::scaleAt)
+            .map(ROUTE_BADGE_SCALE_PROFILE::scaleAt)
             .toSet()
 
         assertTrue("500 sampled zooms should collapse to a few scales, got ${scales.size}", scales.size <= 12)
@@ -66,11 +67,12 @@ class RouteBadgeScaleProfileTest {
     }
 
     @Test
-    fun `every other label holds one size at every zoom`() {
-        // The default a RouteBadge takes, so adjacency labels (#1827) and the continuation badge (#1691) are
-        // untouched by all this — and a renderer's re-stamp on camera settle can skip them entirely.
-        for (zoom in 1..21) {
-            assertEquals(1f, FIXED_ROUTE_BADGE_SCALE_PROFILE.scaleAt(zoom.toFloat()), 0f)
-        }
+    fun `it is what a label is born with, so a new one recedes without knowing to ask`() {
+        // #2195 in one assertion: the schedule is the RouteBadge default, not something each producer opts
+        // into. #2102 gave the itinerary's labels a schedule and left the default fixed, which is how
+        // adjacency — the older producer — went on drawing full-size pills at every zoom.
+        val badge = RouteBadge(routes = listOf(BadgedRoute("A", 0xFF123456.toInt())), point = GeoPoint(0.0, 0.0))
+
+        assertEquals(ROUTE_BADGE_SCALE_PROFILE, badge.scale)
     }
 }

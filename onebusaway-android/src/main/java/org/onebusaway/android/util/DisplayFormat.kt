@@ -177,6 +177,13 @@ object DisplayFormat {
         }
     }
 
+    /** Passenger-facing stop number and localized direction, joined when both are available. */
+    fun stopSubtitleText(context: Context, stopCode: String?, direction: String?): String? {
+        val codeText = stopCode?.takeIf(String::isNotBlank)?.let { context.getString(R.string.stop_details_code, it) }
+        return listOfNotNull(codeText, stopDirectionText(context, direction))
+            .takeIf { it.isNotEmpty() }?.joinToString(" · ")
+    }
+
     /** [direction] resolved to a localized display string ("Northbound"), or null when absent/blank. */
     fun stopDirectionText(context: Context, direction: String?): String? = direction?.takeIf { it.isNotBlank() }
         ?.let { context.getString(getStopDirectionText(it)) }

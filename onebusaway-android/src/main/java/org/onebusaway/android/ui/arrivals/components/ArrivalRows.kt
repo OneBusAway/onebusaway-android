@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -40,6 +41,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,11 +61,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.time.Duration.Companion.minutes
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
@@ -96,10 +100,14 @@ class ArrivalRowCallbacks(
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
+    /** Starts or stops the live countdown notification for this arrival's whole route row (#2166). */
+    val onToggleTracking: (ArrivalInfo) -> Unit,
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
-    val onShowAlert: (String) -> Unit
+    val onShowAlert: (String) -> Unit,
+    /** Ordinary row taps can open trip details on the mapless board. */
+    val onRowClick: (ArrivalInfo) -> Unit = onShowVehiclesOnMap
 )
 
 /**
@@ -216,6 +224,30 @@ internal fun ArrivalAlertIndicator(
     }
 }
 
+/**
+ * The "this row is being tracked" eye (#2166): a live countdown notification is running for this
+ * (stop, route, headsign). Purely a status mark — tracking is started and stopped from the row's
+ * long-press menu, so a tap target here would be a second, quieter way to do something the rider did
+ * not aim at. Drawn in the row's top-right corner; see [RouteArrivalRow].
+ *
+ * Deliberately colourless: `onSurfaceVariant` is the Material role for a secondary icon on a surface,
+ * and it keeps the mark out of the deviation palette. Green would have been the obvious "this is on"
+ * hue, but green already means *on time* everywhere else on this row (the ETA pills, the status
+ * pill), and a green mark in its corner would read as a claim about the arrivals rather than as a
+ * flag on the row. The eye says "marked", not a value, so it does not need a colour to spend.
+ */
+@Composable
+internal fun TrackedRouteIndicator(modifier: Modifier = Modifier) {
+    Box(modifier.size(CORNER_TOUCH_SIZE), contentAlignment = Alignment.Center) {
+        Icon(
+            painter = painterResource(R.drawable.ic_visibility),
+            contentDescription = stringResource(R.string.stop_info_arrival_tracked),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(CORNER_GLYPH_SIZE)
+        )
+    }
+}
+
 /** Adapts the [ArrivalInfo] display model onto [ArrivalRowVisual]. Shared by the interactive Style
  *  A row and the report-flow picker (which wrap it with their own click + card). [onAlertClick] adds
  *  the tappable alert indicator when the arrival is affected by an active alert (null hides it). */
@@ -247,6 +279,46 @@ internal fun ArrivalRowContent(
 }
 
 /**
+ * The colour of the focused trip's ETA-pill rim, or null when no pill should be outlined.
+ *
+ * The pill's rim and the row card's own selection stroke mark **different selections**, and since #1990
+ * they say so in different colours. The card's says *this route* is the one the map is showing, and keeps
+ * the colour that route's line is drawn in ([cardSelectionColor]). The pill's says *this trip* is the one
+ * drilled into — and the map draws that trip's whole estimate (the uncertainty band, the fix it starts
+ * from, the fast estimate it ends at, and the vehicle in the middle) in one contrasting colour. Wearing
+ * that colour is what makes the pill a member of that set rather than a second, differently-scoped copy
+ * of the route highlight, which is what it was when #2205 first gave it the card's stroke to borrow.
+ *
+ * [bandColor] is null whenever the map has no band to name — nothing selected yet, or a trip with no
+ * real-time fix to extrapolate — and the pill falls back to borrowing the card's stroke as it used to.
+ *
+ * [selected] gates both, because [bandColor] arrives as one map-wide value rather than per row: without
+ * the gate a stale trip id would outline a pill in a row that isn't the focused one.
+ */
+internal fun focusedPillRimColor(
+    selected: Boolean,
+    bandColor: Int?,
+    cardSelectionColor: Int?
+): Int? = if (selected) bandColor ?: cardSelectionColor else null
+
+/** The focused pill's rim width, shared by both producers of an [EtaPillFocus] so they can't drift. */
+private val FOCUSED_PILL_RIM = 2.dp
+
+/**
+ * The focused-pill treatment for [tripId] drawn in [rimColor], or null when nothing is drilled into or
+ * there is no colour to draw it in.
+ *
+ * The one place an [EtaPillFocus] is built, for both surfaces that show a focused pill: a stop's arrivals
+ * row (above) and a directions leg's inline ETA strip (#2224). The rung the two read is the same one —
+ * `CurrentFocus.selectedTripId` — so what they draw for it should be the same too.
+ */
+internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
+    val trip = tripId ?: return null
+    val color = rimColor ?: return null
+    return EtaPillFocus(trip, BorderStroke(FOCUSED_PILL_RIM, Color(color)))
+}
+
+/**
  * One arrivals row for a single (route, direction): the route badge on the left, and on the right
  * the direction name over a horizontally-scrollable strip of per-trip ETA pills (soonest first).
  * The unified row (issue #1707) — replaces the old per-trip Style A row and Style B card.
@@ -262,9 +334,29 @@ internal fun ArrivalRowContent(
  *   "Show route schedule" when the route has a schedule URL.
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
- * trip's actions drive the badge color and the route menu. [etaAnchor] is attached to the first pill
- * (the onboarding spotlight target).
+ * trip's actions drive the badge color and the route menu. [anchors] carries the onboarding spotlight
+ * targets a host may attach to the row's pill, badge and star.
  */
+
+/**
+ * Onboarding spotlight targets a host may attach inside an arrivals row — each an opaque [Modifier] the
+ * row simply hangs on the element named, without knowing what it is for.
+ *
+ * A bundle rather than a parameter each, because the scripted tour (#2164) spotlights three separate
+ * parts of the same row (the countdown, the route badge, the favourite star) and threading three
+ * modifiers through the panel/list/row chain one at a time is how a signature grows without bound. Every
+ * field defaults to an inert [Modifier], so a host that wants none passes nothing.
+ */
+@Immutable
+data class ArrivalRowAnchors(
+    /** The row's first ETA pill — "how long until your bus arrives". */
+    val eta: Modifier = Modifier,
+    /** The route badge that opens the route on the map. */
+    val badge: Modifier = Modifier,
+    /** The corner star that saves the route. */
+    val star: Modifier = Modifier
+)
+
 @Composable
 fun RouteArrivalRow(
     group: RouteRowGroup,
@@ -275,7 +367,25 @@ fun RouteArrivalRow(
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
-    etaAnchor: Modifier = Modifier
+    // The trip of this row the map is drilled into (the stop→route→trip focus, #2205), or null. Only
+    // meaningful on the selected row, and gated on [selected] below so a stale id can't outline a pill
+    // in a row that isn't the focused one.
+    selectedTripId: String? = null,
+    // The uncertainty band's tint for [selectedTripId] on the map, or null when no vehicle is selected.
+    // The focused pill's rim wears it (#1990) — see [pillFocus] below.
+    selectedTripBandColor: Int? = null,
+    anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
+    // Whether a live countdown is running for this row (#2166) — the row's menu picks its verb and
+    // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
+    // membership is the list's business, and this row is also drawn by hosts (directions, the
+    // trip-results stop strips) that know nothing about tracking.
+    tracked: Boolean = false,
+    // The bay this row departs from, drawn under the headsign — for the transit-centre drawer (#2107),
+    // whose list spans every stop in view and where "which bay" is half the answer. Null on every
+    // stop-scoped surface, where the stop is already the screen's subject and naming it again is noise.
+    stopLabel: String? = null,
+    /** One trip per card, sharing the route and trip actions with grouped rows. */
+    chronological: Boolean = false
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -294,6 +404,10 @@ fun RouteArrivalRow(
     val selectionBorder = selectionColor
         ?.takeIf { selected }
         ?.let { BorderStroke(2.dp, Color(it)) }
+    val pillFocus = etaPillFocus(
+        selectedTripId,
+        focusedPillRimColor(selected, selectedTripBandColor, selectionColor)
+    )
     ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(
@@ -305,7 +419,7 @@ fun RouteArrivalRow(
                     // map / schedule). The ETA pills remain independent children with their own
                     // trip-specific tap/long-press actions.
                     .combinedClickable(
-                        onClick = { callbacks.onShowVehiclesOnMap(representative) },
+                        onClick = { callbacks.onRowClick(representative) },
                         onLongClickLabel = routeMenuLabel,
                         onLongClick = { menuExpanded = true }
                     )
@@ -331,8 +445,11 @@ fun RouteArrivalRow(
                         ),
                         // The trailing padding is the gap to the divider — part of the badge section,
                         // so the TopEnd-aligned alert glyph sits flush against the divider.
-                        modifier = Modifier.align(Alignment.Center).padding(end = 10.dp),
-                        maxFontSize = 32.sp,
+                        modifier = Modifier.align(Alignment.Center).padding(end = 10.dp).then(anchors.badge),
+                        // A chronological row holds one departure, so its badge gets the step up
+                        // that row's lone ETA pill takes (EtaStrip's PillSizing.STANDALONE) — and
+                        // lands on the same 36.sp the flat arrival row badges at.
+                        maxFontSize = if (chronological) 36.sp else 32.sp,
                         width = if (compoundBadge) 96.dp else 64.dp,
                         maxLines = if (compoundBadge) 1 else 2,
                         color = badgeContent,
@@ -342,10 +459,10 @@ fun RouteArrivalRow(
                     if (onAlertClick != null) {
                         ArrivalAlertIndicator(
                             onClick = onAlertClick,
-                            iconSize = 20.dp,
+                            iconSize = CORNER_GLYPH_SIZE,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .size(28.dp)
+                                .size(CORNER_TOUCH_SIZE)
                                 // Cancel the row's vertical padding so the triangle's top lines up with
                                 // the corner star, which floats at the card's very top (above this
                                 // padding) rather than inside the row's content box.
@@ -357,17 +474,46 @@ fun RouteArrivalRow(
                 // similar-looking rounded colored chips don't read as the same kind of thing.
                 VerticalDivider()
                 Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    if (direction.isNotBlank()) {
-                        DirectionHeadsign(direction)
-                        Spacer(Modifier.height(6.dp))
-                    }
-                    EtaStrip(
-                        trips = group.trips,
-                        actionsFor = actionsFor,
+                if (chronological) {
+                    ChronologicalArrivalContent(
+                        arrival = representative,
+                        direction = direction,
+                        stopLabel = stopLabel,
+                        actions = routeActions,
                         callbacks = callbacks,
-                        firstPillModifier = etaAnchor
+                        focus = pillFocus,
+                        modifier = Modifier.weight(1f),
+                        etaModifier = anchors.eta
                     )
+                } else {
+                    Column(Modifier.weight(1f)) {
+                        if (direction.isNotBlank()) {
+                            DirectionHeadsign(direction)
+                        }
+                        if (stopLabel != null) {
+                            Text(
+                                text = stopLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                // Gap between the headsign and the bay, when both show. Carried by the label
+                                // rather than an unconditional spacer under the headsign, which would also
+                                // shift every stop-scoped row — none of which passes a stopLabel.
+                                modifier = Modifier.padding(top = if (direction.isNotBlank()) 2.dp else 0.dp)
+                            )
+                        }
+                        if (direction.isNotBlank() || stopLabel != null) {
+                            Spacer(Modifier.height(6.dp))
+                        }
+                        EtaStrip(
+                            trips = group.trips,
+                            actionsFor = actionsFor,
+                            callbacks = callbacks,
+                            firstPillModifier = anchors.eta,
+                            focus = pillFocus
+                        )
+                    }
                 }
             }
             if (routeActions != null) {
@@ -378,19 +524,33 @@ fun RouteArrivalRow(
                         isFavorite = isFavorite,
                         onClick = { callbacks.onRouteFavorite(routeActions) },
                         tint = colorResource(R.color.navdrawer_icon_tint),
-                        iconSize = 20.dp,
+                        iconSize = CORNER_GLYPH_SIZE,
                         // Tighten the button's touch box to the icon + a small margin, like the corner
                         // overflow icon below, instead of Material's 48dp default — keeps the star flush
                         // in the corner with no compensating offset.
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(CORNER_TOUCH_SIZE).then(anchors.star)
                     )
                 }
+            }
+            if (tracked) {
+                // The row's own top-right corner, opposite the favourite star and past the headsign —
+                // the whole row is what is being watched, not the route chip, so the mark belongs on
+                // the row rather than tucked into the badge beside the alert triangle. Its own layer
+                // for the same reason the star is: a corner mark must not reflow the headsign or the
+                // pills under it.
+                TrackedRouteIndicator(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = TRACKED_MARK_END_INSET)
+                )
             }
             RouteActionsMenu(
                 expanded = menuExpanded,
                 onDismiss = { menuExpanded = false },
                 onShowRouteOnMap = { callbacks.onShowRouteOnMap(representative) },
-                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } }
+                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } },
+                onToggleTracking = { callbacks.onToggleTracking(representative) },
+                tracked = tracked
             )
         }
     }
@@ -415,8 +575,21 @@ internal fun alertClick(
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
-/** The route-level long-press menu: show the whole route on the map (always), and — when [onShowSchedule]
- *  is non-null (the route has a schedule) — open its schedule. A dumb view: both actions arrive pre-bound.
+/** The footprint of a mark in one of the row's corners, and the glyph inside it — the favourite star,
+ *  the service-alert triangle, the tracking eye. One tight box rather than Material's 48dp default, so
+ *  each sits flush in its corner with no compensating offset, and so the three read as one family. */
+private val CORNER_TOUCH_SIZE = 28.dp
+private val CORNER_GLYPH_SIZE = 20.dp
+
+/** Breathing room between the tracking eye and the card's right edge, tuned by eye. Only the eye
+ *  takes it: the star sits flush in the opposite corner, where its tapered points read as inset
+ *  already, and nudging it would move a mark this change has no business touching. */
+private val TRACKED_MARK_END_INSET = 3.dp
+
+/** The route-level long-press menu: show the whole route on the map (always), start or stop this
+ *  row's live countdown notification (#2166), and — when [onShowSchedule] is non-null (the route has
+ *  a schedule) — open its schedule. A dumb view: every action arrives pre-bound, and [tracked] only
+ *  picks the tracking item's wording.
  *  The route's star lives as the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on
  *  each pill's long-press menu ([TripActionsMenu]). */
 @Composable
@@ -424,7 +597,9 @@ internal fun RouteActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     onShowRouteOnMap: () -> Unit,
-    onShowSchedule: (() -> Unit)?
+    onShowSchedule: (() -> Unit)?,
+    onToggleTracking: () -> Unit,
+    tracked: Boolean
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(
@@ -433,6 +608,21 @@ internal fun RouteActionsMenu(
         ) {
             onDismiss()
             onShowRouteOnMap()
+        }
+        // The eye ties the item to the mark it toggles — the row's own tracking eye — and its
+        // struck-through twin shows which way the tap goes rather than restating the label.
+        MenuRow(
+            textRes = if (tracked) {
+                R.string.bus_options_menu_untrack_route
+            } else {
+                R.string.bus_options_menu_track_route
+            },
+            icon = ImageVector.vectorResource(
+                if (tracked) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+            )
+        ) {
+            onDismiss()
+            onToggleTracking()
         }
         if (onShowSchedule != null) {
             MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
@@ -447,7 +637,7 @@ private val PillShape = RoundedCornerShape(6.dp)
 
 /** The lateness-colored status pill (white text on the deviation color), the legacy status badge. */
 @Composable
-private fun StatusPill(text: String, color: Color) {
+internal fun StatusPill(text: String, color: Color) {
     Surface(shape = PillShape, color = color) {
         Text(
             text = text,
@@ -548,7 +738,9 @@ internal fun OnMapIndicator(color: Color, modifier: Modifier = Modifier) {
     )
 }
 
-private fun strikeThroughIf(canceled: Boolean): TextDecoration = if (canceled) TextDecoration.LineThrough else TextDecoration.None
+/** The package's one "a canceled trip's text is struck through" rule — the flat row, the ETA pill and
+ *  its clock lines all read it, so they can't drift apart. */
+internal fun strikeThroughIf(canceled: Boolean): TextDecoration = if (canceled) TextDecoration.LineThrough else TextDecoration.None
 
 /**
  * Renders [DisplayFormat.formatEtaParts] output as a single [AnnotatedString] — not separate Text
@@ -610,13 +802,12 @@ private data class PreviewArrivalData(
     override val predictedDepartureTime: ServerTime? get() = predictedArrivalTime
 }
 
-private const val PREVIEW_MIN_MS = 60_000L
-
 /**
  * Builds a real [ArrivalInfo] for a preview: [etaMinutes] from "now" (predicted when [predicted]),
  * with the schedule offset by [scheduleDeviationMinutes] so the pill takes its on-time/late/early
- * color. A null context is passed deliberately — the row shows only the badge, headsign, and pills, so
- * the (context-dependent) status/time labels stay empty and no resources/app singletons are touched.
+ * color. Supply a context for localized status labels in in-app illustrations; the default keeps
+ * resource-dependent labels empty for numeric tests and tooling previews. [now] fixes the sample
+ * clock times without depending on the time the rider opens an illustration.
  */
 internal fun previewArrival(
     shortName: String,
@@ -635,26 +826,28 @@ internal fun previewArrival(
     // multi-pill strip must pass a distinct id per pill — the default alone collides, and a duplicate
     // key throws. Not derived from etaMinutes on purpose: two pills legitimately share an ETA (a loop
     // route's two visits, a pre-dedup phantom), so identity must stay independent of it.
-    tripId: String = "trip"
+    tripId: String = "trip",
+    context: Context? = null,
+    now: ServerTime = ServerTime(0L)
 ): ArrivalInfo {
-    val predictedMs = etaMinutes * PREVIEW_MIN_MS
-    val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
+    val predictedTime = now + etaMinutes.minutes
+    val scheduledTime = now + (etaMinutes - scheduleDeviationMinutes).minutes
     return ArrivalInfo(
-        context = null,
+        context = context,
         data = PreviewArrivalData(
             routeId = routeId,
             directionId = directionId,
             shortName = shortName,
             headsign = headsign,
-            scheduledArrivalTime = ServerTime(scheduledMs),
-            predictedArrivalTime = if (predicted) ServerTime(predictedMs) else null,
+            scheduledArrivalTime = scheduledTime,
+            predictedArrivalTime = if (predicted) predictedTime else null,
             predicted = predicted,
             status = status,
             routeLongName = routeLongName,
             tripId = tripId,
             hasPlottableVehicle = hasPlottableVehicle
         ),
-        now = ServerTime(0L),
+        now = now,
         includeArrivalDepartureInStatusLabel = false
     )
 }
@@ -671,6 +864,7 @@ internal fun previewRowCallbacks(
     onEtaClick = {},
     onShowTripStatus = {},
     onSetReminder = {},
+    onToggleTracking = {},
     onShowRouteSchedule = onShowRouteSchedule,
     onReportArrivalProblem = {},
     onShowAlert = {}

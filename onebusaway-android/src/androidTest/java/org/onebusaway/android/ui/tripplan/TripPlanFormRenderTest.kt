@@ -25,7 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -308,6 +310,62 @@ class TripPlanFormRenderTest {
     }
 
     /**
+     * A pinned instant reads time-first, and states the day only when the day needs stating (#2185).
+     * The callout is the bar's one elastic slot and routinely ellipsizes, so a date the rider already
+     * knows — today's — is exactly what pushes the time they opened the form for off the end.
+     */
+    @Test
+    fun aTripLaterTodayReadsAsJustItsTime() {
+        renderForm(pinnedOn(TripDay.TODAY))
+
+        composeRule.onNodeWithText("3:45 PM").assertIsDisplayed()
+        assertEquals(
+            "a trip later today should not restate today's date",
+            0,
+            composeRule.onAllNodesWithText("June 10", substring = true).fetchSemanticsNodes().size
+        )
+    }
+
+    @Test
+    fun aTripTomorrowNamesTheDayInWords() {
+        renderForm(pinnedOn(TripDay.TOMORROW))
+
+        composeRule.onNodeWithText("3:45 PM, tomorrow").assertIsDisplayed()
+    }
+
+    @Test
+    fun aTripFurtherOutFallsBackToItsDate() {
+        renderForm(pinnedOn(TripDay.OTHER))
+
+        composeRule.onNodeWithText("3:45 PM, June 10").assertIsDisplayed()
+    }
+
+    /**
+     * What the shortened callout leaves out has to stay reachable: the menu it opens states the pinned
+     * instant in full, above the choices, so the rider can check what the trip is pinned to without
+     * opening the picker to find out.
+     */
+    @Test
+    fun theTimeMenuStatesThePinnedInstantInFull() {
+        renderForm(pinnedOn(TripDay.TODAY))
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME).performClick()
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME_HEADER)
+            .assertTextEquals("June 10, 3:45 PM")
+    }
+
+    /** A trip anchored to "now" has no pinned instant, so there is nothing to state above the rows. */
+    @Test
+    fun theTimeMenuStatesNothingForANowTrip() {
+        renderForm(plannedState)
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME).performClick()
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME_HEADER).assertDoesNotExist()
+    }
+
+    /**
      * The action bar's trailing buttons stay put whatever the time segment reads. The segment is the
      * bar's one flexible slot, so it has to both hold the buttons against the edge when the label is
      * the single word "now" and cap itself when the label is a full date and time — sharing that
@@ -338,6 +396,56 @@ class TripPlanFormRenderTest {
             withNow,
             withPinnedTime
         )
+    }
+
+    /**
+     * Refresh re-plans the trip the form already states (#2135), so — unlike reverse — it belongs with
+     * the rest of the trip's terms, in the action bar's trailing group and immediately before
+     * additional-preferences. Position is the whole of the issue's ask, so it's asserted here.
+     */
+    @Test
+    fun refreshSitsBetweenTheModePickersAndAdditionalPreferences() {
+        renderForm(plannedState)
+
+        val streetMode = bounds(TripPlanTestTags.STREET_MODE)
+        val refresh = bounds(TripPlanTestTags.REFRESH)
+        val settings = bounds(TripPlanTestTags.ADVANCED_SETTINGS)
+
+        assertTrue(
+            "refresh should sit between the street-mode picker (ending ${streetMode.right}) and " +
+                "additional-preferences (starting ${settings.left}), but spanned " +
+                "${refresh.left}..${refresh.right}",
+            refresh.left >= streetMode.right && refresh.right <= settings.left
+        )
+    }
+
+    /** The form is stateless, so what's checked is the ask — the re-plan itself is the ViewModel's. */
+    @Test
+    fun tappingRefreshAsksForTheSameTripAgain() {
+        var refreshes = 0
+        renderForm(state = { plannedState }, onRefresh = { refreshes++ })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.REFRESH).performClick()
+
+        assertEquals("tapping refresh should ask the host to re-plan", 1, refreshes)
+    }
+
+    /**
+     * A form that doesn't yet name both ends of a trip has no trip to re-plan, and asking anyway would
+     * clear whatever is on screen rather than refresh it. The button stays in place (so the trailing
+     * group doesn't shuffle as the form is filled in) but does nothing.
+     */
+    @Test
+    fun refreshIsInertUntilTheFormNamesBothEnds() {
+        var refreshes = 0
+        renderForm(
+            state = { plannedState.copy(to = TripEndpoint.FreeText("")) },
+            onRefresh = { refreshes++ }
+        )
+
+        composeRule.onNodeWithTag(TripPlanTestTags.REFRESH).assertIsNotEnabled().performClick()
+
+        assertEquals("a half-filled form has nothing to refresh", 0, refreshes)
     }
 
     /**
@@ -494,6 +602,9 @@ class TripPlanFormRenderTest {
         return pixels[x, y]
     }
 
+    /** [plannedState] with its trip pinned to an instant that falls on [day]. */
+    private fun pinnedOn(day: TripDay) = plannedState.copy(departNow = false, dayRelation = day)
+
     private fun renderForm(
         state: TripPlanFormState,
         onToQueryChange: (String) -> Unit = {}
@@ -511,6 +622,7 @@ class TripPlanFormRenderTest {
         onVehicleModeSelected: (VehicleMode) -> Unit = {},
         onStreetModeSelected: (StreetMode) -> Unit = {},
         onReverse: () -> Unit = {},
+        onRefresh: () -> Unit = {},
         onPickDateTime: () -> Unit = {}
     ) {
         composeRule.setContent {
@@ -529,6 +641,7 @@ class TripPlanFormRenderTest {
                         onVehicleModeSelected = onVehicleModeSelected,
                         onStreetModeSelected = onStreetModeSelected,
                         onReverse = onReverse,
+                        onRefresh = onRefresh,
                         onAdvancedSettings = {}
                     )
                 }

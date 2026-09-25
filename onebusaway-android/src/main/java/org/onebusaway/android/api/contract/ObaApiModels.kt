@@ -62,8 +62,9 @@ data class ListWithReferences<T>(
 
 /**
  * The shared reference pool returned alongside an entry. Only the reference kinds a migrated
- * endpoint actually consumes are modeled; unmodeled kinds (stops, trips, situations, routes) are
- * tolerated on the wire via `ignoreUnknownKeys` and get added as endpoints need them.
+ * endpoint actually consumes are modeled; unmodeled kinds are tolerated on the wire via
+ * `ignoreUnknownKeys`. The four on-demand pools are present only on `/api/ondemand` responses and
+ * default to empty everywhere else.
  */
 @Serializable
 data class References(
@@ -71,7 +72,11 @@ data class References(
     val stops: List<StopReference> = emptyList(),
     val routes: List<RouteReference> = emptyList(),
     val trips: List<TripReference> = emptyList(),
-    val situations: List<SituationReference> = emptyList()
+    val situations: List<SituationReference> = emptyList(),
+    val serviceAreas: List<ServiceAreaDto> = emptyList(),
+    val locationGroups: List<LocationGroupDto> = emptyList(),
+    val bookingRules: List<BookingRuleDto> = emptyList(),
+    val calendars: List<FlexCalendarDto> = emptyList()
 ) {
     // Index each pool by id (lazily, once per response) so repeated resolution — the per-arrival
     // projections and the per-frame vehicle sampler — is O(1) instead of a linear scan.
@@ -80,6 +85,10 @@ data class References(
     private val routeById by lazy { routes.associateBy { it.id } }
     private val tripById by lazy { trips.associateBy { it.id } }
     private val situationById by lazy { situations.associateBy { it.id } }
+    private val serviceAreaById by lazy { serviceAreas.associateBy { it.id } }
+    private val locationGroupById by lazy { locationGroups.associateBy { it.id } }
+    private val bookingRuleById by lazy { bookingRules.associateBy { it.id } }
+    private val calendarById by lazy { calendars.associateBy { it.id } }
 
     /** Resolves an agency in this pool by id, or null when absent. */
     fun agency(id: String): AgencyReference? = agencyById[id]
@@ -95,6 +104,18 @@ data class References(
 
     /** Resolves a situation in this pool by id, or null when absent. */
     fun situation(id: String): SituationReference? = situationById[id]
+
+    /** Resolves an on-demand service area by id, or null when absent. */
+    fun serviceArea(id: String): ServiceAreaDto? = serviceAreaById[id]
+
+    /** Resolves an on-demand location group by id, or null when absent. */
+    fun locationGroup(id: String): LocationGroupDto? = locationGroupById[id]
+
+    /** Resolves an on-demand booking rule by id, or null when absent. */
+    fun bookingRule(id: String): BookingRuleDto? = bookingRuleById[id]
+
+    /** Resolves an on-demand calendar by id, or null when absent. */
+    fun calendar(id: String): FlexCalendarDto? = calendarById[id]
 }
 
 /** Wire model for a route, as it appears in an entry or the references pool. */
@@ -110,7 +131,10 @@ data class RouteReference(
     // the consumer that needs it (trip-details / arrivals line color).
     val color: String? = null,
     val textColor: String? = null,
-    val agencyId: String = ""
+    val agencyId: String = "",
+    // Ids of the on-demand services this route is flex-involved in (wiki §3.1). Omitted on the wire
+    // when empty, so pre-flex servers decode to an empty list.
+    val onDemandServiceIds: List<String> = emptyList()
 )
 
 /**
@@ -157,7 +181,9 @@ data class StopReference(
     // The GTFS wheelchair-boarding accessibility state as a wire string ("ACCESSIBLE" /
     // "NOT_ACCESSIBLE" / "UNKNOWN"); null on servers/feeds that omit it. Minted to the
     // WheelchairBoarding domain enum by the adapter.
-    val wheelchairBoarding: String? = null
+    val wheelchairBoarding: String? = null,
+    // Ids of the on-demand services whose rules or location groups reference this stop (wiki §3.1).
+    val onDemandServiceIds: List<String> = emptyList()
 )
 
 /**

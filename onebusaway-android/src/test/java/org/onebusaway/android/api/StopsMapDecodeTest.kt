@@ -53,6 +53,9 @@ class StopsMapDecodeTest {
         val route = data.references.route(first.routeIds[0])
         assertEquals("1_70", route?.id)
         assertEquals("Metro Transit", data.references.agency(route!!.agencyId)?.name)
+        // Pre-flex payloads carry no pointer fields; they must decode to empty, not fail.
+        assertTrue(first.onDemandServiceIds.isEmpty())
+        assertTrue(route.onDemandServiceIds.isEmpty())
     }
 
     @Test

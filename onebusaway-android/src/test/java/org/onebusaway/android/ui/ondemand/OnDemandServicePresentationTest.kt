@@ -118,4 +118,42 @@ class OnDemandServicePresentationTest {
         assertEquals(BookingState.OPEN, summary.evaluation?.state)
         assertNull(summary.evaluation?.cutoffInstant)
     }
+
+    // A same-day rule with an hour's notice: on 2026-03-10 its cutoff is 23:50 that evening.
+    private val sameDayHour = booking.copy(
+        id = "same_day",
+        bookingType = BookingType.SAME_DAY,
+        priorNoticeDurationMin = 60,
+        priorNoticeLastDay = null,
+        priorNoticeLastTime = null,
+        priorNoticeStartDay = null,
+        priorNoticeStartTime = null
+    )
+    private val sameDayCutoff = OffsetDateTime.parse("2026-03-10T23:50:00-07:00").toInstant()
+
+    @Test
+    fun `a rule already closed for the travel date never supplies the deadline`() {
+        // Both rules run today. The prior-day rule closed yesterday at 17:00; the same-day one is open.
+        val service = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00"), rule("5088_c_63", "05:00:00", bookingRuleId = "same_day")),
+            bookingRules = mapOf("5088_booking" to booking, "same_day" to sameDayHour)
+        )
+        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
+        assertEquals(LocalDate.of(2026, 3, 10), summary.travelDate)
+        assertEquals(BookingState.OPEN, summary.evaluation?.state)
+        assertEquals(sameDayCutoff, summary.evaluation?.cutoffInstant)
+    }
+
+    @Test
+    fun `a rule with an unknown deadline does not displace a known one`() {
+        val unknownNotice = sameDayHour.copy(id = "unknown", priorNoticeDurationMin = null)
+        val service = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00", bookingRuleId = "unknown"), rule("5088_c_63", "05:00:00", bookingRuleId = "same_day")),
+            bookingRules = mapOf("unknown" to unknownNotice, "same_day" to sameDayHour)
+        )
+        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
+        assertEquals(LocalDate.of(2026, 3, 10), summary.travelDate)
+        assertEquals(BookingState.OPEN, summary.evaluation?.state)
+        assertEquals(sameDayCutoff, summary.evaluation?.cutoffInstant)
+    }
 }

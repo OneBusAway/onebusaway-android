@@ -32,8 +32,11 @@ data class WhenRow(val calendarId: String, val days: Set<DayOfWeek>, val start: 
 
 /**
  * The "How to book" section. [travelDate] is the next bookable service day and [evaluation] its
- * verdict (the earliest cutoff among the rules active that day — conservative, wiki §2.5); both null
- * when no date can be promised (every rule's notice is unknown, or the calendars have ended).
+ * verdict: the earliest cutoff among the rules active that day that can still be booked for it (open
+ * or not yet open). The earliest known deadline is the safest instruction a rider can be given (wiki
+ * §2.5); a rule already closed for that date has a deadline in the past, and a rule whose deadline is
+ * unknown adds no bound the client can state, so neither supplies it. Both null when no date can be
+ * promised (every rule's notice is unknown, or the calendars have ended).
  */
 data class BookingSummary(
     val travelDate: LocalDate?,
@@ -51,6 +54,9 @@ sealed interface OnDemandServiceUiState {
     data object Error : OnDemandServiceUiState
     data class Content(val service: OnDemandService, val whenRows: List<WhenRow>, val booking: BookingSummary?) : OnDemandServiceUiState
 }
+
+/** The states whose cutoff still lies ahead of the rider, so may be the one the page states. */
+private val BOOKABLE_STATES = setOf(BookingState.OPEN, BookingState.NOT_YET_OPEN)
 
 private val UNKNOWN_EVALUATION = BookingEvaluation(BookingState.UNKNOWN, cutoffInstant = null, openInstant = null)
 
@@ -76,7 +82,7 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
             service.rules
                 .filter { rule -> rule.calendarIds.any { service.calendars[it]?.isActiveOn(date) == true } }
                 .map { rule -> service.evaluateBooking(rule, date, now, zone) }
-                .filter { it.state != BookingState.UNKNOWN }
+                .filter { it.state in BOOKABLE_STATES }
                 .minByOrNull { it.cutoffInstant ?: Instant.MAX }
         }
         BookingSummary(

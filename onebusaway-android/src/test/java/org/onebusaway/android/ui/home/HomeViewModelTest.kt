@@ -2960,4 +2960,23 @@ class HomeViewModelTest {
         assertEquals(StopFocusTransition.ReplacePresentation, transition)
         assertEquals(someStop, vm.currentFocus.value.focusedStop)
     }
+
+    // ---- an on-demand zone tap opens its service page, except over directions ----
+
+    @Test
+    fun `a zone tap may open the service page when directions does not own the map`() = runTest {
+        val vm = viewModel()
+        assertTrue(vm.mayOpenOnDemandServiceFromMap())
+        vm.onStopFocused(someStop)
+        assertTrue(vm.mayOpenOnDemandServiceFromMap())
+    }
+
+    @Test
+    fun `a zone tap on the directions map never opens the service page`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        assertFalse(vm.mayOpenOnDemandServiceFromMap())
+        vm.focusItineraryLegOnMap(walkLeg(2))
+        assertFalse(vm.mayOpenOnDemandServiceFromMap())
+    }
 }

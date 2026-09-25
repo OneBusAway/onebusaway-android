@@ -329,6 +329,14 @@ class HomeViewModel @Inject constructor(
      *
      * Returns whether the focus was taken, so the map can leave its own render state alone when it wasn't.
      */
+
+    /**
+     * Whether a tap inside an on-demand zone may open that service's page. Not while directions owns
+     * the map: like a stop or bike tap there (#2097), it would carry the rider off a trip being
+     * planned, so the zone tap is answered as a plain background tap instead.
+     */
+    fun mayOpenOnDemandServiceFromMap(): Boolean = _currentFocus.value !is CurrentFocus.Directions
+
     fun onBikeStationFocused(id: String): Boolean {
         if (_currentFocus.value is CurrentFocus.Directions) return false
         pushFocus(CurrentFocus.BikeStation(id))

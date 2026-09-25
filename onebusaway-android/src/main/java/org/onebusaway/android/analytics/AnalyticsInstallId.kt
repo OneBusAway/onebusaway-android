@@ -26,6 +26,8 @@ import org.onebusaway.android.preferences.PreferencesRepository
  *
  * Umami derives its visitor/session id as `uuid(website, IP, User-Agent, monthly salt)` *unless* the
  * event payload carries an explicit `payload.id`, in which case it uses `uuid(website, id)` instead.
+ * (True through Umami v3.2; v3.3+ hash the IP back in, so the shared server must stay pinned to
+ * <= v3.2 for this to dedupe visitors.)
  * Without one, every IP change (wifi <-> cellular) mints Umami a "new" visitor, inflating reported MAU
  * roughly 2x. Sending this id as `payload.id` on every Umami event keeps a device's sessions stable
  * across IP changes while staying anonymous — it never leaves the device with any other identifying

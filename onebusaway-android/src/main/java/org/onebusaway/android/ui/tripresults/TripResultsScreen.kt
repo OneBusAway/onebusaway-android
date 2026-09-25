@@ -116,6 +116,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -1540,13 +1541,30 @@ private fun LogRowScaffold(
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
         else -> null to null
     }
+    val clockStyle = MaterialTheme.typography.labelMedium.copy(
+        fontFamily = FontFamily.Monospace,
+        textAlign = TextAlign.Center
+    )
+    // A corrected time's struck timetable line sits above the time in force, so the row's event line —
+    // node, spine split and content — drops by that line's laid-out height to stay level with the live
+    // time rather than the superseded one. Measured with the column's own style and width, so a wrapped
+    // wide am/pm marker ("12:00 nachm.") is accounted for too.
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val correctionDrop = time?.corrects?.let { corrects ->
+        val maxWidth = with(density) { timeWidth.roundToPx() }
+        val height = textMeasurer.measure(corrects, clockStyle, constraints = Constraints(maxWidth = maxWidth)).size.height
+        with(density) { height.toDp() }
+    } ?: 0.dp
+    val eventTop = rowTop + correctionDrop
+    val eventSplit = railSplit + correctionDrop
     Column(
         modifier = Modifier
             .fillMaxWidth()
             // drawWithCache, not drawBehind: the dash effect and every Dp→px conversion are resolved
             // once per size/metric change instead of on every frame this row is drawn.
             .drawWithCache {
-                val chrome = RowChrome(this, model, timeWidth, railSplit)
+                val chrome = RowChrome(this, model, timeWidth, eventSplit)
                 onDrawBehind { chrome.draw(this) }
             }
             .then(
@@ -1574,10 +1592,7 @@ private fun LogRowScaffold(
                         clock = it,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = TextUnit.Unspecified,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontFamily = FontFamily.Monospace,
-                            textAlign = TextAlign.Center
-                        )
+                        style = clockStyle
                     )
                 }
                 delta?.let {
@@ -1590,7 +1605,7 @@ private fun LogRowScaffold(
                     )
                 }
             }
-            Box(Modifier.width(RAIL_WIDTH)) {
+            Box(Modifier.width(RAIL_WIDTH).padding(top = correctionDrop)) {
                 LogNode(model.content, model.nodeColors)
             }
             Column(
@@ -1606,7 +1621,7 @@ private fun LogRowScaffold(
                     )
                     .padding(
                         start = CONTENT_START_GAP,
-                        top = if (compact) 0.dp else rowTop,
+                        top = if (compact) 0.dp else eventTop,
                         // A footer takes over the row's bottom inset, so the two read as one block.
                         bottom = if (compact || footer != null) 0.dp else ROW_BOTTOM,
                         end = CONTENT_END_INSET

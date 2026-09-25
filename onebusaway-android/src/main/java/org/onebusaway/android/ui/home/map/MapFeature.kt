@@ -220,10 +220,10 @@ fun MapFeature(
 
             /**
              * A zone covers the map beneath it, so a tap inside one is a background-map tap first: it
-             * answers the keyboard and unfocuses exactly as [onMapClick] does (a focused stop must not
-             * sit under the page it opens). Only a tap that reached the map then opens the service,
-             * and never over directions. That is asked before the tap unfocuses, since unfocusing
-             * can itself step out of directions.
+             * answers the keyboard and unfocuses exactly as [onMapClick] does. It opens the service
+             * only when the map had nothing to peel ([HomeViewModel.mayOpenOnDemandServiceFromMap]),
+             * so one tap never both unfocuses and navigates. That is asked before the tap unfocuses,
+             * since unfocusing is what would empty the focus.
              */
             override fun onOnDemandZoneClick(zone: ZonePolygon) {
                 val mayOpenService = homeViewModel.mayOpenOnDemandServiceFromMap()

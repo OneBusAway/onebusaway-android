@@ -322,11 +322,14 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Whether a tap inside an on-demand zone may open that service's page. Not while directions owns
-     * the map: like a stop or bike tap there (#2097), it would carry the rider off a trip being
-     * planned, so the zone tap is answered as a plain background tap instead.
+     * Whether a tap inside an on-demand zone may open that service's page: only when nothing is
+     * focused and directions does not own the map. A zone covers the map beneath it, so a tap there is
+     * a background tap first; when it has a focus to peel (a stop, a route, a bike dock), peeling is
+     * the whole answer, and opening the page as well would do two things with one tap. Directions is
+     * a focus too, so it is excluded here as well: like a stop or bike tap there (#2097), opening the
+     * page would carry the rider off a trip being planned.
      */
-    fun mayOpenOnDemandServiceFromMap(): Boolean = _currentFocus.value !is CurrentFocus.Directions
+    fun mayOpenOnDemandServiceFromMap(): Boolean = _currentFocus.value == CurrentFocus.None
 
     /**
      * A bike dock was tapped on the map. Directions owns the map while a trip is being planned — and the

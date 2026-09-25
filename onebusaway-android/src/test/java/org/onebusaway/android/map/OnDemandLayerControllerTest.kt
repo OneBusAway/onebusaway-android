@@ -93,7 +93,11 @@ class OnDemandLayerControllerTest {
         routeColor = 0xFF112233.toInt()
     )
 
-    private fun controller(source: OnDemandDataSource, scope: kotlinx.coroutines.CoroutineScope) = OnDemandLayerController(camera, renderState, source, support, prefs, regions, FakeDemoMode(), scope)
+    private fun controller(
+        source: OnDemandDataSource,
+        scope: kotlinx.coroutines.CoroutineScope,
+        regionRepository: FakeRegionRepository = regions
+    ) = OnDemandLayerController(camera, renderState, source, support, prefs, regionRepository, FakeDemoMode(), scope)
 
     @Test
     fun `a settled viewport loads zones with the route colour`() = runTest {
@@ -180,6 +184,41 @@ class OnDemandLayerControllerTest {
         regions.emit(region(id = 2, obaBaseUrl = "https://other.example.org/"))
         advanceTimeBy(1)
         assertEquals(2, source.requests.size)
+        subject.stop()
+    }
+
+    @Test
+    fun `a custom API URL with no region loads zones and keys support on that URL`() = runTest {
+        val customUrl = "https://custom.example.org/"
+        prefs.setString(R.string.preference_key_oba_api_url, customUrl)
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service())))
+        val subject = controller(source, backgroundScope, regionRepository = FakeRegionRepository(null))
+        subject.start()
+        camera.emit(viewport)
+        advanceTimeBy(1)
+
+        assertEquals(1, source.requests.size)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
+
+        source.result = OnDemandResult.Unsupported
+        camera.emit(viewport.copy(center = GeoPoint(38.84, -77.06)))
+        advanceTimeBy(1)
+        assertTrue(support.isKnownUnsupported(customUrl))
+        subject.stop()
+    }
+
+    @Test
+    fun `a custom API URL takes the region's place as the deployment`() = runTest {
+        support.recordAbsent(endpoint)
+        prefs.setString(R.string.preference_key_oba_api_url, "https://custom.example.org/")
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service())))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(viewport)
+        advanceTimeBy(1)
+
+        assertEquals(1, source.requests.size)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
         subject.stop()
     }
 }

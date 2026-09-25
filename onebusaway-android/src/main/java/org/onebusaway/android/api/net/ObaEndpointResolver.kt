@@ -24,6 +24,7 @@ import javax.inject.Singleton
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 
@@ -46,9 +47,10 @@ class ObaEndpointResolver @Inject constructor(
      * neither is set. A scheme-less custom URL is assumed to be https (#126).
      */
     fun baseUrl(): Uri? {
-        val custom = preferences.getString(R.string.preference_key_oba_api_url, null)
-        val raw = custom?.takeIf { it.isNotEmpty() } ?: regionRepository.region.value?.obaBaseUrl
-            ?: return null
+        val raw = obaEndpoint(
+            customApiUrl = preferences.getString(R.string.preference_key_oba_api_url, null),
+            region = regionRepository.region.value
+        ) ?: return null
         // A scheme-less custom URL is assumed to be https (#126).
         val withScheme = if (raw.toUri().scheme != null) {
             raw
@@ -69,3 +71,12 @@ class ObaEndpointResolver @Inject constructor(
      * construction rather than on every request. */
     val appUid: String? = preferences.getString(ObaApi.APP_UID, null)
 }
+
+/**
+ * The OBA endpoint requests actually go to, as entered: a non-empty user-entered custom API URL ahead
+ * of [region]'s base URL, or null when neither is set. [ObaEndpointResolver.baseUrl] builds on it; a
+ * per-deployment verdict (such as [org.onebusaway.android.api.data.OnDemandSupport]'s) keys on it so it
+ * names the server that answered.
+ */
+fun obaEndpoint(customApiUrl: String?, region: Region?): String? =
+    customApiUrl?.takeIf { it.isNotEmpty() } ?: region?.obaBaseUrl

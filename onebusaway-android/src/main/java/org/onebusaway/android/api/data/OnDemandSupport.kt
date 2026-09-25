@@ -23,8 +23,9 @@ import javax.inject.Singleton
  * lifetime as [NearbyArrivalsSupport], for the same reasons: the namespace is a property of the
  * server (maglev has it, onebusaway-application-modules does not), no directory field records it, so
  * it is discovered by the probe and believed only from an explicit HTTP 404 ([isEndpointAbsent]).
- * In memory only, keyed by the OBA base URL, so a region switch needs no reset and an upgraded
- * server is re-probed on the next launch.
+ * In memory only, keyed by the endpoint requests go to ([org.onebusaway.android.api.net.obaEndpoint]:
+ * a custom API URL ahead of the region's base URL), so a region switch needs no reset, a custom URL
+ * gets its own verdict, and an upgraded server is re-probed on the next launch.
  */
 @Singleton
 class OnDemandSupport @Inject constructor() {

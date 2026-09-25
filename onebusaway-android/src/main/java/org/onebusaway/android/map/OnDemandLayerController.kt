@@ -22,12 +22,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.OnDemandDataSource
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.api.data.OnDemandSupport
+import org.onebusaway.android.api.net.obaEndpoint
 import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
@@ -46,8 +46,9 @@ import org.onebusaway.android.region.RegionRepository
  * JVM-constructible; [MapViewModel] hands it `mapHost.settledCamera()` and `mapHost.renderState`.
  *
  * Whether the deployment serves the namespace at all is discovered here: the viewport query is the
- * probe, and an [OnDemandResult.Unsupported] answer is recorded in [OnDemandSupport] (keyed by the OBA
- * base URL, like the transit-centre drawer) so this process never asks that server again.
+ * probe, and an [OnDemandResult.Unsupported] answer is recorded in [OnDemandSupport] (keyed by the
+ * endpoint the requests go to — a custom API URL ahead of the region's) so this process never asks
+ * that server again.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnDemandLayerController(
@@ -76,9 +77,7 @@ class OnDemandLayerController(
             combine(
                 settledCamera,
                 prefsRepository.observeBoolean(R.string.preference_key_show_ondemand_zones, true),
-                // The deployment is an input, not a fact read once: a region switch changes who answers.
-                // The demo transit system has no flex data, so demo mode reads as "no deployment".
-                combine(regionRepository.region.map { it?.obaBaseUrl }.distinctUntilChanged(), demoMode.active) { url, demo -> if (demo) null else url }
+                deployment()
             ) { camera, enabled, deployment -> Triple(camera, enabled, deployment) }
                 // A newer viewport cancels an in-flight load.
                 .collectLatest { (camera, enabled, deployment) ->
@@ -90,6 +89,19 @@ class OnDemandLayerController(
                 }
         }
     }
+
+    /**
+     * Who answers the viewport query, as an input rather than a fact read once: a region switch or a
+     * custom API URL changes it. Keyed exactly as the requests are routed ([obaEndpoint]), so a custom
+     * URL with no region still loads zones and a 404 is recorded against the server that sent it. The
+     * demo transit system has no flex data, so demo mode alone reads as "no deployment".
+     */
+    private fun deployment(): Flow<String?> = combine(
+        regionRepository.region,
+        prefsRepository.observeString(R.string.preference_key_oba_api_url, null),
+        demoMode.active
+    ) { region, customApiUrl, demo -> if (demo) null else obaEndpoint(customApiUrl, region) }
+        .distinctUntilChanged()
 
     /** Stop the loader, dropping the cache so the next [start] can't redraw another server's zones. */
     fun stop() {

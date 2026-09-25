@@ -40,10 +40,12 @@ data class WhenRow(val calendarId: String, val days: Set<DayOfWeek>, val start: 
  * OPEN rule with no booking rule has no deadline (a null cutoff); it supplies the line only when it
  * is the sole OPEN rule, which then reads "no notice required".
  *
- * Only when no rule is bookable on any date: each rule is evaluated on its next active service day,
- * and if any is [BookingState.NOT_YET_OPEN], [travelDate] and [evaluation] are that of the one whose
- * booking opens earliest, so the page says when booking opens. Otherwise both are null: no date can
- * be promised (every rule's notice is unknown, the calendars have ended, or [zone] is null).
+ * Only when no rule is bookable on any date: each rule is taken on the first of its service days
+ * whose booking is [BookingState.NOT_YET_OPEN] (not merely its next service day, which may already be
+ * closed while a later one is still to open), and if any rule has one, [travelDate] and [evaluation]
+ * are those of the rule whose booking opens earliest, so the page says when booking opens. Otherwise
+ * both are null: no date can be promised (every rule's notice is unknown, the calendars have ended,
+ * or [zone] is null).
  *
  * [zone] is the agency timezone every deadline is computed in; null when the feed's id cannot be
  * resolved, in which case no deadline is computed at all.
@@ -106,17 +108,19 @@ private fun OnDemandService.bookingLine(now: Instant, zone: ZoneId): DatedEvalua
 }
 
 /**
- * For a service with nothing bookable on any date: each rule evaluated on its next active service
- * day, keeping the NOT_YET_OPEN ones, and the one whose booking opens earliest.
+ * For a service with nothing bookable on any date: each rule on the first of its service days whose
+ * booking has not opened yet, and of those the one whose booking opens earliest. The walk has to go
+ * past the rule's next service day: with a one-day notice window that day is already closed by the
+ * evening before, while the day after it is still to open.
  */
 private fun OnDemandService.earliestOpening(now: Instant, zone: ZoneId): DatedEvaluation? {
     val today = now.atZone(zone).toLocalDate()
     return rules
         .filterNot(::hasUnresolvedPickupBookingRule)
         .mapNotNull { rule ->
-            BookingDeadlineEvaluator.nextActiveServiceDate(rule, today, calendars)?.let { date -> DatedEvaluation(date, evaluateBooking(rule, date, now, zone)) }
+            BookingDeadlineEvaluator.nextServiceDateInState(rule, pickupBookingRule(rule), BookingState.NOT_YET_OPEN, today, now, zone, calendars)
+                ?.let { date -> DatedEvaluation(date, evaluateBooking(rule, date, now, zone)) }
         }
-        .filter { it.evaluation.state == BookingState.NOT_YET_OPEN }
         .minByOrNull { it.evaluation.openInstant ?: Instant.MAX }
 }
 

@@ -245,4 +245,21 @@ class OnDemandServicePresentationTest {
         assertNull(summary.travelDate)
         assertNull(summary.evaluation)
     }
+
+    @Test
+    fun `a rule closed for its next service day but not yet open for the one after says when booking opens`() {
+        // Booked the day before, between 09:00 and 17:00. At 18:00 on Tuesday, Wednesday is closed
+        // (its window shut an hour ago) and Thursday's window opens Wednesday at 09:00.
+        val dayBefore = booking.copy(id = "dayBefore", priorNoticeStartDay = 1, priorNoticeStartTime = ServiceDayTime.parse("09:00:00"))
+        val service = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00", bookingRuleId = "dayBefore")),
+            bookingRules = mapOf("dayBefore" to dayBefore),
+            calendars = mapOf("5088_c_63" to weekdays)
+        )
+        val tuesdayEvening = OffsetDateTime.parse("2026-03-10T18:00:00-07:00").toInstant()
+        val summary = requireNotNull(presentService(service, tuesdayEvening).booking)
+        assertEquals(LocalDate.of(2026, 3, 12), summary.travelDate)
+        assertEquals(BookingState.NOT_YET_OPEN, summary.evaluation?.state)
+        assertEquals(OffsetDateTime.parse("2026-03-11T09:00:00-07:00").toInstant(), summary.evaluation?.openInstant)
+    }
 }

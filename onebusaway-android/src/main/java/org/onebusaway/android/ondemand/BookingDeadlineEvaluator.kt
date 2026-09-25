@@ -64,7 +64,7 @@ object BookingDeadlineEvaluator {
     /** A backstop against calendars too sparse for any real prior-notice window (spec §6.3). */
     private const val MAX_COUNT_BACK_DAYS = 400
 
-    /** How far ahead [nextActiveServiceDate] and [nextBookableServiceDate] look, matching the other clients' lookahead cap. */
+    /** How far ahead [nextServiceDateInState] looks, matching the other clients' lookahead cap. */
     private const val MAX_LOOKAHEAD_DAYS = 400
 
     /** Local noon of [date] in [zone], minus twelve hours. */
@@ -136,16 +136,25 @@ object BookingDeadlineEvaluator {
         now: Instant,
         zone: ZoneId,
         calendars: Map<String, FlexCalendar>
-    ): LocalDate? = activeServiceDates(rule, from, calendars)
-        .firstOrNull { evaluate(rule, bookingRule, it, now, zone, calendars).state == BookingState.OPEN }
+    ): LocalDate? = nextServiceDateInState(rule, bookingRule, BookingState.OPEN, from, now, zone, calendars)
 
     /**
-     * The earliest date on or after [from] (the agency-local today) that is active on at least one of
-     * the rule's calendars, bounded by the latest calendar end date and [MAX_LOOKAHEAD_DAYS]; null when
-     * there is none. Unlike [nextBookableServiceDate] it ignores booking, so the caller can evaluate a
-     * date that cannot be booked yet.
+     * The earliest active service day of the rule's calendars on or after [from] (the agency-local
+     * today), within the same bounds as [nextBookableServiceDate], on which [evaluate] is [state];
+     * null when there is none. A caller asking for [BookingState.NOT_YET_OPEN] gets the first date whose
+     * booking is still to open, which need not be the rule's next service day — that one may already
+     * be closed.
      */
-    fun nextActiveServiceDate(rule: AvailabilityRule, from: LocalDate, calendars: Map<String, FlexCalendar>): LocalDate? = activeServiceDates(rule, from, calendars).firstOrNull()
+    fun nextServiceDateInState(
+        rule: AvailabilityRule,
+        bookingRule: BookingRule?,
+        state: BookingState,
+        from: LocalDate,
+        now: Instant,
+        zone: ZoneId,
+        calendars: Map<String, FlexCalendar>
+    ): LocalDate? = activeServiceDates(rule, from, calendars)
+        .firstOrNull { evaluate(rule, bookingRule, it, now, zone, calendars).state == state }
 
     /**
      * The rule's active service days from [from], in order, bounded by the latest calendar end date

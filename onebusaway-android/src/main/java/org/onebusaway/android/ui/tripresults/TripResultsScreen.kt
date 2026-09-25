@@ -1313,7 +1313,10 @@ private fun TripLogList(
     val rows = rememberLogRows(entries, expanded.toSet())
     // Which rows name the day under their time — only when the trip isn't today, or crosses midnight.
     val today = deviceToday()
-    val rowDays = remember(rows, today) { rowDays(rows, today, ZoneId.systemDefault()) }
+    // Keyed on the zone too, so a zone change while the list stays up can't leave the log's days stale
+    // against the option card's, which reads the zone afresh.
+    val zone = ZoneId.systemDefault()
+    val rowDays = remember(rows, today, zone) { rowDays(rows, today, zone) }
     val listState = rememberLazyListState()
 
     // The scripted tour rings parts of this drawer, and the thing it rings has to be on screen (#2164).

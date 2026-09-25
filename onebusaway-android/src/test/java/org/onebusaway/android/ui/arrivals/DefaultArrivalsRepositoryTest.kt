@@ -276,6 +276,14 @@ class DefaultArrivalsRepositoryTest {
         minutesAfter = minutesAfter
     )
 
+    private fun onDemandService(id: String, name: String) = OnDemandService(
+        id = id,
+        agencyId = "5088",
+        routeId = null,
+        name = name,
+        kind = OnDemandServiceKind.ZONE
+    )
+
     // --- Fresh loads ------------------------------------------------------------------------------
 
     @Test
@@ -307,7 +315,7 @@ class DefaultArrivalsRepositoryTest {
         val onDemand = object : OnDemandDataSource by NoOnDemandDataSource() {
             override suspend fun service(id: String): OnDemandResult<OnDemandService> {
                 fetched += id
-                return OnDemandResult.Loaded(OnDemandService(id, "5088", null, "DOT Paratransit", OnDemandServiceKind.ZONE))
+                return OnDemandResult.Loaded(onDemandService(id, name = "DOT Paratransit"))
             }
         }
         val repository = repository(dataSource, onDemand = onDemand)
@@ -411,6 +419,28 @@ class DefaultArrivalsRepositoryTest {
         assertEquals(6L, stale.arrivals.single().eta)
         // The footnote window still names the boundary of the (old) data actually shown.
         assertEquals(ServerTime(T0) + 65.minutes, stale.windowEnd)
+    }
+
+    @Test
+    fun `a stale fallback shows only cached on-demand services and never fetches`() = runTest {
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot(onDemandServiceIds = listOf("cached", "failed"))) }
+        var networkDown = false
+        val onDemand = object : OnDemandDataSource by NoOnDemandDataSource() {
+            override suspend fun service(id: String): OnDemandResult<OnDemandService> {
+                check(!networkDown) { "must not fetch on the stale path" }
+                return if (id == "cached") OnDemandResult.Loaded(onDemandService(id, name = "Cached")) else OnDemandResult.Failed(IOException("down"))
+            }
+        }
+        val repository = repository(dataSource, onDemand = onDemand)
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        networkDown = true
+        dataSource.respond = { Result.failure(IOException("down")) }
+        val stale = repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertTrue(stale.isStale)
+        assertEquals(listOf("Cached"), stale.onDemandServices.map { it.name })
     }
 
     @Test

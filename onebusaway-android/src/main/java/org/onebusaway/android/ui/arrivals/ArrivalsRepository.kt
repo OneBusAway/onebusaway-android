@@ -348,7 +348,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = display.convert(snapshot.arrivals, now, includeArrivalDepartureLabel)
         val stop = snapshot.stop
-        val onDemandServices = loadOnDemandItems(stop?.onDemandServiceIds.orEmpty(), onDemandItemsById, onDemandDataSource::service)
+        val onDemandServices = onDemandItemsFor(stop?.onDemandServiceIds.orEmpty(), isStale)
         val userInfo = stopDao.userInfo(snapshot.stopId)
         val header = StopHeader(
             stopId = snapshot.stopId,
@@ -387,6 +387,17 @@ class DefaultArrivalsRepository @Inject constructor(
             stopLon = stop?.longitude ?: 0.0,
             onDemandServices = onDemandServices
         )
+    }
+
+    /**
+     * The card items for a stop's on-demand pointers. The stale path serves only what is already
+     * cached: it runs because the network just failed, and fetching an uncached pointer there would
+     * hold the stale arrivals back until that fetch failed or timed out too.
+     */
+    private suspend fun onDemandItemsFor(ids: List<String>, isStale: Boolean): List<OnDemandServiceItem> = if (isStale) {
+        ids.mapNotNull { onDemandItemsById[it] }
+    } else {
+        loadOnDemandItems(ids, onDemandItemsById, onDemandDataSource::service)
     }
 
     /**

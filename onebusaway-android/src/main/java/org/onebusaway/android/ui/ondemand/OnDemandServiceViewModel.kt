@@ -33,7 +33,6 @@ import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.api.isNotFound
 import org.onebusaway.android.app.di.DefaultDispatcher
 import org.onebusaway.android.models.OnDemandService
-import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.TimeProvider
 
@@ -95,7 +94,7 @@ class OnDemandServiceViewModel @Inject constructor(
     // The deadline is computed against the device wall clock (spec §6.3), never the envelope's
     // currentTime, which sits on the long-cache tier.
     private suspend fun present(service: OnDemandService): OnDemandServiceUiState.Content {
-        val now = Instant.ofEpochMilli(WallTime(timeProvider.now()).epochMs)
+        val now = Instant.ofEpochMilli(timeProvider.now())
         return withContext(presentDispatcher) { presentService(service, now) }
     }
 }

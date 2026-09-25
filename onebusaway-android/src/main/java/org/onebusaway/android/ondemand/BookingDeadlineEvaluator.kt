@@ -64,6 +64,9 @@ object BookingDeadlineEvaluator {
     /** A backstop against calendars too sparse for any real prior-notice window (spec §6.3). */
     private const val MAX_COUNT_BACK_DAYS = 400
 
+    /** How far ahead [nextActiveServiceDate] looks, matching the other clients' lookahead cap. */
+    private const val MAX_LOOKAHEAD_DAYS = 400
+
     /** Local noon of [date] in [zone], minus twelve hours. */
     fun serviceDayAnchor(date: LocalDate, zone: ZoneId): Instant = date.atTime(LocalTime.NOON).atZone(zone).toInstant().minus(Duration.ofHours(12))
 
@@ -139,6 +142,21 @@ object BookingDeadlineEvaluator {
             .takeWhile { !it.isAfter(end) }
             .filter { date -> ruleCalendars.any { it.isActiveOn(date) } }
             .firstOrNull { evaluate(rule, bookingRule, it, now, zone, calendars).state == BookingState.OPEN }
+    }
+
+    /**
+     * The earliest date on or after [from] (the agency-local today) that is active on at least one of
+     * the rule's calendars, bounded by the latest calendar end date and [MAX_LOOKAHEAD_DAYS]; null when
+     * there is none. Unlike [nextBookableServiceDate] it ignores booking, so the caller can evaluate a
+     * date that cannot be booked yet.
+     */
+    fun nextActiveServiceDate(rule: AvailabilityRule, from: LocalDate, calendars: Map<String, FlexCalendar>): LocalDate? {
+        val ruleCalendars = rule.calendarIds.mapNotNull(calendars::get)
+        val end = ruleCalendars.maxOfOrNull { it.endDate } ?: return null
+        return generateSequence(from) { it.plusDays(1) }
+            .take(MAX_LOOKAHEAD_DAYS)
+            .takeWhile { !it.isAfter(end) }
+            .firstOrNull { date -> ruleCalendars.any { it.isActiveOn(date) } }
     }
 
     private class BookingWindow(val cutoff: Instant, val open: Instant?)

@@ -186,4 +186,43 @@ class OnDemandServicePresentationTest {
             assertEquals("703-746-5222", summary.phoneNumber)
         }
     }
+
+    // A seasonal service: every day from 2026-04-09, thirty days after tuesdayAfternoon, booked from
+    // 09:00 fourteen days ahead until 17:00 the day before. Nothing is bookable yet.
+    private val season = FlexCalendar("season", DayOfWeek.entries.toSet(), LocalDate.of(2026, 4, 9), LocalDate.of(2026, 12, 1), emptySet())
+    private val seasonBooking = booking.copy(id = "season", priorNoticeStartDay = 14, priorNoticeStartTime = ServiceDayTime.parse("09:00:00"))
+    private val seasonal = alexandria.copy(
+        rules = listOf(rule("season", "05:00:00", bookingRuleId = "season")),
+        bookingRules = mapOf("season" to seasonBooking),
+        calendars = mapOf("season" to season)
+    )
+
+    @Test
+    fun `when nothing is bookable yet the page says when booking opens`() {
+        val summary = requireNotNull(presentService(seasonal, tuesdayAfternoon).booking)
+        assertEquals(LocalDate.of(2026, 4, 9), summary.travelDate)
+        assertEquals(BookingState.NOT_YET_OPEN, summary.evaluation?.state)
+        assertEquals(OffsetDateTime.parse("2026-03-26T09:00:00-07:00").toInstant(), summary.evaluation?.openInstant)
+    }
+
+    @Test
+    fun `a rule bookable now wins over one whose booking has not opened`() {
+        val service = seasonal.copy(
+            rules = seasonal.rules + rule("5088_c_63", "05:00:00", bookingRuleId = "same_day"),
+            bookingRules = seasonal.bookingRules + ("same_day" to sameDayHour),
+            calendars = seasonal.calendars + ("5088_c_63" to weekdays)
+        )
+        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
+        assertEquals(LocalDate.of(2026, 3, 10), summary.travelDate)
+        assertEquals(BookingState.OPEN, summary.evaluation?.state)
+        assertEquals(sameDayCutoff, summary.evaluation?.cutoffInstant)
+    }
+
+    @Test
+    fun `a service unknown on every rule still publishes no deadline`() {
+        val unknownNotice = sameDayHour.copy(id = "season", priorNoticeDurationMin = null)
+        val summary = requireNotNull(presentService(seasonal.copy(bookingRules = mapOf("season" to unknownNotice)), tuesdayAfternoon).booking)
+        assertNull(summary.travelDate)
+        assertNull(summary.evaluation)
+    }
 }

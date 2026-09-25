@@ -38,8 +38,12 @@ data class WhenRow(val calendarId: String, val days: Set<DayOfWeek>, val start: 
  * that date has a deadline in the past, a rule not yet open would say "booking opens …" while another
  * rule is bookable now, and a rule whose deadline is unknown adds no bound the client can state. An
  * OPEN rule with no booking rule has no deadline (a null cutoff); it supplies the line only when it
- * is the sole OPEN rule, which then reads "no notice required". Both null when no date can be
- * promised (every rule's notice is unknown, the calendars have ended, or [zone] is null).
+ * is the sole OPEN rule, which then reads "no notice required".
+ *
+ * Only when no rule is bookable on any date: each rule is evaluated on its next active service day,
+ * and if any is [BookingState.NOT_YET_OPEN], [travelDate] and [evaluation] are that of the one whose
+ * booking opens earliest, so the page says when booking opens. Otherwise both are null: no date can
+ * be promised (every rule's notice is unknown, the calendars have ended, or [zone] is null).
  *
  * [zone] is the agency timezone every deadline is computed in; null when the feed's id cannot be
  * resolved, in which case no deadline is computed at all.
@@ -76,11 +80,10 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
         null
     } else {
         val zone = agencyZone(service.agencyTimezone)
-        val travelDate = zone?.let { service.nextBookableServiceDate(now, it) }
-        val evaluation = if (zone == null || travelDate == null) null else service.earliestOpenEvaluation(travelDate, now, zone)
+        val line = zone?.let { service.bookingLine(now, it) }
         BookingSummary(
-            travelDate = travelDate,
-            evaluation = evaluation,
+            travelDate = line?.travelDate,
+            evaluation = line?.evaluation,
             zone = zone,
             phoneNumber = bookingRules.firstNotNullOfOrNull { it.phoneNumber },
             bookingUrl = bookingRules.firstNotNullOfOrNull { it.bookingUrl },
@@ -89,6 +92,30 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
         )
     }
     return OnDemandServiceUiState.Content(service, whenRows, booking)
+}
+
+/** The verdict the booking line states, and the ride date it is for. */
+private data class DatedEvaluation(val travelDate: LocalDate, val evaluation: BookingEvaluation)
+
+/** What the booking line states; see [BookingSummary]. Null when no date can be promised. */
+private fun OnDemandService.bookingLine(now: Instant, zone: ZoneId): DatedEvaluation? {
+    val bookableDate = nextBookableServiceDate(now, zone) ?: return earliestOpening(now, zone)
+    return earliestOpenEvaluation(bookableDate, now, zone)?.let { DatedEvaluation(bookableDate, it) }
+}
+
+/**
+ * For a service with nothing bookable on any date: each rule evaluated on its next active service
+ * day, keeping the NOT_YET_OPEN ones, and the one whose booking opens earliest.
+ */
+private fun OnDemandService.earliestOpening(now: Instant, zone: ZoneId): DatedEvaluation? {
+    val today = now.atZone(zone).toLocalDate()
+    return rules
+        .filterNot(::hasUnresolvedPickupBookingRule)
+        .mapNotNull { rule ->
+            BookingDeadlineEvaluator.nextActiveServiceDate(rule, today, calendars)?.let { date -> DatedEvaluation(date, evaluateBooking(rule, date, now, zone)) }
+        }
+        .filter { it.evaluation.state == BookingState.NOT_YET_OPEN }
+        .minByOrNull { it.evaluation.openInstant ?: Instant.MAX }
 }
 
 /** The earliest date any rule can be booked for right now, or null when none can. */

@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.ondemand
 
 import androidx.lifecycle.SavedStateHandle
 import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -76,6 +77,24 @@ class OnDemandServiceViewModelTest {
         source.result = OnDemandResult.Loaded(service)
         vm.retry()
         assertEquals(2, source.requested.size)
+        assertTrue(vm.state.value is OnDemandServiceUiState.Content)
+    }
+
+    /** Each request waits on its own deferred, so a test decides when (and in which order) they land. */
+    private class GatedDataSource : OnDemandDataSource {
+        val pending = mutableListOf<CompletableDeferred<OnDemandResult<OnDemandService>>>()
+        override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
+        override suspend fun service(id: String): OnDemandResult<OnDemandService> = CompletableDeferred<OnDemandResult<OnDemandService>>().also { pending += it }.await()
+        override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
+    }
+
+    @Test
+    fun `a slow earlier load cannot overwrite a retry`() = runTest {
+        val source = GatedDataSource()
+        val vm = viewModel(source)
+        vm.retry()
+        source.pending[1].complete(OnDemandResult.Loaded(service))
+        source.pending[0].complete(OnDemandResult.Failed(IOException("offline")))
         assertTrue(vm.state.value is OnDemandServiceUiState.Content)
     }
 }

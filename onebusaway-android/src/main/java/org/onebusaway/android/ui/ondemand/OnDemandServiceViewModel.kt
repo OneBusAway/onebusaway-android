@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,6 +44,9 @@ class OnDemandServiceViewModel @Inject constructor(
     private val _state = MutableStateFlow<OnDemandServiceUiState>(OnDemandServiceUiState.Loading)
     val state: StateFlow<OnDemandServiceUiState> = _state.asStateFlow()
 
+    // The fetch in flight, cancelled by the next one so a slow earlier answer can't land last.
+    private var loadJob: Job? = null
+
     init {
         load()
     }
@@ -50,8 +54,9 @@ class OnDemandServiceViewModel @Inject constructor(
     fun retry() = load()
 
     private fun load() {
+        loadJob?.cancel()
         _state.value = OnDemandServiceUiState.Loading
-        viewModelScope.launch {
+        loadJob = viewModelScope.launch {
             _state.value = when (val result = dataSource.service(serviceId)) {
                 // The deadline is computed against the device wall clock (spec §6.3), never the
                 // envelope's currentTime, which sits on the long-cache tier.

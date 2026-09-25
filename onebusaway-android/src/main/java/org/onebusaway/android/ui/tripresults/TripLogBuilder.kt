@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import kotlin.time.Duration
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
@@ -221,6 +222,8 @@ object TripLogBuilder {
         val leader = entries[idx] as TripLogEntry.Transit
         entries[idx] = leader.copy(
             exitTime = leg.endTime,
+            // The rider now gets off at the end of this leg, so the correction there is this leg's.
+            exitScheduledTime = leg.timetableTime(leg.endTime, leg.arrivalDelay),
             durationMinutes = (leg.endTime - leader.boardTime).inWholeMinutes,
             rideEvents = leader.rideEvents +
                 listOfNotNull(transition?.let { RideEvent.Transition(it) }) +
@@ -252,6 +255,8 @@ object TripLogBuilder {
             reachStop = reachStop,
             boardTime = leg.startTime,
             exitTime = leg.endTime,
+            boardScheduledTime = leg.timetableTime(leg.startTime, leg.departureDelay),
+            exitScheduledTime = leg.timetableTime(leg.endTime, leg.arrivalDelay),
             durationMinutes = leg.duration.inWholeMinutes,
             // Only this leg's own stops; a folded chain's later legs append theirs after their seam.
             rideEvents = stopEvents(board),
@@ -272,6 +277,15 @@ object TripLogBuilder {
         .map { LogStop(it.directionText.str(), it.focusPoint()) }
         .filter { it.name.isNotBlank() }
         .map { RideEvent.Stop(it) }
+
+    /**
+     * The timetable time a live prediction moved [time] (one of the leg's ends) off by [delay], or null
+     * when there is none. Both OTP adapters put the *estimated* time in `startTime`/`endTime` and its
+     * offset from the timetable in `departureDelay`/`arrivalDelay` (OTP2: `estimated.delay`), so the
+     * schedule is the one minus the other. Whether a non-zero delay is worth striking through is decided
+     * on the printed strings, at render time.
+     */
+    private fun TripLeg.timetableTime(time: ServerTime, delay: Duration): ServerTime? = (time - delay).takeIf { realTime && delay != Duration.ZERO }
 
     /** A minimal route identity when the repository couldn't resolve one (unknown agency / OTP1 path). */
     private fun fallbackRouteLeg(leg: TripLeg) = RouteLegRef(

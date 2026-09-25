@@ -17,7 +17,6 @@ package org.onebusaway.android.directions.util
 
 import android.content.Context
 import android.content.res.Resources
-import android.text.SpannableString
 import android.text.TextUtils
 import android.util.Log
 import org.onebusaway.android.BuildConfig
@@ -28,7 +27,6 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -247,7 +245,6 @@ class DirectionsGenerator(
 
     fun generateTransitSubdirection(leg: TripLeg, isOnDirection: Boolean): Direction {
         val direction = Direction()
-        direction.isRealTimeInfo = leg.realTime
 
         // Set icon
         val mode = getLocalizedMode(leg.mode, applicationContext.resources)
@@ -255,8 +252,6 @@ class DirectionsGenerator(
         val agencyName = leg.agencyName
         val from = leg.from
         val to = leg.to
-        var newTimeMillis = ServerTime(0L)
-        var oldTimeMillis = ServerTime(0L)
 
         // As a work-around for #662, we always use routeShortName and not tripShortName
         val shortName = leg.routeShortName
@@ -279,8 +274,6 @@ class DirectionsGenerator(
             action = applicationContext.getString(R.string.step_by_step_transit_get_on)
             placeAndHeadsign = from.name
             modeIcon = getModeIcon(leg.mode)
-            newTimeMillis = leg.startTime
-            oldTimeMillis = newTimeMillis - leg.departureDelay
 
             // Only onDirection has subdirection (list of stops in between)
             val stopsInBetween = ArrayList<TripPlace>()
@@ -335,8 +328,6 @@ class DirectionsGenerator(
             action = applicationContext.getString(R.string.step_by_step_transit_get_off)
             placeAndHeadsign = to.name
             modeIcon = -1
-            newTimeMillis = leg.endTime
-            oldTimeMillis = newTimeMillis - leg.arrivalDelay
         }
 
         direction.icon = modeIcon
@@ -347,24 +338,6 @@ class DirectionsGenerator(
         direction.service = "$action $mode $route"
         direction.agency = agencyName
         direction.extra = extra
-
-        if (leg.realTime) {
-            val newTimeString = ConversionUtils.getTimeUpdated(
-                applicationContext,
-                oldTimeMillis.epochMs,
-                newTimeMillis.epochMs
-            )
-            direction.newTime = newTimeString
-        }
-
-        val oldTimeString = SpannableString(
-            ConversionUtils.getTimeWithContext(
-                applicationContext,
-                oldTimeMillis.epochMs,
-                true
-            )
-        )
-        direction.oldTime = oldTimeString
 
         return direction
     }

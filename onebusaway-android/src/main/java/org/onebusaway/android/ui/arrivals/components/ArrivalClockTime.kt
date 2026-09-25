@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import org.onebusaway.android.R
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.util.DisplayFormat
 
@@ -66,12 +67,18 @@ internal data class ArrivalClock(val expected: String, val corrects: String? = n
  *
  * Both fall out of comparing what is actually printed, so there is no threshold to pick here.
  */
-internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock {
-    val expected = DisplayFormat.formatTime(context, displayTime.epochMs)
-    // Without a usable prediction the two are the same instant, so the second format call is a
+internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock = // Without a usable prediction the two are the same instant, so the second format call is a
     // guaranteed-identical string — skip it rather than pay for it on every scheduled-only arrival.
-    if (scheduledTime == displayTime) return ArrivalClock(expected)
-    return arrivalClockOf(expected = expected, scheduled = DisplayFormat.formatTime(context, scheduledTime.epochMs))
+    clockOf(context, displayTime, scheduledTime.takeIf { it != displayTime })
+
+/**
+ * The [ArrivalClock] for a time in force, [expected], correcting the timetable time [scheduled] when
+ * there is one — by [arrivalClockOf]'s rule, so every surface that corrects a time (arrival rows, the
+ * trip log's ride times, #2337) agrees on when a correction is worth drawing.
+ */
+internal fun clockOf(context: Context, expected: ServerTime, scheduled: ServerTime?): ArrivalClock {
+    val expectedText = DisplayFormat.formatTime(context, expected.epochMs)
+    return scheduled?.let { arrivalClockOf(expectedText, DisplayFormat.formatTime(context, it.epochMs)) } ?: ArrivalClock(expectedText)
 }
 
 /** The formatted-string rule itself, split out so it is testable without a `Context`. */
@@ -101,7 +108,8 @@ internal fun ArrivalClock.sideBySideText(): String = corrects?.let { it + SIDE_B
  * one ([ArrivalClock.corrects]) — `~~10:42 AM~~` over `10:47 AM`. With nothing to correct this is
  * exactly the plain single [Text] it replaced, adding no layout node of its own.
  * [sideBySide] puts the corrected pair in one text line for chronological rows, wrapping when needed
- * at large text sizes.
+ * at large text sizes. [correctionBelow] flips the stacked pair so the time in force leads — for a
+ * timeline, whose event node lines up with the column's first line (the trip log, #2337).
  *
  * A strikethrough is inaudible, so the corrected pair merges into one spoken phrase — "Scheduled
  * 10:42 AM, now expected 10:47 AM" — rather than leaving a screen reader to read two bare times in a
@@ -119,7 +127,8 @@ internal fun CorrectedClockTime(
     style: TextStyle,
     modifier: Modifier = Modifier,
     canceled: Boolean = false,
-    sideBySide: Boolean = false
+    sideBySide: Boolean = false,
+    correctionBelow: Boolean = false
 ) {
     val canceledDecoration = strikeThroughIf(canceled)
     val corrects = clock.corrects
@@ -167,13 +176,16 @@ internal fun CorrectedClockTime(
         modifier = spokenModifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = corrects,
-            color = color.copy(alpha = color.alpha * CORRECTED_ALPHA),
-            fontSize = fontSize,
-            textDecoration = TextDecoration.LineThrough,
-            style = style
-        )
+        val timetable = @Composable {
+            Text(
+                text = corrects,
+                color = color.copy(alpha = color.alpha * CORRECTED_ALPHA),
+                fontSize = fontSize,
+                textDecoration = TextDecoration.LineThrough,
+                style = style
+            )
+        }
+        if (!correctionBelow) timetable()
         Text(
             text = clock.expected,
             color = color,
@@ -181,5 +193,6 @@ internal fun CorrectedClockTime(
             textDecoration = canceledDecoration,
             style = style
         )
+        if (correctionBelow) timetable()
     }
 }

@@ -34,15 +34,9 @@ class Direction() {
 
     var extra: CharSequence? = null
 
-    var oldTime: CharSequence? = null
-
-    var newTime: CharSequence? = null
-
     var isTransit = false
 
     var subDirections: ArrayList<Direction>? = null
-
-    var isRealTimeInfo = false
 
     // The geographic point this step refers to (a leg endpoint, an intermediate stop, or a walk
     // step), set by DirectionsGenerator so the results UI can focus the map on the step when tapped.
@@ -50,22 +44,6 @@ class Direction() {
     var focusLat: Double? = null
 
     var focusLon: Double? = null
-
-    constructor(
-        icon: Int,
-        service: CharSequence?,
-        placeAndHeadsign: CharSequence?,
-        oldTime: CharSequence?,
-        newTime: CharSequence?,
-        isTransit: Boolean
-    ) : this() {
-        this.icon = icon
-        this.service = service
-        this.placeAndHeadsign = placeAndHeadsign
-        this.oldTime = oldTime
-        this.newTime = newTime
-        this.isTransit = isTransit
-    }
 
     constructor(icon: Int, directionText: CharSequence?) : this() {
         this.icon = icon

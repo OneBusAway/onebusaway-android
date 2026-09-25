@@ -137,6 +137,8 @@ import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.arrivals.components.CorrectedClockTime
+import org.onebusaway.android.ui.arrivals.components.clockOf
 import org.onebusaway.android.ui.compose.LocalUnitsAreMetric
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
@@ -1529,11 +1531,12 @@ private fun LogRowScaffold(
     val railSplit = RAIL_SPLIT * scale
     // The time column shows a node's clock time and, in the gap below it, the leg's elapsed "delta".
     // (A walk step's distance is not shown here — it rides between the steps in the content column.)
+    // A ride's board/exit time carries the timetable time a live prediction moved it off (#2337).
     val (time, delta) = when (val c = model.content) {
-        is RowContent.Terminal -> DisplayFormat.formatTime(context, c.entry.time.epochMs) to null
+        is RowContent.Terminal -> clockOf(context, c.entry.time, scheduled = null) to null
         is RowContent.BoardHeader ->
-            DisplayFormat.formatTime(context, c.entry.boardTime.epochMs) to deltaText(c.entry.durationMinutes, context)
-        is RowContent.ExitNode -> DisplayFormat.formatTime(context, c.entry.exitTime.epochMs) to null
+            clockOf(context, c.entry.boardTime, c.entry.boardScheduledTime) to deltaText(c.entry.durationMinutes, context)
+        is RowContent.ExitNode -> clockOf(context, c.entry.exitTime, c.entry.exitScheduledTime) to null
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
         else -> null to null
     }
@@ -1564,15 +1567,18 @@ private fun LogRowScaffold(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 time?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontFamily = FontFamily.Monospace,
+                    // The time in force leads, level with the node; the struck timetable time sits under it.
+                    // The column is sized for the common short time; a locale with a wide am/pm marker
+                    // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
+                    CorrectedClockTime(
+                        clock = it,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        // The column is sized for the common short time; a locale with a wide am/pm marker
-                        // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
-                        maxLines = 2
+                        fontSize = TextUnit.Unspecified,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            textAlign = TextAlign.Center
+                        ),
+                        correctionBelow = true
                     )
                 }
                 delta?.let {
@@ -2385,6 +2391,9 @@ private fun previewTransitLeg(
     reachStop = ReachStop.OnFoot(3.minutes, notBefore = null),
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
+    // Running 2 min late, so the previews draw the struck timetable time under each end (#2337).
+    boardScheduledTime = ServerTime(2 * 60_000L),
+    exitScheduledTime = ServerTime(18 * 60_000L),
     durationMinutes = 16,
     rideEvents = rideEvents,
     routeLeg = RouteLegRef(
@@ -2414,6 +2423,8 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     reachStop = ReachStop.OnFoot(20.minutes, notBefore = null),
     boardTime = ServerTime(24 * 60_000L),
     exitTime = ServerTime(84 * 60_000L),
+    boardScheduledTime = null,
+    exitScheduledTime = null,
     durationMinutes = 60,
     routeLeg = RouteLegRef(
         routeId = "95_74",

@@ -67,7 +67,7 @@ fun CustomerServiceDestination(navController: NavController, reportContext: Repo
         },
         onPhone = { agency ->
             val phone = agency.phone ?: return@CustomerServiceRoute
-            ExternalIntents.goToPhoneDialer(activity, "tel:$phone")
+            ExternalIntents.goToPhoneDialer(activity, phone)
             reportContactEvent(agency.name, R.string.analytics_label_customer_service_phone)
         }
     )

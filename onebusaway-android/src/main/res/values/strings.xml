@@ -95,6 +95,8 @@
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
     <string name="browser_error">Unable to launch browser.</string>
+    <!-- Shown when the device has no app that can dial a phone number -->
+    <string name="dialer_error">Unable to open the phone dialer.</string>
     <string name="search_hint">Search stop or route IDs</string>
     <string name="checkmark_description">Selection checkmark</string>
 

@@ -43,7 +43,7 @@ fun NavGraphBuilder.onDemandGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() },
                 onRetry = viewModel::retry,
                 // ACTION_DIAL never places the call itself; the rider confirms in the dialer.
-                onCall = { phone -> ExternalIntents.goToPhoneDialer(context, "tel:$phone") },
+                onCall = { phone -> ExternalIntents.goToPhoneDialer(context, phone) },
                 onOpenUrl = { url -> ExternalIntents.goToUrl(context, url) }
             )
         }

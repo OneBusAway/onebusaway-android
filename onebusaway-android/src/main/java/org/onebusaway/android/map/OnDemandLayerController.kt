@@ -107,9 +107,7 @@ class OnDemandLayerController(
     fun stop() {
         loadJob?.cancel()
         loadJob = null
-        cachedViewport = null
-        cachedDeployment = null
-        cachedZones = null
+        dropCache()
     }
 
     /** Leave the map with no zones on it and the loader off. */
@@ -118,13 +116,25 @@ class OnDemandLayerController(
         clearZones()
     }
 
+    private fun dropCache() {
+        cachedViewport = null
+        cachedDeployment = null
+        cachedZones = null
+    }
+
     /**
      * The zones for [camera] on [deployment]: from cache when unchanged, else fetched. Null when there
      * is nothing new to draw — a transient failure keeps whatever is on screen (a pan must not blank
-     * the layer), and an unsupported answer has already cleared it.
+     * the layer), and an unsupported answer has already cleared it. The one exception is a failure
+     * right after the deployment changed: what is on screen is then another server's zones, so they
+     * come off before that server is asked rather than outliving a fetch of it that fails.
      */
     private suspend fun zonesFor(camera: CameraSnapshot, deployment: String): List<ZonePolygon>? {
         cachedZones?.takeIf { cachedViewport == camera && cachedDeployment == deployment }?.let { return it }
+        if (cachedDeployment != null && cachedDeployment != deployment) {
+            dropCache()
+            clearZones()
+        }
         return when (val result = dataSource.servicesForViewport(camera)) {
             is OnDemandResult.Loaded -> zonePolygons(result.value).also {
                 cachedViewport = camera

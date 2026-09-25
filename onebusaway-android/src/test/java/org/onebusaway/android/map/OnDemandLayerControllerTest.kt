@@ -188,6 +188,24 @@ class OnDemandLayerControllerTest {
     }
 
     @Test
+    fun `switching regions takes the old zones off even when the new deployment fails`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service())))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(viewport)
+        advanceTimeBy(1)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
+
+        source.result = OnDemandResult.Failed(IOException("slow"))
+        regions.emit(region(id = 2, obaBaseUrl = "https://other.example.org/"))
+        advanceTimeBy(1)
+        assertEquals(2, source.requests.size)
+        assertTrue(renderState.snapshot.value.onDemandZones.isEmpty())
+        assertFalse(support.isKnownUnsupported("https://other.example.org/"))
+        subject.stop()
+    }
+
+    @Test
     fun `a custom API URL with no region loads zones and keys support on that URL`() = runTest {
         val customUrl = "https://custom.example.org/"
         prefs.setString(R.string.preference_key_oba_api_url, customUrl)

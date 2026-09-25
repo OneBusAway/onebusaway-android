@@ -31,11 +31,14 @@ import org.onebusaway.android.ondemand.BookingState
 data class WhenRow(val calendarId: String, val days: Set<DayOfWeek>, val start: ServiceDayTime?, val end: ServiceDayTime?)
 
 /**
- * The "How to book" section. [travelDate] is the next bookable service day and [evaluation] its
- * verdict: the earliest cutoff among the rules active that day that can still be booked for it (open
- * or not yet open). The earliest known deadline is the safest instruction a rider can be given (wiki
- * §2.5); a rule already closed for that date has a deadline in the past, and a rule whose deadline is
- * unknown adds no bound the client can state, so neither supplies it. Both null when no date can be
+ * The "How to book" section. [travelDate] is the next bookable service day — by construction a date
+ * on which some rule evaluates [BookingState.OPEN] — and [evaluation] its verdict: the earliest cutoff
+ * among the rules that evaluate OPEN on that date. The earliest known deadline is the safest
+ * instruction a rider can be given (wiki §2.5). Only OPEN rules supply it: a rule already closed for
+ * that date has a deadline in the past, a rule not yet open would say "booking opens …" while another
+ * rule is bookable now, and a rule whose deadline is unknown adds no bound the client can state. An
+ * OPEN rule with no booking rule has no deadline (a null cutoff); it supplies the line only when it
+ * is the sole OPEN rule, which then reads "no notice required". Both null when no date can be
  * promised (every rule's notice is unknown, or the calendars have ended).
  */
 data class BookingSummary(
@@ -54,9 +57,6 @@ sealed interface OnDemandServiceUiState {
     data object Error : OnDemandServiceUiState
     data class Content(val service: OnDemandService, val whenRows: List<WhenRow>, val booking: BookingSummary?) : OnDemandServiceUiState
 }
-
-/** The states whose cutoff still lies ahead of the rider, so may be the one the page states. */
-private val BOOKABLE_STATES = setOf(BookingState.OPEN, BookingState.NOT_YET_OPEN)
 
 private val UNKNOWN_EVALUATION = BookingEvaluation(BookingState.UNKNOWN, cutoffInstant = null, openInstant = null)
 
@@ -82,7 +82,7 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
             service.rules
                 .filter { rule -> rule.calendarIds.any { service.calendars[it]?.isActiveOn(date) == true } }
                 .map { rule -> service.evaluateBooking(rule, date, now, zone) }
-                .filter { it.state in BOOKABLE_STATES }
+                .filter { it.state == BookingState.OPEN }
                 .minByOrNull { it.cutoffInstant ?: Instant.MAX }
         }
         BookingSummary(

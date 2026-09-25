@@ -156,4 +156,20 @@ class OnDemandServicePresentationTest {
         assertEquals(BookingState.OPEN, summary.evaluation?.state)
         assertEquals(sameDayCutoff, summary.evaluation?.cutoffInstant)
     }
+
+    @Test
+    fun `a not-yet-open rule on the travel date never supplies the deadline`() {
+        // Both rules run today. The evening rule's booking opens at 21:00 for a 23:05 cutoff, earlier
+        // than the open rule's 23:50: stating it would say "booking opens" while a ride is bookable now.
+        val evening = sameDayHour.copy(id = "evening", priorNoticeDurationMin = 5, priorNoticeDurationMax = 120)
+        val eveningRule = rule("5088_c_63", "23:00:00", bookingRuleId = "evening").copy(endPickupTime = ServiceDayTime.parse("23:10:00"))
+        val service = alexandria.copy(
+            rules = listOf(eveningRule, rule("5088_c_63", "05:00:00", bookingRuleId = "same_day")),
+            bookingRules = mapOf("evening" to evening, "same_day" to sameDayHour)
+        )
+        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
+        assertEquals(LocalDate.of(2026, 3, 10), summary.travelDate)
+        assertEquals(BookingState.OPEN, summary.evaluation?.state)
+        assertEquals(sameDayCutoff, summary.evaluation?.cutoffInstant)
+    }
 }

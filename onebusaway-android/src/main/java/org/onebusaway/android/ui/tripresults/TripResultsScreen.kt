@@ -1567,8 +1567,8 @@ private fun LogRowScaffold(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 time?.let {
-                    // The time in force leads, level with the node; the struck timetable time sits under it.
-                    // The column is sized for the common short time; a locale with a wide am/pm marker
+                    // A corrected time stacks as the arrivals ETA pills do: the struck timetable time over
+                    // the time in force. The column is sized for the common short time; a locale with a wide am/pm marker
                     // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
                     CorrectedClockTime(
                         clock = it,
@@ -1577,8 +1577,7 @@ private fun LogRowScaffold(
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontFamily = FontFamily.Monospace,
                             textAlign = TextAlign.Center
-                        ),
-                        correctionBelow = true
+                        )
                     )
                 }
                 delta?.let {

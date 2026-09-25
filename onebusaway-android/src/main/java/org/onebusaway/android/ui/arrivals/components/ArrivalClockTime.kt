@@ -108,8 +108,7 @@ internal fun ArrivalClock.sideBySideText(): String = corrects?.let { it + SIDE_B
  * one ([ArrivalClock.corrects]) — `~~10:42 AM~~` over `10:47 AM`. With nothing to correct this is
  * exactly the plain single [Text] it replaced, adding no layout node of its own.
  * [sideBySide] puts the corrected pair in one text line for chronological rows, wrapping when needed
- * at large text sizes. [correctionBelow] flips the stacked pair so the time in force leads — for a
- * timeline, whose event node lines up with the column's first line (the trip log, #2337).
+ * at large text sizes.
  *
  * A strikethrough is inaudible, so the corrected pair merges into one spoken phrase — "Scheduled
  * 10:42 AM, now expected 10:47 AM" — rather than leaving a screen reader to read two bare times in a
@@ -127,8 +126,7 @@ internal fun CorrectedClockTime(
     style: TextStyle,
     modifier: Modifier = Modifier,
     canceled: Boolean = false,
-    sideBySide: Boolean = false,
-    correctionBelow: Boolean = false
+    sideBySide: Boolean = false
 ) {
     val canceledDecoration = strikeThroughIf(canceled)
     val corrects = clock.corrects
@@ -176,16 +174,13 @@ internal fun CorrectedClockTime(
         modifier = spokenModifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val timetable = @Composable {
-            Text(
-                text = corrects,
-                color = color.copy(alpha = color.alpha * CORRECTED_ALPHA),
-                fontSize = fontSize,
-                textDecoration = TextDecoration.LineThrough,
-                style = style
-            )
-        }
-        if (!correctionBelow) timetable()
+        Text(
+            text = corrects,
+            color = color.copy(alpha = color.alpha * CORRECTED_ALPHA),
+            fontSize = fontSize,
+            textDecoration = TextDecoration.LineThrough,
+            style = style
+        )
         Text(
             text = clock.expected,
             color = color,
@@ -193,6 +188,5 @@ internal fun CorrectedClockTime(
             textDecoration = canceledDecoration,
             style = style
         )
-        if (correctionBelow) timetable()
     }
 }

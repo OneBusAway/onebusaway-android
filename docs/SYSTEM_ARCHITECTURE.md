@@ -33,6 +33,19 @@ If you use an issue management system that supports the Open311 standard, you ca
 
 ![onebusaway system architecture-open311](https://user-images.githubusercontent.com/928045/32296055-721a068a-bf21-11e7-922d-f167118d2390.png)
 
+## Add on-demand (GTFS-Flex) services *(Optional)*
+
+A region running [maglev](https://github.com/OneBusAway/maglev) can ingest GTFS-Flex feeds and serve
+demand-responsive services through the `/api/ondemand` namespace (see the maglev wiki page *GTFS-Flex
+Support*). When it does, the app draws service zones on the home map (Settings › "Show on-demand
+zones"), lists a stop's on-demand services on the arrivals screen, and opens a service page with hours
+and a booking deadline computed on the device in the agency's timezone.
+
+Nothing is configured per region: the app probes `services-for-location` once per launch, and a
+deployment that answers HTTP 404 (every onebusaway-application-modules server today) is remembered as
+not serving the namespace for the rest of that process. Booking itself happens out of band — by phone
+or the agency's booking site — the app never places a booking.
+
 ## Configure your own servers
 
 ### OneBusAway and OpenTripPlanner

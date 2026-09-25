@@ -132,6 +132,7 @@ data class StopFocusMenu(
     val onReportStopProblem: () -> Unit,
     val onNightLight: () -> Unit,
     val onCreateShortcut: () -> Unit,
+    val onAddWidget: () -> Unit,
     val onShowArrivals: () -> Unit,
     /**
      * Plan a trip to this stop — the map long press's "navigate here" offer, asked of the stop the rider
@@ -637,6 +638,10 @@ private fun StopMenuAction(menu: StopFocusMenu, expanded: Boolean, onExpandedCha
             MenuRow(R.string.my_context_create_shortcut) {
                 onExpandedChange(false)
                 menu.onCreateShortcut()
+            }
+            MenuRow(R.string.stop_info_option_add_widget) {
+                onExpandedChange(false)
+                menu.onAddWidget()
             }
             MenuRow(R.string.stop_info_option_report_problem) {
                 onExpandedChange(false)

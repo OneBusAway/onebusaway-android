@@ -94,6 +94,7 @@ class FocusBannerTest {
                 onReportStopProblem = {},
                 onNightLight = {},
                 onCreateShortcut = {},
+                onAddWidget = {},
                 onShowArrivals = { openedArrivals++ },
                 onNavigateHere = {}
             )
@@ -106,6 +107,7 @@ class FocusBannerTest {
             R.string.map_navigate_here,
             R.string.view_arrivals_only,
             R.string.my_context_create_shortcut,
+            R.string.stop_info_option_add_widget,
             R.string.stop_info_option_report_problem,
             R.string.stop_info_option_night_light
         )
@@ -133,6 +135,7 @@ class FocusBannerTest {
                 onReportStopProblem = {},
                 onNightLight = {},
                 onCreateShortcut = {},
+                onAddWidget = {},
                 onShowArrivals = {},
                 onNavigateHere = { navigated++ }
             )
@@ -157,6 +160,7 @@ class FocusBannerTest {
                 onReportStopProblem = {},
                 onNightLight = {},
                 onCreateShortcut = {},
+                onAddWidget = {},
                 onShowArrivals = {},
                 onNavigateHere = null
             )

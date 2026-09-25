@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
@@ -85,8 +86,9 @@ fun OnDemandServiceScreen(
 
 @Composable
 private fun ServiceContent(content: OnDemandServiceUiState.Content, onCall: (String) -> Unit, onOpenUrl: (String) -> Unit) {
-    // Configuration.locales is API 24; on minSdk 23 the JVM default locale is the app locale.
-    val locale = Locale.getDefault()
+    // LocalLocale observes the app's locale so this recomposes on a locale change,
+    // unlike Locale.getDefault() which reads it once and never updates.
+    val locale = LocalLocale.current.platformLocale
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)

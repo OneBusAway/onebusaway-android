@@ -48,6 +48,13 @@ class UmamiAnalyticsTest {
         assertFalse(UmamiAnalytics.isSuccessfulIngest(500, "error"))
     }
 
+    @Test fun onlyHttpsEndpointsAreSecure() {
+        assertTrue(UmamiAnalytics.isHttps("https://umami.example.com/api/send"))
+        assertTrue(UmamiAnalytics.isHttps("HTTPS://umami.example.com/api/send"))
+        assertFalse(UmamiAnalytics.isHttps("http://10.0.2.2:3000/api/send"))
+        assertFalse(UmamiAnalytics.isHttps("not a url"))
+    }
+
     @Test fun userAgentFormat() {
         val userAgent = UmamiAnalytics.buildUserAgent()
         assertTrue(userAgent.startsWith("OneBusAway/"))

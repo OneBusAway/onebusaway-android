@@ -36,6 +36,11 @@ class UmamiAnalytics(
     fun event(name: String?, pageUrl: String?, props: Map<String, Any?>?) = send(name, pageUrl, props)
 
     private fun send(name: String?, pageUrl: String?, props: Map<String, Any?>?) {
+        // Every event carries the persistent install id, so never send one in cleartext.
+        if (!isHttps(sendUrl)) {
+            Log.w(TAG, "Refusing non-HTTPS Umami endpoint")
+            return
+        }
         val payload = try {
             buildPayload(name, reducePath(pageUrl), props)
         } catch (error: Exception) {
@@ -111,6 +116,8 @@ class UmamiAnalytics(
                 put(key, if (value is String || value is Number || value is Boolean) value else value.toString())
             }
         }
+
+        fun isHttps(url: String): Boolean = runCatching { URI(url).scheme.equals("https", ignoreCase = true) }.getOrDefault(false)
 
         private fun joinUrl(base: String, suffix: String): String = base.removeSuffix("/") + "/" + suffix
 

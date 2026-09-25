@@ -124,7 +124,7 @@ class ObaAnalytics @Inject constructor(
     ) {
         if (!isAnalyticsActive()) return
         val stopDistance = stopDistanceBucket(
-            accuracy = myLocation?.accuracy,
+            accuracy = usableAccuracy(myLocation),
             distanceMeters = myLocation?.let { it.distanceTo(stopLocation) } ?: 0f
         )
         reportViewStopEvent(stopId, stopName, stopDistance.toString())
@@ -231,6 +231,11 @@ class ObaAnalytics @Inject constructor(
          * falls into. Pure/JVM-testable: takes the plain accuracy/distance rather than a [Location], which
          * can't be constructed in unit tests.
          */
+
+        /** [location]'s accuracy, or null when there is no fix or the fix carries no accuracy — a
+         *  `Location` without one reports `accuracy == 0f`, which would otherwise read as a perfect fix. */
+        internal fun usableAccuracy(location: Location?): Float? = location?.takeIf { it.hasAccuracy() }?.accuracy
+
         internal fun stopDistanceBucket(accuracy: Float?, distanceMeters: Float): ObaStopDistance = if (accuracy == null || accuracy >= LOCATION_ACCURACY_THRESHOLD) {
             ObaStopDistance.DISTANCE_8
         } else {

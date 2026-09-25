@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.api.adapters
 
+import java.time.DateTimeException
 import java.time.DayOfWeek
 import java.time.LocalDate
 import org.onebusaway.android.api.contract.AvailabilityRuleDto
@@ -43,8 +44,21 @@ import org.onebusaway.android.util.GeoPoint
  */
 internal fun EntryWithReferences<OnDemandServiceDto>.toOnDemandService(): OnDemandService = entry.toOnDemandService(references, allReferencesBelongToService = true)
 
-/** A list response shares one pool across services, so each takes only what its rules reference. */
-internal fun ListWithReferences<OnDemandServiceDto>.toOnDemandServices(): List<OnDemandService> = list.map { it.toOnDemandService(references, allReferencesBelongToService = false) }
+/**
+ * A list response shares one pool across services, so each takes only what its rules reference. A
+ * service that fails to adapt (a malformed time, date or bbox in what it references) is dropped on
+ * its own: one bad record must not blank every other zone in the viewport. The single-service entry
+ * above stays strict, since there the malformed service is the whole answer.
+ */
+internal fun ListWithReferences<OnDemandServiceDto>.toOnDemandServices(): List<OnDemandService> = list.mapNotNull { dto ->
+    try {
+        dto.toOnDemandService(references, allReferencesBelongToService = false)
+    } catch (_: IllegalArgumentException) {
+        null
+    } catch (_: DateTimeException) {
+        null
+    }
+}
 
 private fun OnDemandServiceDto.toOnDemandService(references: References, allReferencesBelongToService: Boolean): OnDemandService {
     val rules = this.rules.map { it.toAvailabilityRule() }

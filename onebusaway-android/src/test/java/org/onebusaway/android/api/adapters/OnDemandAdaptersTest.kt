@@ -74,6 +74,22 @@ class OnDemandAdaptersTest {
     }
 
     @Test
+    fun `a list drops a service that fails to adapt and keeps the rest`() {
+        val response = list("ondemand_services_for_agency_charlevoix.json")
+        val broken = response.list[0].let { it.copy(rules = listOf(it.rules[0].copy(startPickupTime = "7:20"))) }
+        val twoServices = response.copy(list = listOf(broken, response.list[2]))
+
+        assertEquals(listOf("CC_CC3"), twoServices.toOnDemandServices().map { it.id })
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a single service stays strict`() {
+        val response = entry("ondemand_service_alexandria.json")
+        val broken = response.entry.let { it.copy(rules = listOf(it.rules[0].copy(startPickupTime = "7:20"))) }
+        response.copy(entry = broken).toOnDemandService()
+    }
+
+    @Test
     fun `unknown wire enums fall back rather than throw`() {
         assertEquals(OnDemandServiceKind.UNKNOWN, OnDemandServiceKind.fromWire("teleport"))
         assertEquals(OnDemandServiceKind.UNKNOWN, OnDemandServiceKind.fromWire(null))

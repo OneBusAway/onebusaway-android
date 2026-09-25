@@ -39,12 +39,15 @@ data class WhenRow(val calendarId: String, val days: Set<DayOfWeek>, val start: 
  * rule is bookable now, and a rule whose deadline is unknown adds no bound the client can state. An
  * OPEN rule with no booking rule has no deadline (a null cutoff); it supplies the line only when it
  * is the sole OPEN rule, which then reads "no notice required". Both null when no date can be
- * promised (every rule's notice is unknown, or the calendars have ended).
+ * promised (every rule's notice is unknown, the calendars have ended, or [zone] is null).
+ *
+ * [zone] is the agency timezone every deadline is computed in; null when the feed's id cannot be
+ * resolved, in which case no deadline is computed at all.
  */
 data class BookingSummary(
     val travelDate: LocalDate?,
     val evaluation: BookingEvaluation?,
-    val zone: ZoneId,
+    val zone: ZoneId?,
     val phoneNumber: String?,
     val bookingUrl: String?,
     val infoUrl: String?,
@@ -65,7 +68,6 @@ private val UNKNOWN_EVALUATION = BookingEvaluation(BookingState.UNKNOWN, cutoffI
  * the deadline line is JVM-tested with a fixed instant.
  */
 internal fun presentService(service: OnDemandService, now: Instant): OnDemandServiceUiState.Content {
-    val zone = agencyZone(service.agencyTimezone)
     val whenRows = service.rules.flatMap { rule ->
         rule.calendarIds.mapNotNull { id -> service.calendars[id]?.let { WhenRow(id, it.days, rule.startPickupTime, rule.endPickupTime) } }
     }
@@ -73,18 +75,9 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
     val booking = if (service.rules.isEmpty()) {
         null
     } else {
-        val today = now.atZone(zone).toLocalDate()
-        val travelDate = service.rules
-            .filterNot(service::hasUnresolvedPickupBookingRule)
-            .mapNotNull { rule -> BookingDeadlineEvaluator.nextBookableServiceDate(rule, service.pickupBookingRule(rule), today, now, zone, service.calendars) }
-            .minOrNull()
-        val evaluation = travelDate?.let { date ->
-            service.rules
-                .filter { rule -> rule.calendarIds.any { service.calendars[it]?.isActiveOn(date) == true } }
-                .map { rule -> service.evaluateBooking(rule, date, now, zone) }
-                .filter { it.state == BookingState.OPEN }
-                .minByOrNull { it.cutoffInstant ?: Instant.MAX }
-        }
+        val zone = agencyZone(service.agencyTimezone)
+        val travelDate = zone?.let { service.nextBookableServiceDate(now, it) }
+        val evaluation = if (zone == null || travelDate == null) null else service.earliestOpenEvaluation(travelDate, now, zone)
         BookingSummary(
             travelDate = travelDate,
             evaluation = evaluation,
@@ -97,6 +90,22 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
     }
     return OnDemandServiceUiState.Content(service, whenRows, booking)
 }
+
+/** The earliest date any rule can be booked for right now, or null when none can. */
+private fun OnDemandService.nextBookableServiceDate(now: Instant, zone: ZoneId): LocalDate? {
+    val today = now.atZone(zone).toLocalDate()
+    return rules
+        .filterNot(::hasUnresolvedPickupBookingRule)
+        .mapNotNull { rule -> BookingDeadlineEvaluator.nextBookableServiceDate(rule, pickupBookingRule(rule), today, now, zone, calendars) }
+        .minOrNull()
+}
+
+/** The verdict with the earliest cutoff among the rules that evaluate OPEN on [date]; see [BookingSummary]. */
+private fun OnDemandService.earliestOpenEvaluation(date: LocalDate, now: Instant, zone: ZoneId): BookingEvaluation? = rules
+    .filter { rule -> rule.calendarIds.any { calendars[it]?.isActiveOn(date) == true } }
+    .map { rule -> evaluateBooking(rule, date, now, zone) }
+    .filter { it.state == BookingState.OPEN }
+    .minByOrNull { it.cutoffInstant ?: Instant.MAX }
 
 /**
  * The rule names a pickup booking rule the references don't resolve (absent, or dropped at the
@@ -112,11 +121,12 @@ private fun OnDemandService.evaluateBooking(rule: AvailabilityRule, date: LocalD
 }
 
 /**
- * The agency timezone is required by GTFS and always in the references; the device zone is only a
- * last resort for a feed that published an id `java.time` doesn't know, so the page still renders.
+ * The agency timezone, required by GTFS and always in the references; null when it is missing or an
+ * id `java.time` doesn't know. Never the device zone: a deadline computed in the rider's zone rather
+ * than the agency's could be hours late, the one error a rider can't recover from.
  */
-private fun agencyZone(timezone: String?): ZoneId = try {
-    timezone?.let(ZoneId::of) ?: ZoneId.systemDefault()
+private fun agencyZone(timezone: String?): ZoneId? = try {
+    timezone?.let(ZoneId::of)
 } catch (_: DateTimeException) {
-    ZoneId.systemDefault()
+    null
 }

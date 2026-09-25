@@ -172,4 +172,18 @@ class OnDemandServicePresentationTest {
         assertEquals(BookingState.OPEN, summary.evaluation?.state)
         assertEquals(sameDayCutoff, summary.evaluation?.cutoffInstant)
     }
+
+    @Test
+    fun `an agency timezone java time cannot resolve states no deadline but keeps the when rows`() {
+        // The device zone is not the agency's, so a deadline computed in it could be hours late.
+        for (timezone in listOf("Mars/Olympus_Mons", null)) {
+            val content = presentService(alexandria.copy(agencyTimezone = timezone), tuesdayAfternoon)
+            assertEquals(2, content.whenRows.size)
+            val summary = requireNotNull(content.booking)
+            assertNull(summary.travelDate)
+            assertNull(summary.evaluation)
+            assertNull(summary.zone)
+            assertEquals("703-746-5222", summary.phoneNumber)
+        }
+    }
 }

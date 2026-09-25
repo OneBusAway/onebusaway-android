@@ -132,8 +132,9 @@ private fun BookingSection(booking: BookingSummary, locale: Locale, onCall: (Str
 private fun deadlineLine(booking: BookingSummary, locale: Locale): String {
     val evaluation = booking.evaluation
     val travelDate = booking.travelDate
-    if (evaluation == null || travelDate == null) return stringResource(R.string.ondemand_no_deadline_published)
-    val dateTime = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale).withZone(booking.zone)
+    val zone = booking.zone
+    if (evaluation == null || travelDate == null || zone == null) return stringResource(R.string.ondemand_no_deadline_published)
+    val dateTime = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale).withZone(zone)
     val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
     return when (evaluation.state) {
         BookingState.NOT_YET_OPEN -> stringResource(R.string.ondemand_booking_opens, dateTime.format(evaluation.openInstant), date.format(travelDate))

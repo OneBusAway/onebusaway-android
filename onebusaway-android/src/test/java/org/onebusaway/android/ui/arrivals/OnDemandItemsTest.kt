@@ -55,7 +55,7 @@ class OnDemandItemsTest {
 
     @Test
     fun `a cached item is not fetched again`() = runTest {
-        val cache = mutableMapOf("a" to OnDemandServiceItem("a", "Cached", OnDemandServiceKind.ZONE, null))
+        val cache = mutableMapOf("a" to OnDemandServiceItem("a", "Cached", null))
         var fetches = 0
         val items = loadOnDemandItems(listOf("a"), cache) {
             fetches++

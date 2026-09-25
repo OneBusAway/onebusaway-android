@@ -20,13 +20,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.models.OnDemandService
-import org.onebusaway.android.models.OnDemandServiceKind
 
 /** One on-demand service named by the stop's pointer field, as the arrivals card shows it. */
 data class OnDemandServiceItem(
     val id: String,
     val name: String,
-    val kind: OnDemandServiceKind,
     /** The pickup booking rule's phone number, in rule order, or null when none publishes one. */
     val phoneNumber: String?
 )
@@ -34,7 +32,6 @@ data class OnDemandServiceItem(
 internal fun OnDemandService.toItem(): OnDemandServiceItem = OnDemandServiceItem(
     id = id,
     name = name,
-    kind = kind,
     phoneNumber = rules.firstNotNullOfOrNull { pickupBookingRule(it)?.phoneNumber }
 )
 

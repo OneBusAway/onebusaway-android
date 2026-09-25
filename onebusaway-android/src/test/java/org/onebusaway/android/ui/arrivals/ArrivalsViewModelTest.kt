@@ -161,7 +161,7 @@ class ArrivalsViewModelTest {
 
     @Test
     fun `on-demand services reach the content state`() = runTest {
-        val item = OnDemandServiceItem("5088_77652", "DOT Paratransit", org.onebusaway.android.models.OnDemandServiceKind.ZONE, "703-746-5222")
+        val item = OnDemandServiceItem("5088_77652", "DOT Paratransit", "703-746-5222")
         val viewModel = ArrivalsViewModel("1_100", FakeArrivalsRepository(Result.success(data(onDemandServices = listOf(item)))))
         viewModel.refresh()
         assertEquals(listOf(item), (viewModel.state.value as ArrivalsUiState.Content).onDemandServices)

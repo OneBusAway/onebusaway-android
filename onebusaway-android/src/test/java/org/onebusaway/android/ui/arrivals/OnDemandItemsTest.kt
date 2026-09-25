@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -30,6 +31,7 @@ import org.onebusaway.android.models.BookingType
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class OnDemandItemsTest {
 
     private fun service(id: String, phone: String?) = OnDemandService(

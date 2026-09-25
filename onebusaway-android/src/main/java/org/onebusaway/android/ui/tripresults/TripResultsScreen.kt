@@ -128,7 +128,6 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
@@ -1377,7 +1376,8 @@ private fun TripLogList(
                 Modifier
             }
             Box(anchored) {
-                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip, day = rowDays[row.key])
+                val day = rowDays[row.key]?.let { dayName(it, today) }
+                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip, day = day)
             }
         }
     }
@@ -1420,7 +1420,7 @@ private fun LogRow(
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
-    day: LocalDate? = null
+    day: String? = null
 ) {
     val i = model.entryIndex
     when (val content = model.content) {
@@ -1547,7 +1547,7 @@ private fun LogRowScaffold(
     compact: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     footer: (@Composable () -> Unit)? = null,
-    day: LocalDate? = null,
+    day: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -1625,7 +1625,7 @@ private fun LogRowScaffold(
                 // than ellipsizing for the same reason the time does.
                 day?.let {
                     Text(
-                        text = dayName(it, deviceToday()),
+                        text = it,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,

@@ -65,7 +65,7 @@ class TripDayLabelTest {
 
     /** Noon, [dayOffset] days from today — clear of midnight whatever the device zone. */
     private fun noon(dayOffset: Long, plusMinutes: Long = 0) = ServerTime(
-        deviceToday(zone).plusDays(dayOffset).atTime(LocalTime.NOON).plusMinutes(plusMinutes)
+        deviceToday().plusDays(dayOffset).atTime(LocalTime.NOON).plusMinutes(plusMinutes)
             .atZone(zone).toInstant().toEpochMilli()
     )
 

@@ -38,7 +38,11 @@ import org.onebusaway.android.ui.tripplan.TripDay
 /** The calendar day this instant falls on in [zone] — an unwrap for java.time, which wants millis. */
 internal fun ServerTime.localDate(zone: ZoneId): LocalDate = Instant.ofEpochMilli(epochMs).atZone(zone).toLocalDate()
 
-/** The instant a log row prints in its time column, or null for a row that prints none. */
+/**
+ * The instant a log row prints in its time column, or null for a row that prints none. The column
+ * itself reads it from here, so the rows that print a time and the rows [rowDays] can name a day on are
+ * one list.
+ */
 internal val RowContent.clockTime: ServerTime?
     get() = when (this) {
         is RowContent.Terminal -> entry.time
@@ -67,8 +71,8 @@ internal fun rowDays(rows: List<LogRowModel>, today: LocalDate, zone: ZoneId): M
     return days
 }
 
-/** The device's calendar day now, in [zone] — the "today" the results name other days against. */
-internal fun deviceToday(zone: ZoneId = ZoneId.systemDefault()): LocalDate = LocalDate.now(zone)
+/** The device's calendar day now — the "today" the results name other days against. */
+internal fun deviceToday(): LocalDate = LocalDate.now(ZoneId.systemDefault())
 
 /**
  * [day] as the results name it: "Today" and "Tomorrow" in words, like the trip-plan form's date picker,
@@ -76,12 +80,12 @@ internal fun deviceToday(zone: ZoneId = ZoneId.systemDefault()): LocalDate = Loc
  * log's narrow time column and under an option card's time range.
  */
 @Composable
-internal fun dayName(day: LocalDate, today: LocalDate, zone: ZoneId = ZoneId.systemDefault()): String = when (TripDay.of(day, today)) {
+internal fun dayName(day: LocalDate, today: LocalDate): String = when (TripDay.of(day, today)) {
     TripDay.TODAY -> stringResource(R.string.trip_plan_date_today)
     TripDay.TOMORROW -> stringResource(R.string.trip_plan_date_tomorrow)
     TripDay.OTHER -> DateUtils.formatDateTime(
         LocalContext.current,
-        day.atStartOfDay(zone).toInstant().toEpochMilli(),
+        day.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
         DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_WEEKDAY or DateUtils.FORMAT_ABBREV_ALL
     )
 }

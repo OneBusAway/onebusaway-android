@@ -73,6 +73,7 @@ import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
+import org.onebusaway.android.ui.arrivals.components.OnDemandServicesCard
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.compose.components.AlertSurface
 import org.onebusaway.android.ui.icons.AppIcons
@@ -80,6 +81,13 @@ import org.onebusaway.android.util.DisplayFormat
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
 private const val REFRESH_PERIOD_MS = 60_000L
+
+/**
+ * The index of the first route row: every optional head item — the display-mode switch, the alert
+ * section, the on-demand card, the direction line — pushes it down by one. Kept pure so the count
+ * can't drift from the `item(...)` order in [ArrivalsList] without a failing test.
+ */
+internal fun firstRouteIndex(hasModeSwitch: Boolean, alertsBeforeRoutes: Boolean, onDemandBeforeRoutes: Boolean, directionBeforeRoutes: Boolean): Int = listOf(hasModeSwitch, alertsBeforeRoutes, onDemandBeforeRoutes, directionBeforeRoutes).count { it }
 
 /** How many service alerts the alert list shows before the "show more" link, and the page size each
  *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */
@@ -196,7 +204,8 @@ internal fun ArrivalsList(
     anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
     displayMode: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
     onDisplayModeChange: ((ArrivalDisplayMode) -> Unit)? = null,
-    modeSwitchModifier: Modifier = Modifier
+    modeSwitchModifier: Modifier = Modifier,
+    onOpenOnDemandService: (serviceId: String) -> Unit = {}
 ) {
     val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {
         resolveSelectedRouteGroupKey(content.routeGroups, selectedRowKey, selectedRouteId)
@@ -222,11 +231,16 @@ internal fun ArrivalsList(
         hadSelection = effectiveSelectedRowKey != null
         if (displayMode == ArrivalDisplayMode.ROUTE && (effectiveSelectedRowKey != null || wasSelected)) {
             val alertsBeforeRoutes = content.hasAlerts && showAlerts
+            val onDemandBeforeRoutes = content.onDemandServices.isNotEmpty()
             val directionBeforeRoutes = showDirection && content.header.direction != null
-            val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
-                (if (directionBeforeRoutes) 1 else 0) +
-                (if (onDisplayModeChange != null) 1 else 0)
-            listState.scrollToItem(firstRouteIndex)
+            listState.scrollToItem(
+                firstRouteIndex(
+                    hasModeSwitch = onDisplayModeChange != null,
+                    alertsBeforeRoutes = alertsBeforeRoutes,
+                    onDemandBeforeRoutes = onDemandBeforeRoutes,
+                    directionBeforeRoutes = directionBeforeRoutes
+                )
+            )
         }
     }
     LazyColumn(state = listState, modifier = modifier.fillMaxWidth(), contentPadding = contentPadding) {
@@ -248,6 +262,11 @@ internal fun ArrivalsList(
                     onShowHiddenAlerts = onShowHiddenAlerts,
                     modifier = Modifier.animateItem()
                 )
+            }
+        }
+        if (content.onDemandServices.isNotEmpty()) {
+            item(key = "ondemand") {
+                OnDemandServicesCard(content.onDemandServices, onOpenOnDemandService, Modifier.animateItem())
             }
         }
         if (showDirection) {

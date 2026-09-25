@@ -160,7 +160,8 @@ internal fun ArrivalsSheetHost(
     selectedRoute: StopRouteSelection?,
     mapRouteColors: Map<RouteDirectionKey, Int>,
     // The selected trip's band tint (#1990), or null when no vehicle is selected.
-    selectedTripBandColor: Int?
+    selectedTripBandColor: Int?,
+    onOpenOnDemandService: (serviceId: String) -> Unit
 ) {
     session ?: return
     val tutorialState = LocalTutorialState.current
@@ -179,6 +180,7 @@ internal fun ArrivalsSheetHost(
             selectedRouteId = selectedRoute?.originLeg?.routeId,
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
             selectedTripId = selectedRoute?.selectedTripId,
+            onOpenOnDemandService = onOpenOnDemandService,
             // The onboarding spotlight targets inside the first arrivals row. The ETA pill is shared
             // with the older opportunistic arrivals tutorial; the badge and star are the scripted
             // tour's own (#2164).

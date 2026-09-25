@@ -238,7 +238,8 @@ private fun ArrivalsBoard(
                     listState = listState,
                     displayMode = displayMode,
                     onDisplayModeChange = { displayMode = it },
-                    modeSwitchModifier = Modifier.padding(top = 3.dp, end = 3.dp)
+                    modeSwitchModifier = Modifier.padding(top = 3.dp, end = 3.dp),
+                    onOpenOnDemandService = { navController.navigate(NavRoutes.onDemandService(it)) }
                 )
             }
         }

@@ -1498,6 +1498,12 @@
     <string name="ondemand_details_title">Details</string>
     <!-- Shown in place of the service page when the server does not know the service -->
     <string name="ondemand_not_found">This on-demand service is not available in this region.</string>
+    <!-- Heading of the card on a stop's arrivals list naming the on-demand (dial-a-ride) services that serve the stop -->
+    <string name="ondemand_card_title">On-demand service at this stop</string>
+    <!-- Second line of an on-demand service row on the arrivals card when the service publishes no booking phone; tapping opens the service page -->
+    <string name="ondemand_card_tap">Tap for hours and booking</string>
+    <!-- Second line of an on-demand service row on the arrivals card; %1$s is a phone number -->
+    <string name="ondemand_card_phone">Book by phone: %1$s</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

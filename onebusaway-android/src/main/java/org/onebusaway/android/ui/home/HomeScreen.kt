@@ -714,7 +714,8 @@ fun HomeScreen(
                                             state = arrivalsState,
                                             selectedRoute = stopFocus?.selectedRoute,
                                             mapRouteColors = mapRouteColors,
-                                            selectedTripBandColor = selectedTripBandColor
+                                            selectedTripBandColor = selectedTripBandColor,
+                                            onOpenOnDemandService = onOpenOnDemandService
                                         )
                                     }
                                 }

@@ -41,6 +41,7 @@ import org.onebusaway.android.region.RegionRepository
 class AnalyticsProvider @Inject constructor(
     @param:ApplicationContext private val context: Context,
     regionRepository: RegionRepository,
+    private val installId: AnalyticsInstallId,
     @AppScope scope: CoroutineScope
 ) {
 
@@ -83,7 +84,7 @@ class AnalyticsProvider @Inject constructor(
         val serverUrl = region.umamiAnalyticsUrl ?: return null
         val websiteId = region.umamiAnalyticsId ?: return null
         val host = hostOf(baseUrl) ?: return null
-        return UmamiAnalytics(serverUrl, websiteId, host)
+        return UmamiAnalytics(serverUrl, websiteId, host, installId.get())
     }
 
     private fun hostOf(url: String): String? = try {

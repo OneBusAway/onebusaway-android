@@ -9,8 +9,19 @@ import java.util.concurrent.Executors
 import org.json.JSONObject
 import org.onebusaway.android.BuildConfig
 
-/** Fire-and-forget Umami event emitter; failures never escape to callers. */
-class UmamiAnalytics(serverUrl: String, private val websiteId: String, private val hostname: String) {
+/**
+ * Fire-and-forget Umami event emitter; failures never escape to callers.
+ *
+ * @param installId The anonymous, per-install id (see [AnalyticsInstallId]), sent as `payload.id` on
+ * every event so Umami derives a stable visitor/session id (`uuid(website, id)`) instead of re-deriving
+ * one from IP + User-Agent on every request, which mints a "new" visitor on every IP change.
+ */
+class UmamiAnalytics(
+    serverUrl: String,
+    private val websiteId: String,
+    private val hostname: String,
+    private val installId: String
+) {
     private val sendUrl = joinUrl(serverUrl, "api/send")
     private val userAgent = buildUserAgent()
 
@@ -62,6 +73,7 @@ class UmamiAnalytics(serverUrl: String, private val websiteId: String, private v
             .put("website", websiteId)
             .put("hostname", hostname)
             .put("url", path)
+            .put("id", installId)
         if (name != null) payload.put("name", name)
         val data = JSONObject()
         regionName?.let { data.put("RegionName", it) }

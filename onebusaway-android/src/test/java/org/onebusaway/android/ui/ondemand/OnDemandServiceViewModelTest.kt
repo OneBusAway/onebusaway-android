@@ -17,6 +17,9 @@ package org.onebusaway.android.ui.ondemand
 
 import androidx.lifecycle.SavedStateHandle
 import java.io.IOException
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.OffsetDateTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,10 +34,16 @@ import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.api.data.OnDemandDataSource
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.models.AvailabilityRule
+import org.onebusaway.android.models.BookingRule
+import org.onebusaway.android.models.BookingType
+import org.onebusaway.android.models.FlexCalendar
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.models.ServiceDayTime
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.util.TimeProvider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnDemandServiceViewModelTest {
@@ -54,9 +63,13 @@ class OnDemandServiceViewModelTest {
 
     private val service = OnDemandService("5088_77652", "5088", "5088_77652", "DOT Paratransit", OnDemandServiceKind.ZONE, agencyTimezone = "America/Los_Angeles")
 
+    // Tuesday 2026-03-10 at 16:00 Pacific; tests move it on.
+    private var nowMs = OffsetDateTime.parse("2026-03-10T16:00:00-07:00").toInstant().toEpochMilli()
+
     private fun viewModel(source: OnDemandDataSource, presentDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()) = OnDemandServiceViewModel(
         SavedStateHandle(mapOf(NavRoutes.ARG_ONDEMAND_SERVICE_ID to "5088_77652")),
         source,
+        TimeProvider { nowMs },
         presentDispatcher
     )
 
@@ -111,5 +124,35 @@ class OnDemandServiceViewModelTest {
         assertEquals(OnDemandServiceUiState.Loading, vm.state.value)
         presentDispatcher.scheduler.advanceUntilIdle()
         assertTrue(vm.state.value is OnDemandServiceUiState.Content)
+    }
+
+    @Test
+    fun `resuming re-presents the loaded service against a fresh clock without refetching`() = runTest {
+        // Every day, booked by 17:00 the day before.
+        val daily = FlexCalendar("c", DayOfWeek.entries.toSet(), LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), emptySet())
+        val dayBefore = BookingRule(
+            "b", BookingType.PRIOR_DAYS, null, null, priorNoticeLastDay = 1, priorNoticeLastTime = ServiceDayTime.parse("17:00:00"),
+            priorNoticeStartDay = null, priorNoticeStartTime = null, priorNoticeCalendarId = null,
+            message = null, pickupMessage = null, dropOffMessage = null, phoneNumber = null, infoUrl = null, bookingUrl = null
+        )
+        val rule = AvailabilityRule(listOf("a"), listOf("a"), null, null, null, listOf("c"), 2, 2, "b", "b", null, null)
+        val source = FakeDataSource(OnDemandResult.Loaded(service.copy(rules = listOf(rule), bookingRules = mapOf("b" to dayBefore), calendars = mapOf("c" to daily))))
+        val vm = viewModel(source)
+        assertEquals(LocalDate.of(2026, 3, 11), (vm.state.value as OnDemandServiceUiState.Content).booking?.travelDate)
+
+        nowMs = OffsetDateTime.parse("2026-03-10T17:30:00-07:00").toInstant().toEpochMilli()
+        vm.representNow()
+
+        assertEquals(LocalDate.of(2026, 3, 12), (vm.state.value as OnDemandServiceUiState.Content).booking?.travelDate)
+        assertEquals(1, source.requested.size)
+    }
+
+    @Test
+    fun `resuming before anything has loaded does nothing`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Failed(IOException("offline")))
+        val vm = viewModel(source)
+        vm.representNow()
+        assertEquals(OnDemandServiceUiState.Error, vm.state.value)
+        assertEquals(1, source.requested.size)
     }
 }

@@ -18,6 +18,8 @@ package org.onebusaway.android.ui.ondemand
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -37,6 +39,8 @@ fun NavGraphBuilder.onDemandGraph(navController: NavHostController) {
         val context = LocalContext.current
         val viewModel: OnDemandServiceViewModel = hiltViewModel()
         val state by viewModel.state.collectAsStateWithLifecycle()
+        // Back from the dialer or browser, the booking deadline may have passed; restate it.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.representNow() }
         ObaTheme {
             OnDemandServiceScreen(
                 state = state,

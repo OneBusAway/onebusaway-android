@@ -56,7 +56,7 @@ class OnDemandLayerControllerTest {
             requests += viewport
             return result
         }
-        override suspend fun service(id: String): OnDemandResult<OnDemandService> = OnDemandResult.Failed(IOException("unused"))
+        override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = OnDemandResult.Failed(IOException("unused"))
         override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Failed(IOException("unused"))
     }
 

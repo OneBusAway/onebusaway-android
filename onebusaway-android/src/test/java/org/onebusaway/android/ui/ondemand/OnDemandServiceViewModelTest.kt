@@ -54,7 +54,7 @@ class OnDemandServiceViewModelTest {
     private class FakeDataSource(var result: OnDemandResult<OnDemandService>) : OnDemandDataSource {
         val requested = mutableListOf<String>()
         override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
-        override suspend fun service(id: String): OnDemandResult<OnDemandService> {
+        override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> {
             requested += id
             return result
         }
@@ -103,7 +103,7 @@ class OnDemandServiceViewModelTest {
     private class GatedDataSource : OnDemandDataSource {
         val pending = mutableListOf<CompletableDeferred<OnDemandResult<OnDemandService>>>()
         override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
-        override suspend fun service(id: String): OnDemandResult<OnDemandService> = CompletableDeferred<OnDemandResult<OnDemandService>>().also { pending += it }.await()
+        override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = CompletableDeferred<OnDemandResult<OnDemandService>>().also { pending += it }.await()
         override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
     }
 

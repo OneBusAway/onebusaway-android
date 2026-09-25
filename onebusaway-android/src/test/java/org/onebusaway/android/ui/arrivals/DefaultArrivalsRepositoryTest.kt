@@ -37,6 +37,7 @@ import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.RouteReference
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.TripReference
+import org.onebusaway.android.api.data.GEOMETRY_DETAIL_NONE
 import org.onebusaway.android.api.data.OnDemandDataSource
 import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.api.data.StopArrivals
@@ -311,10 +312,10 @@ class DefaultArrivalsRepositoryTest {
     fun `a stop's on-demand pointers load into the data, and the next poll reuses them`() = runTest {
         val dataSource = FakeStopArrivalsDataSource()
         dataSource.respond = { Result.success(snapshot(onDemandServiceIds = listOf("5088_77652"))) }
-        val fetched = mutableListOf<String>()
+        val fetched = mutableListOf<Pair<String, String>>()
         val onDemand = object : OnDemandDataSource by NoOnDemandDataSource() {
-            override suspend fun service(id: String): OnDemandResult<OnDemandService> {
-                fetched += id
+            override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> {
+                fetched += id to geometryDetail
                 return OnDemandResult.Loaded(onDemandService(id, name = "DOT Paratransit"))
             }
         }
@@ -324,7 +325,8 @@ class DefaultArrivalsRepositoryTest {
         val data = repository.getArrivals(STOP_ID, 65).getOrThrow()
 
         assertEquals(listOf("DOT Paratransit"), data.onDemandServices.map { it.name })
-        assertEquals(listOf("5088_77652"), fetched)
+        // The card draws no zone, so it asks for no geometry.
+        assertEquals(listOf("5088_77652" to GEOMETRY_DETAIL_NONE), fetched)
     }
 
     @Test
@@ -427,7 +429,7 @@ class DefaultArrivalsRepositoryTest {
         dataSource.respond = { Result.success(snapshot(onDemandServiceIds = listOf("cached", "failed"))) }
         var networkDown = false
         val onDemand = object : OnDemandDataSource by NoOnDemandDataSource() {
-            override suspend fun service(id: String): OnDemandResult<OnDemandService> {
+            override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> {
                 check(!networkDown) { "must not fetch on the stale path" }
                 return if (id == "cached") OnDemandResult.Loaded(onDemandService(id, name = "Cached")) else OnDemandResult.Failed(IOException("down"))
             }
@@ -504,6 +506,6 @@ class DefaultArrivalsRepositoryTest {
 /** No stop under test carries a pointer, so nothing is ever fetched; a call is a test bug. */
 private class NoOnDemandDataSource : OnDemandDataSource {
     override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
-    override suspend fun service(id: String): OnDemandResult<OnDemandService> = error("unexpected on-demand fetch for $id")
+    override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = error("unexpected on-demand fetch for $id")
     override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
 }

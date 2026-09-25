@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
+import org.onebusaway.android.api.data.GEOMETRY_DETAIL_NONE
 import org.onebusaway.android.api.data.OnDemandDataSource
 import org.onebusaway.android.api.data.StopArrivals
 import org.onebusaway.android.api.data.StopArrivalsDataSource
@@ -397,7 +398,8 @@ class DefaultArrivalsRepository @Inject constructor(
     private suspend fun onDemandItemsFor(ids: List<String>, isStale: Boolean): List<OnDemandServiceItem> = if (isStale) {
         ids.mapNotNull { onDemandItemsById[it] }
     } else {
-        loadOnDemandItems(ids, onDemandItemsById, onDemandDataSource::service)
+        // The card lists name, kind and phone; it draws no zone, so it asks for no geometry.
+        loadOnDemandItems(ids, onDemandItemsById) { id -> onDemandDataSource.service(id, GEOMETRY_DETAIL_NONE) }
     }
 
     /**

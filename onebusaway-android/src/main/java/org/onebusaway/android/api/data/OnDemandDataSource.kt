@@ -24,8 +24,11 @@ import org.onebusaway.android.api.requireData
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.models.OnDemandService
 
-/** The `geometryDetail` every screen asks for: drawable straight onto the map, ~15 KB per zone. */
+/** The `geometryDetail` every screen that draws a zone asks for: drawable straight onto the map, ~15 KB per zone. */
 const val GEOMETRY_DETAIL_SIMPLIFIED = "simplified"
+
+/** The `geometryDetail` for a caller that never draws the service (the arrivals card): no geometry at all. */
+const val GEOMETRY_DETAIL_NONE = "none"
 
 /** One on-demand fetch, or the verdict that this region cannot serve the namespace. */
 sealed interface OnDemandResult<out T> {
@@ -52,8 +55,11 @@ interface OnDemandDataSource {
      */
     suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>>
 
-    /** One service by combined id, with simplified geometry. A 404 is [OnDemandResult.Failed] (not found). */
-    suspend fun service(id: String): OnDemandResult<OnDemandService>
+    /**
+     * One service by combined id, with [geometryDetail] geometry ([GEOMETRY_DETAIL_SIMPLIFIED] or
+     * [GEOMETRY_DETAIL_NONE]). A 404 is [OnDemandResult.Failed] (not found).
+     */
+    suspend fun service(id: String, geometryDetail: String = GEOMETRY_DETAIL_SIMPLIFIED): OnDemandResult<OnDemandService>
 
     /** Every on-demand service of an agency. A 404 is [OnDemandResult.Failed] (unknown agency). */
     suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>>
@@ -83,8 +89,8 @@ class DefaultOnDemandDataSource @Inject constructor(
         ).requireData().toOnDemandServices()
     }.toOnDemandResult(probe = true).logged("services-for-location")
 
-    override suspend fun service(id: String): OnDemandResult<OnDemandService> = api.call { service ->
-        service.onDemandService(id, GEOMETRY_DETAIL_SIMPLIFIED).requireData().toOnDemandService()
+    override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = api.call { service ->
+        service.onDemandService(id, geometryDetail).requireData().toOnDemandService()
     }.toOnDemandResult(probe = false).logged("service($id)")
 
     override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = api.call { service ->

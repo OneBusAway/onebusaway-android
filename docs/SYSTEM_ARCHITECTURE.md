@@ -41,9 +41,9 @@ Support*). When it does, the app draws service zones on the home map (Settings �
 zones"), lists a stop's on-demand services on the arrivals screen, and opens a service page with hours
 and a booking deadline computed on the device in the agency's timezone.
 
-Nothing is configured per region: the app probes `services-for-location` once per launch, and a
-deployment that answers HTTP 404 (every onebusaway-application-modules server today) is remembered as
-not serving the namespace for the rest of that process. Booking itself happens out of band — by phone
+Nothing is configured per region: the app queries `services-for-location` for each settled map
+viewport, and only an HTTP 404 answer (every onebusaway-application-modules server today) is
+remembered, marking that deployment as not serving the namespace for the rest of the process. Booking itself happens out of band — by phone
 or the agency's booking site — the app never places a booking.
 
 ## Configure your own servers

@@ -88,6 +88,7 @@ import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.openRoute
 import org.onebusaway.android.ui.nav.showArrivals
+import org.onebusaway.android.ui.ondemand.onDemandGraph
 import org.onebusaway.android.ui.report.reportGraph
 import org.onebusaway.android.ui.routeinfo.routeInfoGraph
 import org.onebusaway.android.ui.searchresults.searchResultMode
@@ -290,6 +291,7 @@ fun HomeNavHost(
         // feature; they recover the host via findActivity rather than threading dependencies).
         arrivalsGraph(navController)
         routeInfoGraph(navController)
+        onDemandGraph(navController)
         tripGraph(navController)
         myListsGraph(navController)
         homeListsGraph(navController)

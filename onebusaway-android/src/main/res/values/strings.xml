@@ -1453,6 +1453,47 @@
     <!-- Marker accessibility text: %1$s is what the vehicle is, %2$s is everything else about it -->
     <string name="rental_marker_description">%1$s. %2$s</string>
 
+    <!-- On-demand (GTFS-Flex) services -->
+    <!-- Title of the on-demand service page while the service's own name is not yet loaded -->
+    <string name="ondemand_service_title">On-demand service</string>
+    <!-- Kind of on-demand service: pickup and drop-off anywhere inside one area -->
+    <string name="ondemand_kind_zone">Dial-a-ride zone</string>
+    <!-- Kind of on-demand service: pickup in one area, drop-off in another -->
+    <string name="ondemand_kind_zone_to_zone">Zone to zone</string>
+    <!-- Kind of on-demand service: rides between a fixed set of stops -->
+    <string name="ondemand_kind_stop_group">Between designated stops</string>
+    <!-- Kind of on-demand service: a fixed route that can leave its path to pick riders up -->
+    <string name="ondemand_kind_deviated_route">Route deviation</string>
+    <!-- Kind of on-demand service when the server names a kind this app does not know -->
+    <string name="ondemand_kind_unknown">On-demand</string>
+    <!-- Section heading for the days and hours the service runs -->
+    <string name="ondemand_when_title">When</string>
+    <!-- Service hours when the service runs around the clock -->
+    <string name="ondemand_all_hours">All hours</string>
+    <!-- %1$s and %2$s are clock times, e.g. 5:00 AM – 12:50 AM -->
+    <string name="ondemand_time_window">%1$s – %2$s</string>
+    <!-- %1$s is a clock time that falls after midnight on the following day -->
+    <string name="ondemand_time_next_day">%1$s (next day)</string>
+    <!-- Section heading for booking deadlines and contact options -->
+    <string name="ondemand_how_to_book_title">How to book</string>
+    <!-- %1$s is the date and time booking closes, %2$s is the date of the ride -->
+    <string name="ondemand_book_by">Book by %1$s for a ride on %2$s</string>
+    <!-- %1$s is the date and time booking opens, %2$s is the date of the ride -->
+    <string name="ondemand_booking_opens">Booking opens %1$s for a ride on %2$s</string>
+    <!-- Shown when no advance notice is required -->
+    <string name="ondemand_book_at_ride_time">Book when you are ready to ride</string>
+    <string name="ondemand_no_deadline_published">This agency has not published a booking deadline. Contact them to book.</string>
+    <string name="ondemand_no_rules">No service hours are published for this service.</string>
+    <!-- Button that opens the phone dialer; %1$s is a phone number -->
+    <string name="ondemand_call">Call %1$s</string>
+    <!-- Button that opens the agency's booking website -->
+    <string name="ondemand_book_online">Book online</string>
+    <!-- Button that opens the agency's information website -->
+    <string name="ondemand_more_info">More information</string>
+    <!-- Section heading for the agency's own notes about booking -->
+    <string name="ondemand_details_title">Details</string>
+    <string name="ondemand_not_found">This on-demand service is not available in this region.</string>
+
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 
     <!--Travel Behaviour data collection-->

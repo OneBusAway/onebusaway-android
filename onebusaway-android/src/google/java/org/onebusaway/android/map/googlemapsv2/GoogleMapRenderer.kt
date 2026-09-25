@@ -74,6 +74,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.ZONE_STROKE_WIDTH_PX
 import org.onebusaway.android.map.render.ZonePolygon
+import org.onebusaway.android.map.render.ZonePolygonReconciler
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
@@ -98,6 +99,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
+ *  - [renderZones] likewise reconciles the on-demand zones in place, so a static redraw never
+ *    recreates their large polygons.
  *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
  *    [GoogleStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position/z-index writes.
@@ -123,8 +126,9 @@ class GoogleMapRenderer(
         ContextCompat.getColor(context, R.color.route_stop_outline)
     )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
-    private val staticPolygons = mutableListOf<Polygon>()
-    private val zoneByPolygon = HashMap<Polygon, ZonePolygon>()
+
+    // On-demand zones have their own change boundary ([renderZones]), so a static redraw leaves them be.
+    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZonePolygon, removePolygons = { polygons -> polygons.forEach(Polygon::remove) })
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -279,9 +283,6 @@ class GoogleMapRenderer(
         staticMarkers.clear()
         staticPolylines.forEach { it.remove() }
         staticPolylines.clear()
-        staticPolygons.forEach { it.remove() }
-        staticPolygons.clear()
-        zoneByPolygon.clear()
         rentalByMarker.clear()
         continuationBadgeByMarker.clear()
         routeBadgeByMarker.clear()
@@ -291,7 +292,6 @@ class GoogleMapRenderer(
     fun renderStatic(snapshot: MapRenderSnapshot = renderState.snapshot.value) {
         clearStatic()
 
-        renderZones(snapshot.onDemandZones)
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand, snapshot.compactStopIcons)
         routeStopLayer.render(
             snapshot.stops,
@@ -335,22 +335,23 @@ class GoogleMapRenderer(
         renderRouteBadges(snapshot.routeBadges)
     }
 
-    // Drawn before the stop layers and at [ZONE_Z_INDEX] so zones sit beneath every line and marker.
-    private fun renderZones(zones: List<ZonePolygon>) {
-        for (zone in zones) {
-            val exterior = zone.rings.firstOrNull() ?: continue
-            val options = PolygonOptions()
-                .addAll(exterior.map { it.toLatLng() })
-                .fillColor(zoneFillColor(zone.color))
-                .strokeColor(zoneStrokeColor(zone.color))
-                .strokeWidth(ZONE_STROKE_WIDTH_PX)
-                .clickable(true)
-                .zIndex(ZONE_Z_INDEX)
-            for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
-            val polygon = map.addPolygon(options)
-            staticPolygons.add(polygon)
-            zoneByPolygon[polygon] = zone
-        }
+    /** Reconcile the independently collected on-demand zones, retaining equal native polygons. */
+    fun renderZones(zones: List<ZonePolygon>) {
+        zoneReconciler.reconcile(zones)
+    }
+
+    // At [ZONE_Z_INDEX], so a zone sits beneath every line and marker whenever it is added.
+    private fun addZonePolygon(zone: ZonePolygon): Polygon? {
+        val exterior = zone.rings.firstOrNull() ?: return null
+        val options = PolygonOptions()
+            .addAll(exterior.map { it.toLatLng() })
+            .fillColor(zoneFillColor(zone.color))
+            .strokeColor(zoneStrokeColor(zone.color))
+            .strokeWidth(ZONE_STROKE_WIDTH_PX)
+            .clickable(true)
+            .zIndex(ZONE_Z_INDEX)
+        for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
+        return map.addPolygon(options)
     }
 
     private fun renderRouteBadges(badges: List<RouteBadge>) {
@@ -557,6 +558,7 @@ class GoogleMapRenderer(
 
         clearStatic()
         routePolylineReconciler.clear()
+        zoneReconciler.clear()
 
         stopMarkerLayer.dispose()
 
@@ -930,7 +932,7 @@ class GoogleMapRenderer(
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
     /** The zone a native polygon draws, for the adapter's polygon-click dispatch. */
-    fun zoneForPolygon(polygon: Polygon): ZonePolygon? = zoneByPolygon[polygon]
+    fun zoneForPolygon(polygon: Polygon): ZonePolygon? = zoneReconciler.zoneFor(polygon)
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

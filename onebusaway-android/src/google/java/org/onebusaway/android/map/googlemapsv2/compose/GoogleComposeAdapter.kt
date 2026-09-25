@@ -61,6 +61,7 @@ import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
+import org.onebusaway.android.map.render.onDemandZoneRenderFlow
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.compose.findActivity
@@ -197,9 +198,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             // stop-only emissions still cannot touch the independently collected route layer below.
             LaunchedEffect(activeRenderer) {
                 renderState.snapshot
-                    // Both polyline slices are dropped here: they have their own change boundary below,
-                    // and leaving either in would re-run the whole static render on every line update.
-                    .map { it.copy(routePolylines = emptyList(), pinnedTripPolylines = emptyList()) }
+                    // Both polyline slices and the zones are dropped here: they have their own change
+                    // boundaries below, and leaving any in would re-run the whole static render on every
+                    // line or zone update.
+                    .map { it.copy(routePolylines = emptyList(), pinnedTripPolylines = emptyList(), onDemandZones = emptyList()) }
                     .distinctUntilChanged()
                     .collect { activeRenderer.renderStatic(it) }
             }
@@ -209,6 +211,11 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             LaunchedEffect(activeRenderer) {
                 routePolylineRenderFlow(renderState.snapshot, host.camera)
                     .collect { activeRenderer.renderRoutePolylines(it) }
+            }
+            // On-demand zones have their own change boundary too: a stop refresh or rental toggle keeps
+            // the native Google polygons instead of recreating every zone's large vertex set.
+            LaunchedEffect(activeRenderer) {
+                onDemandZoneRenderFlow(renderState.snapshot).collect { activeRenderer.renderZones(it) }
             }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
             // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive

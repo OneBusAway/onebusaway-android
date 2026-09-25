@@ -296,6 +296,24 @@ class RoutePolylineReconcilerTest {
         assertTrue(h.created.all { it.removed })
     }
 
+    @Test
+    fun `redraw re-adds every line in order at the zoom width`() {
+        val h = Harness()
+        val a = line(1, 0.0)
+        val b = line(2, 1.0)
+        h.reconciler.reconcile(listOf(a, b), zoom = 4f)
+        val first = h.live()
+
+        h.reconciler.redraw(zoom = 5f)
+
+        assertTrue(first.all { it.removed })
+        assertEquals(listOf(a, b), h.live().map { it.polyline })
+        assertTrue(h.live().all { it.width == 5f })
+        // Still reconciled against the same list: an equal follow-up is a no-op.
+        h.reconciler.reconcile(listOf(a, b), zoom = 5f)
+        assertEquals(4, h.createCount)
+    }
+
     private companion object {
         // The fake's case colour, distinct from every line colour used here so a test can tell the two apart.
         const val CASE_COLOR = -424242

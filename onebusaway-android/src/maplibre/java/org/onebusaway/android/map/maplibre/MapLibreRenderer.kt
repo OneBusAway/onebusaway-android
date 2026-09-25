@@ -32,6 +32,7 @@ import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.annotations.Polygon
 import org.maplibre.android.annotations.PolygonOptions
 import org.maplibre.android.annotations.Polyline
 import org.maplibre.android.annotations.PolylineOptions
@@ -62,6 +63,7 @@ import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.ZonePolygon
+import org.onebusaway.android.map.render.ZonePolygonReconciler
 import org.onebusaway.android.map.render.contains
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
@@ -86,6 +88,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
+ *  - [renderZones] likewise reconciles the on-demand zones in place, so a static redraw never
+ *    recreates their large polygons.
  *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
  *    [MapLibreStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position writes.
@@ -166,6 +170,9 @@ class MapLibreRenderer(
     // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on
     // the next so the retained route and per-frame dynamic layers survive a static redraw.
     private val staticAnnotations = mutableListOf<Annotation>()
+
+    // On-demand zones have their own change boundary ([renderZones]), so a static redraw leaves them be.
+    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZonePolygon, removePolygons = { polygons -> map.removeAnnotations(polygons) })
 
     // Whole-route lines are reconciled independently from the combined static snapshot: stop list,
     // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
@@ -289,7 +296,6 @@ class MapLibreRenderer(
         rentalIcons.clear()
         routeBadgeByMarker.clear()
 
-        renderZones(snapshot.onDemandZones)
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
         routeStopLayer.render(
             snapshot.stops,
@@ -334,19 +340,26 @@ class MapLibreRenderer(
         renderRouteBadges(snapshot.routeBadges)
     }
 
-    // Classic annotations draw in add order, so adding these before the stops puts zones underneath. The
-    // classic PolygonOptions has no stroke width, so the outline is the SDK's hairline.
-    private fun renderZones(zones: List<ZonePolygon>) {
-        for (zone in zones) {
-            val exterior = zone.rings.firstOrNull() ?: continue
-            val options = PolygonOptions()
-                .addAll(exterior.map { it.toLatLng() })
-                .fillColor(zoneFillColor(zone.color))
-                .strokeColor(zoneStrokeColor(zone.color))
-                .alpha(1f)
-            for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
-            staticAnnotations.add(map.addPolygon(options))
-        }
+    /**
+     * Reconcile the independently collected on-demand zones, retaining equal native polygons. Classic
+     * shape annotations stack in add order with no z-index, so a zone added after the route lines would
+     * cover them: when any zone is added, the route lines are re-added on top.
+     */
+    fun renderZones(zones: List<ZonePolygon>) {
+        if (zoneReconciler.reconcile(zones)) routePolylineReconciler.redraw(map.cameraPosition.zoom.toFloat())
+    }
+
+    // The classic PolygonOptions has no stroke width, so the outline is the SDK's hairline. Markers always
+    // draw above shape annotations, so the stops sit on top whatever the add order.
+    private fun addZonePolygon(zone: ZonePolygon): Polygon? {
+        val exterior = zone.rings.firstOrNull() ?: return null
+        val options = PolygonOptions()
+            .addAll(exterior.map { it.toLatLng() })
+            .fillColor(zoneFillColor(zone.color))
+            .strokeColor(zoneStrokeColor(zone.color))
+            .alpha(1f)
+        for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
+        return map.addPolygon(options)
     }
 
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
@@ -444,6 +457,7 @@ class MapLibreRenderer(
         interlineSeamLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
         routePolylineReconciler.clear()
+        zoneReconciler.clear()
         map.removeAnnotations()
 
         staticAnnotations.clear()

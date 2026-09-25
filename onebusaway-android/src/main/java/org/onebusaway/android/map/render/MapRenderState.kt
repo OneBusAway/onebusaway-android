@@ -510,7 +510,8 @@ data class MapRenderSnapshot(
     val rentals: List<RentalMarker> = emptyList(),
     val rentalsVisible: Boolean = false,
     // On-demand service zones for the viewport (written by OnDemandLayerController). Drawn beneath the
-    // stops on the static layer; empty when the layer is off or the region has no flex data.
+    // stops and route lines, reconciled on their own change boundary (onDemandZoneRenderFlow) rather
+    // than on the static layer; empty when the layer is off or the region has no flex data.
     val onDemandZones: List<ZonePolygon> = emptyList(),
     val stops: List<StopMarker> = emptyList(),
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an

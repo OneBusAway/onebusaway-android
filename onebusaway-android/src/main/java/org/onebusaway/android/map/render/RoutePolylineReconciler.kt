@@ -120,6 +120,16 @@ class RoutePolylineReconciler<NativeLine>(
         }
     }
 
+    /**
+     * Remove and re-add every drawn line at [zoom], in the same order. For a map that stacks equal-z
+     * annotations by add order, this lifts the lines back above anything added since.
+     */
+    fun redraw(zoom: Float) {
+        val current = renderedPolylines
+        clear()
+        reconcile(current, zoom)
+    }
+
     /** Remove every drawn line and drop all state — the renderer's dispose path. */
     fun clear() {
         val natives = drawn.flatMap { it.natives }

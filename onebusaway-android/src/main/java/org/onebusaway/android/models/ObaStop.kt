@@ -54,6 +54,9 @@ interface ObaStop : ObaElement {
     /** The wheelchair-boarding accessibility of the stop; [WheelchairBoarding.UNKNOWN] when unstated. */
     val wheelchairBoarding: WheelchairBoarding
 
+    /** Ids of the on-demand services this stop takes part in (wiki §3.1); empty for every pre-flex source. */
+    val onDemandServiceIds: List<String> get() = emptyList()
+
     companion object {
         const val LOCATION_STOP = 0
         const val LOCATION_STATION = 1

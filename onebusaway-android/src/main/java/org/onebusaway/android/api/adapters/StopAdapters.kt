@@ -40,6 +40,7 @@ internal class DtoStop(private val ref: StopReference) : ObaStop {
     override val routeIds: Array<String> get() = ref.routeIds.toTypedArray()
     override val wheelchairBoarding: WheelchairBoarding
         get() = WheelchairBoarding.fromString(ref.wheelchairBoarding)
+    override val onDemandServiceIds: List<String> get() = ref.onDemandServiceIds
 }
 
 /**

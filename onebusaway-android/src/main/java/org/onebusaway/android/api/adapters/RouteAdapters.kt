@@ -33,6 +33,7 @@ internal class DtoRoute(private val ref: RouteReference) : ObaRoute {
     override val color: Int? get() = ref.colorArgb()
     override val textColor: Int? get() = ref.textColorArgb()
     override val agencyId: String get() = ref.agencyId
+    override val onDemandServiceIds: List<String> get() = ref.onDemandServiceIds
 }
 
 /**

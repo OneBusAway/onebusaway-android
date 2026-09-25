@@ -1337,8 +1337,12 @@ class HomeViewModel @Inject constructor(
      * the control not working. The button is the one-tap exit the old trip-plan screen's up arrow was.
      * Unwinds rather than moves forward ([exitDirections] with `backward`), so the next Back doesn't walk
      * straight back into the trip just closed.
+     *
+     * Ignored once directions is gone: a second tap can land before recomposition removes the form, and
+     * a backward exit from outside directions would pop the focus the first tap just restored.
      */
     fun closeDirections() {
+        if (_currentFocus.value !is CurrentFocus.Directions) return
         if (stageDirectionsExitConfirmation(_currentFocus.value, CurrentFocus.None, backward = true)) return
         exitDirections(backward = true)
     }

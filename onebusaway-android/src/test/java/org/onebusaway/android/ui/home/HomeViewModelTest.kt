@@ -770,6 +770,22 @@ class HomeViewModelTest {
         assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
     }
 
+    /** A second close landing before the form is gone must not pop the focus the first one restored. */
+    @Test
+    fun `a repeated close does not unwind past where directions began`() = runTest {
+        val vm = viewModel()
+        vm.revealStop(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        advanceUntilIdle()
+        vm.enterDirections()
+        advanceUntilIdle()
+
+        vm.closeDirections()
+        vm.closeDirections()
+        advanceUntilIdle()
+
+        assertEquals("stop", (vm.currentFocus.value as? CurrentFocus.Stop)?.stop?.id)
+    }
+
     /** Close unwinds like Back rather than moving forward, so the next Back can't walk into the trip (#2317). */
     @Test
     fun `close leaves no step back into directions`() = runTest {

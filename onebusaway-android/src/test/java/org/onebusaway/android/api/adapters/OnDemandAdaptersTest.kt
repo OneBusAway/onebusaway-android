@@ -82,6 +82,16 @@ class OnDemandAdaptersTest {
         assertEquals(listOf("CC_CC3"), twoServices.toOnDemandServices().map { it.id })
     }
 
+    @Test
+    fun `a list drops a service whose area has a short position and keeps the rest`() {
+        val viewport = list("ondemand_services_for_location_viewport.json")
+        val shortPositions = viewport.references.serviceAreas.map { it.copy(nearestPointOnBoundary = listOf(-77.05)) }
+        val group = list("ondemand_services_for_agency_charlevoix.json").list.first { it.id == "CC_CC3" }
+        val response = viewport.copy(list = viewport.list + group, references = viewport.references.copy(serviceAreas = shortPositions))
+
+        assertEquals(listOf("CC_CC3"), response.toOnDemandServices().map { it.id })
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `a single service stays strict`() {
         val response = entry("ondemand_service_alexandria.json")

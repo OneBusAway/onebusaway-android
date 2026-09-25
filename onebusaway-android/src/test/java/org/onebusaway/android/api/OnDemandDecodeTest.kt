@@ -166,4 +166,9 @@ class OnDemandDecodeTest {
         val point = json.decodeFromString<ServiceAreaDto>("""{"id":"p","bbox":[0,0,0,0],"geometry":{"type":"Point","coordinates":[1,2]}}""")
         assertTrue(point.polygons().isEmpty())
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a position with one coordinate is malformed input, not an index error`() {
+        json.decodeFromString<ServiceAreaDto>("""{"id":"s","bbox":[0,0,1,1],"geometry":{"type":"Polygon","coordinates":[[[0,0],[1],[1,1],[0,0]]]}}""").polygons()
+    }
 }

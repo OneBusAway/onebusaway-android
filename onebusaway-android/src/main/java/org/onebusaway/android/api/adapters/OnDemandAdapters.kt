@@ -147,6 +147,7 @@ internal fun FlexCalendarDto.toFlexCalendar(): FlexCalendar = FlexCalendar(
 
 internal fun ServiceAreaDto.toServiceArea(): ServiceArea {
     require(bbox.size == 4) { "serviceArea $id bbox must be [minLon, minLat, maxLon, maxLat]" }
+    nearestPointOnBoundary?.let { require(it.size >= 2) { "serviceArea $id nearestPointOnBoundary must be [lon, lat]" } }
     return ServiceArea(
         id = id,
         name = name,

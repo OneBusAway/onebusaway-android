@@ -80,8 +80,9 @@ data class ServiceAreaDto(
     /**
      * The geometry as polygons: `[polygon][ring][point]`, ring 0 the exterior and the rest holes, in
      * the ring order the feed published. A `Polygon` yields one polygon, a `MultiPolygon` one per
-     * member; a missing or non-polygonal geometry yields none. Malformed coordinates throw, which the
-     * data source's failure path reports rather than drawing a half-decoded zone.
+     * member; a missing or non-polygonal geometry yields none. Malformed coordinates throw
+     * [IllegalArgumentException] — the one failure the list adapter drops a single service on — rather
+     * than drawing a half-decoded zone.
      */
     fun polygons(): List<List<List<GeoPoint>>> {
         val geometryObject = geometry as? JsonObject ?: return emptyList()
@@ -95,8 +96,12 @@ data class ServiceAreaDto(
 
     private fun JsonArray.toRings(): List<List<GeoPoint>> = map { ring -> ring.jsonArray.map { it.jsonArray.toGeoPoint() } }
 
-    // GeoJSON positions are [lon, lat].
-    private fun JsonArray.toGeoPoint(): GeoPoint = GeoPoint(latitude = this[1].jsonPrimitive.double, longitude = this[0].jsonPrimitive.double)
+    // GeoJSON positions are [lon, lat], optionally followed by an altitude this ignores. Checked so a
+    // short position fails as malformed input rather than as an index error the adapter doesn't expect.
+    private fun JsonArray.toGeoPoint(): GeoPoint {
+        require(size >= 2) { "serviceArea $id has a GeoJSON position with $size coordinate(s); expected [lon, lat]" }
+        return GeoPoint(latitude = this[1].jsonPrimitive.double, longitude = this[0].jsonPrimitive.double)
+    }
 }
 
 /** A `references.locationGroups` element; members also appear in `references.stops`. */

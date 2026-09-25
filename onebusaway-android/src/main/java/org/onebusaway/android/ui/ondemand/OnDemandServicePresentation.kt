@@ -72,9 +72,11 @@ private val UNKNOWN_EVALUATION = BookingEvaluation(BookingState.UNKNOWN, cutoffI
  * the deadline line is JVM-tested with a fixed instant.
  */
 internal fun presentService(service: OnDemandService, now: Instant): OnDemandServiceUiState.Content {
+    // Several rules can share the same days and pickup window (e.g. Charlevoix's CC_CC1); collapse
+    // those into one row, keeping the first occurrence's position.
     val whenRows = service.rules.flatMap { rule ->
         rule.calendarIds.mapNotNull { id -> service.calendars[id]?.let { WhenRow(id, it.days, rule.startPickupTime, rule.endPickupTime) } }
-    }
+    }.distinctBy { Triple(it.days, it.start, it.end) }
     val bookingRules = service.rules.mapNotNull(service::pickupBookingRule).distinctBy { it.id }
     val booking = if (service.rules.isEmpty()) {
         null

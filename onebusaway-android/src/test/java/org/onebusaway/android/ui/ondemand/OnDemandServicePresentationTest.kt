@@ -84,6 +84,26 @@ class OnDemandServicePresentationTest {
     }
 
     @Test
+    fun `identical days and hours collapse into one row`() {
+        val service = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00"), rule("5088_c_63", "05:00:00"), rule("5088_c_63", "07:00:00"))
+        )
+        val content = presentService(service, tuesdayAfternoon)
+        assertEquals(2, content.whenRows.size)
+        assertEquals(ServiceDayTime.parse("05:00:00"), content.whenRows[0].start)
+        assertEquals(ServiceDayTime.parse("07:00:00"), content.whenRows[1].start)
+    }
+
+    @Test
+    fun `same days but different hours stay separate`() {
+        val service = alexandria.copy(rules = listOf(rule("5088_c_63", "05:00:00"), rule("5088_c_63", "09:00:00")))
+        val content = presentService(service, tuesdayAfternoon)
+        assertEquals(2, content.whenRows.size)
+        assertEquals(ServiceDayTime.parse("05:00:00"), content.whenRows[0].start)
+        assertEquals(ServiceDayTime.parse("09:00:00"), content.whenRows[1].start)
+    }
+
+    @Test
     fun `a degenerate service with no rules still presents`() {
         val content = presentService(alexandria.copy(rules = emptyList()), tuesdayAfternoon)
         assertTrue(content.whenRows.isEmpty())

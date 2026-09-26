@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.ondemand
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import java.io.IOException
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -23,8 +24,10 @@ import java.time.OffsetDateTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -41,6 +44,9 @@ import org.onebusaway.android.models.FlexCalendar
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.models.ServiceDayTime
+import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.OnDemandStatus
+import org.onebusaway.android.ondemand.ProbeSource
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.GeoPoint
@@ -148,6 +154,10 @@ class OnDemandServiceViewModelTest {
 
         assertEquals(LocalDate.of(2026, 3, 12), (vm.state.value as OnDemandServiceUiState.Content).booking?.travelDate)
         assertEquals(1, source.requested.size)
+
+        // A live service schedules a refresh against the fixed test clock (spec §3.6); left running,
+        // runTest's own end-of-test drain would keep firing and rescheduling it forever.
+        vm.viewModelScope.cancel()
     }
 
     @Test
@@ -157,5 +167,43 @@ class OnDemandServiceViewModelTest {
         vm.representNow()
         assertEquals(OnDemandServiceUiState.Error, vm.state.value)
         assertEquals(1, source.requested.size)
+    }
+
+    private fun viewModelWithArgs(source: OnDemandDataSource, args: Map<String, Any?>) = OnDemandServiceViewModel(
+        SavedStateHandle(mapOf(NavRoutes.ARG_ONDEMAND_SERVICE_ID to "5088_77652") + args),
+        source,
+        TimeProvider { nowMs },
+        UnconfinedTestDispatcher()
+    )
+
+    @Test
+    fun `the route arguments become the location check`() = runTest {
+        val vm = viewModelWithArgs(
+            FakeDataSource(OnDemandResult.Loaded(service)),
+            mapOf(NavRoutes.ARG_ONDEMAND_INSIDE to "true", NavRoutes.ARG_ONDEMAND_SOURCE to "rider", NavRoutes.ARG_ONDEMAND_LOCALITY to "Boyne City", NavRoutes.ARG_ONDEMAND_LAT to "45.05", NavRoutes.ARG_ONDEMAND_LON to "-85.1")
+        )
+        val content = vm.state.value as OnDemandServiceUiState.Content
+        assertEquals(LocationCheck(ProbeSource.Rider, true, "Boyne City", GeoPoint(45.05, -85.1)), content.locationCheck)
+        assertEquals(null, (viewModel(FakeDataSource(OnDemandResult.Loaded(service))).state.value as OnDemandServiceUiState.Content).locationCheck)
+    }
+
+    @Test
+    fun `the page re-presents itself a second after the next change`() = runTest {
+        val calendar = FlexCalendar("c", setOf(DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY), LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), emptySet())
+        val running = service.copy(
+            rules = listOf(AvailabilityRule(listOf("a"), listOf("a"), ServiceDayTime.parse("07:20:00"), ServiceDayTime.parse("16:40:00"), null, listOf("c"), 2, 2, null, null, null, null)),
+            calendars = mapOf("c" to calendar)
+        )
+        nowMs = OffsetDateTime.parse("2026-03-10T16:39:30-07:00").toInstant().toEpochMilli()
+        val vm = viewModel(FakeDataSource(OnDemandResult.Loaded(running)))
+        assertTrue((vm.state.value as OnDemandServiceUiState.Content).availability.status is OnDemandStatus.OpenNow)
+
+        nowMs = OffsetDateTime.parse("2026-03-10T16:40:01-07:00").toInstant().toEpochMilli()
+        advanceTimeBy(32_000)
+        assertTrue((vm.state.value as OnDemandServiceUiState.Content).availability.status is OnDemandStatus.OpensAt)
+
+        // See the comment in "resuming re-presents…" above: stop the next scheduled refresh so
+        // runTest's end-of-test drain doesn't chase it against this test's now-fixed clock.
+        vm.viewModelScope.cancel()
     }
 }

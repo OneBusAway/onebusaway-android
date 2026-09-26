@@ -23,6 +23,7 @@ import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,8 @@ import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.api.isNotFound
 import org.onebusaway.android.app.di.DefaultDispatcher
 import org.onebusaway.android.models.OnDemandService
+import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.locationCheckFromArgs
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.TimeProvider
 
@@ -52,12 +55,25 @@ class OnDemandServiceViewModel @Inject constructor(
 
     private val serviceId: String = requireNotNull(savedState[NavRoutes.ARG_ONDEMAND_SERVICE_ID]) { "on-demand service page requires a service id" }
 
+    // The probe's location facts when the page was opened from the dock, picker, pin or planner.
+    private val locationCheck: LocationCheck? = locationCheckFromArgs(
+        inside = savedState[NavRoutes.ARG_ONDEMAND_INSIDE],
+        source = savedState[NavRoutes.ARG_ONDEMAND_SOURCE],
+        locality = savedState[NavRoutes.ARG_ONDEMAND_LOCALITY],
+        lat = savedState[NavRoutes.ARG_ONDEMAND_LAT],
+        lon = savedState[NavRoutes.ARG_ONDEMAND_LON]
+    )
+
     private val _state = MutableStateFlow<OnDemandServiceUiState>(OnDemandServiceUiState.Loading)
     val state: StateFlow<OnDemandServiceUiState> = _state.asStateFlow()
 
     // The fetch or presentation in flight, cancelled by the next one so a slow earlier answer can't
     // land last.
     private var job: Job? = null
+
+    // The re-presentation scheduled for the next availability change (spec §3.6), separate from [job]
+    // so a fetch or a manual re-present neither waits for nor is cancelled by it.
+    private var refreshJob: Job? = null
 
     // The last service fetched, kept to re-present; null while a fetch is in flight or after it failed.
     private var loaded: OnDemandService? = null
@@ -95,6 +111,22 @@ class OnDemandServiceViewModel @Inject constructor(
     // currentTime, which sits on the long-cache tier.
     private suspend fun present(service: OnDemandService): OnDemandServiceUiState.Content {
         val now = Instant.ofEpochMilli(timeProvider.now())
-        return withContext(presentDispatcher) { presentService(service, now) }
+        val content = withContext(presentDispatcher) { presentService(service, now, locationCheck) }
+        scheduleRefresh(content.availability.nextChangeInstant, now)
+        return content
+    }
+
+    /** Re-present one second after the availability changes, so "Open now" becomes "Opens …" on its own. */
+    private fun scheduleRefresh(at: Instant?, now: Instant) {
+        refreshJob?.cancel()
+        if (at == null) return
+        refreshJob = viewModelScope.launch {
+            delay((at.toEpochMilli() + REFRESH_GRACE_MS - now.toEpochMilli()).coerceAtLeast(0L))
+            representNow()
+        }
+    }
+
+    private companion object {
+        const val REFRESH_GRACE_MS = 1_000L
     }
 }

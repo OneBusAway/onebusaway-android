@@ -1488,8 +1488,6 @@
     <string name="ondemand_book_online">Book online</string>
     <!-- Button that opens the agency's information website -->
     <string name="ondemand_more_info">More information</string>
-    <!-- Section heading for the agency's own notes about booking -->
-    <string name="ondemand_details_title">Details</string>
     <!-- Shown in place of the service page when the server does not know the service -->
     <string name="ondemand_not_found">This on-demand service is not available in this region.</string>
     <!-- Heading of the card on a stop's arrivals list naming the on-demand (dial-a-ride) services that serve the stop -->
@@ -1591,6 +1589,17 @@
         <item quantity="other">%d services nearby</item>
     </plurals>
     <string name="ondemand_picker_footer">Sorted by soonest available.</string>
+
+    <!-- Zone detail page (DRT UI spec §3.6) -->
+    <string name="ondemand_where_title">Where</string>
+    <string name="ondemand_detail_service_area">Service area</string>
+    <string name="ondemand_detail_drop_off">Drop-off</string>
+    <string name="ondemand_detail_no_service">No service</string>
+    <string name="ondemand_open_agency_website">Open Agency Website</string>
+    <!-- %1$s is a locality name -->
+    <string name="ondemand_detail_location_sub">Pickups available in %1$s</string>
+    <!-- %1$s is a list of area names -->
+    <string name="ondemand_detail_includes_location">%1$s — includes your location</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

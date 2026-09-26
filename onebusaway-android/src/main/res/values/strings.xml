@@ -1609,6 +1609,14 @@
     <string name="ondemand_planner_empty">No on-demand service covers both locations.</string>
     <string name="ondemand_planner_status_now">Status shown for now.</string>
 
+    <!-- Map layers sheet (DRT UI spec §3.9) -->
+    <string name="map_layers_basemap_standard">Standard</string>
+    <string name="map_layers_basemap_satellite">Satellite</string>
+    <string name="map_layers_basemap_hybrid">Hybrid</string>
+    <string name="map_layers_on_demand_zones">On-demand zones</string>
+    <string name="map_layers_bikes">Bikes</string>
+    <string name="map_layers_scooters">Scooters</string>
+
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 
     <!--Travel Behaviour data collection-->

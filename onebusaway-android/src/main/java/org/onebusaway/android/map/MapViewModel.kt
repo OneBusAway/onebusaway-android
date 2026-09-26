@@ -338,6 +338,9 @@ class MapViewModel @Inject constructor(
     /** Show/hide one rental mode, under the master button. */
     fun setRentalLayerVisible(layer: RentalLayer, visible: Boolean) = rentalController.setLayerVisible(layer, visible)
 
+    /** Re-read the rental preferences after the layers sheet wrote them (spec §3.9). */
+    fun syncRentalLayersFromPreferences() = rentalController.syncFromPreferences()
+
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
     // stopsController `routeActive` lambda above can resolve it without a circular inference.)

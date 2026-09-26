@@ -99,12 +99,14 @@ android {
             dimension = "platform"
             isDefault = true
             buildConfigField("String", "MAP_COMPOSE_ADAPTER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.compose.GoogleComposeAdapter\"")
+            buildConfigField("boolean", "MAP_HAS_BASEMAP_CHOICE", "true")
         }
 
         create("maplibre") {
             // MapLibre-based build using OpenFreeMap tiles - see src/maplibre
             dimension = "platform"
             buildConfigField("String", "MAP_COMPOSE_ADAPTER_CLASS", "\"org.onebusaway.android.map.maplibre.compose.MapLibreComposeAdapter\"")
+            buildConfigField("boolean", "MAP_HAS_BASEMAP_CHOICE", "false")
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.

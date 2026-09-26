@@ -191,6 +191,8 @@ class HomeCallbacks(
     val onNightLight: () -> Unit,
     val onLearnMore: () -> Unit,
     val onOpenSurvey: (url: String) -> Unit,
+    // A tap on a drawn on-demand zone: open that service's page.
+    val onOpenOnDemandService: (serviceId: String) -> Unit = {},
     val onShowArrivals: (FocusedStop) -> Unit = {}
 )
 
@@ -720,7 +722,8 @@ fun HomeScreen(
                                             state = arrivalsState,
                                             selectedRoute = stopFocus?.selectedRoute,
                                             mapRouteColors = mapRouteColors,
-                                            selectedTripBandColor = selectedTripBandColor
+                                            selectedTripBandColor = selectedTripBandColor,
+                                            onOpenOnDemandService = onOpenOnDemandService
                                         )
                                     }
                                 }
@@ -898,6 +901,7 @@ fun HomeScreen(
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
+                                    onOpenOnDemandService = onOpenOnDemandService,
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.

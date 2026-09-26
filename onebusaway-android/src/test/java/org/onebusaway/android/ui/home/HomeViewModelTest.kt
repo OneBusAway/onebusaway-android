@@ -2960,4 +2960,29 @@ class HomeViewModelTest {
         assertEquals(StopFocusTransition.ReplacePresentation, transition)
         assertEquals(someStop, vm.currentFocus.value.focusedStop)
     }
+
+    // ---- an on-demand zone tap opens its service page only when there was nothing to peel ----
+
+    @Test
+    fun `a zone tap may open the service page when nothing is focused`() = runTest {
+        val vm = viewModel()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertTrue(vm.mayOpenOnDemandServiceFromMap())
+    }
+
+    @Test
+    fun `a zone tap over a focused stop only peels the focus`() = runTest {
+        val vm = viewModel()
+        vm.onStopFocused(someStop)
+        assertFalse(vm.mayOpenOnDemandServiceFromMap())
+    }
+
+    @Test
+    fun `a zone tap on the directions map never opens the service page`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        assertFalse(vm.mayOpenOnDemandServiceFromMap())
+        vm.focusItineraryLegOnMap(walkLeg(2))
+        assertFalse(vm.mayOpenOnDemandServiceFromMap())
+    }
 }

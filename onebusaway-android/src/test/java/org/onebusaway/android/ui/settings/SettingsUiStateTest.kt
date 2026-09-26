@@ -35,6 +35,7 @@ class SettingsUiStateTest {
         showZoomControls = false,
         compactStopIcons = false,
         showRentalButton = true,
+        showOnDemandZones = true,
         displayWeatherView = true,
         showAvailableStudies = true,
         leftHandMode = false,

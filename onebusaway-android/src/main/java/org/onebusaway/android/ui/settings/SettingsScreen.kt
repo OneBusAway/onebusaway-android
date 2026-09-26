@@ -147,6 +147,7 @@ fun SettingsRoute(
         onShowZoomControls = viewModel::onShowZoomControlsChanged,
         onCompactStopIcons = viewModel::onCompactStopIconsChanged,
         onShowRentalButton = viewModel::onShowRentalButtonChanged,
+        onShowOnDemandZones = viewModel::onShowOnDemandZonesChanged,
         onDisplayWeatherView = viewModel::onDisplayWeatherViewChanged,
         onShowAvailableStudies = viewModel::onShowAvailableStudiesChanged,
         onLeftHandMode = viewModel::onLeftHandModeChanged,
@@ -188,6 +189,7 @@ class SettingsActions(
     val onShowZoomControls: (Boolean) -> Unit,
     val onCompactStopIcons: (Boolean) -> Unit,
     val onShowRentalButton: (Boolean) -> Unit,
+    val onShowOnDemandZones: (Boolean) -> Unit,
     val onDisplayWeatherView: (Boolean) -> Unit,
     val onShowAvailableStudies: (Boolean) -> Unit,
     val onLeftHandMode: (Boolean) -> Unit,
@@ -310,6 +312,12 @@ fun SettingsScreen(
                     summary = stringResource(R.string.preferences_show_rental_button_summary),
                     checked = state.showRentalButton,
                     onCheckedChange = actions.onShowRentalButton
+                )
+                SwitchPreferenceItem(
+                    title = stringResource(R.string.preferences_show_ondemand_zones_title),
+                    summary = stringResource(R.string.preferences_show_ondemand_zones_summary),
+                    checked = state.showOnDemandZones,
+                    onCheckedChange = actions.onShowOnDemandZones
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_weather_view),

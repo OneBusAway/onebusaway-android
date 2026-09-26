@@ -95,6 +95,8 @@
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
     <string name="browser_error">Unable to launch browser.</string>
+    <!-- Shown when the device has no app that can dial a phone number -->
+    <string name="dialer_error">Unable to open the phone dialer.</string>
     <string name="search_hint">Search stop or route IDs</string>
     <string name="checkmark_description">Selection checkmark</string>
 
@@ -685,6 +687,10 @@
 
     <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
     <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
+    <!-- Settings: title of the switch that toggles the on-demand (GTFS-Flex) zones layer on the map -->
+    <string name="preferences_show_ondemand_zones_title">Show on-demand zones</string>
+    <!-- Settings: summary explaining what the on-demand zones switch above does -->
+    <string name="preferences_show_ondemand_zones_summary">Draw dial-a-ride service areas on the map where the region publishes them</string>
     <!-- Settings: how long the home screen keeps a selected stop after the rider last left it (#2294) -->
     <string name="preferences_focus_timeout_title">Remember selected stop for</string>
     <string name="preferences_focus_timeout_30_minutes">30 minutes</string>
@@ -1447,6 +1453,56 @@
     <string name="rental_window_battery">%1$d%% battery</string>
     <!-- Marker accessibility text: %1$s is what the vehicle is, %2$s is everything else about it -->
     <string name="rental_marker_description">%1$s. %2$s</string>
+
+    <!-- On-demand (GTFS-Flex) services -->
+    <!-- Title of the on-demand service page while the service's own name is not yet loaded -->
+    <string name="ondemand_service_title">On-demand service</string>
+    <!-- Kind of on-demand service: pickup and drop-off anywhere inside one area -->
+    <string name="ondemand_kind_zone">Dial-a-ride zone</string>
+    <!-- Kind of on-demand service: pickup in one area, drop-off in another -->
+    <string name="ondemand_kind_zone_to_zone">Zone to zone</string>
+    <!-- Kind of on-demand service: rides between a fixed set of stops -->
+    <string name="ondemand_kind_stop_group">Between designated stops</string>
+    <!-- Kind of on-demand service: a fixed route that can leave its path to pick riders up -->
+    <string name="ondemand_kind_deviated_route">Route deviation</string>
+    <!-- Kind of on-demand service when the server names a kind this app does not know -->
+    <string name="ondemand_kind_unknown">On-demand</string>
+    <!-- Section heading for the days and hours the service runs -->
+    <string name="ondemand_when_title">When</string>
+    <!-- Service hours when the service runs around the clock -->
+    <string name="ondemand_all_hours">All hours</string>
+    <!-- %1$s and %2$s are clock times, e.g. 5:00 AM – 12:50 AM -->
+    <string name="ondemand_time_window">%1$s – %2$s</string>
+    <!-- %1$s is a clock time that falls after midnight on the following day -->
+    <string name="ondemand_time_next_day">%1$s (next day)</string>
+    <!-- Section heading for booking deadlines and contact options -->
+    <string name="ondemand_how_to_book_title">How to book</string>
+    <!-- %1$s is the date and time booking closes, %2$s is the date of the ride -->
+    <string name="ondemand_book_by">Book by %1$s for a ride on %2$s</string>
+    <!-- %1$s is the date and time booking opens, %2$s is the date of the ride -->
+    <string name="ondemand_booking_opens">Booking opens %1$s for a ride on %2$s</string>
+    <!-- Shown when no advance notice is required -->
+    <string name="ondemand_book_at_ride_time">Book when you are ready to ride</string>
+    <!-- Shown under "How to book" when the feed gives no booking deadline the app can state -->
+    <string name="ondemand_no_deadline_published">This agency has not published a booking deadline. Contact them to book.</string>
+    <!-- Shown under "When" when the feed publishes no days or hours for the service -->
+    <string name="ondemand_no_rules">No service hours are published for this service.</string>
+    <!-- Button that opens the phone dialer; %1$s is a phone number -->
+    <string name="ondemand_call">Call %1$s</string>
+    <!-- Button that opens the agency's booking website -->
+    <string name="ondemand_book_online">Book online</string>
+    <!-- Button that opens the agency's information website -->
+    <string name="ondemand_more_info">More information</string>
+    <!-- Section heading for the agency's own notes about booking -->
+    <string name="ondemand_details_title">Details</string>
+    <!-- Shown in place of the service page when the server does not know the service -->
+    <string name="ondemand_not_found">This on-demand service is not available in this region.</string>
+    <!-- Heading of the card on a stop's arrivals list naming the on-demand (dial-a-ride) services that serve the stop -->
+    <string name="ondemand_card_title">On-demand service at this stop</string>
+    <!-- Second line of an on-demand service row on the arrivals card when the service publishes no booking phone; tapping opens the service page -->
+    <string name="ondemand_card_tap">Tap for hours and booking</string>
+    <!-- Second line of an on-demand service row on the arrivals card; %1$s is a phone number -->
+    <string name="ondemand_card_phone">Book by phone: %1$s</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

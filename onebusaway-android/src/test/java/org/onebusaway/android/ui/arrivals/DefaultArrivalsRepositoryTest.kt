@@ -37,6 +37,9 @@ import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.RouteReference
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.TripReference
+import org.onebusaway.android.api.data.GEOMETRY_DETAIL_NONE
+import org.onebusaway.android.api.data.OnDemandDataSource
+import org.onebusaway.android.api.data.OnDemandResult
 import org.onebusaway.android.api.data.StopArrivals
 import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.database.oba.ImportGate
@@ -51,8 +54,11 @@ import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
 import org.onebusaway.android.database.oba.StopUserInfoRow
 import org.onebusaway.android.demo.FakeDemoModeState
+import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.OnDemandService
+import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.time.ElapsedClock
@@ -205,7 +211,8 @@ class DefaultArrivalsRepositoryTest {
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
         clock: FakeElapsedClock = FakeElapsedClock(),
-        demoMode: FakeDemoModeState = FakeDemoModeState()
+        demoMode: FakeDemoModeState = FakeDemoModeState(),
+        onDemand: OnDemandDataSource = NoOnDemandDataSource()
     ) = DefaultArrivalsRepository(
         regionRepository = FakeRegionRepository(),
         stopArrivals = dataSource,
@@ -216,7 +223,8 @@ class DefaultArrivalsRepositoryTest {
         preferences = FakePreferencesRepository(),
         display = FakeArrivalsDisplay(),
         elapsedClock = clock,
-        demoMode = demoMode
+        demoMode = demoMode,
+        onDemandDataSource = onDemand
     )
 
     // --- Fixtures ---------------------------------------------------------------------------------
@@ -228,7 +236,8 @@ class DefaultArrivalsRepositoryTest {
         shapeId: String = "shape-A",
         arrivalAt: Long = currentTime + 10 * 60_000L,
         hasArrivals: Boolean = true,
-        minutesAfter: Int = 65
+        minutesAfter: Int = 65,
+        onDemandServiceIds: List<String> = emptyList()
     ) = StopArrivals(
         data = EntryWithReferences(
             entry = ArrivalsForStop(
@@ -256,7 +265,8 @@ class DefaultArrivalsRepositoryTest {
                         name = "Pine St & 3rd Ave",
                         lat = 47.61,
                         lon = -122.33,
-                        routeIds = listOf("route-1")
+                        routeIds = listOf("route-1"),
+                        onDemandServiceIds = onDemandServiceIds
                     )
                 ),
                 routes = listOf(RouteReference(id = "route-1", shortName = "5", agencyId = "agency-1")),
@@ -265,6 +275,14 @@ class DefaultArrivalsRepositoryTest {
         ),
         currentTime = currentTime,
         minutesAfter = minutesAfter
+    )
+
+    private fun onDemandService(id: String, name: String) = OnDemandService(
+        id = id,
+        agencyId = "5088",
+        routeId = null,
+        name = name,
+        kind = OnDemandServiceKind.ZONE
     )
 
     // --- Fresh loads ------------------------------------------------------------------------------
@@ -288,6 +306,27 @@ class DefaultArrivalsRepositoryTest {
             setOf(FocusedTrip("trip-A", "route-1", "shape-A", null, directionId = 0)),
             loaded.focusedTrips
         )
+    }
+
+    @Test
+    fun `a stop's on-demand pointers load into the data, and the next poll reuses them`() = runTest {
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot(onDemandServiceIds = listOf("5088_77652"))) }
+        val fetched = mutableListOf<Pair<String, String>>()
+        val onDemand = object : OnDemandDataSource by NoOnDemandDataSource() {
+            override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> {
+                fetched += id to geometryDetail
+                return OnDemandResult.Loaded(onDemandService(id, name = "DOT Paratransit"))
+            }
+        }
+        val repository = repository(dataSource, onDemand = onDemand)
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+        val data = repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(listOf("DOT Paratransit"), data.onDemandServices.map { it.name })
+        // The card draws no zone, so it asks for no geometry.
+        assertEquals(listOf("5088_77652" to GEOMETRY_DETAIL_NONE), fetched)
     }
 
     @Test
@@ -385,6 +424,28 @@ class DefaultArrivalsRepositoryTest {
     }
 
     @Test
+    fun `a stale fallback shows only cached on-demand services and never fetches`() = runTest {
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot(onDemandServiceIds = listOf("cached", "failed"))) }
+        var networkDown = false
+        val onDemand = object : OnDemandDataSource by NoOnDemandDataSource() {
+            override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> {
+                check(!networkDown) { "must not fetch on the stale path" }
+                return if (id == "cached") OnDemandResult.Loaded(onDemandService(id, name = "Cached")) else OnDemandResult.Failed(IOException("down"))
+            }
+        }
+        val repository = repository(dataSource, onDemand = onDemand)
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        networkDown = true
+        dataSource.respond = { Result.failure(IOException("down")) }
+        val stale = repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertTrue(stale.isStale)
+        assertEquals(listOf("Cached"), stale.onDemandServices.map { it.name })
+    }
+
+    @Test
     fun `an uncontended stale re-projection refreshes the derived map snapshot`() = runTest {
         val dataSource = FakeStopArrivalsDataSource()
         val clock = FakeElapsedClock()
@@ -440,4 +501,11 @@ class DefaultArrivalsRepositoryTest {
         // ...but the published holder is NOT rolled back to it.
         assertEquals(freshTrips, repository.lastLoaded()!!.focusedTrips)
     }
+}
+
+/** No stop under test carries a pointer, so nothing is ever fetched; a call is a test bug. */
+private class NoOnDemandDataSource : OnDemandDataSource {
+    override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
+    override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = error("unexpected on-demand fetch for $id")
+    override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
 }

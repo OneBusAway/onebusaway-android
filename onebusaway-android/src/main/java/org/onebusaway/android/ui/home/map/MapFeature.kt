@@ -58,6 +58,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -98,6 +99,7 @@ import org.onebusaway.android.map.mapBanner
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.map.rental.RentalKind
@@ -156,7 +158,9 @@ fun MapFeature(
     // How tall the stops notice currently is, or 0 with none showing (#2229). Reported because the
     // parked-trip button sits in the *host's* overlay layer and has to clear this one, which lives here —
     // the same padding/inset bridging this module already does.
-    onStopsBannerHeight: (Int) -> Unit = {}
+    onStopsBannerHeight: (Int) -> Unit = {},
+    // A tap inside an on-demand zone opens that service's page; the host owns navigation.
+    onOpenOnDemandService: (serviceId: String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -184,6 +188,8 @@ fun MapFeature(
         homeViewModel.onLocationPermissionResult()
     }
 
+    // The callbacks object below outlives recompositions, so it reads the host's latest lambda.
+    val currentOnOpenOnDemandService by rememberUpdatedState(onOpenOnDemandService)
     val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
             override fun onStopClick(marker: StopMarker) {
@@ -210,6 +216,23 @@ fun MapFeature(
             }
 
             override fun onMapClick(point: GeoPoint?) {
+                answerBackgroundTap()
+            }
+
+            /**
+             * A zone covers the map beneath it, so a tap inside one is a background-map tap first: it
+             * answers the keyboard and unfocuses exactly as [onMapClick] does. It opens the service
+             * only when the map had nothing to peel ([HomeViewModel.mayOpenOnDemandServiceFromMap]),
+             * so one tap never both unfocuses and navigates. That is asked before the tap unfocuses,
+             * since unfocusing is what would empty the focus.
+             */
+            override fun onOnDemandZoneClick(zone: ZonePolygon) {
+                val mayOpenService = homeViewModel.mayOpenOnDemandServiceFromMap()
+                if (answerBackgroundTap() && mayOpenService) currentOnOpenOnDemandService(zone.serviceId)
+            }
+
+            /** What any tap on the map itself does; false when the tap was spent on the keyboard instead. */
+            private fun answerBackgroundTap(): Boolean {
                 // A tap made while the keyboard is up is aimed at the keyboard: half the map is behind
                 // it, and the rider is reaching for the part they can see again. So that tap does only
                 // that. Without this it also unfocused the map a level, which from the directions form
@@ -224,10 +247,11 @@ fun MapFeature(
                     // tap, aimed at the map the rider can now see, retires it below.
                     focusManager.clearFocus()
                     keyboard?.hide()
-                    return
+                    return false
                 }
                 dismissNavigateHere()
                 homeViewModel.unfocusMapOneLevel()
+                return true
             }
 
             override fun onMapLongClick(point: GeoPoint) {

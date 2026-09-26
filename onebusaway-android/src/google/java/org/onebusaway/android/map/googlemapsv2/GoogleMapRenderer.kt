@@ -34,6 +34,8 @@ import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polygon
+import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.gms.maps.model.StrokeStyle
@@ -70,11 +72,16 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.ZONE_STROKE_WIDTH_PX
+import org.onebusaway.android.map.render.ZonePolygon
+import org.onebusaway.android.map.render.ZonePolygonReconciler
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
+import org.onebusaway.android.map.render.zoneFillColor
+import org.onebusaway.android.map.render.zoneStrokeColor
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -92,6 +99,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
+ *  - [renderZones] likewise reconciles the on-demand zones in place, so a static redraw never
+ *    recreates their large polygons.
  *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
  *    [GoogleStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position/z-index writes.
@@ -117,6 +126,9 @@ class GoogleMapRenderer(
         ContextCompat.getColor(context, R.color.route_stop_outline)
     )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
+
+    // On-demand zones have their own change boundary ([renderZones]), so a static redraw leaves them be.
+    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZonePolygon, removePolygons = { polygons -> polygons.forEach(Polygon::remove) })
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -323,6 +335,25 @@ class GoogleMapRenderer(
         renderRouteBadges(snapshot.routeBadges)
     }
 
+    /** Reconcile the independently collected on-demand zones, retaining equal native polygons. */
+    fun renderZones(zones: List<ZonePolygon>) {
+        zoneReconciler.reconcile(zones)
+    }
+
+    // At [ZONE_Z_INDEX], so a zone sits beneath every line and marker whenever it is added.
+    private fun addZonePolygon(zone: ZonePolygon): Polygon? {
+        val exterior = zone.rings.firstOrNull() ?: return null
+        val options = PolygonOptions()
+            .addAll(exterior.map { it.toLatLng() })
+            .fillColor(zoneFillColor(zone.color))
+            .strokeColor(zoneStrokeColor(zone.color))
+            .strokeWidth(ZONE_STROKE_WIDTH_PX)
+            .clickable(true)
+            .zIndex(ZONE_Z_INDEX)
+        for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
+        return map.addPolygon(options)
+    }
+
     private fun renderRouteBadges(badges: List<RouteBadge>) {
         // Read the camera rather than trusting the last settle: a static redraw can land mid-gesture, and a
         // label stamped at a stale zoom would keep the wrong size until the camera next moved.
@@ -527,6 +558,7 @@ class GoogleMapRenderer(
 
         clearStatic()
         routePolylineReconciler.clear()
+        zoneReconciler.clear()
 
         stopMarkerLayer.dispose()
 
@@ -899,6 +931,9 @@ class GoogleMapRenderer(
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
+    /** The zone a native polygon draws, for the adapter's polygon-click dispatch. */
+    fun zoneForPolygon(polygon: Polygon): ZonePolygon? = zoneReconciler.zoneFor(polygon)
+
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
     /** The route-continuation badge (#1691) tapped, or null if [marker] isn't that badge. */
@@ -953,6 +988,9 @@ class GoogleMapRenderer(
         // The ping ripple draws above the route line/band (gms always draws Circles beneath markers, so it
         // never covers the vehicle icon regardless of this value).
         private const val PING_Z_INDEX = 3f
+
+        /** Beneath route lines (z 0) and every marker: zones are context, not content. */
+        private const val ZONE_Z_INDEX = -1f
 
         // The route-continuation badge (#1691) draws above vehicles so it's always reliably tappable.
         private const val ROUTE_BADGE_Z_INDEX = 1.5f

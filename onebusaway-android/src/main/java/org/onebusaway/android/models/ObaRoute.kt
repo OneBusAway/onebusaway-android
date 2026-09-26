@@ -50,6 +50,9 @@ interface ObaRoute : ObaElement {
     /** The ID of the agency operating this route. */
     val agencyId: String
 
+    /** Ids of the on-demand services this route is flex-involved in (wiki §3.1); empty for every pre-flex source. */
+    val onDemandServiceIds: List<String> get() = emptyList()
+
     companion object {
         const val TYPE_TRAM = 0
         const val TYPE_SUBWAY = 1

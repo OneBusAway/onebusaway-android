@@ -105,7 +105,9 @@ sealed interface ArrivalsUiState {
         val hiddenAlertCount: Int = 0,
         val stopCode: String? = null,
         val stopLat: Double = 0.0,
-        val stopLon: Double = 0.0
+        val stopLon: Double = 0.0,
+        /** The stop's on-demand services, for the card ahead of the route rows; empty hides it. */
+        val onDemandServices: List<OnDemandServiceItem> = emptyList()
     ) : ArrivalsUiState {
         /** True when the stop has any service alert at all — shown *or* hidden — so the header keeps
          *  its alert icon even after the rider hides every alert. */

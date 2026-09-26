@@ -32,6 +32,8 @@ import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.annotations.Polygon
+import org.maplibre.android.annotations.PolygonOptions
 import org.maplibre.android.annotations.Polyline
 import org.maplibre.android.annotations.PolylineOptions
 import org.maplibre.android.geometry.LatLng
@@ -60,10 +62,15 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.ZonePolygon
+import org.onebusaway.android.map.render.ZonePolygonReconciler
+import org.onebusaway.android.map.render.contains
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.vehicleTitle
+import org.onebusaway.android.map.render.zoneFillColor
+import org.onebusaway.android.map.render.zoneStrokeColor
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -81,6 +88,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
+ *  - [renderZones] likewise reconciles the on-demand zones in place, so a static redraw never
+ *    recreates their large polygons.
  *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
  *    [MapLibreStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position writes.
@@ -161,6 +170,9 @@ class MapLibreRenderer(
     // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on
     // the next so the retained route and per-frame dynamic layers survive a static redraw.
     private val staticAnnotations = mutableListOf<Annotation>()
+
+    // On-demand zones have their own change boundary ([renderZones]), so a static redraw leaves them be.
+    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZonePolygon, removePolygons = { polygons -> map.removeAnnotations(polygons) })
 
     // Whole-route lines are reconciled independently from the combined static snapshot: stop list,
     // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
@@ -328,6 +340,28 @@ class MapLibreRenderer(
         renderRouteBadges(snapshot.routeBadges)
     }
 
+    /**
+     * Reconcile the independently collected on-demand zones, retaining equal native polygons. Classic
+     * shape annotations stack in add order with no z-index, so a zone added after the route lines would
+     * cover them: when any zone is added, the route lines are re-added on top.
+     */
+    fun renderZones(zones: List<ZonePolygon>) {
+        if (zoneReconciler.reconcile(zones)) routePolylineReconciler.redraw(map.cameraPosition.zoom.toFloat())
+    }
+
+    // The classic PolygonOptions has no stroke width, so the outline is the SDK's hairline. Markers always
+    // draw above shape annotations, so the stops sit on top whatever the add order.
+    private fun addZonePolygon(zone: ZonePolygon): Polygon? {
+        val exterior = zone.rings.firstOrNull() ?: return null
+        val options = PolygonOptions()
+            .addAll(exterior.map { it.toLatLng() })
+            .fillColor(zoneFillColor(zone.color))
+            .strokeColor(zoneStrokeColor(zone.color))
+            .alpha(1f)
+        for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
+        return map.addPolygon(options)
+    }
+
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
     // icon on the point by default, so no anchor call is needed here (contrast Google's explicit
     // .anchor(0.5f, 0.5f)). Draw order is add-order in maplibre (no z-index on classic markers), so
@@ -423,6 +457,7 @@ class MapLibreRenderer(
         interlineSeamLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
         routePolylineReconciler.clear()
+        zoneReconciler.clear()
         map.removeAnnotations()
 
         staticAnnotations.clear()
@@ -760,6 +795,12 @@ class MapLibreRenderer(
     }
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
+
+    /** The topmost zone under [point], for the adapter's map-click dispatch (classic polygons have no click listener). */
+    fun zoneAt(point: LatLng): ZonePolygon? {
+        val geoPoint = GeoPoint(point.latitude, point.longitude)
+        return renderState.snapshot.value.onDemandZones.lastOrNull { it.contains(geoPoint) }
+    }
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

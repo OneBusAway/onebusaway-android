@@ -174,10 +174,19 @@ object ExternalIntents {
         false
     }
 
-    fun goToPhoneDialer(context: Context, url: String) {
-        val intent = Intent(Intent.ACTION_DIAL)
-        intent.setData(url.toUri())
-        context.startActivity(intent)
+    /**
+     * Opens the dialer with [phoneNumber] filled in; the rider still places the call. The number is
+     * the scheme-specific part as published, so a `#` or an extension suffix is encoded rather than
+     * read as a URI fragment. A device with no dialer (many tablets) gets a toast, not a crash.
+     */
+    fun goToPhoneDialer(context: Context, phoneNumber: String) {
+        val intent = Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", phoneNumber, null))
+        try {
+            context.startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(context, context.getString(R.string.dialer_error), Toast.LENGTH_SHORT)
+                .show()
+        }
     }
 
     /**

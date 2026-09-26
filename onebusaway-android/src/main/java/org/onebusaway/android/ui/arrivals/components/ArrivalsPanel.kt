@@ -60,7 +60,8 @@ fun ArrivalsPanel(
     anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
     displayMode: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
     onDisplayModeChange: ((ArrivalDisplayMode) -> Unit)? = null,
-    modeSwitchModifier: Modifier = Modifier
+    modeSwitchModifier: Modifier = Modifier,
+    onOpenOnDemandService: (serviceId: String) -> Unit = {}
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -79,6 +80,7 @@ fun ArrivalsPanel(
             displayMode = displayMode,
             onDisplayModeChange = onDisplayModeChange,
             modeSwitchModifier = modeSwitchModifier,
+            onOpenOnDemandService = onOpenOnDemandService,
             rowCallbacks = rowCallbacks,
             onShowAlert = handler::onShowAlert,
             onHideAlert = handler::onHideAlert,

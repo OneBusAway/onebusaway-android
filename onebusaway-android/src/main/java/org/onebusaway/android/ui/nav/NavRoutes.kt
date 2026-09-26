@@ -187,6 +187,13 @@ object NavRoutes {
     /** Builds a navigable [ROUTE_INFO] route, encoding the id (route ids can contain `/`, spaces). */
     fun routeInfo(routeId: String): String = "routeInfo/${Uri.encode(routeId)}"
 
+    // --- On-demand (GTFS-Flex) service page ---
+    const val ARG_ONDEMAND_SERVICE_ID = "onDemandServiceId"
+    const val ONDEMAND_SERVICE = "onDemandService/{$ARG_ONDEMAND_SERVICE_ID}"
+
+    /** Builds a navigable [ONDEMAND_SERVICE] route; service ids equal route ids and may contain `/`. */
+    fun onDemandService(serviceId: String): String = "onDemandService/${Uri.encode(serviceId)}"
+
     // --- Mapless arrivals and shared stop nav-args ---
     const val ARRIVALS = "arrivals/{stopId}?stopName={stopName}&routeId={routeId}&routeHeadsign={routeHeadsign}"
 

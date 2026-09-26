@@ -17,6 +17,7 @@ package org.onebusaway.android.map.compose
 
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.util.GeoPoint
@@ -63,6 +64,9 @@ interface ObaMapCallbacks {
      * was missed. Same shape as [onStopClick], which likewise hands over the render model.
      */
     fun onRouteBadgeClick(badge: RouteBadge) {}
+
+    /** A tap inside an on-demand zone — the host opens that service's page. */
+    fun onOnDemandZoneClick(zone: ZonePolygon) {}
 
     /** The rental info-window tap — the host opens the operator (app, deep link, or site). */
     fun onRentalInfoWindowClick(place: RentalPlace)

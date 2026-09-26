@@ -141,7 +141,8 @@ class ArrivalsViewModelTest {
         minutesAfter: Int = 65,
         isStale: Boolean = false,
         favorite: Boolean = false,
-        hideAlertsByDefault: Boolean = false
+        hideAlertsByDefault: Boolean = false,
+        onDemandServices: List<OnDemandServiceItem> = emptyList()
     ) = ArrivalsData(
         arrivals = emptyList(),
         routeGroups = emptyList(),
@@ -154,8 +155,17 @@ class ArrivalsViewModelTest {
         hideAlertsByDefault = hideAlertsByDefault,
         stopCode = null,
         stopLat = 0.0,
-        stopLon = 0.0
+        stopLon = 0.0,
+        onDemandServices = onDemandServices
     )
+
+    @Test
+    fun `on-demand services reach the content state`() = runTest {
+        val item = OnDemandServiceItem("5088_77652", "DOT Paratransit", "703-746-5222")
+        val viewModel = ArrivalsViewModel("1_100", FakeArrivalsRepository(Result.success(data(onDemandServices = listOf(item)))))
+        viewModel.refresh()
+        assertEquals(listOf(item), (viewModel.state.value as ArrivalsUiState.Content).onDemandServices)
+    }
 
     @Test
     fun `initial state is Loading`() = runTest {

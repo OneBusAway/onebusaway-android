@@ -67,9 +67,11 @@ internal data class ArrivalClock(val expected: String, val corrects: String? = n
  *
  * Both fall out of comparing what is actually printed, so there is no threshold to pick here.
  */
-internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock = // Without a usable prediction the two are the same instant, so the second format call is a
+internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock {
+    // Without a usable prediction the two are the same instant, so the second format call is a
     // guaranteed-identical string — skip it rather than pay for it on every scheduled-only arrival.
-    clockOf(context, displayTime, scheduledTime.takeIf { it != displayTime })
+    return clockOf(context, displayTime, scheduledTime.takeIf { it != displayTime })
+}
 
 /**
  * The [ArrivalClock] for a time in force, [expected], correcting the timetable time [scheduled] when

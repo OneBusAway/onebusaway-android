@@ -41,6 +41,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -110,10 +111,12 @@ fun OnDemandDockBar(
     }
     val badge = badgeText(pagerState.currentPage + 1, pages.size).resolve()
     val moreServicesLabel = stringResource(R.string.ondemand_bar_a11y_more_services)
-    val shapes = if (pages.all { geometry.containsKey(it.match.service.id) }) {
-        pages.flatMap { page -> geometry.getValue(page.match.service.id).toThumbnailShapes(page.thumbnailColor) }
-    } else {
-        null
+    val shapes = remember(pages, geometry) {
+        if (pages.all { geometry.containsKey(it.match.service.id) }) {
+            pages.flatMap { page -> geometry.getValue(page.match.service.id).toThumbnailShapes(page.thumbnailColor) }
+        } else {
+            null
+        }
     }
     Column(modifier.testTag(OnDemandDockTestTags.BAR), horizontalAlignment = Alignment.CenterHorizontally) {
         HorizontalPager(

@@ -37,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -201,8 +202,8 @@ private fun LocationRow(check: LocationCheck) {
 
 @Composable
 private fun Thumbnail(content: OnDemandServiceUiState.Content, color: Int) {
-    val shapes = content.service.areas.toThumbnailShapes(color)
-    val centre = shapesCentre(shapes) ?: return
+    val shapes = remember(content.service.areas, color) { content.service.areas.toThumbnailShapes(color) }
+    val centre = remember(shapes) { shapesCentre(shapes) } ?: return
     val check = content.locationCheck
     ZoneThumbnail(
         shapes = shapes,
@@ -275,11 +276,11 @@ private fun HowToBookSection(content: OnDemandServiceUiState.Content, locale: Lo
             deadlineBooking?.let { IconRow(R.drawable.ic_schedule, deadlineLine(it, locale)) }
             url?.let {
                 if (deadlineBooking != null) HorizontalDivider(Modifier.padding(start = 56.dp))
-                IconRow(R.drawable.ic_open_in_new, stringResource(R.string.ondemand_open_agency_website), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { onOpenUrl(it) })
+                IconRow(R.drawable.ic_open_in_new, stringResource(R.string.ondemand_open_agency_website), isLink = true, modifier = Modifier.clickable { onOpenUrl(it) })
             }
             infoUrl?.let {
                 if (deadlineBooking != null || url != null) HorizontalDivider(Modifier.padding(start = 56.dp))
-                IconRow(R.drawable.ic_info, stringResource(R.string.ondemand_more_info), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { onOpenUrl(it) })
+                IconRow(R.drawable.ic_info, stringResource(R.string.ondemand_more_info), isLink = true, modifier = Modifier.clickable { onOpenUrl(it) })
             }
         }
     }
@@ -296,11 +297,18 @@ private fun DetailCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun IconRow(iconRes: Int, title: String, subtitle: String? = null, tint: Color = MaterialTheme.colorScheme.onSurfaceVariant, modifier: Modifier = Modifier) {
+private fun IconRow(
+    iconRes: Int,
+    title: String,
+    subtitle: String? = null,
+    isLink: Boolean = false,
+    tint: Color = if (isLink) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier: Modifier = Modifier
+) {
     Row(modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Icon(painterResource(iconRes), contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
         Column {
-            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = if (tint == MaterialTheme.colorScheme.primary) tint else MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = if (isLink) tint else MaterialTheme.colorScheme.onSurface)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }

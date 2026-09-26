@@ -387,12 +387,24 @@ class MapLibreRenderer(
             )
         }
         zone.labelPoint?.let { point ->
-            val icon = zonePinIcons.getOrPut("${zone.serviceName}:$color") { iconFactory.fromBitmap(ZonePinBitmaps.pin(context, zone.serviceName, color).bitmap) }
+            val icon = zonePinIcons.getOrPut("${zone.serviceName}:$color") { iconFactory.fromBitmap(centredOnDisc(ZonePinBitmaps.pin(context, zone.serviceName, color))) }
             val marker = map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon))
             zoneByPin[marker] = zone
             annotations += marker
         }
         return annotations
+    }
+
+    // The classic Marker centres its icon on the point and takes no anchor, so the pin is padded with
+    // clear space above until its disc (not the disc-plus-label box) sits at the bitmap's centre, as
+    // Google's `anchor(0.5f, anchorY)` places it.
+    private fun centredOnDisc(pin: ZonePinBitmaps.ZonePin): Bitmap {
+        val source = pin.bitmap
+        val discCentreY = pin.anchorY * source.height
+        val paddedHeight = (2 * (source.height - discCentreY)).toInt().coerceAtLeast(source.height)
+        val padded = createBitmap(source.width, paddedHeight)
+        Canvas(padded).drawBitmap(source, 0f, (paddedHeight - source.height).toFloat(), null)
+        return padded
     }
 
     private fun removeZones(groups: List<List<Annotation>>) {

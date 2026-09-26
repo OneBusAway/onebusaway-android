@@ -339,6 +339,10 @@ class OnDemandServicePresentationTest {
         assertEquals(setOf(DayOfWeek.SUNDAY), noServiceDays(ended, today))
         assertTrue(noServiceDays(alexandria, today).isEmpty())
         assertTrue(noServiceDays(alexandria, null).isEmpty())
+        // No rule calendar resolves at all: spec §2.5 treats this as Unknown, not a service that
+        // runs zero days, so it must not report every weekday as unserved.
+        assertTrue(noServiceDays(alexandria.copy(rules = emptyList()), today).isEmpty())
+        assertTrue(noServiceDays(alexandria.copy(rules = listOf(rule("dangling", "05:00:00"))), today).isEmpty())
     }
 
     @Test

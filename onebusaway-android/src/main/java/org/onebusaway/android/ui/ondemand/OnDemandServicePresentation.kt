@@ -141,15 +141,17 @@ private fun mergedWhenRows(service: OnDemandService): List<WhenRow> {
     return rows.groupBy { it.start to it.end }.values.map { group -> group.first().copy(days = group.flatMap { it.days }.toSet()) }
 }
 
-/** Weekdays absent from every rule calendar whose end date is [today] or later. Empty without a date. */
+/**
+ * Weekdays absent from every rule calendar whose end date is [today] or later. Empty without a
+ * date, and empty when no rule calendar resolves at all (spec §2.5: no rules is Unknown, not a
+ * service that runs zero days) — only a rule with a *resolvable but expired* calendar reports
+ * every weekday as unserved.
+ */
 internal fun noServiceDays(service: OnDemandService, today: LocalDate?): Set<DayOfWeek> {
     if (today == null) return emptySet()
-    val served = service.rules
-        .flatMap { it.calendarIds }
-        .mapNotNull { service.calendars[it] }
-        .filter { !it.endDate.isBefore(today) }
-        .flatMap { it.days }
-        .toSet()
+    val calendars = service.rules.flatMap { it.calendarIds }.mapNotNull { service.calendars[it] }
+    if (calendars.isEmpty()) return emptySet()
+    val served = calendars.filter { !it.endDate.isBefore(today) }.flatMap { it.days }.toSet()
     return DayOfWeek.entries.toSet() - served
 }
 

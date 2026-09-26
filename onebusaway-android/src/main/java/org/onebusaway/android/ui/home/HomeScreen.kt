@@ -595,9 +595,8 @@ fun HomeScreen(
                 val stripDp = navigationBarStripHeight()
                 val capPeekDp = with(density) {
                     val height = LocalWindowInfo.current.containerSize.height
-                    (height * sheetContent.peekHeightFraction).toDp()
-                } +
-                    stripDp
+                    (height * sheetContent.peekHeightFraction).toDp() + stripDp
+                }
 
                 // The full collapsed peek: the fixed cap while loading or still opening, then min(content, cap)
                 // once settled — fitting short stops without dead space, clipping tall ones at the cap. The

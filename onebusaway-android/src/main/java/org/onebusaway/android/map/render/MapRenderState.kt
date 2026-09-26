@@ -46,9 +46,9 @@ fun interface MapProjector {
 /**
  * The map's content padding, in pixels. [topPx] keeps the compass, vehicle markers, and framed content
  * below the floating top chrome or the active route-focus control, whichever extends farther down;
- * [bottomPx] keeps the focused stop above the arrivals sheet, and everything above the system navigation bar. Held as declarative state and applied by
- * the renderer (the Google adapter uses `GoogleMap.setPadding`) instead of an
- * imperative `mapView.setPadding(...)` poke. Kept in its own flow (not [MapRenderSnapshot]) so a
+ * [bottomPx] keeps the focused stop above the arrivals sheet, and everything above the system navigation
+ * bar. Held as declarative state and applied by the renderer (the Google adapter uses
+ * `GoogleMap.setPadding`) instead of an imperative `mapView.setPadding(...)` poke. Kept in its own flow (not [MapRenderSnapshot]) so a
  * padding change doesn't recompose the overlay content.
  */
 data class MapPadding(val topPx: Int = 0, val bottomPx: Int = 0)
@@ -629,7 +629,7 @@ class MapRenderState {
     // exactly wrong while the rider is aiming the centre crosshair, because the point captured on
     // confirm IS the camera target. With a top inset the captured point lands below the crosshair by
     // half the inset; with a bottom inset, above it. So a pick suspends padding outright rather than
-    // zeroing contributors one at a time: there are four independent writers here, and any of them
+    // zeroing contributors one at a time: there are five independent writers here, and any of them
     // left standing would reintroduce the offset.
     private var centerPickActive = false
 

@@ -275,7 +275,7 @@ private val DIRECTIONS_SHEET_FORM_GAP = 8.dp
  * floor M3 drops the Expanded anchor outright (it skips it when sheet height == peek) and the sheet just
  * rests at the handle — the honest outcome for a window with no room to open into.
  */
-internal fun directionsSheetHeight(windowHeight: Dp, formBottom: Dp, peekHeight: Dp, bottomStrip: Dp = 0.dp): Dp {
+internal fun directionsSheetHeight(windowHeight: Dp, formBottom: Dp, peekHeight: Dp, bottomStrip: Dp): Dp {
     val belowForm = windowHeight - formBottom - DIRECTIONS_SHEET_FORM_GAP
     return minOf(windowHeight * DIRECTIONS_SHEET_HEIGHT_FRACTION + bottomStrip, belowForm).coerceAtLeast(peekHeight)
 }

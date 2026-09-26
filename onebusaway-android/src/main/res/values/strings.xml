@@ -1462,16 +1462,6 @@
     <!-- On-demand (GTFS-Flex) services -->
     <!-- Title of the on-demand service page while the service's own name is not yet loaded -->
     <string name="ondemand_service_title">On-demand service</string>
-    <!-- Kind of on-demand service: pickup and drop-off anywhere inside one area -->
-    <string name="ondemand_kind_zone">Dial-a-ride zone</string>
-    <!-- Kind of on-demand service: pickup in one area, drop-off in another -->
-    <string name="ondemand_kind_zone_to_zone">Zone to zone</string>
-    <!-- Kind of on-demand service: rides between a fixed set of stops -->
-    <string name="ondemand_kind_stop_group">Between designated stops</string>
-    <!-- Kind of on-demand service: a fixed route that can leave its path to pick riders up -->
-    <string name="ondemand_kind_deviated_route">Route deviation</string>
-    <!-- Kind of on-demand service when the server names a kind this app does not know -->
-    <string name="ondemand_kind_unknown">On-demand</string>
     <!-- Section heading for the days and hours the service runs -->
     <string name="ondemand_when_title">When</string>
     <!-- Service hours when the service runs around the clock -->

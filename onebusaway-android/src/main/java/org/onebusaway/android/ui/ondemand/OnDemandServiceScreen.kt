@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.ondemand
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,23 +41,13 @@ import java.time.format.FormatStyle
 import java.time.format.TextStyle
 import java.util.Locale
 import org.onebusaway.android.R
-import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.models.ServiceDayTime
 import org.onebusaway.android.ondemand.BookingState
 import org.onebusaway.android.ui.compose.components.ErrorContent
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 
-@StringRes
-private fun OnDemandServiceKind.labelRes(): Int = when (this) {
-    OnDemandServiceKind.ZONE -> R.string.ondemand_kind_zone
-    OnDemandServiceKind.ZONE_TO_ZONE -> R.string.ondemand_kind_zone_to_zone
-    OnDemandServiceKind.STOP_GROUP -> R.string.ondemand_kind_stop_group
-    OnDemandServiceKind.DEVIATED_ROUTE -> R.string.ondemand_kind_deviated_route
-    OnDemandServiceKind.UNKNOWN -> R.string.ondemand_kind_unknown
-}
-
-/** The service page: name, kind, when it runs, how to book, and the feed's own notes. */
+/** The service page: name, when it runs, how to book, and the feed's own notes. */
 @Composable
 fun OnDemandServiceScreen(
     state: OnDemandServiceUiState,
@@ -93,7 +82,6 @@ private fun ServiceContent(content: OnDemandServiceUiState.Content, onCall: (Str
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(stringResource(content.service.kind.labelRes()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         content.service.description?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
 
         Text(stringResource(R.string.ondemand_when_title), style = MaterialTheme.typography.titleMedium)

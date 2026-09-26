@@ -113,14 +113,29 @@ fun computeAvailability(service: OnDemandService, now: Instant): OnDemandAvailab
     val nextRunStart = if (runningNow) null else windows.nextStartAfter(now, today)
     val firstActiveDate = windows.firstActiveDate(today)
     val bookingTier = bookingTier(service, firstActiveDate)
-    val bookableNow = containing.any { service.evaluateBooking(it.rule, it.date, now, zone).state == BookingState.OPEN }
+    val containingBookings = containing.map { it to service.evaluateBooking(it.rule, it.date, now, zone) }
+    val bookableNow = containingBookings.any { (_, evaluation) -> evaluation.state == BookingState.OPEN }
     val nextBookable = service.serviceNextBookableDate(now, zone)
     val line = service.bookingLine(now, zone)
-    val status = status(bookingTier, line, anyActive = firstActiveDate != null, hasRules = service.rules.isNotEmpty(), runningNow, bookableNow, runningUntil, nextRunStart)
+    // Same-day booking closed for today while the window is still open (spec §2.5 step 3, I4): the
+    // rule's own next bookable service day, not bookingLine's search, which can land on a later date
+    // than the one governing the window actually running now.
+    val nextBookingOpening = if (runningNow && !bookableNow) {
+        containing.mapNotNull { service.nextSameDayOpening(it.rule, now, zone) }.minOrNull()
+    } else {
+        null
+    }
+    val status = status(bookingTier, line, anyActive = firstActiveDate != null, hasRules = service.rules.isNotEmpty(), runningNow, bookableNow, runningUntil, nextRunStart, nextBookingOpening)
     val tags = tags(bookingTier, service.eligibility)
     val bookingChange = line?.evaluation?.let { evaluation ->
         listOfNotNull(evaluation.openInstant, evaluation.cutoffInstant).filter { it.isAfter(now) }.minOrNull()
     }
+    // The window(s) actually running now may be dated a different service day than bookingLine's own
+    // search lands on (a window that crosses midnight is dated the day before), so their booking
+    // instants are folded in directly rather than trusting bookingLine alone.
+    val containingChange = containingBookings
+        .flatMap { (_, evaluation) -> listOfNotNull(evaluation.openInstant, evaluation.cutoffInstant) }
+        .filter { it.isAfter(now) }
     return OnDemandAvailability(
         runningNow = runningNow,
         runningUntil = runningUntil,
@@ -131,7 +146,7 @@ fun computeAvailability(service: OnDemandService, now: Instant): OnDemandAvailab
         status = status,
         tags = tags,
         usabilityTier = usabilityTier(tags, status, nextBookable, today),
-        nextChangeInstant = listOfNotNull(runningUntil, nextRunStart, bookingChange).minOrNull(),
+        nextChangeInstant = (listOfNotNull(runningUntil, nextRunStart, bookingChange) + containingChange).minOrNull(),
         zone = zone
     )
 }
@@ -219,14 +234,32 @@ private fun status(
     runningNow: Boolean,
     bookableNow: Boolean,
     runningUntil: Instant?,
-    nextRunStart: Instant?
+    nextRunStart: Instant?,
+    nextBookingOpening: Instant?
 ): OnDemandStatus = when {
     tier == BookingTier.ADVANCE -> advanceStatus(line, anyActive)
     runningNow && bookableNow -> OnDemandStatus.OpenNow(runningUntil)
+    // Same-day booking's cutoff has passed for today but the window is still open (I4): the service
+    // reads as opening again rather than falling through to unknown.
+    runningNow && nextBookingOpening != null -> OnDemandStatus.OpensAt(nextBookingOpening)
     nextRunStart != null -> OnDemandStatus.OpensAt(nextRunStart)
     // Rules that never activate again are closed; no rules at all is not knowable (spec §2.5 steps 4–5).
     !anyActive && hasRules -> OnDemandStatus.Closed
     else -> OnDemandStatus.Unknown
+}
+
+/**
+ * The next instant a same-day rule that is running now but not bookable today becomes bookable
+ * again: the booking window's open instant on the rule's next bookable service day, or that day's
+ * pickup-window start when the rule states no explicit opening time (spec §2.5 step 2, I4). Null
+ * for any other booking tier, an unresolved booking rule, or a rule with no further bookable day.
+ */
+private fun OnDemandService.nextSameDayOpening(rule: AvailabilityRule, now: Instant, zone: ZoneId): Instant? {
+    val bookingRule = pickupBookingRule(rule)?.takeIf { it.bookingType == BookingType.SAME_DAY } ?: return null
+    val today = now.atZone(zone).toLocalDate()
+    val nextDate = BookingDeadlineEvaluator.nextBookableServiceDate(rule, bookingRule, today, now, zone, calendars) ?: return null
+    val opening = BookingDeadlineEvaluator.evaluate(rule, bookingRule, nextDate, now, zone, calendars).openInstant
+    return opening ?: BookingDeadlineEvaluator.instantOf(nextDate, rule.startPickupTime ?: MIDNIGHT, zone)
 }
 
 /** An advance service leads with its booking window, not with whether vehicles are running. */

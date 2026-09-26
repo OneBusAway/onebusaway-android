@@ -186,6 +186,47 @@ class OnDemandAvailabilityTest {
     }
 
     @Test
+    fun `same-day cutoff passed while still running opens again the next active day`() {
+        // 90 minutes' notice pushes the cutoff to 15:10, ahead of the 16:40 window end: the service
+        // is still running but no longer bookable for today (spec §2.5 step 3, I4).
+        val closedForToday = service(bookingRules = mapOf("CC_b1" to bookingRule(durationMin = 90)))
+        val availability = computeAvailability(closedForToday, instant("2026-03-10T15:30:00-04:00"))
+        assertTrue(availability.runningNow)
+        assertFalse(availability.bookableNow)
+        assertEquals(OnDemandStatus.OpensAt(instant("2026-03-11T07:20:00-04:00")), availability.status)
+        assertEquals(TIER_ADVANCE, availability.usabilityTier)
+    }
+
+    @Test
+    fun `same-day booking is still open just before the cutoff`() {
+        val closedForToday = service(bookingRules = mapOf("CC_b1" to bookingRule(durationMin = 90)))
+        val availability = computeAvailability(closedForToday, instant("2026-03-10T15:00:00-04:00"))
+        assertTrue(availability.bookableNow)
+        assertEquals(OnDemandStatus.OpenNow(instant("2026-03-10T16:40:00-04:00")), availability.status)
+        assertEquals(TIER_OPEN_NOW, availability.usabilityTier)
+        // The 15:10 cutoff is the next thing to happen, ahead of the 16:40 window end.
+        assertEquals(instant("2026-03-10T15:10:00-04:00"), availability.nextChangeInstant)
+    }
+
+    @Test
+    fun `after the window ends the cutoff fix leaves behaviour unchanged`() {
+        val closedForToday = service(bookingRules = mapOf("CC_b1" to bookingRule(durationMin = 90)))
+        val availability = computeAvailability(closedForToday, instant("2026-03-10T16:50:00-04:00"))
+        assertFalse(availability.runningNow)
+        assertEquals(OnDemandStatus.OpensAt(instant("2026-03-11T07:20:00-04:00")), availability.status)
+        assertEquals(TIER_ADVANCE, availability.usabilityTier)
+    }
+
+    @Test
+    fun `a midnight-crossing window's cutoff lands in the next change instant`() {
+        // Same window as the previous-service-day test, but pinning that its own 00:45 cutoff — not
+        // just the 01:00 window end — surfaces so the dock re-checks in time (Task 2 deferred minor).
+        val night = service(rules = listOf(rule(start = "20:00:00", end = "25:00:00")), bookingRules = mapOf("CC_b1" to bookingRule(durationMin = 15)))
+        val availability = computeAvailability(night, instant("2026-03-11T00:30:00-04:00"))
+        assertEquals(instant("2026-03-11T00:45:00-04:00"), availability.nextChangeInstant)
+    }
+
+    @Test
     fun `every calendar ended is closed, tier 5, and walks no further`() {
         val ended = service(calendars = mapOf("CC_cal" to calendar(end = LocalDate.of(2026, 2, 28))))
         val availability = computeAvailability(ended, tuesdayTwoPm)

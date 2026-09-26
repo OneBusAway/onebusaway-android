@@ -16,7 +16,6 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.map.rental.METERS_PER_DEGREE_LATITUDE
-import org.onebusaway.android.map.rental.visibleHeightMeters
 import org.onebusaway.android.util.GeoPoint
 
 /** Spec §3.4: fit the stack's union bbox with 20 % padding. */
@@ -28,12 +27,20 @@ const val ONDEMAND_ZOOM_OUT_MIN_HEIGHT_METERS = 2 * ONDEMAND_STREET_LEVEL_MAX_HE
 /** Never larger than 0.9 × the outer window, so the layer stays drawn. */
 const val ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS = 0.9 * ONDEMAND_MAX_VISIBLE_HEIGHT_METERS
 
+/** Where the bar's thumbnail tap points the camera: [center], showing [latSpan] degrees of latitude. */
+data class OnDemandZoomOutTarget(val center: GeoPoint, val latSpan: Double)
+
 /**
- * The corners the map fits when the bar's thumbnail is tapped: the union of [bounds] padded by
- * [ONDEMAND_ZOOM_OUT_PADDING_FRACTION]; when that is shorter than the minimum or taller than the
- * maximum, a box of that height centred on [probe], keeping the padded box's aspect ratio.
+ * The thumbnail tap's target: the union of [bounds] padded by [ONDEMAND_ZOOM_OUT_PADDING_FRACTION],
+ * centred on the union. [viewportAspect] is the map's lonSpan / latSpan; a box wider than the
+ * viewport is shown by its width, so the latitude the map would show is what gets clamped. Outside
+ * the min/max height the target is the clamped height centred on [probe].
+ *
+ * The result is a centre and a span rather than corners to fit: a fit adds the map's content padding
+ * (search bar, dock, framing margin) on top of the box, which can push a clamped box past
+ * [ONDEMAND_MAX_VISIBLE_HEIGHT_METERS] and hide the layer the tap was meant to show.
  */
-fun onDemandZoomOutCorners(bounds: List<Pair<GeoPoint, GeoPoint>>, probe: GeoPoint): Pair<GeoPoint, GeoPoint>? {
+fun onDemandZoomOutTarget(bounds: List<Pair<GeoPoint, GeoPoint>>, probe: GeoPoint, viewportAspect: Double): OnDemandZoomOutTarget? {
     if (bounds.isEmpty()) return null
     val minLat = bounds.minOf { it.first.latitude }
     val maxLat = bounds.maxOf { it.second.latitude }
@@ -41,17 +48,12 @@ fun onDemandZoomOutCorners(bounds: List<Pair<GeoPoint, GeoPoint>>, probe: GeoPoi
     val maxLon = bounds.maxOf { it.second.longitude }
     val height = (maxLat - minLat) * (1 + ONDEMAND_ZOOM_OUT_PADDING_FRACTION)
     val width = (maxLon - minLon) * (1 + ONDEMAND_ZOOM_OUT_PADDING_FRACTION)
-    val heightMeters = visibleHeightMeters(height)
-    val clampedHeight = when {
-        heightMeters < ONDEMAND_ZOOM_OUT_MIN_HEIGHT_METERS -> ONDEMAND_ZOOM_OUT_MIN_HEIGHT_METERS / METERS_PER_DEGREE_LATITUDE
-        heightMeters > ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS -> ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS / METERS_PER_DEGREE_LATITUDE
-        else -> null
+    val shownLatSpan = maxOf(height, width / viewportAspect)
+    val minLatSpan = ONDEMAND_ZOOM_OUT_MIN_HEIGHT_METERS / METERS_PER_DEGREE_LATITUDE
+    val maxLatSpan = ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS / METERS_PER_DEGREE_LATITUDE
+    return when {
+        shownLatSpan < minLatSpan -> OnDemandZoomOutTarget(probe, minLatSpan)
+        shownLatSpan > maxLatSpan -> OnDemandZoomOutTarget(probe, maxLatSpan)
+        else -> OnDemandZoomOutTarget(GeoPoint((minLat + maxLat) / 2, (minLon + maxLon) / 2), shownLatSpan)
     }
-    if (clampedHeight == null) {
-        val centreLat = (minLat + maxLat) / 2
-        val centreLon = (minLon + maxLon) / 2
-        return GeoPoint(centreLat - height / 2, centreLon - width / 2) to GeoPoint(centreLat + height / 2, centreLon + width / 2)
-    }
-    val clampedWidth = if (height == 0.0) clampedHeight else width * clampedHeight / height
-    return GeoPoint(probe.latitude - clampedHeight / 2, probe.longitude - clampedWidth / 2) to GeoPoint(probe.latitude + clampedHeight / 2, probe.longitude + clampedWidth / 2)
 }

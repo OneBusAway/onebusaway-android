@@ -23,6 +23,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlin.math.log2
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -306,8 +307,11 @@ class MapViewModel @Inject constructor(
     /** The bar thumbnail's tap (spec §3.4): fit the stack's zones at region level, clamped about [probe]. */
     fun zoomOutToOnDemandZones(matches: List<OnDemandMatch>, probe: GeoPoint) {
         val bounds = matches.flatMap { match -> match.service.areas.map { it.southWest to it.northEast } }
-        val corners = onDemandZoomOutCorners(bounds, probe) ?: return
-        mapHost.frame(FramingIntent.Points(listOf(corners.first, corners.second), minSpanDeg = 0.0))
+        val viewport = camera.value?.takeIf { it.latSpan > 0 } ?: return
+        val target = onDemandZoomOutTarget(bounds, probe, viewport.lonSpan / viewport.latSpan) ?: return
+        // Latitude span halves with each zoom level, so the target span maps to a zoom offset.
+        val zoom = viewport.zoom + log2(viewport.latSpan / target.latSpan)
+        mapHost.restoreViewport(MapViewport(target.center, zoom))
     }
 
     /** The outside chevron (spec §3.4): centre the nearest boundary point, keeping the zoom. */

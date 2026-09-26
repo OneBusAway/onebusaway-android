@@ -29,35 +29,59 @@ class OnDemandFramingTest {
 
     @Test
     fun `a normal zone is padded by twenty percent about its own centre`() {
-        val (sw, ne) = requireNotNull(onDemandZoomOutCorners(listOf(box(0.2, GeoPoint(45.2, -85.0))), probe))
-        assertEquals(0.24, ne.latitude - sw.latitude, 1e-9)
-        assertEquals(45.2, (sw.latitude + ne.latitude) / 2, 1e-9)
-        assertEquals(-85.0, (sw.longitude + ne.longitude) / 2, 1e-9)
+        val target = requireNotNull(onDemandZoomOutTarget(listOf(box(0.2, GeoPoint(45.2, -85.0))), probe, SQUARE_VIEWPORT))
+        assertEquals(0.24, target.latSpan, 1e-9)
+        assertNear(GeoPoint(45.2, -85.0), target.center)
     }
 
     @Test
-    fun `a tiny zone is framed at twice the street gate about the probe`() {
-        val (sw, ne) = requireNotNull(onDemandZoomOutCorners(listOf(box(0.005)), probe))
-        assertEquals(ONDEMAND_ZOOM_OUT_MIN_HEIGHT_METERS, visibleHeightMeters(ne.latitude - sw.latitude), 1.0)
-        assertEquals(probe.latitude, (sw.latitude + ne.latitude) / 2, 1e-9)
+    fun `a tiny zone is shown at twice the street gate about the probe`() {
+        val target = requireNotNull(onDemandZoomOutTarget(listOf(box(0.005)), probe, SQUARE_VIEWPORT))
+        assertEquals(ONDEMAND_ZOOM_OUT_MIN_HEIGHT_METERS, visibleHeightMeters(target.latSpan), 1.0)
+        assertEquals(probe, target.center)
     }
 
     @Test
     fun `a huge zone is clamped to nine tenths of the outer window about the probe`() {
-        val (sw, ne) = requireNotNull(onDemandZoomOutCorners(listOf(box(2.0, GeoPoint(46.0, -85.0))), probe))
-        assertEquals(ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS, visibleHeightMeters(ne.latitude - sw.latitude), 1.0)
-        assertEquals(probe.longitude, (sw.longitude + ne.longitude) / 2, 1e-9)
+        val target = requireNotNull(onDemandZoomOutTarget(listOf(box(2.0, GeoPoint(46.0, -85.0))), probe, SQUARE_VIEWPORT))
+        assertEquals(ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS, visibleHeightMeters(target.latSpan), 1.0)
+        assertEquals(probe, target.center)
     }
 
     @Test
-    fun `the union of several boxes is framed`() {
-        val (sw, ne) = requireNotNull(onDemandZoomOutCorners(listOf(box(0.2, GeoPoint(45.0, -85.0)), box(0.2, GeoPoint(45.2, -85.2))), probe))
-        assertEquals(45.0 - 0.1 - 0.04, sw.latitude, 1e-9)
-        assertEquals(45.2 + 0.1 + 0.04, ne.latitude, 1e-9)
+    fun `a zone too wide for a portrait viewport is clamped on the latitude the map would show`() {
+        val wideButShort = GeoPoint(44.9, -85.8) to GeoPoint(45.3, -84.4)
+        val target = requireNotNull(onDemandZoomOutTarget(listOf(wideButShort), probe, PORTRAIT_VIEWPORT))
+        assertEquals(ONDEMAND_ZOOM_OUT_MAX_HEIGHT_METERS, visibleHeightMeters(target.latSpan), 1.0)
+        assertEquals(probe, target.center)
     }
 
     @Test
-    fun `no boxes gives nothing to frame`() {
-        assertNull(onDemandZoomOutCorners(emptyList(), probe))
+    fun `a moderately wide zone is shown by its width in a portrait viewport`() {
+        val target = requireNotNull(onDemandZoomOutTarget(listOf(GeoPoint(45.0, -85.1) to GeoPoint(45.05, -84.9)), probe, PORTRAIT_VIEWPORT))
+        assertEquals(0.2 * 1.2 / PORTRAIT_VIEWPORT, target.latSpan, 1e-9)
+        assertNear(GeoPoint(45.025, -85.0), target.center)
+    }
+
+    @Test
+    fun `the union of several boxes is centred on the union`() {
+        val target = requireNotNull(onDemandZoomOutTarget(listOf(box(0.2, GeoPoint(45.0, -85.0)), box(0.2, GeoPoint(45.2, -85.2))), probe, SQUARE_VIEWPORT))
+        assertEquals(0.4 * 1.2, target.latSpan, 1e-9)
+        assertEquals(45.1, target.center.latitude, 1e-9)
+    }
+
+    @Test
+    fun `no boxes gives nothing to show`() {
+        assertNull(onDemandZoomOutTarget(emptyList(), probe, SQUARE_VIEWPORT))
+    }
+
+    private fun assertNear(expected: GeoPoint, actual: GeoPoint) {
+        assertEquals(expected.latitude, actual.latitude, 1e-9)
+        assertEquals(expected.longitude, actual.longitude, 1e-9)
+    }
+
+    private companion object {
+        const val SQUARE_VIEWPORT = 1.0
+        const val PORTRAIT_VIEWPORT = 0.5
     }
 }

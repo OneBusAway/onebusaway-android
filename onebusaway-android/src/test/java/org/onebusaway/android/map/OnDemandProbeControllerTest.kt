@@ -255,7 +255,8 @@ class OnDemandProbeControllerTest {
         assertTrue(subject.dockState.value is OnDemandDockState.Bar)
         val kept = subject.dockState.value
 
-        // Trigger 3 re-probes the same point; with the cache expired it reaches the failing server.
+        // Foreground (trigger 3) re-probes the same point regardless of the failure; with the cache
+        // expired it reaches the failing server.
         source.near = OnDemandResult.Failed(IOException("slow"))
         nowMs += 11 * 60_000
         subject.onForeground()
@@ -263,16 +264,17 @@ class OnDemandProbeControllerTest {
         assertEquals(4, source.nearRequests.size)
         assertEquals("0 m from the state's probe point keeps it", kept, subject.dockState.value)
 
-        // The failure forgot the probe point, so the next settle probes again: 50 m away keeps the state.
+        // A failure is not itself a trigger: a 50 m settle is under the move threshold, so it must not
+        // probe even though the last attempt failed.
         camera.emit(street(north(450.0)))
         advanceTimeBy(1)
-        assertEquals(5, source.nearRequests.size)
-        assertEquals("50 m from the state's probe point keeps it", kept, subject.dockState.value)
+        assertEquals("a 50 m settle after a failure does not probe", 4, source.nearRequests.size)
+        assertEquals(kept, subject.dockState.value)
 
-        // 150 m from the state's probe point hides it.
+        // 150 m from the last probe point is a real trigger and hides the dock on this failure.
         camera.emit(street(north(550.0)))
         advanceTimeBy(1)
-        assertEquals(6, source.nearRequests.size)
+        assertEquals(5, source.nearRequests.size)
         assertEquals(OnDemandDockState.Hidden, subject.dockState.value)
         subject.stop()
     }

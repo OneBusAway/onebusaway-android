@@ -140,9 +140,6 @@ class OnDemandProbeController(
     /** The point moves are measured from and trigger 3 re-probes; kept across a failed probe. */
     private var lastProbe: ProbePoint? = null
 
-    /** The last probe failed, so the next trigger probes whatever the distance (§2.1 "retries"). */
-    private var retryPending = false
-
     private data class Inputs(val camera: CameraSnapshot, val rider: GeoPoint?, val deployment: String?, val enabled: Boolean)
 
     fun start() {
@@ -208,8 +205,10 @@ class OnDemandProbeController(
         }
         val probe = ProbePoint(inputs.rider ?: inputs.camera.center, if (inputs.rider != null) ProbeSource.Rider else ProbeSource.MapCenter)
         val last = lastProbe
-        val due = retryPending ||
-            last == null ||
+        // Spec §2.1's real triggers only: a fresh point, a source change (authorization), or a ≥ 100 m
+        // move. A prior failure does not by itself make the next settle or fix due; onForeground and
+        // nextChangeInstant retry independently of this check.
+        val due = last == null ||
             last.source != probe.source ||
             haversineMeters(last.point, probe.point) >= ONDEMAND_PROBE_MOVE_METERS
         if (due) launchProbe(probe, deployment)
@@ -218,7 +217,6 @@ class OnDemandProbeController(
     private fun launchProbe(probe: ProbePoint, deployment: String) {
         probeJob?.cancel()
         lastProbe = probe
-        retryPending = false
         probeJob = scope.launch {
             when (val outcome = fetch(riderCache, deployment, probe.point)) {
                 is Outcome.Services -> publish(deployment, probe, outcome.services)
@@ -233,7 +231,6 @@ class OnDemandProbeController(
                         current.deployment == deployment &&
                         haversineMeters(current.probe.point, probe.point) < ONDEMAND_PROBE_MOVE_METERS
                     if (!nearLastState) hideState()
-                    retryPending = true
                 }
             }
         }
@@ -301,7 +298,6 @@ class OnDemandProbeController(
         probeJob?.cancel()
         hideState()
         lastProbe = null
-        retryPending = false
     }
 
     private sealed interface Outcome {

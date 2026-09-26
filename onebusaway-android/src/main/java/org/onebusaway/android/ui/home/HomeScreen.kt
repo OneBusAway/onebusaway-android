@@ -92,6 +92,7 @@ import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
+import org.onebusaway.android.ui.home.chrome.NavigationBarScrim
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
@@ -892,6 +893,9 @@ fun HomeScreen(
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
                                     modifier = Modifier.fillMaxSize()
                                 )
+                                // Over the map and under everything else: the bar's buttons get a scrim
+                                // to read against, where the map would otherwise run straight under them.
+                                NavigationBarScrim()
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
                                 // MapTopChrome is drawn LAST so the menu + search FABs stay on top of (and tappable
                                 // above) every overlay — including the route-mode header, which now floats as a card

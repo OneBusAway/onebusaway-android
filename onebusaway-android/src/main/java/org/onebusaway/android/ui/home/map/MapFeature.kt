@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -368,6 +369,14 @@ fun MapFeature(
         snapshotFlow { mapTopChromeInsetPx(statusBars.getTop(density), density) }
             .distinctUntilChanged()
             .collect { mapViewModel.host.setTopChromeInset(it) }
+    }
+    // The same for the bottom edge: the navigation bar is the map's baseline bottom inset (#2337), so the
+    // Google logo and framed content clear the bar the edge-to-edge map draws behind.
+    val navigationBars = WindowInsets.navigationBars
+    LaunchedEffect(mapViewModel, navigationBars, density) {
+        snapshotFlow { navigationBars.getBottom(density) }
+            .distinctUntilChanged()
+            .collect { mapViewModel.host.setNavigationBarInset(it) }
     }
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.mapDirectives.collect { directive ->

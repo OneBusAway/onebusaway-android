@@ -46,7 +46,7 @@ fun interface MapProjector {
 /**
  * The map's content padding, in pixels. [topPx] keeps the compass, vehicle markers, and framed content
  * below the floating top chrome or the active route-focus control, whichever extends farther down;
- * [bottomPx] keeps the focused stop above the arrivals sheet. Held as declarative state and applied by
+ * [bottomPx] keeps the focused stop above the arrivals sheet, and everything above the system navigation bar. Held as declarative state and applied by
  * the renderer (the Google adapter uses `GoogleMap.setPadding`) instead of an
  * imperative `mapView.setPadding(...)` poke. Kept in its own flow (not [MapRenderSnapshot]) so a
  * padding change doesn't recompose the overlay content.
@@ -567,7 +567,7 @@ class MapRenderState {
 
     val snapshot: StateFlow<MapRenderSnapshot> = _snapshot.asStateFlow()
 
-    // Map content padding (top chrome/route focus + arrivals-sheet bottom), in its own flow so a
+    // Map content padding (top chrome/route focus + navigation bar/sheet bottom), in its own flow so a
     // padding change doesn't redraw the overlay content. The Google adapter applies it globally via
     // map.setPadding (which its newLatLngBounds framing then honors); maplibre's newLatLngBounds ignores
     // persistent padding, so its Points framing reads this value and folds the insets into the fit
@@ -598,15 +598,30 @@ class MapRenderState {
         applyTopPadding()
     }
 
-    // Bottom padding is the greater of two independently reported insets — the arrivals sheet and the
-    // directions results sheet — mirroring [applyTopPadding]. They're mutually exclusive today (a focused
-    // stop and directions focus never coexist), but combining by max means neither writer has to know
-    // that, and a stale 0 from the inactive source can't clobber the active inset on a focus transition.
+    // Bottom padding is the greatest of three independently reported insets — the system navigation bar,
+    // the arrivals sheet and the directions results sheet — mirroring [applyTopPadding]. The navigation
+    // bar is the always-present floor (the edge-to-edge map draws behind it, #2337), the way the top chrome
+    // is for the top. The two sheets are mutually exclusive today (a focused stop and directions focus
+    // never coexist), but combining by max means no writer has to know that, and a stale 0 from the
+    // inactive source can't clobber the active inset on a focus transition.
+    private var navigationBarInsetPx = 0
     private var arrivalsBottomInsetPx = 0
     private var directionsBottomInsetPx = 0
 
     private fun applyBottomPadding() = _padding.update {
-        it.copy(bottomPx = if (centerPickActive) 0 else maxOf(arrivalsBottomInsetPx, directionsBottomInsetPx))
+        it.copy(
+            bottomPx = if (centerPickActive) {
+                0
+            } else {
+                maxOf(navigationBarInsetPx, arrivalsBottomInsetPx, directionsBottomInsetPx)
+            }
+        )
+    }
+
+    /** The system navigation bar's bottom inset; keeps the Google logo and framed content above the bar. */
+    fun setNavigationBarInset(px: Int) {
+        navigationBarInsetPx = px
+        applyBottomPadding()
     }
 
     // Padding moves the camera *target* to the middle of the padded region. That is what every other

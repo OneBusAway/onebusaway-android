@@ -79,6 +79,7 @@ import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.ZonePolygonReconciler
 import org.onebusaway.android.map.render.clickable
 import org.onebusaway.android.map.render.formatDataAge
+import org.onebusaway.android.map.render.highlighted
 import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
@@ -355,12 +356,16 @@ class GoogleMapRenderer(
     }
 
     // At [ZONE_Z_INDEX], so a zone sits beneath every line and marker whenever it is added; the halo one
-    // step lower still. Only a region-level polygon takes taps (spec §3.1).
+    // step lower still. A highlighted service is raised to [ZONE_HIGHLIGHTED_Z_INDEX] so its stroke and
+    // fill always draw above every other service's zone, regardless of add order (spec §2.3, D4). Only
+    // a region-level polygon takes taps (spec §3.1).
     private fun addZone(zone: ZonePolygon): ZoneNatives? {
         val exterior = zone.rings.firstOrNull() ?: return null
         val color = zone.color ?: DEFAULT_ROUTE_LINE_COLOR
         val outline = exterior.map { it.toLatLng() }
         val holes = zone.rings.drop(1).map { hole -> hole.map { it.toLatLng() } }
+        val zIndex = if (zone.style.highlighted) ZONE_HIGHLIGHTED_Z_INDEX else ZONE_Z_INDEX
+        val haloZIndex = if (zone.style.highlighted) ZONE_HIGHLIGHTED_HALO_Z_INDEX else ZONE_HALO_Z_INDEX
         val halo = zoneHaloColor(color, zone.style)?.let { haloColor ->
             val options = PolygonOptions()
                 .addAll(outline)
@@ -368,7 +373,7 @@ class GoogleMapRenderer(
                 .strokeColor(haloColor)
                 .strokeWidth(ZONE_HALO_WIDTH_DP * density)
                 .clickable(false)
-                .zIndex(ZONE_HALO_Z_INDEX)
+                .zIndex(haloZIndex)
             holes.forEach(options::addHole)
             map.addPolygon(options)
         }
@@ -378,7 +383,7 @@ class GoogleMapRenderer(
             .strokeColor(zoneStrokeColor(color, zone.style))
             .strokeWidth(zone.style.strokeWidthDp * density)
             .clickable(zone.style.clickable)
-            .zIndex(ZONE_Z_INDEX)
+            .zIndex(zIndex)
         holes.forEach(options::addHole)
         val polygon = map.addPolygon(options)
         zoneByPolygon[polygon] = zone
@@ -1052,6 +1057,10 @@ class GoogleMapRenderer(
 
         /** A street-level halo draws one step beneath its zone's own stroke. */
         private const val ZONE_HALO_Z_INDEX = -2f
+
+        /** Above every ordinary zone (and its halo), so a highlighted service's stroke/fill always wins. */
+        private const val ZONE_HIGHLIGHTED_Z_INDEX = -0.5f
+        private const val ZONE_HIGHLIGHTED_HALO_Z_INDEX = -0.6f
 
         /** Above [ZONE_Z_INDEX] so a zone's pin is never covered by its own polygon. */
         private const val ZONE_PIN_Z_INDEX = 0.5f

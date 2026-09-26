@@ -247,6 +247,9 @@ enum class ZoneStyle { REGION, REGION_HIGHLIGHTED, STREET, STREET_DIMMED, STREET
 /** Only region-level polygons take a tap (spec §3.1); at street level the polygon covers the screen. */
 val ZoneStyle.clickable: Boolean get() = this == ZoneStyle.REGION || this == ZoneStyle.REGION_HIGHLIGHTED
 
+/** Spec §2.3: the highlighted service draws above every other service's zone, not just at full alpha. */
+val ZoneStyle.highlighted: Boolean get() = this == ZoneStyle.REGION_HIGHLIGHTED || this == ZoneStyle.STREET_HIGHLIGHTED
+
 /** Spec §2.3: 2 pt at region level, 4 pt at street level and for any highlight. */
 val ZoneStyle.strokeWidthDp: Float get() = if (this == ZoneStyle.REGION) 2f else 4f
 

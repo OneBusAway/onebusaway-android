@@ -197,6 +197,11 @@ class ZoneGeometryTest {
         assertTrue(ZoneStyle.REGION_HIGHLIGHTED.clickable)
         assertFalse(ZoneStyle.STREET.clickable)
         assertFalse(ZoneStyle.STREET_HIGHLIGHTED.clickable)
+        assertTrue(ZoneStyle.REGION_HIGHLIGHTED.highlighted)
+        assertTrue(ZoneStyle.STREET_HIGHLIGHTED.highlighted)
+        assertFalse(ZoneStyle.REGION.highlighted)
+        assertFalse(ZoneStyle.STREET.highlighted)
+        assertFalse(ZoneStyle.STREET_DIMMED.highlighted)
     }
 
     @Test

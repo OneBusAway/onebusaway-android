@@ -200,6 +200,17 @@ class ZoneGeometryTest {
     }
 
     @Test
+    fun `fill opacity and colour split a fill colour's alpha channel from its RGB`() {
+        val regionFill = zoneFillColor(0xFF112233.toInt(), ZoneStyle.REGION)
+        assertEquals(0x33 / 255f, fillOpacity(regionFill), 1e-6f)
+        assertEquals(0xFF112233.toInt(), opaqueFillColor(regionFill))
+
+        val streetFill = zoneFillColor(0xFF112233.toInt(), ZoneStyle.STREET)
+        assertEquals(0f, fillOpacity(streetFill), 1e-6f)
+        assertEquals(0xFF112233.toInt(), opaqueFillColor(streetFill))
+    }
+
+    @Test
     fun `a polygon tap at street level does not find a zone`() {
         val region = ZonePolygon("svc", "Zone", listOf(outer), null, style = ZoneStyle.REGION)
         val street = region.copy(style = ZoneStyle.STREET)

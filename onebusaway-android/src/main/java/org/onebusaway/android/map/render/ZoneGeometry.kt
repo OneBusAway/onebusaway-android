@@ -261,6 +261,17 @@ private const val DIMMED_HALO_ALPHA = 0x26
 
 fun zoneFillColor(color: Int, style: ZoneStyle): Int = withAlpha(color, if (style == ZoneStyle.REGION || style == ZoneStyle.REGION_HIGHLIGHTED) FILL_ALPHA else 0)
 
+/**
+ * [fillColor]'s alpha channel as a 0f–1f fraction. The maplibre flavour's classic annotation API
+ * has no per-feature alpha in its fill colour — a [org.maplibre.android.annotations.Polygon]'s
+ * opacity comes only from its separate `alpha` property — so that renderer splits a [zoneFillColor]
+ * into this and [opaqueFillColor] rather than passing the colour through directly.
+ */
+fun fillOpacity(fillColor: Int): Float = ((fillColor ushr 24) and 0xFF) / 255f
+
+/** [fillColor] with its alpha channel forced fully opaque; see [fillOpacity]. */
+fun opaqueFillColor(fillColor: Int): Int = fillColor or (0xFF shl 24)
+
 fun zoneStrokeColor(color: Int, style: ZoneStyle): Int = withAlpha(
     color,
     when (style) {

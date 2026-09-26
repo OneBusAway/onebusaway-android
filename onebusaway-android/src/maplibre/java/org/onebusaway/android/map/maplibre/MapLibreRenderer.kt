@@ -67,7 +67,9 @@ import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.ZonePinBitmaps
 import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.ZonePolygonReconciler
+import org.onebusaway.android.map.render.fillOpacity
 import org.onebusaway.android.map.render.formatDataAge
+import org.onebusaway.android.map.render.opaqueFillColor
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.strokeWidthDp
@@ -359,15 +361,21 @@ class MapLibreRenderer(
     // The classic PolygonOptions has no stroke width, so the fill is drawn with a transparent outline and
     // each ring is stroked by its own polyline at the style's width (2 dp region, 4 dp street); there is
     // no halo on this flavour (spec §3.2). Markers always draw above shapes, so the pin and the stops sit on top.
+    //
+    // The classic Polygon annotation also has no per-feature alpha in its fill colour: only its separate
+    // `alpha` property controls opacity, so [zoneFillColor]'s alpha channel is split into that ([fillOpacity])
+    // and an opaque RGB colour ([opaqueFillColor]) rather than passed through directly (else the fill drew
+    // opaque at every level regardless of the intended alpha, spec §2.3 region / §3.2 street).
     private fun addZone(zone: ZonePolygon): List<Annotation>? {
         val exterior = zone.rings.firstOrNull() ?: return null
         val color = zone.color ?: DEFAULT_ROUTE_LINE_COLOR
         val annotations = mutableListOf<Annotation>()
+        val fillColor = zoneFillColor(color, zone.style)
         val fill = PolygonOptions()
             .addAll(exterior.map { it.toLatLng() })
-            .fillColor(zoneFillColor(color, zone.style))
+            .fillColor(opaqueFillColor(fillColor))
             .strokeColor(Color.TRANSPARENT)
-            .alpha(1f)
+            .alpha(fillOpacity(fillColor))
         for (hole in zone.rings.drop(1)) fill.addHole(hole.map { it.toLatLng() })
         annotations += map.addPolygon(fill)
         for (ring in zone.rings) {

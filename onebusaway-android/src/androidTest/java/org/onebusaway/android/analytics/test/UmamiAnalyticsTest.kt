@@ -12,7 +12,7 @@ import org.onebusaway.android.analytics.UmamiAnalyticsReporter
 
 @RunWith(AndroidJUnit4::class)
 class UmamiAnalyticsTest {
-    private fun newClient() = UmamiAnalytics("https://umami.example.com/", "wid-1", "api.example.com")
+    private fun newClient(installId: String = "install-1") = UmamiAnalytics("https://umami.example.com/", "wid-1", "api.example.com", installId)
 
     @Test fun eventPayload() {
         val client = newClient().apply { setRegionName("Tampa Bay") }
@@ -22,15 +22,17 @@ class UmamiAnalyticsTest {
         assertEquals("wid-1", payload.getString("website"))
         assertEquals("api.example.com", payload.getString("hostname"))
         assertEquals("/search", payload.getString("url"))
+        assertEquals("install-1", payload.getString("id"))
         assertEquals("Search", payload.getString("name"))
         assertEquals("bus", payload.getJSONObject("data").getString("query"))
         assertEquals("Tampa Bay", payload.getJSONObject("data").getString("RegionName"))
     }
 
     @Test fun pageviewHasNoName() {
-        val payload = JSONObject(newClient().buildPayload(null, "/stop", null)).getJSONObject("payload")
+        val payload = JSONObject(newClient("install-2").buildPayload(null, "/stop", null)).getJSONObject("payload")
         assertFalse(payload.has("name"))
         assertEquals("/stop", payload.getString("url"))
+        assertEquals("install-2", payload.getString("id"))
     }
 
     @Test fun reducePath() {
@@ -44,6 +46,13 @@ class UmamiAnalyticsTest {
         assertFalse(UmamiAnalytics.isSuccessfulIngest(200, "{\"beep\":\"boop\"}"))
         assertTrue(UmamiAnalytics.isSuccessfulIngest(200, "some.jwt.token"))
         assertFalse(UmamiAnalytics.isSuccessfulIngest(500, "error"))
+    }
+
+    @Test fun onlyHttpsEndpointsAreSecure() {
+        assertTrue(UmamiAnalytics.isHttps("https://umami.example.com/api/send"))
+        assertTrue(UmamiAnalytics.isHttps("HTTPS://umami.example.com/api/send"))
+        assertFalse(UmamiAnalytics.isHttps("http://10.0.2.2:3000/api/send"))
+        assertFalse(UmamiAnalytics.isHttps("not a url"))
     }
 
     @Test fun userAgentFormat() {

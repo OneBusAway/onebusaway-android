@@ -160,6 +160,7 @@ private fun ArrivalsBoard(
     val regions = remember { RegionEntryPoint.get(context) }
     val regionState by regions.state.collectAsStateWithLifecycle()
     if (regionState is RegionState.Active) ArrivalsPolling(viewModel)
+    ArrivalsAnalyticsEffect(viewModel)
 
     Scaffold(
         modifier = Modifier.testTag("arrivals_board"),

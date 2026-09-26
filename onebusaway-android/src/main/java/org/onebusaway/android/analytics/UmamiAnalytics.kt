@@ -9,8 +9,19 @@ import java.util.concurrent.Executors
 import org.json.JSONObject
 import org.onebusaway.android.BuildConfig
 
-/** Fire-and-forget Umami event emitter; failures never escape to callers. */
-class UmamiAnalytics(serverUrl: String, private val websiteId: String, private val hostname: String) {
+/**
+ * Fire-and-forget Umami event emitter; failures never escape to callers.
+ *
+ * @param installId The anonymous, per-install id (see [AnalyticsInstallId]), sent as `payload.id` on
+ * every event so Umami derives a stable visitor/session id (`uuid(website, id)`) instead of re-deriving
+ * one from IP + User-Agent on every request, which mints a "new" visitor on every IP change.
+ */
+class UmamiAnalytics(
+    serverUrl: String,
+    private val websiteId: String,
+    private val hostname: String,
+    private val installId: String
+) {
     private val sendUrl = joinUrl(serverUrl, "api/send")
     private val userAgent = buildUserAgent()
 
@@ -25,6 +36,11 @@ class UmamiAnalytics(serverUrl: String, private val websiteId: String, private v
     fun event(name: String?, pageUrl: String?, props: Map<String, Any?>?) = send(name, pageUrl, props)
 
     private fun send(name: String?, pageUrl: String?, props: Map<String, Any?>?) {
+        // Every event carries the persistent install id, so never send one in cleartext.
+        if (!isHttps(sendUrl)) {
+            Log.w(TAG, "Refusing non-HTTPS Umami endpoint")
+            return
+        }
         val payload = try {
             buildPayload(name, reducePath(pageUrl), props)
         } catch (error: Exception) {
@@ -62,6 +78,7 @@ class UmamiAnalytics(serverUrl: String, private val websiteId: String, private v
             .put("website", websiteId)
             .put("hostname", hostname)
             .put("url", path)
+            .put("id", installId)
         if (name != null) payload.put("name", name)
         val data = JSONObject()
         regionName?.let { data.put("RegionName", it) }
@@ -99,6 +116,8 @@ class UmamiAnalytics(serverUrl: String, private val websiteId: String, private v
                 put(key, if (value is String || value is Number || value is Boolean) value else value.toString())
             }
         }
+
+        fun isHttps(url: String): Boolean = runCatching { URI(url).scheme.equals("https", ignoreCase = true) }.getOrDefault(false)
 
         private fun joinUrl(base: String, suffix: String): String = base.removeSuffix("/") + "/" + suffix
 

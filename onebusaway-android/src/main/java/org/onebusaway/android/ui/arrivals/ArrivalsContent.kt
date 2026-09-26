@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import android.location.Location
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeOut
@@ -67,6 +68,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
@@ -85,6 +89,10 @@ private const val REFRESH_PERIOD_MS = 60_000L
  *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */
 private const val ALERT_PAGE_SIZE = 3
 
+/** Placeholder provider name for the [Location] built from a stop's lat/lon in [ArrivalsAnalyticsEffect]
+ *  — never registered with the location system, just a value holder for [ObaAnalytics.reportViewStopEvent]. */
+private const val STOP_LOCATION_PROVIDER = "stop"
+
 /**
  * The lifecycle-scoped 60s polling loop, shared by the standalone screen and the map panel.
  * Runs only while RESUMED (cancelled on pause, like the legacy Handler) and refreshes immediately
@@ -101,6 +109,30 @@ internal fun ArrivalsPolling(viewModel: ArrivalsViewModel) {
                 viewModel.refresh()
                 delay(REFRESH_PERIOD_MS)
             }
+        }
+    }
+}
+
+/**
+ * Reports [ArrivalsViewModel.stopViewed] to Firebase + Plausible + Umami, once per stop-screen visit.
+ * Dispatch needs the device's last-known location and a `Context` to resolve the analytics singleton —
+ * neither of which the ViewModel has — so it lives here, shared by the mapless arrivals board
+ * (`ArrivalsBoard`) and the home map's stop sheet (`rememberArrivalsSession`). Mirrors
+ * [org.onebusaway.android.ui.home.HomeNavHost]'s `HomeAnalyticsEffect` split between VM decision and host
+ * dispatch.
+ */
+@Composable
+internal fun ArrivalsAnalyticsEffect(viewModel: ArrivalsViewModel) {
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.stopViewed.collect { event ->
+            val myLocation = LocationEntryPoint.get(context).lastKnownLocation()
+            val stopLocation = Location(STOP_LOCATION_PROVIDER).apply {
+                latitude = event.stopLat
+                longitude = event.stopLon
+            }
+            AnalyticsEntryPoint.get(context)
+                .reportViewStopEvent(event.stopId, event.stopName, myLocation, stopLocation)
         }
     }
 }

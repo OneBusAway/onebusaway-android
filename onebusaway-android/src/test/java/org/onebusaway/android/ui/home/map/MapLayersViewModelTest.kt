@@ -112,13 +112,14 @@ class MapLayersViewModelTest {
     }
 
     @Test
-    fun `refresh notices a deployment recorded unsupported since the last emission`() = runTest {
+    fun `a 404 recorded after the first emission hides the transit group`() = runTest {
         val support = OnDemandSupport()
         val vm = viewModel(defaultPrefs(), support)
         advanceUntilIdle()
         assertEquals(1, vm.state.value.transit.size)
+        // No explicit refresh: the transit tile follows the observable absent set (PF-13), so this
+        // alone must recompute the state — a one-shot isKnownUnsupported read would leave it stale.
         support.recordAbsent(endpoint)
-        vm.refresh()
         advanceUntilIdle()
         assertTrue(vm.state.value.transit.isEmpty())
     }

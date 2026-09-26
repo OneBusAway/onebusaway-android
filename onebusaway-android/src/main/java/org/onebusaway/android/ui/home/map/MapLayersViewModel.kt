@@ -57,9 +57,6 @@ class MapLayersViewModel @Inject constructor(
     private val _state = MutableStateFlow(MapLayersUiState.EMPTY)
     val state: StateFlow<MapLayersUiState> = _state.asStateFlow()
 
-    // Bumped by [refresh] so a 404 recorded since the last emission is noticed when the sheet opens.
-    private val refreshTick = MutableStateFlow(0)
-
     init {
         viewModelScope.launch {
             val layerPrefs = combine(
@@ -77,9 +74,8 @@ class MapLayersViewModel @Inject constructor(
                 layerPrefs,
                 onDemandTileVisible,
                 regionRepo.region.combine(demoMode.active) { region, demo -> region to demo },
-                prefs.observeString(R.string.preference_key_otp_api_url, null),
-                refreshTick
-            ) { current, tileVisible, (region, demo), otpUrl, _ ->
+                prefs.observeString(R.string.preference_key_otp_api_url, null)
+            ) { current, tileVisible, (region, demo), otpUrl ->
                 layersUiState(
                     prefs = current,
                     onDemandTileVisible = tileVisible,
@@ -88,11 +84,6 @@ class MapLayersViewModel @Inject constructor(
                 )
             }.distinctUntilChanged().collect { _state.value = it }
         }
-    }
-
-    /** Re-derive the state — called when the sheet opens, since a 404 verdict arrives without a preference change. */
-    fun refresh() {
-        refreshTick.value++
     }
 
     fun toggle(id: LayerTileId) = write(current().toggled(id))

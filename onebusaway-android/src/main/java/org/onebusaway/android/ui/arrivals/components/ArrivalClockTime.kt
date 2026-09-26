@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import org.onebusaway.android.R
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.util.DisplayFormat
 
@@ -67,11 +68,19 @@ internal data class ArrivalClock(val expected: String, val corrects: String? = n
  * Both fall out of comparing what is actually printed, so there is no threshold to pick here.
  */
 internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock {
-    val expected = DisplayFormat.formatTime(context, displayTime.epochMs)
     // Without a usable prediction the two are the same instant, so the second format call is a
     // guaranteed-identical string — skip it rather than pay for it on every scheduled-only arrival.
-    if (scheduledTime == displayTime) return ArrivalClock(expected)
-    return arrivalClockOf(expected = expected, scheduled = DisplayFormat.formatTime(context, scheduledTime.epochMs))
+    return clockOf(context, displayTime, scheduledTime.takeIf { it != displayTime })
+}
+
+/**
+ * The [ArrivalClock] for a time in force, [expected], correcting the timetable time [scheduled] when
+ * there is one — by [arrivalClockOf]'s rule, so every surface that corrects a time (arrival rows, the
+ * trip log's ride times, #2337) agrees on when a correction is worth drawing.
+ */
+internal fun clockOf(context: Context, expected: ServerTime, scheduled: ServerTime?): ArrivalClock {
+    val expectedText = DisplayFormat.formatTime(context, expected.epochMs)
+    return scheduled?.let { arrivalClockOf(expectedText, DisplayFormat.formatTime(context, it.epochMs)) } ?: ArrivalClock(expectedText)
 }
 
 /** The formatted-string rule itself, split out so it is testable without a `Context`. */

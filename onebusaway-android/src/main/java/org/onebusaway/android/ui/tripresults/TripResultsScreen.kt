@@ -116,6 +116,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -137,6 +138,8 @@ import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.arrivals.components.CorrectedClockTime
+import org.onebusaway.android.ui.arrivals.components.clockOf
 import org.onebusaway.android.ui.compose.LocalUnitsAreMetric
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
@@ -1529,21 +1532,39 @@ private fun LogRowScaffold(
     val railSplit = RAIL_SPLIT * scale
     // The time column shows a node's clock time and, in the gap below it, the leg's elapsed "delta".
     // (A walk step's distance is not shown here — it rides between the steps in the content column.)
+    // A ride's board/exit time carries the timetable time a live prediction moved it off (#2337).
     val (time, delta) = when (val c = model.content) {
-        is RowContent.Terminal -> DisplayFormat.formatTime(context, c.entry.time.epochMs) to null
+        is RowContent.Terminal -> clockOf(context, c.entry.time, scheduled = null) to null
         is RowContent.BoardHeader ->
-            DisplayFormat.formatTime(context, c.entry.boardTime.epochMs) to deltaText(c.entry.durationMinutes, context)
-        is RowContent.ExitNode -> DisplayFormat.formatTime(context, c.entry.exitTime.epochMs) to null
+            clockOf(context, c.entry.boardTime, c.entry.boardScheduledTime) to deltaText(c.entry.durationMinutes, context)
+        is RowContent.ExitNode -> clockOf(context, c.entry.exitTime, c.entry.exitScheduledTime) to null
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
         else -> null to null
     }
+    val clockStyle = MaterialTheme.typography.labelMedium.copy(
+        fontFamily = FontFamily.Monospace,
+        textAlign = TextAlign.Center
+    )
+    // A corrected time's struck timetable line sits above the time in force, so the row's event line —
+    // node, spine split and content — drops by that line's laid-out height to stay level with the live
+    // time rather than the superseded one. Measured with the column's own style and width, so a wrapped
+    // wide am/pm marker ("12:00 nachm.") is accounted for too.
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val correctionDrop = time?.corrects?.let { corrects ->
+        val maxWidth = with(density) { timeWidth.roundToPx() }
+        val height = textMeasurer.measure(corrects, clockStyle, constraints = Constraints(maxWidth = maxWidth)).size.height
+        with(density) { height.toDp() }
+    } ?: 0.dp
+    val eventTop = rowTop + correctionDrop
+    val eventSplit = railSplit + correctionDrop
     Column(
         modifier = Modifier
             .fillMaxWidth()
             // drawWithCache, not drawBehind: the dash effect and every Dp→px conversion are resolved
             // once per size/metric change instead of on every frame this row is drawn.
             .drawWithCache {
-                val chrome = RowChrome(this, model, timeWidth, railSplit)
+                val chrome = RowChrome(this, model, timeWidth, eventSplit)
                 onDrawBehind { chrome.draw(this) }
             }
             .then(
@@ -1564,15 +1585,14 @@ private fun LogRowScaffold(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 time?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontFamily = FontFamily.Monospace,
+                    // A corrected time stacks as the arrivals ETA pills do: the struck timetable time over
+                    // the time in force. The column is sized for the common short time; a locale with a wide am/pm marker
+                    // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
+                    CorrectedClockTime(
+                        clock = it,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        // The column is sized for the common short time; a locale with a wide am/pm marker
-                        // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
-                        maxLines = 2
+                        fontSize = TextUnit.Unspecified,
+                        style = clockStyle
                     )
                 }
                 delta?.let {
@@ -1585,7 +1605,7 @@ private fun LogRowScaffold(
                     )
                 }
             }
-            Box(Modifier.width(RAIL_WIDTH)) {
+            Box(Modifier.width(RAIL_WIDTH).padding(top = correctionDrop)) {
                 LogNode(model.content, model.nodeColors)
             }
             Column(
@@ -1601,7 +1621,7 @@ private fun LogRowScaffold(
                     )
                     .padding(
                         start = CONTENT_START_GAP,
-                        top = if (compact) 0.dp else rowTop,
+                        top = if (compact) 0.dp else eventTop,
                         // A footer takes over the row's bottom inset, so the two read as one block.
                         bottom = if (compact || footer != null) 0.dp else ROW_BOTTOM,
                         end = CONTENT_END_INSET
@@ -2385,6 +2405,9 @@ private fun previewTransitLeg(
     reachStop = ReachStop.OnFoot(3.minutes, notBefore = null),
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
+    // Running 2 min late, so the previews draw the struck timetable time under each end (#2337).
+    boardScheduledTime = ServerTime(2 * 60_000L),
+    exitScheduledTime = ServerTime(18 * 60_000L),
     durationMinutes = 16,
     rideEvents = rideEvents,
     routeLeg = RouteLegRef(
@@ -2414,6 +2437,8 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     reachStop = ReachStop.OnFoot(20.minutes, notBefore = null),
     boardTime = ServerTime(24 * 60_000L),
     exitTime = ServerTime(84 * 60_000L),
+    boardScheduledTime = null,
+    exitScheduledTime = null,
     durationMinutes = 60,
     routeLeg = RouteLegRef(
         routeId = "95_74",

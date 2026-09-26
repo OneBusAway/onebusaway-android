@@ -271,6 +271,76 @@ class TripLogBuilderTest {
         assertEquals(transitRef, transit.routeLeg)
     }
 
+    /** The single ride built from [leg] alone. */
+    private fun rideOf(leg: TripLeg): TripLogEntry.Transit = TripLogBuilder
+        .build(listOf(leg), listOf(boardDir, alightDir), listOf(transitRef))
+        .filterIsInstance<TripLogEntry.Transit>()
+        .single()
+
+    /**
+     * A live ride keeps the timetable times its prediction moved it off (#2337): the leg's times are
+     * already the estimates, so the schedule is each one minus its delay — 2 min late boarding at 4:00
+     * was due at 2:00; 3 min late getting off at 20:00 was due at 17:00.
+     */
+    @Test
+    fun aLiveRide_carriesTheTimetableTimesItsPredictionCorrects() {
+        val transit = rideOf(transitLeg.copy(arrivalDelay = 3.minutes))
+
+        assertEquals(ServerTime(4 * 60_000L), transit.boardTime)
+        assertEquals(ServerTime(2 * 60_000L), transit.boardScheduledTime)
+        assertEquals(ServerTime(20 * 60_000L), transit.exitTime)
+        assertEquals(ServerTime(17 * 60_000L), transit.exitScheduledTime)
+    }
+
+    /** An early ride's timetable time is *later* than the time in force — a negative delay. */
+    @Test
+    fun anEarlyRide_carriesALaterTimetableTime() {
+        val transit = rideOf(transitLeg.copy(departureDelay = (-1).minutes))
+
+        assertEquals(ServerTime(5 * 60_000L), transit.boardScheduledTime)
+    }
+
+    @Test
+    fun aRideOnSchedule_hasNothingToCorrect() {
+        val transit = rideOf(transitLeg.copy(departureDelay = Duration.ZERO, arrivalDelay = Duration.ZERO))
+
+        assertNull(transit.boardScheduledTime)
+        assertNull(transit.exitScheduledTime)
+    }
+
+    /** A delay is only a correction when the leg is live; without real-time the times are the timetable. */
+    @Test
+    fun aScheduledOnlyRide_hasNothingToCorrect() {
+        val transit = rideOf(transitLeg.copy(realTime = false, arrivalDelay = 3.minutes))
+
+        assertNull(transit.boardScheduledTime)
+        assertNull(transit.exitScheduledTime)
+    }
+
+    /**
+     * A folded interline chain boards on its leader and gets off at the end of its last leg, so each end
+     * carries that leg's correction — not the leader's arrival delay at a seam the rider stays aboard through.
+     */
+    @Test
+    fun aFoldedChain_correctsItsExitByTheLegItEndsOn() {
+        val leader = transitLeg.copy(arrivalDelay = 5.minutes)
+        val continuation = transitLeg.copy(
+            interlineWithPreviousLeg = true,
+            departureDelay = 5.minutes,
+            arrivalDelay = 1.minutes,
+            startTime = ServerTime(20 * 60_000L),
+            endTime = ServerTime(28 * 60_000L)
+        )
+        val transit = TripLogBuilder.build(
+            legs = listOf(leader, continuation),
+            flatDirections = listOf(boardDir, alightDir, continuationBoardDir, alightDir),
+            routeLegRefs = listOf(transitRef, null)
+        ).filterIsInstance<TripLogEntry.Transit>().single()
+
+        assertEquals(ServerTime(2 * 60_000L), transit.boardScheduledTime)
+        assertEquals(ServerTime(27 * 60_000L), transit.exitScheduledTime)
+    }
+
     @Test
     fun theAccessWalk_reachesTheStopByItsDurationRatherThanItsPlannedEnd() {
         // The rider walks to the first ride's stop, and it takes 4 minutes. That duration — NOT the

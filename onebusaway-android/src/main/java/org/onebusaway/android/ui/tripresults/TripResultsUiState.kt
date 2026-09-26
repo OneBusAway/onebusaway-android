@@ -219,6 +219,15 @@ sealed interface TripLogEntry {
         val reachStop: ReachStop?,
         val boardTime: ServerTime,
         val exitTime: ServerTime,
+        /**
+         * The timetable times a live prediction moved [boardTime]/[exitTime] off (#2337) — drawn struck
+         * through beside them, as the arrivals UI does. Null when there is nothing to correct: the leg
+         * isn't real-time, or OTP reports it exactly on schedule. [boardTime]/[exitTime] are already the
+         * predicted times (both OTP adapters put the estimate there), so these are the only place the
+         * schedule survives.
+         */
+        val boardScheduledTime: ServerTime? = null,
+        val exitScheduledTime: ServerTime? = null,
         val durationMinutes: Long,
         val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,

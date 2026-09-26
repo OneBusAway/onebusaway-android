@@ -1581,6 +1581,16 @@
     <string name="ondemand_bar_a11y_more_services">All services here</string>
     <!-- %1$s is a number, %2$s a unit abbreviation, e.g. "300 ft" -->
     <string name="ondemand_distance">%1$s %2$s</string>
+    <!-- Overlap picker (DRT UI spec §3.5); %d is a count of services -->
+    <plurals name="ondemand_picker_title">
+        <item quantity="one">%d service here</item>
+        <item quantity="other">%d services here</item>
+    </plurals>
+    <plurals name="ondemand_picker_title_nearby">
+        <item quantity="one">%d service nearby</item>
+        <item quantity="other">%d services nearby</item>
+    </plurals>
+    <string name="ondemand_picker_footer">Sorted by soonest available.</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

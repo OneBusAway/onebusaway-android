@@ -76,6 +76,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
@@ -249,16 +250,41 @@ private fun setCurrentLocation(context: Context, viewModel: TripPlanViewModel, s
     Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
 }
 
-/** The expanded directions sheet's share of the window height (the collapsed peek is handle-only). */
-private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.4f
+/**
+ * The expanded directions sheet's share of the window height (the collapsed peek is handle-only). Half,
+ * up from 40%, so more of an itinerary reads without dragging (#2337) while the drawn route keeps the
+ * other half of the map.
+ */
+private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.5f
+
+/** The map left showing between the form card's bottom edge and a sheet that would otherwise reach it. */
+private val DIRECTIONS_SHEET_FORM_GAP = 8.dp
+
+/**
+ * The expanded directions sheet's height: [DIRECTIONS_SHEET_HEIGHT_FRACTION] of [windowHeight], stopped
+ * [DIRECTIONS_SHEET_FORM_GAP] short of the form card ([formBottom], its bottom edge in window
+ * coordinates) so a short window doesn't slide the sheet over the form's controls. A form not yet
+ * measured reports 0, which leaves the whole window to cap against — no cap at all in practice.
+ *
+ * Floored at [peekHeight], because a sheet shorter than its own peek inverts the two states: M3 anchors
+ * PartiallyExpanded at (layoutHeight - peek) and Expanded at (layoutHeight - sheetHeight), so the
+ * collapsed sheet would sit *above* the expanded one. Reachable in a freeform window near Android's
+ * 220dp resizable minimum alongside a 48dp 3-button bar, or under a form that fills the window. At the
+ * floor M3 drops the Expanded anchor outright (it skips it when sheet height == peek) and the sheet just
+ * rests at the handle — the honest outcome for a window with no room to open into.
+ */
+internal fun directionsSheetHeight(windowHeight: Dp, formBottom: Dp, peekHeight: Dp): Dp {
+    val belowForm = windowHeight - formBottom - DIRECTIONS_SHEET_FORM_GAP
+    return minOf(windowHeight * DIRECTIONS_SHEET_HEIGHT_FRACTION, belowForm).coerceAtLeast(peekHeight)
+}
 
 /**
  * The bottom directions sheet: option cards + the step-by-step list, over the map. A standard Material 3
  * persistent bottom sheet — [BottomSheetScaffold]'s sheet slot — so it gets the real sheet gesture:
  * the sheet tracks the finger, settles on velocity, and drags from anywhere on it (including a
  * nested-scroll handoff, so pulling down at the top of the step list collapses the sheet). Collapsed it
- * rests at a handle-only peek revealing the map; expanded it fills [DIRECTIONS_SHEET_HEIGHT_FRACTION]
- * of the window. Tapping the handle still toggles, and screen readers get M3's expand/collapse actions.
+ * rests at a handle-only peek revealing the map; expanded it is [directionsSheetHeight] tall. Tapping
+ * the handle still toggles, and screen readers get M3's expand/collapse actions.
  *
  * The scaffold hosts *only* the sheet: its body is empty and its container transparent, so the map that
  * the caller drew underneath shows through and keeps receiving its own gestures (M3 builds the scaffold
@@ -285,6 +311,8 @@ fun DirectionsResultsSheet(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     onSheetHeightPx: (Int) -> Unit,
+    // The form card's bottom edge in window px, which the expanded sheet stops short of; 0 if unmeasured.
+    formBottomPx: Int,
     // The itinerary leg indices of a route label tapped on the map, as they arrive. Required rather than
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
     // would otherwise type-check.
@@ -306,16 +334,10 @@ fun DirectionsResultsSheet(
     val navBottom = navigationBarBottomPadding()
     val peekHeight = DRAG_HANDLE_HEIGHT + navBottom
     // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
-    //
-    // Floored at the peek, because a sheet shorter than its own peek inverts the two states: M3 anchors
-    // PartiallyExpanded at (layoutHeight - peek) and Expanded at (layoutHeight - sheetHeight), so the
-    // collapsed sheet would sit *above* the expanded one. Reachable in a freeform window near Android's
-    // 220dp resizable minimum alongside a 48dp 3-button bar, where the fraction lands under the peek. At
-    // the floor M3 drops the Expanded anchor outright (it skips it when sheet height == peek) and the
-    // sheet just rests at the handle — the honest outcome for a window with no room to open into.
+    val windowHeightPx = LocalWindowInfo.current.containerSize.height
     val fullHeight = with(LocalDensity.current) {
-        (LocalWindowInfo.current.containerSize.height * DIRECTIONS_SHEET_HEIGHT_FRACTION).toDp()
-    }.coerceAtLeast(peekHeight)
+        directionsSheetHeight(windowHeightPx.toDp(), formBottomPx.toDp(), peekHeight)
+    }
     val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
 

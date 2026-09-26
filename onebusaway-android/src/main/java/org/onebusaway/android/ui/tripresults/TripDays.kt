@@ -39,9 +39,10 @@ import org.onebusaway.android.ui.tripplan.TripDay
 internal fun ServerTime.localDate(zone: ZoneId): LocalDate = Instant.ofEpochMilli(epochMs).atZone(zone).toLocalDate()
 
 /**
- * The instant a log row prints in its time column, or null for a row that prints none. The column
- * itself reads it from here, so the rows that print a time and the rows [rowDays] can name a day on are
- * one list.
+ * The instant a log row prints in its time column, or null for a row that prints none. Keep it in step
+ * with the column's own `when` in `LogRowScaffold` (which also pairs each time with the timetable time a
+ * live prediction moved it off), so the rows that print a time and the rows [rowDays] can name a day on
+ * are one list.
  */
 internal val RowContent.clockTime: ServerTime?
     get() = when (this) {

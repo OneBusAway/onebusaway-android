@@ -221,7 +221,7 @@ private fun Thumbnail(content: OnDemandServiceUiState.Content, color: Int) {
 @Composable
 private fun WhereSection(rows: WhereRows, content: OnDemandServiceUiState.Content) {
     val check = content.locationCheck
-    val areaNames = rows.serviceAreaNames.joinToString(", ").ifEmpty { zoneCount(content.service.areas.size).resolveCopy() }
+    val areaNames = rows.serviceAreaNames.joinToString(", ").ifEmpty { zoneCount(rows.zoneCount).resolveCopy() }
     val serviceAreaSub = if (check?.source == ProbeSource.Rider && check.isInside) stringResource(R.string.ondemand_detail_includes_location, areaNames) else areaNames
     val inside = check?.isInside == true
     SectionHeader(stringResource(R.string.ondemand_where_title))
@@ -235,7 +235,8 @@ private fun WhereSection(rows: WhereRows, content: OnDemandServiceUiState.Conten
             )
             rows.dropOffNames?.let { names ->
                 HorizontalDivider(Modifier.padding(start = 56.dp))
-                IconRow(R.drawable.ic_location_on, stringResource(R.string.ondemand_detail_drop_off), names.joinToString(", ").ifEmpty { null })
+                val dropOffSub = names.joinToString(", ").ifEmpty { zoneCount(rows.zoneCount).resolveCopy() }
+                IconRow(R.drawable.ic_location_on, stringResource(R.string.ondemand_detail_drop_off), dropOffSub)
             }
         }
     }

@@ -69,8 +69,12 @@ data class BookingSummary(
     val messages: List<String>
 )
 
-/** The "Where" section (spec §3.6 item 5): the pickup areas, and the drop-off places when they differ. */
-data class WhereRows(val serviceAreaNames: List<String>, val dropOffNames: List<String>?)
+/**
+ * The "Where" section (spec §3.6 item 5): the pickup areas, and the drop-off places when they differ.
+ * [zoneCount] is the service's total area count, the fallback either row's name list resolves to when
+ * every one of its areas is unnamed (spec gives no fallback of its own, so both rows share this one).
+ */
+data class WhereRows(val serviceAreaNames: List<String>, val dropOffNames: List<String>?, val zoneCount: Int)
 
 /** Which fact the page promotes (spec §3.6 items 1–2): the status line, the deadline row, or neither. */
 enum class DetailPromotion { STATUS_LINE, DEADLINE_ROW, NONE }
@@ -161,7 +165,11 @@ internal fun whereRows(service: OnDemandService): WhereRows? {
     if (service.areas.size <= 1 && !differs) return null
     val fromIds = service.rules.flatMapTo(mutableSetOf()) { it.fromIds }
     val toIds = service.rules.flatMapTo(mutableSetOf()) { it.toIds }
-    return WhereRows(serviceAreaNames = service.placeNames(fromIds), dropOffNames = if (differs) service.placeNames(toIds) else null)
+    return WhereRows(
+        serviceAreaNames = service.placeNames(fromIds),
+        dropOffNames = if (differs) service.placeNames(toIds) else null,
+        zoneCount = service.areas.size
+    )
 }
 
 // Areas first, then location groups; member stops are not carried on the service, so a bare stop id names nothing.

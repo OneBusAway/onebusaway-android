@@ -372,8 +372,26 @@ class OnDemandServicePresentationTest {
         val rows = requireNotNull(whereRows(zoneToZone))
         assertEquals(listOf("Boyne City"), rows.serviceAreaNames)
         assertEquals(listOf("Petoskey"), rows.dropOffNames)
+        assertEquals(2, rows.zoneCount)
         val twoAreasSameEnds = zoneToZone.copy(rules = listOf(rule("5088_c_63", "05:00:00").copy(fromIds = listOf("a", "b"), toIds = listOf("a", "b"))))
         assertNull(requireNotNull(whereRows(twoAreasSameEnds)).dropOffNames)
+    }
+
+    @Test
+    fun `an unnamed drop-off area leaves dropOffNames empty, with the zone count to fall back to`() {
+        val unnamed = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00").copy(fromIds = listOf("a"), toIds = listOf("b"))),
+            areas = listOf(
+                alexandriaArea("a", "Boyne City"),
+                alexandriaArea("b", "")
+            )
+        )
+        val rows = requireNotNull(whereRows(unnamed))
+        assertEquals(listOf("Boyne City"), rows.serviceAreaNames)
+        // Same D6 fallback as the Service area row: the toIds area has no name, so the row falls
+        // back to the service's zone count rather than showing nothing.
+        assertEquals(emptyList<String>(), rows.dropOffNames)
+        assertEquals(2, rows.zoneCount)
     }
 
     @Test

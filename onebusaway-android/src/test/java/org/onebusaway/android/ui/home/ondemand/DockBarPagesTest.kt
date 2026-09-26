@@ -58,6 +58,18 @@ class DockBarPagesTest {
     }
 
     @Test
+    fun `a route's own text colour applies only while the bar shows the route colour`() {
+        val yellow = 0xFFFFD400.toInt()
+        val black = 0xFF000000.toInt()
+        val routed = matchFor(service(areas = listOf(area(distance = 0.0)), routeColor = yellow, matchReason = OnDemandMatchReason.AREA_CONTAINS_POINT), now)
+            .let { it.copy(service = it.service.copy(routeTextColor = black)) }
+        val onOwnColour = dockBarPages(OnDemandDockState.Bar(listOf(routed), probe), emptyMap(), mapOf("CC_CC1" to yellow), now, Locale.US, metric = false).single()
+        val afterCollision = dockBarPages(OnDemandDockState.Bar(listOf(routed), probe), emptyMap(), mapOf("CC_CC1" to 0xFF5B21B6.toInt()), now, Locale.US, metric = false).single()
+        assertEquals(black, onOwnColour.textColor)
+        assertEquals(0xFFFFFFFF.toInt(), afterCollision.textColor)
+    }
+
+    @Test
     fun `a dark service colour reads white`() {
         val dark = mapOf("CC_CC1" to 0xFF1F3A5F.toInt())
         val page = dockBarPages(OnDemandDockState.Bar(listOf(inside), probe), emptyMap(), dark, now, Locale.US, metric = false).single()

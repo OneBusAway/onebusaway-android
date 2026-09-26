@@ -56,6 +56,8 @@ data class DockBarPage(
     val edgePoint: GeoPoint?
 )
 
+private const val OPAQUE_ALPHA = 0xFF000000.toInt()
+
 /** One page per stack entry, in the stack's order (the dock decision already filtered and sorted it). */
 fun dockBarPages(state: OnDemandDockState.Bar, edges: Map<String, ZoneEdge>, colors: Map<String, Int>, now: Instant, locale: Locale, metric: Boolean): List<DockBarPage> = state.matches.map { match ->
     val edge = edges[match.service.id]
@@ -63,11 +65,14 @@ fun dockBarPages(state: OnDemandDockState.Bar, edges: Map<String, ZoneEdge>, col
     val edgePoint = match.nearestPointOnBoundary ?: edge?.point
     val resolved = colors[match.service.id] ?: ONDEMAND_OUTSIDE_GRAY
     val color = if (match.isInside) resolved else ONDEMAND_OUTSIDE_GRAY
+    // A collision can swap the route colour for a palette one, and the route's text colour was chosen for
+    // the route colour only.
+    val onRouteColor = match.isInside && match.service.routeColor?.let { (it or OPAQUE_ALPHA) == resolved } == true
     DockBarPage(
         match = match,
         color = color,
         // The outside gray always reads white; a route's own text colour applies only over its own colour.
-        textColor = readableTextColor(color, preferred = if (match.isInside) match.service.routeTextColor else null),
+        textColor = readableTextColor(color, preferred = match.service.routeTextColor.takeIf { onRouteColor }),
         thumbnailColor = resolved,
         title = barTitle(match, state.probe.point, edge, now, locale, metric),
         trailing = trailingAction(match, contact, edgePoint),

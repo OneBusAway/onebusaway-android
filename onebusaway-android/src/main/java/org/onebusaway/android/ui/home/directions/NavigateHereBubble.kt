@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.GenericShape
@@ -237,7 +238,10 @@ private fun NavigateHerePill(onNavigate: () -> Unit, coverage: OnDemandCoverageL
             if (coverage != null) {
                 HorizontalDivider()
                 Row(
+                    // Spec §5: every icon-only or otherwise small tap target keeps a 48 dp minimum, even
+                    // though the row's own text and padding would otherwise fall short of it.
                     modifier = Modifier
+                        .heightIn(min = 48.dp)
                         .clickable(onClick = onOpenCoverage)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                         .testTag(NavigateHereBubbleTestTags.COVERAGE),

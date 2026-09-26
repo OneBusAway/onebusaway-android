@@ -49,6 +49,7 @@ class DockBarPagesTest {
     fun `an inside page takes the service colour, the inside title and the phone`() {
         val page = dockBarPages(OnDemandDockState.Bar(listOf(inside), probe), emptyMap(), colors, now, Locale.US, metric = false).single()
         assertEquals(0xFF78AA36.toInt(), page.color)
+        assertEquals(0xFF78AA36.toInt(), page.thumbnailColor)
         // White is only 2.76:1 on #78AA36; black reaches 7.6:1 (spec §5, WCAG 4.5:1).
         assertEquals(0xFF000000.toInt(), page.textColor)
         assertEquals(R.string.ondemand_bar_inside, page.title?.res)
@@ -67,6 +68,8 @@ class DockBarPagesTest {
     fun `an outside page is gray with the edge chevron, or nothing without a point`() {
         val page = dockBarPages(OnDemandDockState.Bar(listOf(outside), probe), emptyMap(), colors, now, Locale.US, metric = false).single()
         assertEquals(ONDEMAND_OUTSIDE_GRAY, page.color)
+        // The bar's background goes gray, but the thumbnail's rings keep the service's own colour (D5).
+        assertEquals(0xFF3B82F6.toInt(), page.thumbnailColor)
         assertEquals(R.string.ondemand_bar_outside_south, page.title?.res)
         assertEquals(TrailingAction.CHEVRON_EDGE, page.trailing)
         assertEquals(GeoPoint(45.056, -85.1), page.edgePoint)

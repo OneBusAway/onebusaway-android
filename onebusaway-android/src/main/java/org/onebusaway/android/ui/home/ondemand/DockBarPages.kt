@@ -43,6 +43,11 @@ data class DockBarPage(
     val match: OnDemandMatch,
     val color: Int,
     val textColor: Int,
+    /**
+     * The thumbnail's ring colour: the service's own resolved colour always, even outside where
+     * [color] (the bar's background) turns gray (spec §3.4's "the same drawing" for the outside state).
+     */
+    val thumbnailColor: Int,
     /** Null when there is nothing to say: the service name then takes the title position. */
     val title: TextSpec?,
     val trailing: TrailingAction,
@@ -56,12 +61,14 @@ fun dockBarPages(state: OnDemandDockState.Bar, edges: Map<String, ZoneEdge>, col
     val edge = edges[match.service.id]
     val contact = contactOf(match.service)
     val edgePoint = match.nearestPointOnBoundary ?: edge?.point
-    val color = if (match.isInside) colors[match.service.id] ?: ONDEMAND_OUTSIDE_GRAY else ONDEMAND_OUTSIDE_GRAY
+    val resolved = colors[match.service.id] ?: ONDEMAND_OUTSIDE_GRAY
+    val color = if (match.isInside) resolved else ONDEMAND_OUTSIDE_GRAY
     DockBarPage(
         match = match,
         color = color,
         // The outside gray always reads white; a route's own text colour applies only over its own colour.
         textColor = readableTextColor(color, preferred = if (match.isInside) match.service.routeTextColor else null),
+        thumbnailColor = resolved,
         title = barTitle(match, state.probe.point, edge, now, locale, metric),
         trailing = trailingAction(match, contact, edgePoint),
         contact = contact,

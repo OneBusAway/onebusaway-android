@@ -111,7 +111,7 @@ fun OnDemandDockBar(
     val badge = badgeText(pagerState.currentPage + 1, pages.size).resolve()
     val moreServicesLabel = stringResource(R.string.ondemand_bar_a11y_more_services)
     val shapes = if (pages.all { geometry.containsKey(it.match.service.id) }) {
-        pages.flatMap { page -> geometry.getValue(page.match.service.id).toThumbnailShapes(page.color) }
+        pages.flatMap { page -> geometry.getValue(page.match.service.id).toThumbnailShapes(page.thumbnailColor) }
     } else {
         null
     }

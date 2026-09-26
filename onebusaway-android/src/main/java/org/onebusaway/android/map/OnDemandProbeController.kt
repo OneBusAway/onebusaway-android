@@ -270,13 +270,16 @@ class OnDemandProbeController(
         geometryJob?.cancel()
         val wanted = matches.filter { (it.isInside || it.isNearby) && geometryCache.peek(deployment, it.service.id) == null }
         if (wanted.isEmpty()) return
+        // One child per service, so the fetches overlap; cancelling geometryJob cancels them all.
         geometryJob = scope.launch {
             for (match in wanted) {
-                val areas = geometryCache.areas(deployment, match.service.id) ?: continue
-                // A fetch that outlived a deployment change or a newer state answers for one we no longer show.
-                if (!isShowing(deployment, probe)) return@launch
-                _geometry.update { it + (match.service.id to areas) }
-                nearestBoundaryPoint(probe.point, areas)?.let { edge -> _edges.update { it + (match.service.id to edge) } }
+                launch {
+                    val areas = geometryCache.areas(deployment, match.service.id) ?: return@launch
+                    // A fetch that outlived a deployment change or a newer state answers for one we no longer show.
+                    if (!isShowing(deployment, probe)) return@launch
+                    _geometry.update { it + (match.service.id to areas) }
+                    nearestBoundaryPoint(probe.point, areas)?.let { edge -> _edges.update { it + (match.service.id to edge) } }
+                }
             }
         }
     }

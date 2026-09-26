@@ -128,6 +128,7 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.launch
@@ -810,6 +811,19 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
         // The device-localized departure–arrival range (unwrap the server clock only here).
         val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
         val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
+        // The day the option sets out on, above its range, whenever that isn't today (#2337): a bare
+        // range reads as today's, which is exactly what a trip planned for tomorrow isn't.
+        val today = deviceToday()
+        val startDay = option.startTime.localDate(ZoneId.systemDefault())
+        if (startDay != today) {
+            Text(
+                text = dayName(startDay, today),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                modifier = Modifier.testTag(OPTION_DAY_TEST_TAG)
+            )
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             ScheduleMetric(startText, winner = WinnerCategory.LATEST_DEPARTURE in winners, outlineColor = winnerOutlineColor)
             Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
@@ -1230,6 +1244,10 @@ private fun UnpinTripButton(onClick: () -> Unit) {
 /** The tag the unpin button is driven by in instrumented tests. */
 const val UNPIN_TRIP_TEST_TAG = "unpinTrip"
 
+/** Tags on the day an option card and a trip-log time name when the trip isn't today (#2337). */
+const val OPTION_DAY_TEST_TAG = "optionDay"
+const val TRIP_LOG_DAY_TEST_TAG = "tripLogDay"
+
 /** The minimum height of a row's content — the platform's 48dp target when the row is a tap target. */
 private val ROW_MIN_HEIGHT = 36.dp
 private val ROW_MIN_TOUCH_HEIGHT = 48.dp
@@ -1293,6 +1311,12 @@ private fun TripLogList(
     // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
     // what makes a toggle recompose this list.
     val rows = rememberLogRows(entries, expanded.toSet())
+    // Which rows name the day under their time — only when the trip isn't today, or crosses midnight.
+    val today = deviceToday()
+    // Keyed on the zone too, so a zone change while the list stays up can't leave the log's days stale
+    // against the option card's, which reads the zone afresh.
+    val zone = ZoneId.systemDefault()
+    val rowDays = remember(rows, today, zone) { rowDays(rows, today, zone) }
     val listState = rememberLazyListState()
 
     // The scripted tour rings parts of this drawer, and the thing it rings has to be on screen (#2164).
@@ -1355,7 +1379,8 @@ private fun TripLogList(
                 Modifier
             }
             Box(anchored) {
-                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+                val day = rowDays[row.key]?.let { dayName(it, today) }
+                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip, day = day)
             }
         }
     }
@@ -1397,12 +1422,13 @@ private fun LogRow(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
+    day: String? = null
 ) {
     val i = model.entryIndex
     when (val content = model.content) {
         is RowContent.Terminal ->
-            LogRowScaffold(model, onClick = content.entry.point?.let { { onFocusPoint(it) } }) {
+            LogRowScaffold(model, onClick = content.entry.point?.let { { onFocusPoint(it) } }, day = day) {
                 TerminalContent(content.entry)
             }
 
@@ -1434,6 +1460,7 @@ private fun LogRow(
             LogRowScaffold(
                 model = model,
                 onClick = null,
+                day = day,
                 onToggleExpand = { onToggle(i) },
                 // The board stop's live ETA strip, under the whole row rather than in the content
                 // column, so it runs to the row's edge instead of stopping short at the expand chevron
@@ -1461,7 +1488,7 @@ private fun LogRow(
             }
 
         is RowContent.ExitNode ->
-            LogRowScaffold(model, onClick = content.entry.routeLeg.alight?.point?.let { { onFocusPoint(it) } }) {
+            LogRowScaffold(model, onClick = content.entry.routeLeg.alight?.point?.let { { onFocusPoint(it) } }, day = day) {
                 ExitContent(content.entry)
             }
     }
@@ -1523,6 +1550,7 @@ private fun LogRowScaffold(
     compact: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     footer: (@Composable () -> Unit)? = null,
+    day: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -1593,6 +1621,19 @@ private fun LogRowScaffold(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = TextUnit.Unspecified,
                         style = clockStyle
+                    )
+                }
+                // The day this time falls on, when it isn't the day the log last stated (#2337) — see
+                // rowDays. Under the time rather than beside it: the column is narrow, and wraps rather
+                // than ellipsizing for the same reason the time does.
+                day?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        modifier = Modifier.testTag(TRIP_LOG_DAY_TEST_TAG)
                     )
                 }
                 delta?.let {

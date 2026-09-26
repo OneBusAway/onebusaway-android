@@ -586,13 +586,7 @@ class TripPlanViewModel @Inject constructor(
      */
     private fun dayRelationOf(instant: WallTime, now: WallTime): TripDay {
         val zone = ZoneId.systemDefault()
-        val day = instant.toLocalDate(zone)
-        val today = now.toLocalDate(zone)
-        return when (day) {
-            today -> TripDay.TODAY
-            today.plusDays(1) -> TripDay.TOMORROW
-            else -> TripDay.OTHER
-        }
+        return TripDay.of(day = instant.toLocalDate(zone), today = now.toLocalDate(zone))
     }
 
     /** The calendar day this instant falls on in [zone] — an unwrap for java.time, which wants millis. */

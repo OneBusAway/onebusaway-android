@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import java.time.LocalDate
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.time.ServerTime
 
@@ -152,7 +153,19 @@ data class AdvancedSettings(
 enum class TripDay {
     TODAY,
     TOMORROW,
-    OTHER
+    OTHER;
+
+    companion object {
+        /**
+         * The one rule for naming [day] against [today], shared by the form's callout and the results'
+         * day labels (#2337) so the two can't disagree about which day a trip is on.
+         */
+        fun of(day: LocalDate, today: LocalDate): TripDay = when (day) {
+            today -> TODAY
+            today.plusDays(1) -> TOMORROW
+            else -> OTHER
+        }
+    }
 }
 
 /** A fully-specified plan request handed to [TripPlanRepository]. */

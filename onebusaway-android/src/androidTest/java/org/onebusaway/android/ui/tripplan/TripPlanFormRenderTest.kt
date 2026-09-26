@@ -17,13 +17,16 @@ package org.onebusaway.android.ui.tripplan
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
@@ -37,10 +40,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -329,14 +334,41 @@ class TripPlanFormRenderTest {
     fun aTripTomorrowNamesTheDayInWords() {
         renderForm(pinnedOn(TripDay.TOMORROW))
 
-        composeRule.onNodeWithText("3:45 PM, tomorrow").assertIsDisplayed()
+        composeRule.onNodeWithText("3:45 PM").assertIsDisplayed()
+        composeRule.onNodeWithText("Tomorrow").assertIsDisplayed()
     }
 
     @Test
     fun aTripFurtherOutFallsBackToItsDate() {
         renderForm(pinnedOn(TripDay.OTHER))
 
-        composeRule.onNodeWithText("3:45 PM, June 10").assertIsDisplayed()
+        composeRule.onNodeWithText("3:45 PM").assertIsDisplayed()
+        composeRule.onNodeWithText("June 10").assertIsDisplayed()
+    }
+
+    /**
+     * The day survives the bar's squeeze (#2337). As a suffix on the time it was what the ellipsis cut,
+     * so a trip on another day read as a bare time — "10:45…" — with nothing saying which day. On its
+     * own line under the time, a long date in the narrowest card still shows whole.
+     */
+    @Test
+    fun aPinnedDayIsNotCutOffByTheBar() {
+        renderForm(
+            plannedState.copy(
+                departNow = false,
+                dayRelation = TripDay.OTHER,
+                dateLabel = "September 24",
+                timeLabel = "10:45 AM"
+            ),
+            fullCardWidth = true
+        )
+
+        for (text in listOf("10:45 AM", "September 24")) {
+            val node = composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
+            val layouts = mutableListOf<TextLayoutResult>()
+            node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+            assertFalse("\"$text\" should show whole, not ellipsized", layouts.single().isLineEllipsized(0))
+        }
     }
 
     /**
@@ -626,12 +658,19 @@ class TripPlanFormRenderTest {
     /** [plannedState] with its trip pinned to an instant that falls on [day]. */
     private fun pinnedOn(day: TripDay) = plannedState.copy(departNow = false, dayRelation = day)
 
+    /**
+     * [fullCardWidth] lays the form out at [cardWidth] even on a screen narrower than it — CI's emulator
+     * is 320dp, which otherwise caps the form there. A test that measures what fits the card needs it;
+     * it spills past the window's right edge, so it's off for the tests that capture pixels.
+     */
     private fun renderForm(
         state: TripPlanFormState,
-        onToQueryChange: (String) -> Unit = {}
+        onToQueryChange: (String) -> Unit = {},
+        fullCardWidth: Boolean = false
     ) = renderForm(
         state = { state },
-        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) }
+        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) },
+        fullCardWidth = fullCardWidth
     )
 
     /** [state] is a lambda so a test can back it with its own mutable state and observe writes. */
@@ -645,11 +684,13 @@ class TripPlanFormRenderTest {
         onReverse: () -> Unit = {},
         onRefresh: () -> Unit = {},
         onPickDateTime: () -> Unit = {},
-        onClose: () -> Unit = {}
+        onClose: () -> Unit = {},
+        fullCardWidth: Boolean = false
     ) {
+        val unbounded = if (fullCardWidth) Modifier.wrapContentWidth(Alignment.Start, unbounded = true) else Modifier
         composeRule.setContent {
             ObaTheme {
-                Box(Modifier.width(cardWidth).testTag(FORM)) {
+                Box(unbounded.width(cardWidth).testTag(FORM)) {
                     TripPlanForm(
                         state = state(),
                         onQueryChange = onQueryChange,

@@ -378,11 +378,14 @@ class MapLibreRenderer(
             .alpha(fillOpacity(fillColor))
         for (hole in zone.rings.drop(1)) fill.addHole(hole.map { it.toLatLng() })
         annotations += map.addPolygon(fill)
+        // Polylines are classic annotations too, so the stroke's alpha channel is split the same way.
+        val strokeColor = zoneStrokeColor(color, zone.style)
         for (ring in zone.rings) {
             annotations += map.addPolyline(
                 PolylineOptions()
                     .addAll(ring.map { it.toLatLng() })
-                    .color(zoneStrokeColor(color, zone.style))
+                    .color(opaqueFillColor(strokeColor))
+                    .alpha(fillOpacity(strokeColor))
                     .width(zone.style.strokeWidthDp)
             )
         }

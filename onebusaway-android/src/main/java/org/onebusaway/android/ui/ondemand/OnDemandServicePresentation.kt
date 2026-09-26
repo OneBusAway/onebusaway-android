@@ -15,17 +15,16 @@
  */
 package org.onebusaway.android.ui.ondemand
 
-import java.time.DateTimeException
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import org.onebusaway.android.models.AvailabilityRule
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.ServiceDayTime
-import org.onebusaway.android.ondemand.BookingDeadlineEvaluator
 import org.onebusaway.android.ondemand.BookingEvaluation
 import org.onebusaway.android.ondemand.BookingState
+import org.onebusaway.android.ondemand.agencyZone
+import org.onebusaway.android.ondemand.bookingLine
 
 /** One "When" line: the days of [calendarId] and the pickup window (null ends = all hours). */
 data class WhenRow(val calendarId: String, val days: Set<DayOfWeek>, val start: ServiceDayTime?, val end: ServiceDayTime?)
@@ -67,8 +66,6 @@ sealed interface OnDemandServiceUiState {
     data class Content(val service: OnDemandService, val whenRows: List<WhenRow>, val booking: BookingSummary?) : OnDemandServiceUiState
 }
 
-private val UNKNOWN_EVALUATION = BookingEvaluation(BookingState.UNKNOWN, cutoffInstant = null, openInstant = null)
-
 /**
  * Projects a service for the page at [now] (the device wall clock, minted by the caller). Pure, so
  * the deadline line is JVM-tested with a fixed instant.
@@ -100,70 +97,4 @@ internal fun presentService(service: OnDemandService, now: Instant): OnDemandSer
         )
     }
     return OnDemandServiceUiState.Content(service, whenRows, booking)
-}
-
-/** The verdict the booking line states, and the ride date it is for. */
-private data class DatedEvaluation(val travelDate: LocalDate, val evaluation: BookingEvaluation)
-
-/** What the booking line states; see [BookingSummary]. Null when no date can be promised. */
-private fun OnDemandService.bookingLine(now: Instant, zone: ZoneId): DatedEvaluation? {
-    val bookableDate = nextBookableServiceDate(now, zone) ?: return earliestOpening(now, zone)
-    return earliestOpenEvaluation(bookableDate, now, zone)?.let { DatedEvaluation(bookableDate, it) }
-}
-
-/**
- * For a service with nothing bookable on any date: each rule on the first of its service days whose
- * booking has not opened yet, and of those the one whose booking opens earliest. The walk has to go
- * past the rule's next service day: with a one-day notice window that day is already closed by the
- * evening before, while the day after it is still to open.
- */
-private fun OnDemandService.earliestOpening(now: Instant, zone: ZoneId): DatedEvaluation? {
-    val today = now.atZone(zone).toLocalDate()
-    return rules
-        .filterNot(::hasUnresolvedPickupBookingRule)
-        .mapNotNull { rule ->
-            BookingDeadlineEvaluator.nextServiceDateInState(rule, pickupBookingRule(rule), BookingState.NOT_YET_OPEN, today, now, zone, calendars)
-                ?.let { date -> DatedEvaluation(date, evaluateBooking(rule, date, now, zone)) }
-        }
-        .minByOrNull { it.evaluation.openInstant ?: Instant.MAX }
-}
-
-/** The earliest date any rule can be booked for right now, or null when none can. */
-private fun OnDemandService.nextBookableServiceDate(now: Instant, zone: ZoneId): LocalDate? {
-    val today = now.atZone(zone).toLocalDate()
-    return rules
-        .filterNot(::hasUnresolvedPickupBookingRule)
-        .mapNotNull { rule -> BookingDeadlineEvaluator.nextBookableServiceDate(rule, pickupBookingRule(rule), today, now, zone, calendars) }
-        .minOrNull()
-}
-
-/** The verdict with the earliest cutoff among the rules that evaluate OPEN on [date]; see [BookingSummary]. */
-private fun OnDemandService.earliestOpenEvaluation(date: LocalDate, now: Instant, zone: ZoneId): BookingEvaluation? = rules
-    .filter { rule -> rule.calendarIds.any { calendars[it]?.isActiveOn(date) == true } }
-    .map { rule -> evaluateBooking(rule, date, now, zone) }
-    .filter { it.state == BookingState.OPEN }
-    .minByOrNull { it.cutoffInstant ?: Instant.MAX }
-
-/**
- * The rule names a pickup booking rule the references don't resolve (absent, or dropped at the
- * adapter for a `booking_type` this build can't read). Notice *is* required, we just can't say how
- * much — so it is [BookingState.UNKNOWN], never the evaluator's null-rule "no notice, book any time".
- */
-private fun OnDemandService.hasUnresolvedPickupBookingRule(rule: AvailabilityRule): Boolean = rule.pickupBookingRuleId != null && pickupBookingRule(rule) == null
-
-private fun OnDemandService.evaluateBooking(rule: AvailabilityRule, date: LocalDate, now: Instant, zone: ZoneId): BookingEvaluation = if (hasUnresolvedPickupBookingRule(rule)) {
-    UNKNOWN_EVALUATION
-} else {
-    BookingDeadlineEvaluator.evaluate(rule, pickupBookingRule(rule), date, now, zone, calendars)
-}
-
-/**
- * The agency timezone, required by GTFS and always in the references; null when it is missing or an
- * id `java.time` doesn't know. Never the device zone: a deadline computed in the rider's zone rather
- * than the agency's could be hours late, the one error a rider can't recover from.
- */
-private fun agencyZone(timezone: String?): ZoneId? = try {
-    timezone?.let(ZoneId::of)
-} catch (_: DateTimeException) {
-    null
 }

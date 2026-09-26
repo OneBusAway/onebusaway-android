@@ -73,6 +73,8 @@ private const val RECOMPUTE_GRACE_MS = 1_000L
  * the rider asked.
  *
  * JVM-constructible: every input is a flow or an interface, and `now` comes from [timeProvider].
+ *
+ * [scope] must be single-threaded (Main); call [probeExact] from it.
  */
 class OnDemandProbeController(
     private val settledCamera: Flow<CameraSnapshot>,

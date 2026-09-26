@@ -28,8 +28,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.api.data.OnDemandDataSource
@@ -47,6 +49,7 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
+import org.onebusaway.android.map.render.ZoneEdge
 import org.onebusaway.android.map.render.viewport
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlacesRepository
@@ -56,14 +59,21 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.ServiceArea
+import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.OnDemandGeometryCache
+import org.onebusaway.android.ondemand.OnDemandMatch
+import org.onebusaway.android.ondemand.resolveServiceColors
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
+import org.onebusaway.android.util.TimeProvider
 import org.onebusaway.android.util.getRouteDescription
 import org.onebusaway.android.util.getRouteDisplayName
 import org.onebusaway.android.util.parseObaHexColor
+import org.onebusaway.android.util.toGeoPoint
 
 /**
  * The route-mode header content (the old `R.id.route_info` overlay): the route's short/long name +
@@ -129,6 +139,7 @@ class MapViewModel @Inject constructor(
     private val rentalPlacesRepository: RentalPlacesRepository,
     private val onDemandDataSource: OnDemandDataSource,
     private val onDemandSupport: OnDemandSupport,
+    private val onDemandGeometryCache: OnDemandGeometryCache,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
@@ -136,6 +147,7 @@ class MapViewModel @Inject constructor(
     private val stopDao: StopDao,
     private val stopCache: StopCacheRepository,
     private val demoMode: DemoModeState,
+    private val timeProvider: TimeProvider,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -222,6 +234,8 @@ class MapViewModel @Inject constructor(
         scope = viewModelScope
     )
 
+    private val brandColor = ContextCompat.getColor(context, R.color.brand_color)
+
     // The on-demand zone overlay (GTFS-Flex service areas for the viewport); overlays every mode
     // exactly as the rental layer does.
     private val onDemandController = OnDemandLayerController(
@@ -232,9 +246,78 @@ class MapViewModel @Inject constructor(
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
         demoMode = demoMode,
-        brandColor = ContextCompat.getColor(context, R.color.brand_color),
+        brandColor = brandColor,
         scope = viewModelScope
     )
+
+    // The point probe behind the dock (spec §2.1). The rider is the probe source only while the
+    // blue dot is authorised and a fix exists; otherwise the settled map centre is.
+    private val onDemandProbeController = OnDemandProbeController(
+        settledCamera = mapHost.settledCamera(),
+        riderFixes = combine(locationRepository.location, mapHost.myLocationEnabled) { location, authorised ->
+            location?.takeIf { authorised }?.let { RiderFix(it.toGeoPoint(), if (it.hasAccuracy()) it.accuracy else null) }
+        },
+        layerEnabled = prefsRepository.observeBoolean(R.string.preference_key_show_ondemand_zones, true),
+        deployment = onDemandDeployment(regionRepo, prefsRepository, demoMode),
+        dataSource = onDemandDataSource,
+        support = onDemandSupport,
+        geometryCache = onDemandGeometryCache,
+        timeProvider = timeProvider,
+        scope = viewModelScope
+    )
+
+    /** What the dock slot shows (spec §2.4), already gated on zoom level, layer and host suppression. */
+    val onDemandDock: StateFlow<OnDemandDockState> get() = onDemandProbeController.dockState
+
+    /** The whole last probe, for the picker's "all services here" list. */
+    val onDemandProbeResult: StateFlow<OnDemandProbeResult?> get() = onDemandProbeController.result
+
+    val onDemandEdges: StateFlow<Map<String, ZoneEdge>> get() = onDemandProbeController.edges
+
+    val onDemandGeometry: StateFlow<Map<String, List<ServiceArea>>> get() = onDemandProbeController.geometry
+
+    /** One resolved colour per matched service id, so the bar, card and thumbnail agree with the map. */
+    val onDemandColors: StateFlow<Map<String, Int>> = onDemandProbeController.result
+        .map { result -> resolveServiceColors(result?.matches?.map { it.service } ?: emptyList(), brandColor) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    init {
+        // Spec §2.3: the highlight clears whenever the dock leaves the bar state.
+        viewModelScope.launch {
+            onDemandProbeController.dockState.collect { if (it !is OnDemandDockState.Bar) onDemandController.highlightedServiceId.value = null }
+        }
+    }
+
+    /** Spec §2.4: the host hides the dock while a focus, the survey card or a tall sheet has the screen. */
+    fun setOnDemandDockSuppressed(suppressed: Boolean) = onDemandProbeController.setSuppressed(suppressed)
+
+    /** Spec §2.3: draw [serviceId] highlighted (a picker row or a bar page), or nothing with null. */
+    fun highlightOnDemandService(serviceId: String?) {
+        onDemandController.highlightedServiceId.value = serviceId
+    }
+
+    /** The bar thumbnail's tap (spec §3.4): fit the stack's zones at region level, clamped about [probe]. */
+    fun zoomOutToOnDemandZones(matches: List<OnDemandMatch>, probe: GeoPoint) {
+        val bounds = matches.flatMap { match -> match.service.areas.map { it.southWest to it.northEast } }
+        val corners = onDemandZoomOutCorners(bounds, probe) ?: return
+        mapHost.frame(FramingIntent.Points(listOf(corners.first, corners.second), minSpanDeg = 0.0))
+    }
+
+    /** The outside chevron (spec §3.4): centre the nearest boundary point, keeping the zoom. */
+    fun panToOnDemandEdge(point: GeoPoint) = mapHost.centerOn(point.latitude, point.longitude, animate = true)
+
+    /** The exact-point probe for the dropped pin and the planner (spec §2.1); null when unanswerable. */
+    suspend fun probeOnDemandExact(point: GeoPoint): List<OnDemandMatch>? = onDemandProbeController.probeExact(point)
+
+    /**
+     * The probe's location facts for [serviceId] when the last probe matched it (spec §3.6 item 3: a
+     * region-level pin tap opens the page with them), else null and the page omits the row.
+     */
+    fun onDemandLocationCheckFor(serviceId: String): LocationCheck? {
+        val result = onDemandProbeController.result.value ?: return null
+        val match = result.matches.firstOrNull { it.service.id == serviceId } ?: return null
+        return LocationCheck(result.probe.source, match.isInside, locality = null, point = result.probe.point)
+    }
 
     /** Whether the rental layer refused this viewport (see `RentalGuardrails`) — drives the map's pill. */
     val rentalsNeedCloserZoom: StateFlow<Boolean> get() = mapHost.rentalsNeedCloserZoom
@@ -359,6 +442,7 @@ class MapViewModel @Inject constructor(
         if (routeController.focusedStopId == null) stopsController.start()
         rentalController.start()
         onDemandController.start()
+        onDemandProbeController.start()
     }
 
     /**
@@ -393,6 +477,7 @@ class MapViewModel @Inject constructor(
         )
         rentalController.start()
         onDemandController.start()
+        onDemandProbeController.start()
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
@@ -434,6 +519,7 @@ class MapViewModel @Inject constructor(
         routeController.stop()
         rentalController.stop()
         onDemandController.stop()
+        onDemandProbeController.stop()
         if (routeController.focusedStopId != null) {
             stopsController.start()
         } else {
@@ -656,6 +742,7 @@ class MapViewModel @Inject constructor(
         // nor act on, while the trip's own bike legs already say where its vehicle is picked up.
         rentalController.hide()
         onDemandController.hide()
+        onDemandProbeController.stop()
     }
 
     /**
@@ -746,6 +833,7 @@ class MapViewModel @Inject constructor(
         stopsController.start()
         rentalController.start()
         onDemandController.start()
+        onDemandProbeController.start()
     }
 
     /**
@@ -813,6 +901,7 @@ class MapViewModel @Inject constructor(
     /** Refresh prefs-backed state and restart the vehicle poll if in route mode (the host's onResume). */
     fun onResume() {
         rentalController.syncFromPreferences()
+        onDemandProbeController.onForeground()
         mapHost.refreshMyLocationEnabled()
         // Begin the live location feed for as long as the map is shown (permission-gated; a no-op until
         // granted). This is what makes `location` a live stream — the legacy host's LocationHelper feed.

@@ -31,8 +31,11 @@ package org.onebusaway.android.map.rental
  * Metres per degree of latitude — the WGS-84 meridian quarter-arc (10,001,965.729 m) over 90°.
  * Latitude is used rather than longitude precisely because it doesn't vary with where you are, so the
  * gate means the same thing in Seattle as at the equator.
+ *
+ * Internal (not private) because the on-demand zoom-out framing math converts a clamped metre height
+ * back to a lat span the same way and must use the identical constant.
  */
-private const val METERS_PER_DEGREE_LATITUDE = 111_133.0
+internal const val METERS_PER_DEGREE_LATITUDE = 111_133.0
 
 /**
  * The tallest viewport the rental layer will fetch for, in metres of north-south extent.

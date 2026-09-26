@@ -308,8 +308,8 @@ fun SettingsScreen(
                 // The map's own long-press menu is the other way to turn this off, and the only way a
                 // rider is likely to find it; this row is how it comes back (#2168).
                 SwitchPreferenceItem(
-                    title = stringResource(R.string.preferences_show_rental_button_title),
-                    summary = stringResource(R.string.preferences_show_rental_button_summary),
+                    title = stringResource(R.string.preferences_show_layers_button_title),
+                    summary = stringResource(R.string.preferences_show_layers_button_summary),
                     checked = state.showRentalButton,
                     onCheckedChange = actions.onShowRentalButton
                 )

@@ -488,8 +488,11 @@ data class ZonePolygon(
     val serviceId: String,
     val serviceName: String,
     val rings: List<List<GeoPoint>>,
-    /** The route's GTFS colour (ARGB), or null for the default line colour. */
-    val color: Int?
+    /** The service's resolved colour (ARGB, opaque), or null for the default line colour. */
+    val color: Int?,
+    /** Where this polygon's pin goes, set on exactly one polygon per service at region level; null draws no pin. */
+    val labelPoint: GeoPoint? = null,
+    val style: ZoneStyle = ZoneStyle.REGION
 )
 
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */

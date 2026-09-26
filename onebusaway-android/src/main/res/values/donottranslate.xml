@@ -52,6 +52,7 @@
     <string name="preference_key_show_rental_button">preference_show_rental_button</string>
     <string name="preference_key_show_ondemand_zones">preference_show_ondemand_zones</string>
     <string name="preference_key_layer_scooters_visible">layer_scooters_selected</string>
+    <string name="preference_key_basemap">preference_basemap</string>
     <string name="preference_key_trip_plan_travel_by">preference_trip_plan_travel_by</string>
     <string name="preference_key_trip_plan_vehicle_mode">preference_trip_plan_vehicle_mode</string>
     <string name="preference_key_trip_plan_street_mode">preference_trip_plan_street_mode</string>

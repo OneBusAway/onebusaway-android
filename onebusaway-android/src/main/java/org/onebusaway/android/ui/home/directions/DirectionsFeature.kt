@@ -676,7 +676,9 @@ private fun NoEtasText(modifier: Modifier) {
 fun DirectionsErrorSnackbar(
     error: TripPlanError,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Spec §3.8: opens the on-demand fallback when the failure is one an on-demand ride could answer.
+    onOnDemandOptions: (() -> Unit)? = null
 ) {
     Surface(
         // A polite live region so a screen reader announces a newly surfaced planning failure.
@@ -687,29 +689,36 @@ fun DirectionsErrorSnackbar(
         contentColor = MaterialTheme.colorScheme.inverseOnSurface,
         shadowElevation = 6.dp
     ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(error.category.headerRes),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = colorResource(error.category.severity.colorRes)
-                )
-                Text(
-                    text = stringResource(error.detailRes),
-                    modifier = Modifier.padding(top = 2.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.9f)
-                )
+        Column {
+            Row(
+                modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(error.category.headerRes),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = colorResource(error.category.severity.colorRes)
+                    )
+                    Text(
+                        text = stringResource(error.detailRes),
+                        modifier = Modifier.padding(top = 2.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.9f)
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = AppIcons.Close,
+                        contentDescription = stringResource(R.string.dismiss),
+                        tint = MaterialTheme.colorScheme.inverseOnSurface
+                    )
+                }
             }
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = AppIcons.Close,
-                    contentDescription = stringResource(R.string.dismiss),
-                    tint = MaterialTheme.colorScheme.inverseOnSurface
-                )
+            if (onOnDemandOptions != null) {
+                TextButton(onClick = onOnDemandOptions, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+                    Text(stringResource(R.string.ondemand_planner_section), color = MaterialTheme.colorScheme.inversePrimary)
+                }
             }
         }
     }

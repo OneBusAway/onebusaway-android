@@ -25,11 +25,22 @@ import org.junit.Test
 import org.onebusaway.android.models.AvailabilityRule
 import org.onebusaway.android.models.BookingRule
 import org.onebusaway.android.models.BookingType
+import org.onebusaway.android.models.EligibilityRequirement
 import org.onebusaway.android.models.FlexCalendar
+import org.onebusaway.android.models.OnDemandEligibility
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.models.ServiceDayTime
 import org.onebusaway.android.ondemand.BookingState
+import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.OnDemandStatus
+import org.onebusaway.android.ondemand.ProbeSource
+import org.onebusaway.android.ondemand.TIER_ADVANCE
+import org.onebusaway.android.ondemand.TIER_ELIGIBILITY
+import org.onebusaway.android.ondemand.TIER_OPEN_NOW
+import org.onebusaway.android.ondemand.TIER_SAME_DAY
+import org.onebusaway.android.ondemand.TIER_UNKNOWN_OR_CLOSED
+import org.onebusaway.android.util.GeoPoint
 
 class OnDemandServicePresentationTest {
 
@@ -111,10 +122,20 @@ class OnDemandServicePresentationTest {
     }
 
     @Test
-    fun `the service url is the info link when no booking rule has one`() {
+    fun `the service url is never repeated as the info link`() {
         val service = alexandria.copy(bookingRules = mapOf("5088_booking" to booking.copy(infoUrl = null)), url = "https://example.com/dot-paratransit")
-        val summary = requireNotNull(presentService(service, tuesdayAfternoon).booking)
-        assertEquals("https://example.com/dot-paratransit", summary.infoUrl)
+        assertNull(presentService(service, tuesdayAfternoon).booking?.infoUrl)
+        val sameAsUrl = alexandria.copy(url = booking.infoUrl)
+        assertNull(presentService(sameAsUrl, tuesdayAfternoon).booking?.infoUrl)
+    }
+
+    @Test
+    fun `an eligibility info url stands in when the booking rule has none`() {
+        val service = alexandria.copy(
+            bookingRules = mapOf("5088_booking" to booking.copy(infoUrl = null)),
+            eligibility = OnDemandEligibility(EligibilityRequirement.CERTIFICATION_REQUIRED, "https://example.com/apply")
+        )
+        assertEquals("https://example.com/apply", presentService(service, tuesdayAfternoon).booking?.infoUrl)
     }
 
     @Test
@@ -125,12 +146,14 @@ class OnDemandServicePresentationTest {
     }
 
     @Test
-    fun `a service url still shows the booking section when there are no rules`() {
+    fun `a service url with no rules is never duplicated into the booking section`() {
+        // Spec §3.6 item 7: the website row already reads service.url directly, so the booking
+        // section's info link must not repeat it — with no other info source, there is no section.
         val service = alexandria.copy(rules = emptyList(), url = "https://example.com/dot-paratransit")
         val content = presentService(service, tuesdayAfternoon)
         assertTrue(content.whenRows.isEmpty())
-        val summary = requireNotNull(content.booking)
-        assertEquals("https://example.com/dot-paratransit", summary.infoUrl)
+        assertNull(content.booking)
+        assertEquals("https://example.com/dot-paratransit", content.service.url)
     }
 
     @Test
@@ -285,4 +308,100 @@ class OnDemandServicePresentationTest {
         assertEquals(BookingState.NOT_YET_OPEN, summary.evaluation?.state)
         assertEquals(OffsetDateTime.parse("2026-03-11T09:00:00-07:00").toInstant(), summary.evaluation?.openInstant)
     }
+
+    @Test
+    fun `the promoted fact follows the tier`() {
+        val content = presentService(alexandria, tuesdayAfternoon)
+        assertEquals(TIER_ADVANCE, content.availability.usabilityTier)
+        assertEquals(DetailPromotion.DEADLINE_ROW, detailPromotion(content.availability))
+        assertEquals(DetailPromotion.STATUS_LINE, detailPromotion(content.availability.copy(usabilityTier = TIER_OPEN_NOW)))
+        assertEquals(DetailPromotion.STATUS_LINE, detailPromotion(content.availability.copy(usabilityTier = TIER_SAME_DAY)))
+        assertEquals(DetailPromotion.STATUS_LINE, detailPromotion(content.availability.copy(usabilityTier = TIER_UNKNOWN_OR_CLOSED, status = OnDemandStatus.Closed)))
+        assertEquals(DetailPromotion.NONE, detailPromotion(content.availability.copy(usabilityTier = TIER_UNKNOWN_OR_CLOSED, status = OnDemandStatus.Unknown)))
+        assertEquals(DetailPromotion.NONE, detailPromotion(content.availability.copy(usabilityTier = TIER_ELIGIBILITY)))
+        // PF-12: a BookingOpens status also promotes the deadline row, even outside tier 3.
+        assertEquals(
+            DetailPromotion.DEADLINE_ROW,
+            detailPromotion(content.availability.copy(usabilityTier = TIER_UNKNOWN_OR_CLOSED, status = OnDemandStatus.BookingOpens(tuesdayAfternoon, LocalDate.of(2026, 3, 11))))
+        )
+    }
+
+    @Test
+    fun `no service names the weekdays every live calendar skips`() {
+        val today = LocalDate.of(2026, 3, 10)
+        val monToSat = alexandria.copy(rules = listOf(rule("5088_c_63", "05:00:00")))
+        assertEquals(setOf(DayOfWeek.SUNDAY), noServiceDays(monToSat, today))
+        val monToFri = FlexCalendar("wk", weekdays.days - DayOfWeek.SATURDAY, weekdays.startDate, weekdays.endDate, emptySet())
+        val weekdaysOnly = alexandria.copy(rules = listOf(rule("wk", "05:00:00")), calendars = mapOf("wk" to monToFri))
+        assertEquals(setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), noServiceDays(weekdaysOnly, today))
+        // A calendar that has already ended no longer serves its days.
+        val ended = alexandria.copy(calendars = mapOf("5088_c_63" to weekdays, "5088_c_64" to sunday.copy(endDate = LocalDate.of(2026, 2, 1))))
+        assertEquals(setOf(DayOfWeek.SUNDAY), noServiceDays(ended, today))
+        assertTrue(noServiceDays(alexandria, today).isEmpty())
+        assertTrue(noServiceDays(alexandria, null).isEmpty())
+        // No rule calendar resolves at all: spec §2.5 treats this as Unknown, not a service that
+        // runs zero days, so it must not report every weekday as unserved.
+        assertTrue(noServiceDays(alexandria.copy(rules = emptyList()), today).isEmpty())
+        assertTrue(noServiceDays(alexandria.copy(rules = listOf(rule("dangling", "05:00:00"))), today).isEmpty())
+    }
+
+    @Test
+    fun `rules with equal hours merge their weekdays into one row`() {
+        val saturday = FlexCalendar("sat", setOf(DayOfWeek.SATURDAY), weekdays.startDate, weekdays.endDate, emptySet())
+        val monToFri = FlexCalendar("wk", weekdays.days - DayOfWeek.SATURDAY, weekdays.startDate, weekdays.endDate, emptySet())
+        val service = alexandria.copy(rules = listOf(rule("wk", "05:00:00"), rule("sat", "05:00:00")), calendars = mapOf("wk" to monToFri, "sat" to saturday))
+        val rows = presentService(service, tuesdayAfternoon).whenRows
+        assertEquals(1, rows.size)
+        assertEquals(weekdays.days, rows.single().days)
+        assertEquals("Mon–Sat", formatDayRanges(rows.single().days, java.util.Locale.US))
+        assertEquals("Sat–Sun", formatDayRanges(setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), java.util.Locale.US))
+        assertEquals("Sun", formatDayRanges(setOf(DayOfWeek.SUNDAY), java.util.Locale.US))
+        assertEquals("Mon, Wed–Fri", formatDayRanges(setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY), java.util.Locale.US))
+    }
+
+    @Test
+    fun `where rows appear only for zone-to-zone or multi-area services`() {
+        assertNull(whereRows(alexandria))
+        val zoneToZone = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00").copy(fromIds = listOf("a"), toIds = listOf("b"))),
+            areas = listOf(
+                alexandriaArea("a", "Boyne City"),
+                alexandriaArea("b", "Petoskey")
+            )
+        )
+        val rows = requireNotNull(whereRows(zoneToZone))
+        assertEquals(listOf("Boyne City"), rows.serviceAreaNames)
+        assertEquals(listOf("Petoskey"), rows.dropOffNames)
+        assertEquals(2, rows.zoneCount)
+        val twoAreasSameEnds = zoneToZone.copy(rules = listOf(rule("5088_c_63", "05:00:00").copy(fromIds = listOf("a", "b"), toIds = listOf("a", "b"))))
+        assertNull(requireNotNull(whereRows(twoAreasSameEnds)).dropOffNames)
+    }
+
+    @Test
+    fun `an unnamed drop-off area leaves dropOffNames empty, with the zone count to fall back to`() {
+        val unnamed = alexandria.copy(
+            rules = listOf(rule("5088_c_63", "05:00:00").copy(fromIds = listOf("a"), toIds = listOf("b"))),
+            areas = listOf(
+                alexandriaArea("a", "Boyne City"),
+                alexandriaArea("b", "")
+            )
+        )
+        val rows = requireNotNull(whereRows(unnamed))
+        assertEquals(listOf("Boyne City"), rows.serviceAreaNames)
+        // Same D6 fallback as the Service area row: the toIds area has no name, so the row falls
+        // back to the service's zone count rather than showing nothing.
+        assertEquals(emptyList<String>(), rows.dropOffNames)
+        assertEquals(2, rows.zoneCount)
+    }
+
+    @Test
+    fun `the location check and the presentation instant ride along`() {
+        val check = LocationCheck(ProbeSource.Rider, isInside = true, locality = "Boyne City")
+        val content = presentService(alexandria, tuesdayAfternoon, check)
+        assertEquals(check, content.locationCheck)
+        assertEquals(tuesdayAfternoon, content.presentedAt)
+        assertNull(presentService(alexandria, tuesdayAfternoon).locationCheck)
+    }
+
+    private fun alexandriaArea(id: String, name: String) = org.onebusaway.android.models.ServiceArea(id, name, null, GeoPoint(45.0, -85.2), GeoPoint(45.1, -85.0), emptyList(), null, null)
 }

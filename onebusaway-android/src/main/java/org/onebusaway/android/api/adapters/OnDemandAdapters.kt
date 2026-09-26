@@ -29,8 +29,10 @@ import org.onebusaway.android.api.contract.ServiceAreaDto
 import org.onebusaway.android.models.AvailabilityRule
 import org.onebusaway.android.models.BookingRule
 import org.onebusaway.android.models.BookingType
+import org.onebusaway.android.models.EligibilityRequirement
 import org.onebusaway.android.models.FlexCalendar
 import org.onebusaway.android.models.LocationGroup
+import org.onebusaway.android.models.OnDemandEligibility
 import org.onebusaway.android.models.OnDemandMatchReason
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
@@ -86,7 +88,9 @@ private fun OnDemandServiceDto.toOnDemandService(references: References, allRefe
         bookingRules = bookingRules,
         calendars = calendarIds.mapNotNull { references.calendar(it)?.toFlexCalendar() }.associateBy { it.id },
         agencyTimezone = references.agency(agencyId)?.timezone,
-        routeColor = routeId?.let { references.route(it)?.colorArgb() }
+        routeColor = routeId?.let { references.route(it)?.colorArgb() },
+        routeTextColor = routeId?.let { references.route(it)?.textColorArgb() },
+        eligibility = eligibility?.let { OnDemandEligibility(EligibilityRequirement.fromWire(it.requirement), it.infoUrl) }
     )
 }
 

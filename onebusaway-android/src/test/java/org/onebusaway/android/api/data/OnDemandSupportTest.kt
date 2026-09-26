@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.api.data
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,5 +31,17 @@ class OnDemandSupportTest {
         assertFalse(support.isKnownUnsupported(null))
         support.recordAbsent(null)
         assertFalse(support.isKnownUnsupported(null))
+    }
+
+    @Test
+    fun `absent publishes each newly recorded deployment`() {
+        val support = OnDemandSupport()
+        assertEquals(emptySet<String>(), support.absent.value)
+        support.recordAbsent("https://api.pugetsound.onebusaway.org/")
+        assertEquals(setOf("https://api.pugetsound.onebusaway.org/"), support.absent.value)
+        support.recordAbsent("https://api.tampa.onebusaway.org/")
+        assertEquals(setOf("https://api.pugetsound.onebusaway.org/", "https://api.tampa.onebusaway.org/"), support.absent.value)
+        support.recordAbsent(null)
+        assertEquals(setOf("https://api.pugetsound.onebusaway.org/", "https://api.tampa.onebusaway.org/"), support.absent.value)
     }
 }

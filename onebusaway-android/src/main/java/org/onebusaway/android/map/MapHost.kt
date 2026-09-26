@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -109,6 +111,11 @@ class MapHost(
 ) {
 
     val renderState = MapRenderState()
+
+    /** The rider's basemap choice (spec §3.9); only the Google adapter draws anything but [Basemap.STANDARD]. */
+    val basemap: StateFlow<Basemap> = prefsRepository.observeString(R.string.preference_key_basemap, null)
+        .map(::basemapFromPref)
+        .stateIn(scope, SharingStarted.Eagerly, Basemap.STANDARD)
 
     init {
         renderState.setCompactStopIcons(prefsRepository.getBoolean(R.string.preference_key_compact_stop_icons, false))

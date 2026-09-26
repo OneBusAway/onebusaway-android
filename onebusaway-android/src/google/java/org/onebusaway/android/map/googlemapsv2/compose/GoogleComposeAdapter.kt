@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.onebusaway.android.R
+import org.onebusaway.android.map.Basemap
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
@@ -217,6 +218,11 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             LaunchedEffect(activeRenderer) {
                 onDemandZoneRenderFlow(renderState.snapshot).collect { activeRenderer.renderZones(it) }
             }
+            // Spec §3.9: the basemap choice is the google flavour's alone; maplibre keeps its style.
+            val activeMap = googleMap
+            if (activeMap != null) {
+                LaunchedEffect(activeMap) { host.basemap.collect { activeMap.mapType = it.googleMapType() } }
+            }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
             // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
             // (not inferred from the per-frame motion loop below), which is what makes a direction switch
@@ -381,6 +387,12 @@ private fun routeMarkerTap(
         cb.onRouteBadgeClick(routeBadge)
         return true
     }
+    val zone = renderer.zoneForMarker(marker)
+    if (zone != null) {
+        infoWindows.clear()
+        cb.onOnDemandZoneClick(zone)
+        return true
+    }
     // Trip-focus estimate markers + the most-recent-data dot (titled markers): the SDK's default
     // title/snippet info window, which dismisses any open custom bubble.
     infoWindows.clear()
@@ -419,3 +431,9 @@ private fun resolveMapStyle(context: Context): MapStyleOptions = MapStyleOptions
     context,
     if (ThemeUtils.isInDarkMode(context)) R.raw.dark_map else R.raw.light_map
 )
+
+private fun Basemap.googleMapType(): Int = when (this) {
+    Basemap.STANDARD -> GoogleMap.MAP_TYPE_NORMAL
+    Basemap.SATELLITE -> GoogleMap.MAP_TYPE_SATELLITE
+    Basemap.HYBRID -> GoogleMap.MAP_TYPE_HYBRID
+}

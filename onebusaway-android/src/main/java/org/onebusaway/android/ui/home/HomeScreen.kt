@@ -74,6 +74,9 @@ import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.OnDemandCoverageLine
+import org.onebusaway.android.ondemand.ProbeSource
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -103,6 +106,7 @@ import org.onebusaway.android.ui.home.directions.DirectionsSafetyNotice
 import org.onebusaway.android.ui.home.directions.NavigateHereBubble
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
+import org.onebusaway.android.ui.home.directions.showsOnDemandOptions
 import org.onebusaway.android.ui.home.donation.DonationFeature
 import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
@@ -124,6 +128,8 @@ import org.onebusaway.android.ui.home.nearby.limitExceeded
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRouteRows
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRowActions
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRowCallbacks
+import org.onebusaway.android.ui.home.ondemand.OnDemandDockOverlay
+import org.onebusaway.android.ui.home.ondemand.OnDemandSheetsViewModel
 import org.onebusaway.android.ui.home.weather.WeatherFeature
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.home.widealert.WideAlertDialog
@@ -188,6 +194,8 @@ class HomeCallbacks(
     val onOpenSurvey: (url: String) -> Unit,
     // A tap on a drawn on-demand zone: open that service's page.
     val onOpenOnDemandService: (serviceId: String) -> Unit = {},
+    // Opening a zone from the dock, picker, pin or planner carries the probe's location facts.
+    val onOpenOnDemandServiceAt: (serviceId: String, check: LocationCheck) -> Unit = { id, _ -> onOpenOnDemandService(id) },
     val onShowArrivals: (FocusedStop) -> Unit = {}
 )
 
@@ -603,6 +611,21 @@ fun HomeScreen(
                 // nav-bar strip.
                 val collapsedPeekPx = with(density) { collapsedPeekDp.roundToPx() }
 
+                // Spec §2.4: the on-demand dock yields to a focus, the survey card and a sheet over half the map.
+                val surveyState by surveyViewModel.state.collectAsStateWithLifecycle()
+                val surveyCardShown = surveyState.heroQuestion != null && surveyState.sheet == null
+                val dockCovered = dockCoveredBySheet(
+                    sheetShown = sheetShown,
+                    expanded = sheetState.currentValue == SheetValue.Expanded,
+                    peekPx = collapsedPeekPx,
+                    windowHeightPx = LocalWindowInfo.current.containerSize.height
+                )
+                LaunchedEffect(currentFocus, dockCovered, surveyCardShown) {
+                    mapViewModel.setOnDemandDockSuppressed(currentFocus !is CurrentFocus.None || dockCovered || surveyCardShown)
+                }
+                val onDemandSheetsViewModel = hiltViewModel<OnDemandSheetsViewModel>()
+                var onDemandDockHeightPx by remember { mutableIntStateOf(0) }
+
                 // The peek height actually handed to the scaffold: the real peek while shown, 0 while hidden.
                 // Animating between the two slides the whole sheet up from / down past the bottom edge — the
                 // slide-in/out that the removed `Hidden` anchor used to provide. The finished-listener flips
@@ -891,9 +914,13 @@ fun HomeScreen(
                                     mapViewModel = mapViewModel,
                                     homeViewModel = homeViewModel,
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
-                                    fabBottomInset = fabInsetTarget,
+                                    fabBottomInset = fabInsetTarget + with(density) { onDemandDockHeightPx.toDp() },
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
-                                    onOpenOnDemandService = onOpenOnDemandService,
+                                    // A region-level pin tap carries the probe's facts when the last probe matched the service (spec §3.6 item 3).
+                                    onOpenOnDemandService = { id ->
+                                        val check = mapViewModel.onDemandLocationCheckFor(id)
+                                        if (check == null) onOpenOnDemandService(id) else onOpenOnDemandServiceAt(id, check)
+                                    },
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -1120,11 +1147,31 @@ fun HomeScreen(
                                             onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
                                             modifier = Modifier.fillMaxSize()
                                         )
-                                        directionsError != null -> DirectionsErrorSnackbar(
-                                            error = directionsError,
-                                            onDismiss = tripPlanViewModel::clearPlanResult,
-                                            modifier = Modifier.align(Alignment.BottomCenter)
-                                        )
+                                        directionsError != null -> {
+                                            val onDemandSupported by mapViewModel.onDemandSupported.collectAsStateWithLifecycle()
+                                            val from = tripPlanFormState.from
+                                            val to = tripPlanFormState.to
+                                            val offersOnDemand = showsOnDemandOptions(directionsError.category, from.hasCoordinates, to.hasCoordinates, onDemandSupported)
+                                            DirectionsErrorSnackbar(
+                                                error = directionsError,
+                                                onDismiss = tripPlanViewModel::clearPlanResult,
+                                                modifier = Modifier.align(Alignment.BottomCenter),
+                                                onOnDemandOptions = if (offersOnDemand) {
+                                                    {
+                                                        val origin = GeoPoint(requireNotNull(from.lat), requireNotNull(from.lon))
+                                                        val destination = GeoPoint(requireNotNull(to.lat), requireNotNull(to.lon))
+                                                        onDemandSheetsViewModel.openPlanner(
+                                                            origin,
+                                                            destination,
+                                                            isSupported = { mapViewModel.onDemandSupported.value },
+                                                            probeExact = mapViewModel::probeOnDemandExact
+                                                        )
+                                                    }
+                                                } else {
+                                                    null
+                                                }
+                                            )
+                                        }
                                     }
                                     if (directionsLoading) {
                                         LinearProgressIndicator(
@@ -1152,14 +1199,29 @@ fun HomeScreen(
                                 // The bubble over a long press's dropped pin. A pressed point has nothing
                                 // to call it, so it travels as a bare map point; see navigateTo for the
                                 // rest, which the focused stop's menu item shares.
-                                NavigateHereOverlay(mapViewModel) { point ->
-                                    navigateTo(
-                                        TripEndpoint.MapPoint(point.latitude, point.longitude),
-                                        homeViewModel,
-                                        mapViewModel,
-                                        tripPlanViewModel
-                                    )
-                                }
+                                NavigateHereOverlay(
+                                    mapViewModel = mapViewModel,
+                                    onNavigate = { point ->
+                                        navigateTo(
+                                            TripEndpoint.MapPoint(point.latitude, point.longitude),
+                                            homeViewModel,
+                                            mapViewModel,
+                                            tripPlanViewModel
+                                        )
+                                    },
+                                    onOpenCoverage = { line, point ->
+                                        mapViewModel.setNavigateHerePin(null)
+                                        onOpenOnDemandServiceAt(line.match.service.id, LocationCheck(ProbeSource.Point(null), line.isInside, locality = null, point = point))
+                                    }
+                                )
+                                // The on-demand dock (spec §2.4) at the top edge of the sheet, and its picker.
+                                OnDemandDockOverlay(
+                                    mapViewModel = mapViewModel,
+                                    sheetsViewModel = onDemandSheetsViewModel,
+                                    bottomInset = fabInsetTarget,
+                                    onOpenDetail = onOpenOnDemandServiceAt,
+                                    onHeight = { onDemandDockHeightPx = it }
+                                )
                                 // Neither Back nor a tap on the map background leaves outright while a trip
                                 // is drawn — each stages this question instead (#2140). The VM owns the latch
                                 // because the two gestures reach it from different places (the BackHandler
@@ -1240,11 +1302,19 @@ fun HomeScreen(
  * collected *here* rather than in the screen's shared scope: the offer comes and goes often, and neither
  * fact concerns anything else on the screen. [onNavigate] is handed the pinned point, since taking the
  * offer is a trip-planning act the host owns; retiring the pin is the map's own business either way.
+ *
+ * [onOpenCoverage] hands back the pin's on-demand line together with its point (spec §3.7): the pin is
+ * cleared here, the same as taking the offer, since opening the zone page leaves the pressed point behind.
  */
 @Composable
-private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoint) -> Unit) {
+private fun NavigateHereOverlay(
+    mapViewModel: MapViewModel,
+    onNavigate: (GeoPoint) -> Unit,
+    onOpenCoverage: (OnDemandCoverageLine, GeoPoint) -> Unit
+) {
     val pin by mapViewModel.navigateHerePin.collectAsStateWithLifecycle()
     val projector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
+    val coverage by mapViewModel.navigateHereCoverage.collectAsStateWithLifecycle()
     pin?.let { point ->
         NavigateHereBubble(
             point = point,
@@ -1253,7 +1323,9 @@ private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoin
                 mapViewModel.setNavigateHerePin(null)
                 onNavigate(point)
             },
-            onDismiss = { mapViewModel.setNavigateHerePin(null) }
+            onDismiss = { mapViewModel.setNavigateHerePin(null) },
+            coverage = coverage,
+            onOpenCoverage = { coverage?.let { line -> onOpenCoverage(line, point) } }
         )
     }
 }

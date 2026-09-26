@@ -19,8 +19,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -78,21 +76,6 @@ class RentalLayerController(
     private var cachedViewport: CameraSnapshot? = null
     private var cachedSource: String? = null
     private var cachedPlaces: List<RentalPlace>? = null
-
-    private val _loading = MutableStateFlow(false)
-
-    /**
-     * Whether a rental request is in flight — the spinner on the map's rental button.
-     *
-     * Every request, whoever triggered it: a tap that switched something on, and equally the reload a
-     * settled pan or zoom fires. The layer can take seconds to answer over a wide box, and a map
-     * quietly fetching while still showing the previous viewport's markers is worse than one that says
-     * so.
-     *
-     * A redraw served from [placesFor]'s cache is not a request and never raises this — which is what
-     * keeps the mode toggles from flashing it, since they don't reach the network at all.
-     */
-    val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     /**
      * Show or hide rentals entirely — the master button. The two mode toggles keep their own settings
@@ -220,7 +203,6 @@ class RentalLayerController(
         loadJob?.cancel()
         loadJob = null
         host.setRentalsNeedCloserZoom(false)
-        _loading.value = false
         // Drop the cache with the loader: the next `start` may be a different region or a different
         // rental server, and a viewport that merely *compares* equal to the cached one would then
         // redraw the old server's vehicles.
@@ -249,15 +231,7 @@ class RentalLayerController(
      */
     private suspend fun placesFor(camera: CameraSnapshot, source: String): List<RentalPlace>? {
         cachedPlaces?.takeIf { cachedViewport == camera && cachedSource == source }?.let { return it }
-        // Only a real request lights the button — the cache hit above returns without touching it.
-        _loading.value = true
-        val result = try {
-            rentalPlacesRepository.getRentals(camera.southWest.toLocation(), camera.northEast.toLocation())
-        } finally {
-            // `finally`, so a load cancelled mid-flight can't strand the spinner lit: collectLatest
-            // cancels this the moment the viewport moves again, and the next load lights it afresh.
-            _loading.value = false
-        }
+        val result = rentalPlacesRepository.getRentals(camera.southWest.toLocation(), camera.northEast.toLocation())
         val places = result.getOrNull() ?: return null
         cachedViewport = camera
         cachedSource = source

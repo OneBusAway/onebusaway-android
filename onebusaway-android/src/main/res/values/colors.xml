@@ -203,4 +203,7 @@
     <color name="md_theme_surfaceContainer">#ECEFE6</color>
     <color name="md_theme_surfaceContainerHigh">#E6E9E0</color>
     <color name="md_theme_surfaceContainerHighest">#E0E4DB</color>
+    <!-- DRT UI spec §5: the docked bar outside every zone, and the "Open" weight in status lines -->
+    <color name="ondemand_outside">#636366</color>
+    <color name="ondemand_open_green">#248a3d</color>
 </resources>

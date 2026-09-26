@@ -41,7 +41,16 @@ data class OnDemandServiceDto(
     val description: String? = null,
     val url: String? = null,
     val rules: List<AvailabilityRuleDto> = emptyList(),
-    val matchReason: String? = null
+    val matchReason: String? = null,
+    /** Reserved in v1 (wiki §4); decoded only when a server sends it. Absent means "no information", never "open". */
+    val eligibility: OnDemandEligibilityDto? = null
+)
+
+/** The planned `eligibility` extension: `open`, `certificationRequired` or `unknown`, plus an information URL. */
+@Serializable
+data class OnDemandEligibilityDto(
+    val requirement: String = "unknown",
+    val infoUrl: String? = null
 )
 
 /** One availability rule (wiki §2.2). Times are `"HH:MM:SS"` service-day strings and may exceed 24h. */

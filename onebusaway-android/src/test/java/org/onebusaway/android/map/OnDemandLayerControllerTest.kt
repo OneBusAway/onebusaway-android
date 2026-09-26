@@ -20,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -35,9 +36,11 @@ import org.onebusaway.android.api.data.OnDemandSupport
 import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.ZoneStyle
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.models.ServiceArea
+import org.onebusaway.android.ondemand.ONDEMAND_FALLBACK_PALETTE
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
@@ -56,6 +59,7 @@ class OnDemandLayerControllerTest {
             requests += viewport
             return result
         }
+        override suspend fun servicesNear(point: GeoPoint, radiusMeters: Int, geometryDetail: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
         override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = OnDemandResult.Failed(IOException("unused"))
         override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Failed(IOException("unused"))
     }
@@ -93,11 +97,13 @@ class OnDemandLayerControllerTest {
         routeColor = 0xFF112233.toInt()
     )
 
+    private val brand = 0xFF78AA36.toInt()
+
     private fun controller(
         source: OnDemandDataSource,
         scope: kotlinx.coroutines.CoroutineScope,
         regionRepository: FakeRegionRepository = regions
-    ) = OnDemandLayerController(camera, renderState, source, support, prefs, regionRepository, FakeDemoMode(), scope)
+    ) = OnDemandLayerController(camera, renderState, source, support, prefs, regionRepository, FakeDemoMode(), brand, scope)
 
     @Test
     fun `a settled viewport loads zones with the route colour`() = runTest {
@@ -117,8 +123,11 @@ class OnDemandLayerControllerTest {
     }
 
     @Test
-    fun `a multipolygon area becomes one zone per polygon`() {
-        assertEquals(2, zonePolygons(listOf(service(polygons = 2))).size)
+    fun `a multipolygon area becomes one zone per polygon with one pin`() {
+        val zones = zonePolygons(listOf(service(polygons = 2)), OnDemandZoomLevel.REGION, null, brand)
+        assertEquals(2, zones.size)
+        assertEquals(1, zones.count { it.labelPoint != null })
+        assertTrue(zones.all { it.style == ZoneStyle.REGION })
     }
 
     @Test
@@ -137,6 +146,37 @@ class OnDemandLayerControllerTest {
         advanceTimeBy(1)
         assertEquals(1, source.requests.size)
         subject.stop()
+    }
+
+    @Test
+    fun `a viewport taller than the zoom gate clears zones without a request`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service())))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(viewport)
+        advanceTimeBy(1)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
+
+        // A state-wide view: nothing drawn, nothing asked.
+        camera.emit(viewport.copy(latSpan = 2.0))
+        advanceTimeBy(1)
+        assertTrue(renderState.snapshot.value.onDemandZones.isEmpty())
+        assertEquals(1, source.requests.size)
+
+        // Back to the same view: the cache redraws it without a second request.
+        camera.emit(viewport)
+        advanceTimeBy(1)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
+        assertEquals(1, source.requests.size)
+        subject.stop()
+    }
+
+    @Test
+    fun `the zoom gate is 65 km of latitude`() {
+        val gateLatSpan = ONDEMAND_MAX_VISIBLE_HEIGHT_METERS / 111_133.0
+        assertTrue(isWithinOnDemandZoomGate(gateLatSpan))
+        assertTrue(isWithinOnDemandZoomGate(0.0))
+        assertFalse(isWithinOnDemandZoomGate(gateLatSpan * 1.01))
     }
 
     @Test
@@ -238,5 +278,72 @@ class OnDemandLayerControllerTest {
         assertEquals(1, source.requests.size)
         assertEquals(1, renderState.snapshot.value.onDemandZones.size)
         subject.stop()
+    }
+
+    @Test
+    fun `street level restyles the same zones without a pin`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service())))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(viewport)
+        advanceTimeBy(1)
+        assertEquals(OnDemandZoomLevel.REGION, subject.zoomLevel.value)
+        assertEquals(ZoneStyle.REGION, renderState.snapshot.value.onDemandZones.single().style)
+        assertTrue(renderState.snapshot.value.onDemandZones.single().labelPoint != null)
+
+        camera.emit(viewport.copy(latSpan = 0.02))
+        advanceTimeBy(1)
+        assertEquals(OnDemandZoomLevel.STREET, subject.zoomLevel.value)
+        val street = renderState.snapshot.value.onDemandZones.single()
+        assertEquals(ZoneStyle.STREET, street.style)
+        assertEquals(null, street.labelPoint)
+        subject.stop()
+    }
+
+    @Test
+    fun `a highlight raises one service and dims the others at street level`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service(id = "a"), service(id = "b"))))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(viewport.copy(latSpan = 0.02))
+        advanceTimeBy(1)
+        subject.highlightedServiceId.value = "b"
+        advanceTimeBy(1)
+        val styles = renderState.snapshot.value.onDemandZones.associate { it.serviceId to it.style }
+        assertEquals(ZoneStyle.STREET_HIGHLIGHTED, styles["b"])
+        assertEquals(ZoneStyle.STREET_DIMMED, styles["a"])
+        assertEquals(1, source.requests.size)
+
+        subject.highlightedServiceId.value = null
+        advanceTimeBy(1)
+        assertTrue(renderState.snapshot.value.onDemandZones.all { it.style == ZoneStyle.STREET })
+        subject.stop()
+    }
+
+    @Test
+    fun `support turns false the moment the endpoint is recorded absent`() = runTest {
+        val deployment = MutableStateFlow<String?>(endpoint)
+        assertTrue(onDemandSupportedFlow(deployment, support.absent).first())
+
+        support.recordAbsent(endpoint)
+        assertFalse(onDemandSupportedFlow(deployment, support.absent).first())
+    }
+
+    @Test
+    fun `support is false with no deployment regardless of the absent set`() = runTest {
+        val deployment = MutableStateFlow<String?>(null)
+        assertFalse(onDemandSupportedFlow(deployment, support.absent).first())
+    }
+
+    @Test
+    fun `colliding colours resolve to the palette`() {
+        val zones = zonePolygons(
+            listOf(service(id = "a").copy(routeColor = null), service(id = "b").copy(routeColor = null)),
+            OnDemandZoomLevel.REGION,
+            null,
+            brand
+        )
+        assertEquals(brand, zones.first { it.serviceId == "a" }.color)
+        assertEquals(ONDEMAND_FALLBACK_PALETTE[0], zones.first { it.serviceId == "b" }.color)
     }
 }

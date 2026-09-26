@@ -74,6 +74,8 @@ import org.onebusaway.android.nav.ReminderSessionStore
 import org.onebusaway.android.nav.ReminderShapeSource
 import org.onebusaway.android.nav.ReminderSpeechController
 import org.onebusaway.android.nav.RoomReminderSessionStore
+import org.onebusaway.android.ondemand.DefaultLocalityResolver
+import org.onebusaway.android.ondemand.LocalityResolver
 import org.onebusaway.android.preferences.DefaultPreferencesRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.DefaultRegionRepository
@@ -253,6 +255,9 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindGeocodeRepository(impl: DefaultGeocodeRepository): GeocodeRepository
+
+    @Binds
+    abstract fun bindLocalityResolver(impl: DefaultLocalityResolver): LocalityResolver
 
     // The read-only view of demo mode, for collaborators that react to it but must not switch it.
     @Binds

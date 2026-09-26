@@ -34,6 +34,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import org.onebusaway.android.BuildConfig
+import org.onebusaway.android.map.MapFlavourCapabilities
 import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.TimeProvider
@@ -95,6 +97,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideElapsedClock(): ElapsedClock = ElapsedClock { ElapsedTime.now() }
+
+    /** What this build flavour's map SDK can do — currently just the basemap choice (spec §3.9). */
+    @Provides
+    @Singleton
+    fun provideMapFlavourCapabilities(): MapFlavourCapabilities = MapFlavourCapabilities(hasBasemapChoice = BuildConfig.MAP_HAS_BASEMAP_CHOICE)
 
     @Provides
     @Singleton

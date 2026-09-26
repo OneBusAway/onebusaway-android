@@ -1499,6 +1499,75 @@
     <!-- Second line of an on-demand service row on the arrivals card; %1$s is a phone number -->
     <string name="ondemand_card_phone">Book by phone: %1$s</string>
 
+    <!-- On-demand: shared status, tag and location copy (DRT UI spec §2.8) -->
+    <string name="ondemand_card_eyebrow">On-demand service here</string>
+    <!-- %1$s is a clock time in the agency's timezone -->
+    <string name="ondemand_status_open_until">Open · until %1$s</string>
+    <string name="ondemand_status_open_now_until">Open now · until %1$s</string>
+    <string name="ondemand_status_open">Open</string>
+    <!-- %1$s is a relative day and time, e.g. "tomorrow at 7:20 AM" -->
+    <string name="ondemand_status_opens">Opens %1$s</string>
+    <!-- %1$s is a relative day and time, e.g. "tomorrow at 3:10 PM" -->
+    <string name="ondemand_status_book_by">Book by %1$s</string>
+    <string name="ondemand_status_closed">Closed</string>
+    <!-- %1$s is a clock time -->
+    <string name="ondemand_relative_today_at">today at %1$s</string>
+    <string name="ondemand_relative_tomorrow_at">tomorrow at %1$s</string>
+    <!-- %1$s is a weekday name or a date, %2$s a clock time -->
+    <string name="ondemand_relative_day_at">%1$s at %2$s</string>
+    <string name="ondemand_tag_same_day">Same-day booking</string>
+    <string name="ondemand_tag_advance">Advance booking</string>
+    <string name="ondemand_tag_no_notice">No notice needed</string>
+    <string name="ondemand_tag_eligibility">Eligibility required</string>
+    <string name="ondemand_bar_inside">Pickups available here</string>
+    <!-- Docked bar titles when the rider is inside a zone near its edge; %1$s is a distance such as "300 ft" -->
+    <string name="ondemand_bar_inside_near_edge_north">Inside · edge %1$s north</string>
+    <string name="ondemand_bar_inside_near_edge_northeast">Inside · edge %1$s northeast</string>
+    <string name="ondemand_bar_inside_near_edge_east">Inside · edge %1$s east</string>
+    <string name="ondemand_bar_inside_near_edge_southeast">Inside · edge %1$s southeast</string>
+    <string name="ondemand_bar_inside_near_edge_south">Inside · edge %1$s south</string>
+    <string name="ondemand_bar_inside_near_edge_southwest">Inside · edge %1$s southwest</string>
+    <string name="ondemand_bar_inside_near_edge_west">Inside · edge %1$s west</string>
+    <string name="ondemand_bar_inside_near_edge_northwest">Inside · edge %1$s northwest</string>
+    <!-- Docked bar titles when the rider is outside a zone; %1$s is a distance such as "0.3 mi" -->
+    <string name="ondemand_bar_outside_north">%1$s north of the zone</string>
+    <string name="ondemand_bar_outside_northeast">%1$s northeast of the zone</string>
+    <string name="ondemand_bar_outside_east">%1$s east of the zone</string>
+    <string name="ondemand_bar_outside_southeast">%1$s southeast of the zone</string>
+    <string name="ondemand_bar_outside_south">%1$s south of the zone</string>
+    <string name="ondemand_bar_outside_southwest">%1$s southwest of the zone</string>
+    <string name="ondemand_bar_outside_west">%1$s west of the zone</string>
+    <string name="ondemand_bar_outside_northwest">%1$s northwest of the zone</string>
+    <!-- %1$d is the current page, %2$d the page count -->
+    <string name="ondemand_bar_badge">%1$d of %2$d</string>
+    <!-- Address check on a dropped pin; %1$s is a service name -->
+    <string name="ondemand_address_inside">Inside %1$s</string>
+    <string name="ondemand_address_outside">Outside %1$s</string>
+    <!-- %1$s is a service name, %2$d how many more services also contain the point -->
+    <plurals name="ondemand_address_inside_more">
+        <item quantity="one">Inside %1$s and %2$d more</item>
+        <item quantity="other">Inside %1$s and %2$d more</item>
+    </plurals>
+    <!-- Overlap picker subtitle; %1$s is a locality name -->
+    <string name="ondemand_picker_subtitle_location">%1$s · Your location</string>
+    <string name="ondemand_picker_subtitle_center">%1$s · Map center</string>
+    <string name="ondemand_picker_subtitle_point">%1$s · Selected place</string>
+    <string name="ondemand_picker_your_location">Your location</string>
+    <string name="ondemand_picker_map_center">Map center</string>
+    <string name="ondemand_picker_selected_place">Selected place</string>
+    <!-- Zone detail location row -->
+    <string name="ondemand_detail_location_inside">Your location is in this zone</string>
+    <string name="ondemand_detail_location_outside">Your location is outside this zone</string>
+    <string name="ondemand_detail_center_inside">Map center is in this zone</string>
+    <string name="ondemand_detail_center_outside">Map center is outside this zone</string>
+    <string name="ondemand_detail_point_inside">This place is in this zone</string>
+    <string name="ondemand_detail_point_outside">This place is outside this zone</string>
+    <!-- %d is a number of zones -->
+    <plurals name="ondemand_detail_zone_count">
+        <item quantity="one">%d zone</item>
+        <item quantity="other">%d zones</item>
+    </plurals>
+
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 
     <!--Travel Behaviour data collection-->

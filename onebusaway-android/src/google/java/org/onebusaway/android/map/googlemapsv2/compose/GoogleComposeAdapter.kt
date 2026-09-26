@@ -381,6 +381,12 @@ private fun routeMarkerTap(
         cb.onRouteBadgeClick(routeBadge)
         return true
     }
+    val zone = renderer.zoneForMarker(marker)
+    if (zone != null) {
+        infoWindows.clear()
+        cb.onOnDemandZoneClick(zone)
+        return true
+    }
     // Trip-focus estimate markers + the most-recent-data dot (titled markers): the SDK's default
     // title/snippet info window, which dismisses any open custom bubble.
     infoWindows.clear()

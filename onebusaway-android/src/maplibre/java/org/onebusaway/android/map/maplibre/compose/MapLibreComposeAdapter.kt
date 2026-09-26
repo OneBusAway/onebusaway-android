@@ -341,6 +341,12 @@ private fun wireClicks(
             callbacks.onStopClick(stop)
             return@setOnMarkerClickListener true
         }
+        val zone = renderer.zoneForMarker(marker)
+        if (zone != null) {
+            infoWindows.clear()
+            callbacks.onOnDemandZoneClick(zone)
+            return@setOnMarkerClickListener true
+        }
         val vehicle = renderer.vehicleForMarker(marker)
         if (vehicle != null) {
             infoWindows.clear() // dismisses any open bubble (a rental's, a dot's), as a stop tap does

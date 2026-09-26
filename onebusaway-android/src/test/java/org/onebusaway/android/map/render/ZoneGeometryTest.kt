@@ -180,13 +180,6 @@ class ZoneGeometryTest {
     }
 
     @Test
-    fun `fill and stroke keep the route hue and set alpha`() {
-        assertEquals(0x33112233, zoneFillColor(0xFF112233.toInt()))
-        assertEquals(0xCC112233.toInt(), zoneStrokeColor(0xFF112233.toInt()))
-        assertEquals(0x33 shl 24 or (DEFAULT_ROUTE_LINE_COLOR and 0x00FFFFFF), zoneFillColor(null))
-    }
-
-    @Test
     fun `zone styles set fill, stroke, halo and clickability per level`() {
         val colour = 0xFF112233.toInt()
         assertEquals(0x33112233, zoneFillColor(colour, ZoneStyle.REGION))

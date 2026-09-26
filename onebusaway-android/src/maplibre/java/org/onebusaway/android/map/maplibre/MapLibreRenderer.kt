@@ -22,6 +22,7 @@ package org.onebusaway.android.map.maplibre
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
@@ -45,6 +46,7 @@ import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
@@ -62,12 +64,14 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.ZonePinBitmaps
 import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.ZonePolygonReconciler
-import org.onebusaway.android.map.render.contains
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.strokeWidthDp
+import org.onebusaway.android.map.render.tappableZone
 import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.render.zoneFillColor
 import org.onebusaway.android.map.render.zoneStrokeColor
@@ -172,7 +176,10 @@ class MapLibreRenderer(
     private val staticAnnotations = mutableListOf<Annotation>()
 
     // On-demand zones have their own change boundary ([renderZones]), so a static redraw leaves them be.
-    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZonePolygon, removePolygons = { polygons -> map.removeAnnotations(polygons) })
+    // A zone is several classic annotations — the fill, one stroke polyline per ring, the region pin.
+    private val zoneReconciler = ZonePolygonReconciler<List<Annotation>>(createPolygon = ::addZone, removePolygons = ::removeZones)
+    private val zoneByPin = HashMap<Marker, ZonePolygon>()
+    private val zonePinIcons = HashMap<String, Icon>()
 
     // Whole-route lines are reconciled independently from the combined static snapshot: stop list,
     // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
@@ -341,7 +348,7 @@ class MapLibreRenderer(
     }
 
     /**
-     * Reconcile the independently collected on-demand zones, retaining equal native polygons. Classic
+     * Reconcile the independently collected on-demand zones, retaining equal native annotations. Classic
      * shape annotations stack in add order with no z-index, so a zone added after the route lines would
      * cover them: when any zone is added, the route lines are re-added on top.
      */
@@ -349,17 +356,41 @@ class MapLibreRenderer(
         if (zoneReconciler.reconcile(zones)) routePolylineReconciler.redraw(map.cameraPosition.zoom.toFloat())
     }
 
-    // The classic PolygonOptions has no stroke width, so the outline is the SDK's hairline. Markers always
-    // draw above shape annotations, so the stops sit on top whatever the add order.
-    private fun addZonePolygon(zone: ZonePolygon): Polygon? {
+    // The classic PolygonOptions has no stroke width, so the fill is drawn with a transparent outline and
+    // each ring is stroked by its own polyline at the style's width (2 dp region, 4 dp street); there is
+    // no halo on this flavour (spec §3.2). Markers always draw above shapes, so the pin and the stops sit on top.
+    private fun addZone(zone: ZonePolygon): List<Annotation>? {
         val exterior = zone.rings.firstOrNull() ?: return null
-        val options = PolygonOptions()
+        val color = zone.color ?: DEFAULT_ROUTE_LINE_COLOR
+        val annotations = mutableListOf<Annotation>()
+        val fill = PolygonOptions()
             .addAll(exterior.map { it.toLatLng() })
-            .fillColor(zoneFillColor(zone.color))
-            .strokeColor(zoneStrokeColor(zone.color))
+            .fillColor(zoneFillColor(color, zone.style))
+            .strokeColor(Color.TRANSPARENT)
             .alpha(1f)
-        for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
-        return map.addPolygon(options)
+        for (hole in zone.rings.drop(1)) fill.addHole(hole.map { it.toLatLng() })
+        annotations += map.addPolygon(fill)
+        for (ring in zone.rings) {
+            annotations += map.addPolyline(
+                PolylineOptions()
+                    .addAll(ring.map { it.toLatLng() })
+                    .color(zoneStrokeColor(color, zone.style))
+                    .width(zone.style.strokeWidthDp)
+            )
+        }
+        zone.labelPoint?.let { point ->
+            val icon = zonePinIcons.getOrPut("${zone.serviceName}:$color") { iconFactory.fromBitmap(ZonePinBitmaps.pin(context, zone.serviceName, color).bitmap) }
+            val marker = map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon))
+            zoneByPin[marker] = zone
+            annotations += marker
+        }
+        return annotations
+    }
+
+    private fun removeZones(groups: List<List<Annotation>>) {
+        val all = groups.flatten()
+        all.filterIsInstance<Marker>().forEach(zoneByPin::remove)
+        map.removeAnnotations(all)
     }
 
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
@@ -796,11 +827,11 @@ class MapLibreRenderer(
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
-    /** The topmost zone under [point], for the adapter's map-click dispatch (classic polygons have no click listener). */
-    fun zoneAt(point: LatLng): ZonePolygon? {
-        val geoPoint = GeoPoint(point.latitude, point.longitude)
-        return renderState.snapshot.value.onDemandZones.lastOrNull { it.contains(geoPoint) }
-    }
+    /** The topmost region-level zone under [point], for the adapter's map-click dispatch (classic polygons have no click listener). */
+    fun zoneAt(point: LatLng): ZonePolygon? = tappableZone(renderState.snapshot.value.onDemandZones, GeoPoint(point.latitude, point.longitude))
+
+    /** The zone whose region-level pin [marker] is. */
+    fun zoneForMarker(marker: Marker): ZonePolygon? = zoneByPin[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

@@ -50,6 +50,7 @@ import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.InterlineSeamMark
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
@@ -72,15 +73,19 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
-import org.onebusaway.android.map.render.ZONE_STROKE_WIDTH_PX
+import org.onebusaway.android.map.render.ZONE_HALO_WIDTH_DP
+import org.onebusaway.android.map.render.ZonePinBitmaps
 import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.ZonePolygonReconciler
+import org.onebusaway.android.map.render.clickable
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.strokeWidthDp
 import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.render.zoneFillColor
+import org.onebusaway.android.map.render.zoneHaloColor
 import org.onebusaway.android.map.render.zoneStrokeColor
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.time.WallTime
@@ -128,7 +133,16 @@ class GoogleMapRenderer(
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
 
     // On-demand zones have their own change boundary ([renderZones]), so a static redraw leaves them be.
-    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZonePolygon, removePolygons = { polygons -> polygons.forEach(Polygon::remove) })
+    private val zoneReconciler = ZonePolygonReconciler(createPolygon = ::addZone, removePolygons = ::removeZones)
+    private val zoneByPolygon = HashMap<Polygon, ZonePolygon>()
+    private val zoneByPin = HashMap<Marker, ZonePolygon>()
+    private val zonePinIcons = HashMap<String, PinIcon>()
+
+    /** The native pieces one zone draws: its polygon, the street-level halo beneath it, the region-level pin. */
+    private class ZoneNatives(val polygon: Polygon, val halo: Polygon?, val pin: Marker?)
+
+    /** A pin's descriptor with the anchor its bitmap was drawn for (a `BitmapDescriptor` carries none). */
+    private class PinIcon(val descriptor: BitmapDescriptor, val anchorY: Float)
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -340,18 +354,59 @@ class GoogleMapRenderer(
         zoneReconciler.reconcile(zones)
     }
 
-    // At [ZONE_Z_INDEX], so a zone sits beneath every line and marker whenever it is added.
-    private fun addZonePolygon(zone: ZonePolygon): Polygon? {
+    // At [ZONE_Z_INDEX], so a zone sits beneath every line and marker whenever it is added; the halo one
+    // step lower still. Only a region-level polygon takes taps (spec §3.1).
+    private fun addZone(zone: ZonePolygon): ZoneNatives? {
         val exterior = zone.rings.firstOrNull() ?: return null
+        val color = zone.color ?: DEFAULT_ROUTE_LINE_COLOR
+        val outline = exterior.map { it.toLatLng() }
+        val holes = zone.rings.drop(1).map { hole -> hole.map { it.toLatLng() } }
+        val halo = zoneHaloColor(color, zone.style)?.let { haloColor ->
+            val options = PolygonOptions()
+                .addAll(outline)
+                .fillColor(Color.TRANSPARENT)
+                .strokeColor(haloColor)
+                .strokeWidth(ZONE_HALO_WIDTH_DP * density)
+                .clickable(false)
+                .zIndex(ZONE_HALO_Z_INDEX)
+            holes.forEach(options::addHole)
+            map.addPolygon(options)
+        }
         val options = PolygonOptions()
-            .addAll(exterior.map { it.toLatLng() })
-            .fillColor(zoneFillColor(zone.color))
-            .strokeColor(zoneStrokeColor(zone.color))
-            .strokeWidth(ZONE_STROKE_WIDTH_PX)
-            .clickable(true)
+            .addAll(outline)
+            .fillColor(zoneFillColor(color, zone.style))
+            .strokeColor(zoneStrokeColor(color, zone.style))
+            .strokeWidth(zone.style.strokeWidthDp * density)
+            .clickable(zone.style.clickable)
             .zIndex(ZONE_Z_INDEX)
-        for (hole in zone.rings.drop(1)) options.addHole(hole.map { it.toLatLng() })
-        return map.addPolygon(options)
+        holes.forEach(options::addHole)
+        val polygon = map.addPolygon(options)
+        zoneByPolygon[polygon] = zone
+        val pin = zone.labelPoint?.let { point ->
+            val icon = zonePinIcons.getOrPut("${zone.serviceName}:$color") {
+                ZonePinBitmaps.pin(context, zone.serviceName, color).let { PinIcon(BitmapDescriptorFactory.fromBitmap(it.bitmap), it.anchorY) }
+            }
+            map.addMarkerOrFail(
+                MarkerOptions()
+                    .position(point.toLatLng())
+                    .icon(icon.descriptor)
+                    .anchor(0.5f, icon.anchorY)
+                    .zIndex(ZONE_PIN_Z_INDEX)
+            ).also { zoneByPin[it] = zone }
+        }
+        return ZoneNatives(polygon, halo, pin)
+    }
+
+    private fun removeZones(natives: List<ZoneNatives>) {
+        for (zone in natives) {
+            zoneByPolygon.remove(zone.polygon)
+            zone.polygon.remove()
+            zone.halo?.remove()
+            zone.pin?.let { pin ->
+                zoneByPin.remove(pin)
+                pin.remove()
+            }
+        }
     }
 
     private fun renderRouteBadges(badges: List<RouteBadge>) {
@@ -932,7 +987,10 @@ class GoogleMapRenderer(
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
     /** The zone a native polygon draws, for the adapter's polygon-click dispatch. */
-    fun zoneForPolygon(polygon: Polygon): ZonePolygon? = zoneReconciler.zoneFor(polygon)
+    fun zoneForPolygon(polygon: Polygon): ZonePolygon? = zoneByPolygon[polygon]
+
+    /** The zone whose region-level pin [marker] is, for the adapter's marker-click dispatch. */
+    fun zoneForMarker(marker: Marker): ZonePolygon? = zoneByPin[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
@@ -991,6 +1049,12 @@ class GoogleMapRenderer(
 
         /** Beneath route lines (z 0) and every marker: zones are context, not content. */
         private const val ZONE_Z_INDEX = -1f
+
+        /** A street-level halo draws one step beneath its zone's own stroke. */
+        private const val ZONE_HALO_Z_INDEX = -2f
+
+        /** Above [ZONE_Z_INDEX] so a zone's pin is never covered by its own polygon. */
+        private const val ZONE_PIN_Z_INDEX = 0.5f
 
         // The route-continuation badge (#1691) draws above vehicles so it's always reliably tappable.
         private const val ROUTE_BADGE_Z_INDEX = 1.5f

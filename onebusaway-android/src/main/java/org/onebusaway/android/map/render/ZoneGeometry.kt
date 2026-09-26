@@ -23,18 +23,8 @@ import kotlin.math.sqrt
 import org.onebusaway.android.models.ServiceArea
 import org.onebusaway.android.util.GeoPoint
 
-/** Stroke width of a zone outline, in pixels, on both flavors. */
-const val ZONE_STROKE_WIDTH_PX = 3f
-
 private const val FILL_ALPHA = 0x33
-private const val STROKE_ALPHA = 0xCC
 private const val RGB_MASK = 0x00FFFFFF
-
-/** The zone fill: the route's colour at ~20 % opacity, so stops and lines stay legible over it. */
-fun zoneFillColor(routeColor: Int?): Int = withAlpha(routeColor ?: DEFAULT_ROUTE_LINE_COLOR, FILL_ALPHA)
-
-/** The zone outline: the same hue, ~80 % opaque. */
-fun zoneStrokeColor(routeColor: Int?): Int = withAlpha(routeColor ?: DEFAULT_ROUTE_LINE_COLOR, STROKE_ALPHA)
 
 private fun withAlpha(argb: Int, alpha: Int): Int = (alpha shl 24) or (argb and RGB_MASK)
 

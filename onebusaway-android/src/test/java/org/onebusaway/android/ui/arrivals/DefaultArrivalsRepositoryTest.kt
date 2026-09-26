@@ -64,6 +64,7 @@ import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Tests for [DefaultArrivalsRepository]'s stale-fallback/CAS concurrency against the REAL class
@@ -506,6 +507,7 @@ class DefaultArrivalsRepositoryTest {
 /** No stop under test carries a pointer, so nothing is ever fetched; a call is a test bug. */
 private class NoOnDemandDataSource : OnDemandDataSource {
     override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
+    override suspend fun servicesNear(point: GeoPoint, radiusMeters: Int, geometryDetail: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
     override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = error("unexpected on-demand fetch for $id")
     override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
 }

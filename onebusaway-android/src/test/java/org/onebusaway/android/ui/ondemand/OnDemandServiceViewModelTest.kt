@@ -43,6 +43,7 @@ import org.onebusaway.android.models.OnDemandServiceKind
 import org.onebusaway.android.models.ServiceDayTime
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.TimeProvider
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,6 +55,7 @@ class OnDemandServiceViewModelTest {
     private class FakeDataSource(var result: OnDemandResult<OnDemandService>) : OnDemandDataSource {
         val requested = mutableListOf<String>()
         override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
+        override suspend fun servicesNear(point: GeoPoint, radiusMeters: Int, geometryDetail: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
         override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> {
             requested += id
             return result
@@ -103,6 +105,7 @@ class OnDemandServiceViewModelTest {
     private class GatedDataSource : OnDemandDataSource {
         val pending = mutableListOf<CompletableDeferred<OnDemandResult<OnDemandService>>>()
         override suspend fun servicesForViewport(viewport: CameraSnapshot): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
+        override suspend fun servicesNear(point: GeoPoint, radiusMeters: Int, geometryDetail: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
         override suspend fun service(id: String, geometryDetail: String): OnDemandResult<OnDemandService> = CompletableDeferred<OnDemandResult<OnDemandService>>().also { pending += it }.await()
         override suspend fun servicesForAgency(agencyId: String): OnDemandResult<List<OnDemandService>> = OnDemandResult.Loaded(emptyList())
     }

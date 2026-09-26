@@ -81,6 +81,20 @@ enum class BookingType(val wire: Int) {
     }
 }
 
+/** Who may ride (spec §2.9). [UNKNOWN] is also what an unrecognised wire value reads as. */
+enum class EligibilityRequirement(val wire: String) {
+    OPEN("open"),
+    CERTIFICATION_REQUIRED("certificationRequired"),
+    UNKNOWN("unknown");
+
+    companion object {
+        fun fromWire(wire: String): EligibilityRequirement = entries.firstOrNull { it.wire == wire } ?: UNKNOWN
+    }
+}
+
+/** A service's eligibility statement; null on the service when the feed publishes none. */
+data class OnDemandEligibility(val requirement: EligibilityRequirement, val infoUrl: String?)
+
 /** One availability rule (wiki §2.2). All three window times null means the service runs all hours. */
 data class AvailabilityRule(
     val fromIds: List<String>,
@@ -167,7 +181,8 @@ data class OnDemandService(
     val bookingRules: Map<String, BookingRule> = emptyMap(),
     val calendars: Map<String, FlexCalendar> = emptyMap(),
     val agencyTimezone: String? = null,
-    val routeColor: Int? = null
+    val routeColor: Int? = null,
+    val eligibility: OnDemandEligibility? = null
 ) {
     /** The booking rule that governs booking for [rule] — the pickup side (wiki §2.5). */
     fun pickupBookingRule(rule: AvailabilityRule): BookingRule? = rule.pickupBookingRuleId?.let(bookingRules::get)

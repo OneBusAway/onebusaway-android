@@ -85,15 +85,23 @@ class OnDemandSheetsViewModel @Inject constructor(
 
     /**
      * Probe both ends through [probeExact] (the exact-point cache) and qualify. An unanswerable end
-     * reads as no matches, so the sheet says nothing covers both rather than failing.
+     * reads as no matches, so the sheet says nothing covers both rather than failing — unless
+     * [isSupported] now reads false, meaning the deployment just landed in the absent set (spec
+     * §2.10): the sheet closes instead of claiming no service covers both locations.
      */
-    fun openPlanner(origin: GeoPoint, destination: GeoPoint, probeExact: suspend (GeoPoint) -> List<OnDemandMatch>?) {
+    fun openPlanner(origin: GeoPoint, destination: GeoPoint, isSupported: () -> Boolean, probeExact: suspend (GeoPoint) -> List<OnDemandMatch>?) {
         val probe = ProbePoint(origin, ProbeSource.Point(null))
         plannerJob?.cancel()
         _planner.value = PlannerFallbackState.Loading(probe)
         plannerJob = viewModelScope.launch {
-            val atOrigin = probeExact(origin) ?: emptyList()
-            val atDestination = probeExact(destination) ?: emptyList()
+            val originResult = probeExact(origin)
+            val destinationResult = probeExact(destination)
+            if ((originResult == null || destinationResult == null) && !isSupported()) {
+                _planner.value = null
+                return@launch
+            }
+            val atOrigin = originResult.orEmpty()
+            val atDestination = destinationResult.orEmpty()
             _planner.value = PlannerFallbackState.Ready(probe, atOrigin, qualifyingServices(atOrigin, atDestination))
         }
     }

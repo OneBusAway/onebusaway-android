@@ -1160,7 +1160,12 @@ fun HomeScreen(
                                                     {
                                                         val origin = GeoPoint(requireNotNull(from.lat), requireNotNull(from.lon))
                                                         val destination = GeoPoint(requireNotNull(to.lat), requireNotNull(to.lon))
-                                                        onDemandSheetsViewModel.openPlanner(origin, destination, mapViewModel::probeOnDemandExact)
+                                                        onDemandSheetsViewModel.openPlanner(
+                                                            origin,
+                                                            destination,
+                                                            isSupported = { mapViewModel.onDemandSupported.value },
+                                                            probeExact = mapViewModel::probeOnDemandExact
+                                                        )
                                                     }
                                                 } else {
                                                     null

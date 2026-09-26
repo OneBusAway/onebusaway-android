@@ -82,7 +82,7 @@ class OnDemandSheetsViewModelTest {
         val vm = OnDemandSheetsViewModel(GatedResolver(), TimeProvider { now.toEpochMilli() })
         val origin = GeoPoint(45.05, -85.1)
         val destination = GeoPoint(45.06, -85.1)
-        vm.openPlanner(origin, destination) { point -> if (point == origin || point == destination) listOf(open) else emptyList() }
+        vm.openPlanner(origin, destination, isSupported = { true }) { point -> if (point == origin || point == destination) listOf(open) else emptyList() }
         val ready = vm.planner.value as PlannerFallbackState.Ready
         assertEquals(listOf("open"), ready.qualification.qualifying.map { it.service.id })
         assertEquals(ProbeSource.Point(null), ready.origin.source)
@@ -91,11 +91,18 @@ class OnDemandSheetsViewModelTest {
     }
 
     @Test
-    fun `an unanswerable probe leaves the planner empty rather than failing`() = runTest {
+    fun `a transient probe failure leaves the planner empty rather than failing`() = runTest {
         val vm = OnDemandSheetsViewModel(GatedResolver(), TimeProvider { now.toEpochMilli() })
-        vm.openPlanner(GeoPoint(45.05, -85.1), GeoPoint(45.06, -85.1)) { null }
+        vm.openPlanner(GeoPoint(45.05, -85.1), GeoPoint(45.06, -85.1), isSupported = { true }) { null }
         val ready = vm.planner.value as PlannerFallbackState.Ready
         assertEquals(0, ready.qualification.qualifying.size)
         assertEquals(0, ready.qualification.hiddenCount)
+    }
+
+    @Test
+    fun `the probe answering unsupported closes the planner sheet`() = runTest {
+        val vm = OnDemandSheetsViewModel(GatedResolver(), TimeProvider { now.toEpochMilli() })
+        vm.openPlanner(GeoPoint(45.05, -85.1), GeoPoint(45.06, -85.1), isSupported = { false }) { null }
+        assertNull(vm.planner.value)
     }
 }

@@ -106,6 +106,7 @@ import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSession
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
+import org.onebusaway.android.ui.home.chrome.navigationBarStripHeight
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tripplan.AdvancedSettings
@@ -261,7 +262,8 @@ private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.5f
 private val DIRECTIONS_SHEET_FORM_GAP = 8.dp
 
 /**
- * The expanded directions sheet's height: [DIRECTIONS_SHEET_HEIGHT_FRACTION] of [windowHeight], stopped
+ * The expanded directions sheet's height: [DIRECTIONS_SHEET_HEIGHT_FRACTION] of [windowHeight], raised by
+ * [bottomStrip] (the navigation bar's strip, #2337, so the share is measured from above it), stopped
  * [DIRECTIONS_SHEET_FORM_GAP] short of the form card ([formBottom], its bottom edge in window
  * coordinates) so a short window doesn't slide the sheet over the form's controls. A form not yet
  * measured reports 0, which leaves the whole window to cap against — no cap at all in practice.
@@ -273,9 +275,9 @@ private val DIRECTIONS_SHEET_FORM_GAP = 8.dp
  * floor M3 drops the Expanded anchor outright (it skips it when sheet height == peek) and the sheet just
  * rests at the handle — the honest outcome for a window with no room to open into.
  */
-internal fun directionsSheetHeight(windowHeight: Dp, formBottom: Dp, peekHeight: Dp): Dp {
+internal fun directionsSheetHeight(windowHeight: Dp, formBottom: Dp, peekHeight: Dp, bottomStrip: Dp = 0.dp): Dp {
     val belowForm = windowHeight - formBottom - DIRECTIONS_SHEET_FORM_GAP
-    return minOf(windowHeight * DIRECTIONS_SHEET_HEIGHT_FRACTION, belowForm).coerceAtLeast(peekHeight)
+    return minOf(windowHeight * DIRECTIONS_SHEET_HEIGHT_FRACTION + bottomStrip, belowForm).coerceAtLeast(peekHeight)
 }
 
 /**
@@ -336,7 +338,7 @@ fun DirectionsResultsSheet(
     // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
     val windowHeightPx = LocalWindowInfo.current.containerSize.height
     val fullHeight = with(LocalDensity.current) {
-        directionsSheetHeight(windowHeightPx.toDp(), formBottomPx.toDp(), peekHeight)
+        directionsSheetHeight(windowHeightPx.toDp(), formBottomPx.toDp(), peekHeight, navigationBarStripHeight())
     }
     val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)

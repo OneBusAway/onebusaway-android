@@ -20,13 +20,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DrawerState
@@ -92,8 +95,9 @@ import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
-import org.onebusaway.android.ui.home.chrome.NavigationBarScrim
+import org.onebusaway.android.ui.home.chrome.NavigationBarStrip
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
+import org.onebusaway.android.ui.home.chrome.navigationBarStripHeight
 import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
@@ -586,10 +590,14 @@ fun HomeScreen(
                 // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
                 // How much of the window it may cover is a property of what the sheet holds — see
                 // [HomeSheetContent.peekHeightFraction] for why the two drawers differ.
+                // Raised by the navigation bar's strip where there is one (#2337), so the cap is the same
+                // share of the window *above* the strip rather than losing a bar's height to it.
+                val stripDp = navigationBarStripHeight()
                 val capPeekDp = with(density) {
                     val height = LocalWindowInfo.current.containerSize.height
                     (height * sheetContent.peekHeightFraction).toDp()
-                }
+                } +
+                    stripDp
 
                 // The full collapsed peek: the fixed cap while loading or still opening, then min(content, cap)
                 // once settled — fitting short stops without dead space, clipping tall ones at the cap. The
@@ -893,14 +901,17 @@ fun HomeScreen(
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
                                     modifier = Modifier.fillMaxSize()
                                 )
-                                // Over the map and under everything else: the bar's buttons get a scrim
-                                // to read against, where the map would otherwise run straight under them.
-                                NavigationBarScrim()
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
                                 // MapTopChrome is drawn LAST so the menu + search FABs stay on top of (and tappable
                                 // above) every overlay — including the route-mode header, which now floats as a card
-                                // below the FAB row rather than covering it.
-                                Box(Modifier.fillMaxSize()) {
+                                // below the FAB row rather than covering it. The layer clears the side system
+                                // insets — a landscape 3-button bar or a camera cutout — so no control sits
+                                // under them (#2337); the map itself still runs edge to edge beneath.
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                                ) {
                                     // Every top-of-map overlay sits below the chrome row via one shared inset
                                     // (status bar + clearance), so no individual overlay has to know the FAB-row height.
                                     Box(Modifier.fillMaxSize().mapTopChromeOverlayInset()) {
@@ -1360,7 +1371,14 @@ private fun HomeDrawer(
                 }
             )
         },
-        content = content
+        content = {
+            Box(Modifier.fillMaxSize()) {
+                content()
+                // The navigation bar's strip, over the map and its sheets alike (#2337) — but under the
+                // drawer panel, which is its own surface down to the bottom edge.
+                NavigationBarStrip()
+            }
+        }
     )
 }
 

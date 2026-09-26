@@ -48,4 +48,10 @@ class DirectionsSheetHeightTest {
         assertDp(peek, directionsSheetHeight(windowHeight = 400.dp, formBottom = 380.dp, peekHeight = peek))
         assertDp(peek, directionsSheetHeight(windowHeight = 100.dp, formBottom = 0.dp, peekHeight = peek))
     }
+
+    @Test
+    fun `a navigation-bar strip raises the sheet by its height, still short of the form`() {
+        assertDp(448.dp, directionsSheetHeight(windowHeight = 800.dp, formBottom = 240.dp, peekHeight = peek, bottomStrip = 48.dp))
+        assertDp(272.dp, directionsSheetHeight(windowHeight = 640.dp, formBottom = 360.dp, peekHeight = peek, bottomStrip = 48.dp))
+    }
 }

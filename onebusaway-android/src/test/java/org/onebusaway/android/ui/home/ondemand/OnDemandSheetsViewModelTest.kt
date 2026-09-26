@@ -76,4 +76,26 @@ class OnDemandSheetsViewModelTest {
         resolver.answer.complete("Boyne City")
         assertNull(vm.picker.value)
     }
+
+    @Test
+    fun `the planner probes both ends and qualifies the services that cover both`() = runTest {
+        val vm = OnDemandSheetsViewModel(GatedResolver(), TimeProvider { now.toEpochMilli() })
+        val origin = GeoPoint(45.05, -85.1)
+        val destination = GeoPoint(45.06, -85.1)
+        vm.openPlanner(origin, destination) { point -> if (point == origin || point == destination) listOf(open) else emptyList() }
+        val ready = vm.planner.value as PlannerFallbackState.Ready
+        assertEquals(listOf("open"), ready.qualification.qualifying.map { it.service.id })
+        assertEquals(ProbeSource.Point(null), ready.origin.source)
+        vm.closePlanner()
+        assertNull(vm.planner.value)
+    }
+
+    @Test
+    fun `an unanswerable probe leaves the planner empty rather than failing`() = runTest {
+        val vm = OnDemandSheetsViewModel(GatedResolver(), TimeProvider { now.toEpochMilli() })
+        vm.openPlanner(GeoPoint(45.05, -85.1), GeoPoint(45.06, -85.1)) { null }
+        val ready = vm.planner.value as PlannerFallbackState.Ready
+        assertEquals(0, ready.qualification.qualifying.size)
+        assertEquals(0, ready.qualification.hiddenCount)
+    }
 }

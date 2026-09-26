@@ -24,17 +24,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.OnDemandDockState
 import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.resolveServiceColors
+import org.onebusaway.android.ui.home.directions.OnDemandPlannerFallbackSheet
 import org.onebusaway.android.util.ExternalIntents
 
 /** Spec §2.4: 16 dp side gutters, 12 dp above the sheet edge, 360 dp maximum in landscape. */
@@ -63,6 +68,7 @@ fun BoxScope.OnDemandDockOverlay(
     val geometry by mapViewModel.onDemandGeometry.collectAsStateWithLifecycle()
     val colors by mapViewModel.onDemandColors.collectAsStateWithLifecycle()
     val picker by sheetsViewModel.picker.collectAsStateWithLifecycle()
+    val planner by sheetsViewModel.planner.collectAsStateWithLifecycle()
     val windowSize = LocalWindowInfo.current.containerSize
     val landscape = windowSize.width > windowSize.height
     // Spec §2.3: the highlight a picker row or a bar page set clears when the detail page closes — on
@@ -112,6 +118,26 @@ fun BoxScope.OnDemandDockOverlay(
                 mapViewModel.highlightOnDemandService(null)
                 sheetsViewModel.closePicker()
             }
+        )
+    }
+    planner?.let { state ->
+        val brand = colorResource(R.color.brand_color).toArgb()
+        val services = (state as? PlannerFallbackState.Ready)?.qualification?.qualifying?.map { it.service } ?: emptyList()
+        OnDemandPlannerFallbackSheet(
+            state = state,
+            colors = remember(services, brand) { resolveServiceColors(services, brand) },
+            now = sheetsViewModel.now(),
+            onOpenDetail = { match, probe ->
+                sheetsViewModel.closePlanner()
+                onOpenDetail(match.service.id, LocationCheck(probe.source, match.isInside, locality = null, point = probe.point))
+            },
+            onCall = actions.call,
+            onOpenUrl = actions.openUrl,
+            onShowAll = { matches, probe ->
+                sheetsViewModel.closePlanner()
+                sheetsViewModel.openPicker(matches, probe, nearby = false)
+            },
+            onDismiss = sheetsViewModel::closePlanner
         )
     }
 }

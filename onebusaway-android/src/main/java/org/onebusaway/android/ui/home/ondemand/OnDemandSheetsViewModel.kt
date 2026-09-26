@@ -20,6 +20,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,8 +28,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.onebusaway.android.ondemand.LocalityResolver
 import org.onebusaway.android.ondemand.OnDemandMatch
+import org.onebusaway.android.ondemand.PlannerQualification
 import org.onebusaway.android.ondemand.ProbePoint
+import org.onebusaway.android.ondemand.ProbeSource
+import org.onebusaway.android.ondemand.qualifyingServices
 import org.onebusaway.android.ondemand.sortedSoonestUsable
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.TimeProvider
 
 /** What the overlap picker shows (spec §3.5): the list, where it was probed, and the locality once known. */
@@ -39,6 +44,12 @@ data class PickerRequest(
     val nearby: Boolean,
     val locality: String?
 )
+
+/** The planner fallback sheet's content (spec §3.8). */
+sealed interface PlannerFallbackState {
+    data class Loading(val origin: ProbePoint) : PlannerFallbackState
+    data class Ready(val origin: ProbePoint, val originMatches: List<OnDemandMatch>, val qualification: PlannerQualification) : PlannerFallbackState
+}
 
 /**
  * The home screen's on-demand sheets: the overlap picker (and, from the planner, the fallback sheet).
@@ -66,6 +77,30 @@ class OnDemandSheetsViewModel @Inject constructor(
 
     fun closePicker() {
         _picker.value = null
+    }
+
+    private val _planner = MutableStateFlow<PlannerFallbackState?>(null)
+    val planner: StateFlow<PlannerFallbackState?> = _planner.asStateFlow()
+    private var plannerJob: Job? = null
+
+    /**
+     * Probe both ends through [probeExact] (the exact-point cache) and qualify. An unanswerable end
+     * reads as no matches, so the sheet says nothing covers both rather than failing.
+     */
+    fun openPlanner(origin: GeoPoint, destination: GeoPoint, probeExact: suspend (GeoPoint) -> List<OnDemandMatch>?) {
+        val probe = ProbePoint(origin, ProbeSource.Point(null))
+        plannerJob?.cancel()
+        _planner.value = PlannerFallbackState.Loading(probe)
+        plannerJob = viewModelScope.launch {
+            val atOrigin = probeExact(origin) ?: emptyList()
+            val atDestination = probeExact(destination) ?: emptyList()
+            _planner.value = PlannerFallbackState.Ready(probe, atOrigin, qualifyingServices(atOrigin, atDestination))
+        }
+    }
+
+    fun closePlanner() {
+        plannerJob?.cancel()
+        _planner.value = null
     }
 
     /** The device clock, minted here so the sheet's copy is evaluated at open time. */

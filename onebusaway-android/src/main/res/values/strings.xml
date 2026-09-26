@@ -1601,6 +1601,14 @@
     <!-- %1$s is a list of area names -->
     <string name="ondemand_detail_includes_location">%1$s — includes your location</string>
 
+    <!-- Trip planner fallback (DRT UI spec §3.8) -->
+    <string name="ondemand_planner_section">On-demand options</string>
+    <string name="ondemand_planner_serves_both">Serves both locations</string>
+    <string name="ondemand_planner_caption">Services that need eligibility or cover only one end are hidden.</string>
+    <string name="ondemand_planner_show_all">Show all in the zone picker</string>
+    <string name="ondemand_planner_empty">No on-demand service covers both locations.</string>
+    <string name="ondemand_planner_status_now">Status shown for now.</string>
+
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 
     <!--Travel Behaviour data collection-->

@@ -106,6 +106,7 @@ import org.onebusaway.android.ui.home.directions.DirectionsSafetyNotice
 import org.onebusaway.android.ui.home.directions.NavigateHereBubble
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
+import org.onebusaway.android.ui.home.directions.showsOnDemandOptions
 import org.onebusaway.android.ui.home.donation.DonationFeature
 import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
@@ -1146,11 +1147,26 @@ fun HomeScreen(
                                             onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
                                             modifier = Modifier.fillMaxSize()
                                         )
-                                        directionsError != null -> DirectionsErrorSnackbar(
-                                            error = directionsError,
-                                            onDismiss = tripPlanViewModel::clearPlanResult,
-                                            modifier = Modifier.align(Alignment.BottomCenter)
-                                        )
+                                        directionsError != null -> {
+                                            val onDemandSupported by mapViewModel.onDemandSupported.collectAsStateWithLifecycle()
+                                            val from = tripPlanFormState.from
+                                            val to = tripPlanFormState.to
+                                            val offersOnDemand = showsOnDemandOptions(directionsError.category, from.hasCoordinates, to.hasCoordinates, onDemandSupported)
+                                            DirectionsErrorSnackbar(
+                                                error = directionsError,
+                                                onDismiss = tripPlanViewModel::clearPlanResult,
+                                                modifier = Modifier.align(Alignment.BottomCenter),
+                                                onOnDemandOptions = if (offersOnDemand) {
+                                                    {
+                                                        val origin = GeoPoint(requireNotNull(from.lat), requireNotNull(from.lon))
+                                                        val destination = GeoPoint(requireNotNull(to.lat), requireNotNull(to.lon))
+                                                        onDemandSheetsViewModel.openPlanner(origin, destination, mapViewModel::probeOnDemandExact)
+                                                    }
+                                                } else {
+                                                    null
+                                                }
+                                            )
+                                        }
                                     }
                                     if (directionsLoading) {
                                         LinearProgressIndicator(

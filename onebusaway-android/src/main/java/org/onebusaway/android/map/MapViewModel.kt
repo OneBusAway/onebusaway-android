@@ -23,6 +23,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -61,8 +62,10 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.ServiceArea
 import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.OnDemandCoverageLine
 import org.onebusaway.android.ondemand.OnDemandGeometryCache
 import org.onebusaway.android.ondemand.OnDemandMatch
+import org.onebusaway.android.ondemand.coverageLineFor
 import org.onebusaway.android.ondemand.resolveServiceColors
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
@@ -814,15 +817,30 @@ class MapViewModel @Inject constructor(
     /** Where the long-press offer currently stands, or null with none standing. */
     val navigateHerePin: StateFlow<GeoPoint?> = _navigateHerePin.asStateFlow()
 
+    private val _navigateHereCoverage = MutableStateFlow<OnDemandCoverageLine?>(null)
+
+    /** The pin's on-demand line (spec §3.7), or null while none stands, the probe is in flight, or it failed. */
+    val navigateHereCoverage: StateFlow<OnDemandCoverageLine?> = _navigateHereCoverage.asStateFlow()
+
+    private var coverageJob: Job? = null
+
     /**
      * Drop the "navigate here" pin at [point] — moving it if one is already down — or clear the offer
      * with null. The pin itself is the directions layer's (it is the destination's own red pin, drawn
      * and reconciled where the trip's endpoints are); what this adds is publishing *where* it stands, so
-     * the home screen can hang the offer's bubble off it.
+     * the home screen can hang the offer's bubble off it — and asking, at that exact point, whether an
+     * on-demand zone covers it.
      */
     fun setNavigateHerePin(point: GeoPoint?) {
         directionsController.setNavigateHerePin(point)
         _navigateHerePin.value = point
+        coverageJob?.cancel()
+        _navigateHereCoverage.value = null
+        if (point == null) return
+        coverageJob = viewModelScope.launch {
+            val matches = onDemandProbeController.probeExact(point) ?: return@launch
+            if (_navigateHerePin.value == point) _navigateHereCoverage.value = coverageLineFor(matches)
+        }
     }
 
     /** Clear standalone/stop/bike focus and return to an ordinary nearby-stops map. */

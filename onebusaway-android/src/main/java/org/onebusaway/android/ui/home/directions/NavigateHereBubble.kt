@@ -17,13 +17,17 @@ package org.onebusaway.android.ui.home.directions
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,12 +40,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
+import org.onebusaway.android.ondemand.OnDemandCoverageLine
+import org.onebusaway.android.ondemand.addressLine
+import org.onebusaway.android.ui.home.ondemand.resolveCopy
 import org.onebusaway.android.ui.tripplan.TripEndpointDotIcon
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.util.GeoPoint
@@ -50,6 +59,7 @@ import org.onebusaway.android.util.GeoPoint
 object NavigateHereBubbleTestTags {
     const val BUBBLE = "navigateHereBubble"
     const val DOT = "navigateHereDot"
+    const val COVERAGE = "navigateHereCoverage"
 }
 
 /**
@@ -94,7 +104,9 @@ fun NavigateHereBubble(
     projector: MapProjector?,
     onNavigate: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    coverage: OnDemandCoverageLine? = null,
+    onOpenCoverage: () -> Unit = {}
 ) {
     val anchor = remember(point, projector) { mutableStateOf<ScreenOffset?>(null) }
     // Re-projected once per frame, rather than on the timed poll the tour's spotlights use: those hang
@@ -115,7 +127,7 @@ fun NavigateHereBubble(
             anchor.value = proj.toScreen(point)
         }
     }
-    NavigateHereOffer({ anchor.value }, onNavigate, onDismiss, modifier)
+    NavigateHereOffer({ anchor.value }, onNavigate, onDismiss, modifier, coverage, onOpenCoverage)
 }
 
 /**
@@ -134,7 +146,9 @@ internal fun NavigateHereOffer(
     anchor: () -> ScreenOffset?,
     onNavigate: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    coverage: OnDemandCoverageLine? = null,
+    onOpenCoverage: () -> Unit = {}
 ) {
     BackHandler(onBack = onDismiss)
 
@@ -155,7 +169,7 @@ internal fun NavigateHereOffer(
             // bubble's own edge — which is what leaves a triangle showing on whichever side the bubble
             // ended up, without the tail having to know which side that was.
             Box(Modifier.size(TAIL_SIZE).background(tailColor, DiamondShape))
-            NavigateHerePill(onNavigate)
+            NavigateHerePill(onNavigate, coverage, onOpenCoverage)
         }
     ) { measurables, constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
@@ -190,9 +204,9 @@ internal fun NavigateHereOffer(
     }
 }
 
-/** The offer itself: the destination dot the trip form will show, and what pressing it does. */
+/** The offer itself: the destination dot the trip form will show, what pressing it does, and the zone line when one applies. */
 @Composable
-private fun NavigateHerePill(onNavigate: () -> Unit) {
+private fun NavigateHerePill(onNavigate: () -> Unit, coverage: OnDemandCoverageLine?, onOpenCoverage: () -> Unit) {
     Surface(
         onClick = onNavigate,
         modifier = Modifier.testTag(NavigateHereBubbleTestTags.BUBBLE),
@@ -202,21 +216,46 @@ private fun NavigateHerePill(onNavigate: () -> Unit) {
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shadowElevation = 6.dp
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // The mark the pressed point will carry once the trip is planned — the trip-plan rail's own
-            // destination dot, kept from the menu this replaces so the offer and the filled form agree.
-            TripEndpointDotIcon(
-                TripEndpointSlot.TO,
-                Modifier.testTag(NavigateHereBubbleTestTags.DOT)
-            )
-            Text(
-                text = stringResource(R.string.map_navigate_here),
-                style = MaterialTheme.typography.bodyLarge
-            )
+        Column {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // The mark the pressed point will carry once the trip is planned — the trip-plan rail's own
+                // destination dot, kept from the menu this replaces so the offer and the filled form agree.
+                TripEndpointDotIcon(
+                    TripEndpointSlot.TO,
+                    Modifier.testTag(NavigateHereBubbleTestTags.DOT)
+                )
+                Text(
+                    text = stringResource(R.string.map_navigate_here),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+            // Spec §3.7: whether an on-demand zone covers the pressed point, opening that zone's page.
+            if (coverage != null) {
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .clickable(onClick = onOpenCoverage)
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                        .testTag(NavigateHereBubbleTestTags.COVERAGE),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(if (coverage.isInside) R.drawable.ic_check_circle else R.drawable.ic_cancel),
+                        contentDescription = null,
+                        tint = colorResource(if (coverage.isInside) R.color.ondemand_open_green else R.color.md_theme_severityError),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = addressLine(coverage.serviceName, coverage.isInside, coverage.othersInside).resolveCopy(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         }
     }
 }

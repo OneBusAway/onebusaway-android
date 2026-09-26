@@ -75,6 +75,8 @@ import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.OnDemandCoverageLine
+import org.onebusaway.android.ondemand.ProbeSource
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -1176,14 +1178,21 @@ fun HomeScreen(
                                 // The bubble over a long press's dropped pin. A pressed point has nothing
                                 // to call it, so it travels as a bare map point; see navigateTo for the
                                 // rest, which the focused stop's menu item shares.
-                                NavigateHereOverlay(mapViewModel) { point ->
-                                    navigateTo(
-                                        TripEndpoint.MapPoint(point.latitude, point.longitude),
-                                        homeViewModel,
-                                        mapViewModel,
-                                        tripPlanViewModel
-                                    )
-                                }
+                                NavigateHereOverlay(
+                                    mapViewModel = mapViewModel,
+                                    onNavigate = { point ->
+                                        navigateTo(
+                                            TripEndpoint.MapPoint(point.latitude, point.longitude),
+                                            homeViewModel,
+                                            mapViewModel,
+                                            tripPlanViewModel
+                                        )
+                                    },
+                                    onOpenCoverage = { line, point ->
+                                        mapViewModel.setNavigateHerePin(null)
+                                        onOpenOnDemandServiceAt(line.match.service.id, LocationCheck(ProbeSource.Point(null), line.isInside, locality = null, point = point))
+                                    }
+                                )
                                 // The on-demand dock (spec §2.4) at the top edge of the sheet, and its picker.
                                 OnDemandDockOverlay(
                                     mapViewModel = mapViewModel,
@@ -1272,11 +1281,19 @@ fun HomeScreen(
  * collected *here* rather than in the screen's shared scope: the offer comes and goes often, and neither
  * fact concerns anything else on the screen. [onNavigate] is handed the pinned point, since taking the
  * offer is a trip-planning act the host owns; retiring the pin is the map's own business either way.
+ *
+ * [onOpenCoverage] hands back the pin's on-demand line together with its point (spec §3.7): the pin is
+ * cleared here, the same as taking the offer, since opening the zone page leaves the pressed point behind.
  */
 @Composable
-private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoint) -> Unit) {
+private fun NavigateHereOverlay(
+    mapViewModel: MapViewModel,
+    onNavigate: (GeoPoint) -> Unit,
+    onOpenCoverage: (OnDemandCoverageLine, GeoPoint) -> Unit
+) {
     val pin by mapViewModel.navigateHerePin.collectAsStateWithLifecycle()
     val projector by mapViewModel.renderState.projector.collectAsStateWithLifecycle()
+    val coverage by mapViewModel.navigateHereCoverage.collectAsStateWithLifecycle()
     pin?.let { point ->
         NavigateHereBubble(
             point = point,
@@ -1285,7 +1302,9 @@ private fun NavigateHereOverlay(mapViewModel: MapViewModel, onNavigate: (GeoPoin
                 mapViewModel.setNavigateHerePin(null)
                 onNavigate(point)
             },
-            onDismiss = { mapViewModel.setNavigateHerePin(null) }
+            onDismiss = { mapViewModel.setNavigateHerePin(null) },
+            coverage = coverage,
+            onOpenCoverage = { coverage?.let { line -> onOpenCoverage(line, point) } }
         )
     }
 }

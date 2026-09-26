@@ -329,9 +329,6 @@ class MapViewModel @Inject constructor(
     /** Whether the rental layer refused this viewport (see `RentalGuardrails`) — drives the map's pill. */
     val rentalsNeedCloserZoom: StateFlow<Boolean> get() = mapHost.rentalsNeedCloserZoom
 
-    /** Whether a rental load the rider tapped for is in flight — the rental button's spinner. */
-    val rentalsLoading: StateFlow<Boolean> get() = rentalController.loading
-
     /** Show/hide rentals entirely — the map's master rental button. */
     fun setRentalsVisible(visible: Boolean) = rentalController.setRentalsVisible(visible)
 

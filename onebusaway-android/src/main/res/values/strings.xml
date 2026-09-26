@@ -685,8 +685,6 @@
         list.
     </string>
 
-    <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
-    <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
     <!-- Settings: title of the switch that toggles the on-demand (GTFS-Flex) zones layer on the map -->
     <string name="preferences_show_ondemand_zones_title">Show on-demand zones</string>
     <!-- Settings: summary explaining what the on-demand zones switch above does -->
@@ -1439,14 +1437,6 @@
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
 
-    <!-- Rental vehicle map layer (bikes + scooters) -->
-    <string name="layers_rentals_show">Show bikes and scooters</string>
-    <string name="layers_rentals_hide">Hide bikes and scooters</string>
-    <string name="layers_rentals_loading">Loading bikes and scooters</string>
-    <string name="layers_rentals_hide_button">Hide this button</string>
-    <string name="layers_rentals_hidden_toast">Bike and scooter button hidden. Turn it back on in Settings.</string>
-    <string name="layers_bikes_label">Bikes</string>
-    <string name="layers_scooters_label">Scooters</string>
     <string name="map_zoom_in_for_rentals">Zoom in to see bikes and scooters</string>
     <string name="rental_window_vehicles_title">Available</string>
     <string name="rental_window_docks_title">Docks</string>
@@ -1616,6 +1606,19 @@
     <string name="map_layers_on_demand_zones">On-demand zones</string>
     <string name="map_layers_bikes">Bikes</string>
     <string name="map_layers_scooters">Scooters</string>
+    <string name="map_layers_title">Map</string>
+    <string name="map_layers_reset">Reset</string>
+    <string name="map_layers_done">Done</string>
+    <string name="map_layers_group_transit">Transit</string>
+    <string name="map_layers_group_rentals">Rentals</string>
+    <string name="map_layers_state_on">On</string>
+    <string name="map_layers_state_off">Off</string>
+    <!-- Content description of the map layers button -->
+    <string name="map_layers_open">Map layers</string>
+    <string name="map_layers_hide_button">Hide this button</string>
+    <string name="layers_button_hidden_toast">Map layers button hidden. Turn it back on in Settings.</string>
+    <string name="preferences_show_layers_button_title">Show map layers button</string>
+    <string name="preferences_show_layers_button_summary">Display the map layers button on the map</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

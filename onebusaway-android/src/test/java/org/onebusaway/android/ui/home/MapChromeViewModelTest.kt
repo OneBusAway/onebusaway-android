@@ -23,7 +23,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.api.data.OnDemandSupport
 import org.onebusaway.android.demo.FakeDemoModeState
+import org.onebusaway.android.map.MapFlavourCapabilities
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
@@ -40,6 +42,9 @@ class MapChromeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    /** Neither on-demand support nor a basemap choice matters to a test unless it says otherwise. */
+    private val noExtraSurfaces = MapFlavourCapabilities(hasBasemapChoice = false)
+
     /**
      * A prefs fake with the rental button's own visibility switched on.
      *
@@ -54,7 +59,7 @@ class MapChromeViewModelTest {
     @Test
     fun `the zoom-controls preference flips the gate reactively`() = runTest {
         val prefs = rentalButtonShown() // start gates off
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState())
+        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState(), OnDemandSupport(), noExtraSurfaces)
         advanceUntilIdle()
         assertFalse(vm.state.value.zoomControls)
 
@@ -64,26 +69,9 @@ class MapChromeViewModelTest {
     }
 
     @Test
-    fun `the rental-layer preference flips the active tint reactively`() = runTest {
-        val prefs = rentalButtonShown()
-        // A custom OTP URL makes rentals enabled (the layers FAB shows); the visible pref drives active.
-        prefs.setString(R.string.preference_key_otp_api_url, "https://otp.example.org")
-        prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, true)
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState())
-        advanceUntilIdle()
-        assertTrue(vm.state.value.layersFab)
-        assertTrue(vm.state.value.rentalsActive)
-
-        prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, false)
-        advanceUntilIdle()
-        assertFalse(vm.state.value.rentalsActive)
-        assertTrue(vm.state.value.layersFab) // still enabled, just not active
-    }
-
-    @Test
     fun `the layers FAB follows bikeshare-enabled derived from the OTP URL`() = runTest {
         val prefs = rentalButtonShown()
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState())
+        val vm = MapChromeViewModel(prefs, FakeRegionRepository(), FakeDemoModeState(), OnDemandSupport(), noExtraSurfaces)
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab) // no region, no custom OTP URL
 
@@ -97,7 +85,7 @@ class MapChromeViewModelTest {
         // The scripted tutorial's micromobility step has to have a button to point at, wherever the
         // rider actually is and whether or not their region publishes bikeshare (#2164).
         val demo = FakeDemoModeState()
-        val vm = MapChromeViewModel(rentalButtonShown(), FakeRegionRepository(), demo)
+        val vm = MapChromeViewModel(rentalButtonShown(), FakeRegionRepository(), demo, OnDemandSupport(), noExtraSurfaces)
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab)
 
@@ -113,12 +101,33 @@ class MapChromeViewModelTest {
     @Test
     fun `a region supporting OTP bikeshare enables the layers FAB`() = runTest {
         val regions = FakeRegionRepository()
-        val vm = MapChromeViewModel(rentalButtonShown(), regions, FakeDemoModeState())
+        val vm = MapChromeViewModel(rentalButtonShown(), regions, FakeDemoModeState(), OnDemandSupport(), noExtraSurfaces)
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab)
 
         regions.emit(region(1, supportsOtpBikeshare = true))
         advanceUntilIdle()
         assertTrue(vm.state.value.layersFab)
+    }
+
+    @Test
+    fun `without bikeshare the layers button still shows when on-demand may be supported or a basemap choice exists`() = runTest {
+        val prefs = rentalButtonShown()
+        val endpoint = "https://maglev.example.org/"
+        val regions = FakeRegionRepository(region(id = 1, obaBaseUrl = endpoint))
+        val support = OnDemandSupport()
+        val vm = MapChromeViewModel(prefs, regions, FakeDemoModeState(), support, noExtraSurfaces)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.layersFab)
+
+        // PF-13: the button follows the observable absent set, so a 404 recorded after the first
+        // emission must hide it on its own — no refresh call exists to ask for it any more.
+        support.recordAbsent(endpoint)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.layersFab)
+
+        val google = MapChromeViewModel(prefs, regions, FakeDemoModeState(), support, MapFlavourCapabilities(hasBasemapChoice = true))
+        advanceUntilIdle()
+        assertTrue(google.state.value.layersFab)
     }
 }

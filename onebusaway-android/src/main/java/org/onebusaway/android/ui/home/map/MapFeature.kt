@@ -102,7 +102,6 @@ import org.onebusaway.android.map.render.ZonePolygon
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.map.rental.RentalKind
-import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.map.settledCamera
 import org.onebusaway.android.models.ObaTripStatus
@@ -612,18 +611,16 @@ fun MapFeature(
     // self-wired feature module ([MapChromeViewModel]); the map-loading bar reads the map VM's progress
     // directly. Their actions drive the map view model.
     val chrome by hiltViewModel<MapChromeViewModel>().state.collectAsStateWithLifecycle()
+    val layersViewModel = hiltViewModel<MapLayersViewModel>()
+    val layersState by layersViewModel.state.collectAsStateWithLifecycle()
+    var layersSheetOpen by remember { mutableStateOf(false) }
     val mapLoading by mapViewModel.progress.collectAsStateWithLifecycle()
-    val rentalsLoading by mapViewModel.rentalsLoading.collectAsStateWithLifecycle()
     MapChrome(
         zoomVisible = chrome.zoomControls,
         leftHandMode = chrome.leftHand,
-        // Hidden while directions own the map (#2168): the layer draws nothing there, so a button
-        // offering to toggle it would be inert — and directions already crowd this corner.
-        layersVisible = chrome.layersFab && currentFocus !is CurrentFocus.Directions,
-        rentalsActive = chrome.rentalsActive,
-        bikesActive = chrome.bikesActive,
-        scootersActive = chrome.scootersActive,
-        rentalsLoading = rentalsLoading,
+        // Hidden while directions own the map (#2168) and when the sheet would be empty (spec §3.9).
+        layersVisible = chrome.layersFab && currentFocus !is CurrentFocus.Directions && !layersState.isEmpty,
+        layersBadge = layersState.enabledCount,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
         onMyLocation = {
@@ -642,37 +639,45 @@ fun MapFeature(
         },
         onZoomIn = { mapViewModel.zoomIn() },
         onZoomOut = { mapViewModel.zoomOut() },
-        onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) },
-        onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
-        onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) },
-        onHideRentalButton = {
+        onOpenLayers = { layersSheetOpen = true },
+        onHideLayersButton = {
             PreferenceUtils.saveBoolean(resources.getString(R.string.preference_key_show_rental_button), false)
             // The button is the only signpost to itself, so hiding it without saying where it went
             // would look like a bug. The toast names Settings, which is the one way back.
-            Toast.makeText(context, R.string.layers_rentals_hidden_toast, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.layers_button_hidden_toast, Toast.LENGTH_LONG).show()
         }
     )
+    if (layersSheetOpen) {
+        MapLayersSheet(
+            state = layersState,
+            onToggle = { id ->
+                val wasOn = (layersState.transit + layersState.rentals).firstOrNull { it.id == id }?.enabled == true
+                layersViewModel.toggle(id)
+                if (id != LayerTileId.ON_DEMAND_ZONES) {
+                    mapViewModel.syncRentalLayersFromPreferences()
+                    reportRentalLayerChange(context, activated = !wasOn)
+                }
+            },
+            onBasemap = layersViewModel::setBasemap,
+            onReset = {
+                layersViewModel.reset()
+                mapViewModel.syncRentalLayersFromPreferences()
+            },
+            onDismiss = { layersSheetOpen = false }
+        )
+    }
 }
 
 /**
- * Shows or hides the rental layers: persist the new value (DataStore) and drive the loader.
- * [MapChromeViewModel] observes the visibility preference reactively, so the button's tint updates
- * without a host push.
- *
- * Reports to the long-standing bikeshare analytics event rather than a new one, so the series that
- * has been counting "the rider changed the rental overlay" keeps counting the same thing.
+ * Reports a rental tile change to the long-standing bikeshare analytics event rather than a new one,
+ * so the series that has been counting "the rider changed the rental overlay" keeps counting the same thing.
  */
-private fun toggleRentals(
-    context: Context,
-    mapViewModel: MapViewModel,
-    active: Boolean
-) {
-    mapViewModel.setRentalsVisible(!active)
+private fun reportRentalLayerChange(context: Context, activated: Boolean) {
     AnalyticsEntryPoint.get(context).reportUiEvent(
         PlausibleAnalytics.REPORT_MAP_EVENT_URL,
         context.getString(R.string.analytics_layer_bikeshare),
         context.getString(
-            if (active) R.string.analytics_label_bikeshare_deactivated else R.string.analytics_label_bikeshare_activated
+            if (activated) R.string.analytics_label_bikeshare_activated else R.string.analytics_label_bikeshare_deactivated
         )
     )
 }

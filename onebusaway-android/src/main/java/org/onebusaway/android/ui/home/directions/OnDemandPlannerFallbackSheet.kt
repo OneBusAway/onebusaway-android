@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -107,12 +108,10 @@ private fun ReadyContent(
     }
     Text(stringResource(R.string.ondemand_planner_status_now), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Text(stringResource(R.string.ondemand_planner_caption), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Text(
-        text = stringResource(R.string.ondemand_planner_show_all),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.clickable { onShowAll(state.originMatches.filter { it.isInside }, state.origin) }.padding(vertical = 4.dp)
-    )
+    // Spec §5: a 48 dp minimum touch target — TextButton also gives TalkBack a Button role for free.
+    TextButton(onClick = { onShowAll(state.originMatches.filter { it.isInside }, state.origin) }) {
+        Text(text = stringResource(R.string.ondemand_planner_show_all), style = MaterialTheme.typography.labelLarge)
+    }
 }
 
 /** The screen-1 card without its footer: name, "Serves both locations", the meta line and one primary pill. */

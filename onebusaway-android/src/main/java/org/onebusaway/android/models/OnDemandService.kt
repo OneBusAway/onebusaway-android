@@ -182,6 +182,8 @@ data class OnDemandService(
     val calendars: Map<String, FlexCalendar> = emptyMap(),
     val agencyTimezone: String? = null,
     val routeColor: Int? = null,
+    /** The route's GTFS text colour as ARGB, the bar text colour when present (spec §5). */
+    val routeTextColor: Int? = null,
     val eligibility: OnDemandEligibility? = null
 ) {
     /** The booking rule that governs booking for [rule] — the pickup side (wiki §2.5). */

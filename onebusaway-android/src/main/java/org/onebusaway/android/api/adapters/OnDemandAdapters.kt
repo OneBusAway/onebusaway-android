@@ -89,6 +89,7 @@ private fun OnDemandServiceDto.toOnDemandService(references: References, allRefe
         calendars = calendarIds.mapNotNull { references.calendar(it)?.toFlexCalendar() }.associateBy { it.id },
         agencyTimezone = references.agency(agencyId)?.timezone,
         routeColor = routeId?.let { references.route(it)?.colorArgb() },
+        routeTextColor = routeId?.let { references.route(it)?.textColorArgb() },
         eligibility = eligibility?.let { OnDemandEligibility(EligibilityRequirement.fromWire(it.requirement), it.infoUrl) }
     )
 }

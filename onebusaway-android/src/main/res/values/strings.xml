@@ -1567,6 +1567,20 @@
         <item quantity="one">%d zone</item>
         <item quantity="other">%d zones</item>
     </plurals>
+    <string name="ondemand_card_call_to_book">Call to Book</string>
+    <string name="ondemand_card_details">Details</string>
+    <!-- %d is how many other services also contain the probe point -->
+    <plurals name="ondemand_card_more_services">
+        <item quantity="one">%d more service here</item>
+        <item quantity="other">%d more services here</item>
+    </plurals>
+    <string name="ondemand_bar_a11y_show_edge">Show nearest zone edge</string>
+    <string name="ondemand_bar_a11y_zoom_out">Show whole zone</string>
+    <!-- %1$s is a service name -->
+    <string name="ondemand_bar_a11y_call">Call %1$s</string>
+    <string name="ondemand_bar_a11y_more_services">All services here</string>
+    <!-- %1$s is a number, %2$s a unit abbreviation, e.g. "300 ft" -->
+    <string name="ondemand_distance">%1$s %2$s</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

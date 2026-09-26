@@ -17,9 +17,11 @@ package org.onebusaway.android.ui.tripplan
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
@@ -357,7 +359,8 @@ class TripPlanFormRenderTest {
                 dayRelation = TripDay.OTHER,
                 dateLabel = "September 24",
                 timeLabel = "10:45 AM"
-            )
+            ),
+            fullCardWidth = true
         )
 
         for (text in listOf("10:45 AM", "September 24")) {
@@ -655,12 +658,19 @@ class TripPlanFormRenderTest {
     /** [plannedState] with its trip pinned to an instant that falls on [day]. */
     private fun pinnedOn(day: TripDay) = plannedState.copy(departNow = false, dayRelation = day)
 
+    /**
+     * [fullCardWidth] lays the form out at [cardWidth] even on a screen narrower than it — CI's emulator
+     * is 320dp, which otherwise caps the form there. A test that measures what fits the card needs it;
+     * it spills past the window's right edge, so it's off for the tests that capture pixels.
+     */
     private fun renderForm(
         state: TripPlanFormState,
-        onToQueryChange: (String) -> Unit = {}
+        onToQueryChange: (String) -> Unit = {},
+        fullCardWidth: Boolean = false
     ) = renderForm(
         state = { state },
-        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) }
+        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) },
+        fullCardWidth = fullCardWidth
     )
 
     /** [state] is a lambda so a test can back it with its own mutable state and observe writes. */
@@ -674,11 +684,13 @@ class TripPlanFormRenderTest {
         onReverse: () -> Unit = {},
         onRefresh: () -> Unit = {},
         onPickDateTime: () -> Unit = {},
-        onClose: () -> Unit = {}
+        onClose: () -> Unit = {},
+        fullCardWidth: Boolean = false
     ) {
+        val unbounded = if (fullCardWidth) Modifier.wrapContentWidth(Alignment.Start, unbounded = true) else Modifier
         composeRule.setContent {
             ObaTheme {
-                Box(Modifier.width(cardWidth).testTag(FORM)) {
+                Box(unbounded.width(cardWidth).testTag(FORM)) {
                     TripPlanForm(
                         state = state(),
                         onQueryChange = onQueryChange,

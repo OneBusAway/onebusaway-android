@@ -34,34 +34,14 @@ import org.onebusaway.android.util.ExternalIntents
 fun NavGraphBuilder.onDemandGraph(navController: NavHostController) {
     composable(
         NavRoutes.ONDEMAND_SERVICE,
-        arguments = listOf(
-            navArgument(NavRoutes.ARG_ONDEMAND_SERVICE_ID) { type = NavType.StringType },
-            navArgument(NavRoutes.ARG_ONDEMAND_INSIDE) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            },
-            navArgument(NavRoutes.ARG_ONDEMAND_SOURCE) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            },
-            navArgument(NavRoutes.ARG_ONDEMAND_LOCALITY) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            },
-            navArgument(NavRoutes.ARG_ONDEMAND_LAT) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            },
-            navArgument(NavRoutes.ARG_ONDEMAND_LON) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            }
-        )
+        arguments = listOf(navArgument(NavRoutes.ARG_ONDEMAND_SERVICE_ID) { type = NavType.StringType }) +
+            listOf(
+                NavRoutes.ARG_ONDEMAND_INSIDE,
+                NavRoutes.ARG_ONDEMAND_SOURCE,
+                NavRoutes.ARG_ONDEMAND_LOCALITY,
+                NavRoutes.ARG_ONDEMAND_LAT,
+                NavRoutes.ARG_ONDEMAND_LON
+            ).map(::optionalStringArgument)
     ) {
         val context = LocalContext.current
         val viewModel: OnDemandServiceViewModel = hiltViewModel()
@@ -79,4 +59,11 @@ fun NavGraphBuilder.onDemandGraph(navController: NavHostController) {
             )
         }
     }
+}
+
+/** An optional string route argument: the location-check fields a caller may leave out. */
+private fun optionalStringArgument(name: String) = navArgument(name) {
+    type = NavType.StringType
+    nullable = true
+    defaultValue = null
 }

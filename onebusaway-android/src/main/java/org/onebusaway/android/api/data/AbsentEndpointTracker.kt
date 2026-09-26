@@ -15,27 +15,34 @@
  */
 package org.onebusaway.android.api.data
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+
 /**
  * A one-way, in-memory latch of the OBA deployments found not to serve one optional endpoint, keyed
  * by the endpoint URL requests go to. Only an explicit HTTP 404 ([isEndpointAbsent]) records a
  * deployment; nothing clears it, so an upgraded server is re-probed on the next launch. Subclasses
  * name the endpoint and explain why its support has to be discovered rather than configured.
  *
- * Reads and writes come from queries on their own coroutines, hence the synchronized access rather
- * than a plain field.
+ * Backed by a [MutableStateFlow] rather than a plain field: reads and writes come from queries on
+ * their own coroutines, and [absent] lets a caller (the trip planner fallback) react the moment a
+ * deployment already believed supported turns up absent, rather than only on its own next check.
  */
 abstract class AbsentEndpointTracker {
 
-    private val unsupported = mutableSetOf<String>()
+    private val _absent = MutableStateFlow<Set<String>>(emptySet())
+
+    /** The deployments recorded absent so far. */
+    val absent: StateFlow<Set<String>> = _absent.asStateFlow()
 
     /** Whether [obaBaseUrl] is already known not to serve the endpoint. Unknown (and null) endpoints
      *  read as supported (un-probed), which is what makes the first query the probe. */
-    @Synchronized
-    fun isKnownUnsupported(obaBaseUrl: String?): Boolean = obaBaseUrl != null && obaBaseUrl in unsupported
+    fun isKnownUnsupported(obaBaseUrl: String?): Boolean = obaBaseUrl != null && obaBaseUrl in _absent.value
 
     /** Record that the deployment at [obaBaseUrl] answered HTTP 404 for the endpoint. */
-    @Synchronized
     fun recordAbsent(obaBaseUrl: String?) {
-        obaBaseUrl?.let(unsupported::add)
+        obaBaseUrl?.let { url -> _absent.update { it + url } }
     }
 }

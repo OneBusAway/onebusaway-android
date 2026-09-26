@@ -186,6 +186,16 @@ internal fun onDemandDeployment(regionRepository: RegionRepository, prefsReposit
     .distinctUntilChanged()
 
 /**
+ * Whether [deployment] may serve `/api/ondemand`: unknown counts as supported until [absent] names it
+ * (spec §2.10). Combined on [OnDemandSupport.absent] rather than a one-shot
+ * [OnDemandSupport.isKnownUnsupported] check so a 404 recorded after this flow already emitted still
+ * turns it false — a fallback surface built on this (e.g. the trip planner) hides on the very probe
+ * that finds the deployment unsupported, not just on the next collector restart. Factored out of
+ * [MapViewModel] so it is JVM-testable without constructing one.
+ */
+internal fun onDemandSupportedFlow(deployment: Flow<String?>, absent: Flow<Set<String>>): Flow<Boolean> = combine(deployment, absent) { url, absentDeployments -> url != null && url !in absentDeployments }
+
+/**
  * The tallest viewport the zone layer draws for, in metres of north-south extent.
  *
  * The sibling iOS app hides this layer above a visible-rect height of 600,000 Mercator map points,

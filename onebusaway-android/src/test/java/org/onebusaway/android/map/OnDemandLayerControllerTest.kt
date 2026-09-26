@@ -20,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -317,6 +318,21 @@ class OnDemandLayerControllerTest {
         advanceTimeBy(1)
         assertTrue(renderState.snapshot.value.onDemandZones.all { it.style == ZoneStyle.STREET })
         subject.stop()
+    }
+
+    @Test
+    fun `support turns false the moment the endpoint is recorded absent`() = runTest {
+        val deployment = MutableStateFlow<String?>(endpoint)
+        assertTrue(onDemandSupportedFlow(deployment, support.absent).first())
+
+        support.recordAbsent(endpoint)
+        assertFalse(onDemandSupportedFlow(deployment, support.absent).first())
+    }
+
+    @Test
+    fun `support is false with no deployment regardless of the absent set`() = runTest {
+        val deployment = MutableStateFlow<String?>(null)
+        assertFalse(onDemandSupportedFlow(deployment, support.absent).first())
     }
 
     @Test

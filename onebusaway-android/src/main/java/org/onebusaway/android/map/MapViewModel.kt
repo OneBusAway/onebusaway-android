@@ -284,6 +284,10 @@ class MapViewModel @Inject constructor(
         .map { result -> resolveServiceColors(result?.matches?.map { it.service } ?: emptyList(), brandColor) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
+    /** Whether the current deployment may serve `/api/ondemand`: unknown counts as supported until a 404 says otherwise. */
+    val onDemandSupported: StateFlow<Boolean> = onDemandSupportedFlow(onDemandDeployment(regionRepo, prefsRepository, demoMode), onDemandSupport.absent)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     init {
         // Spec §2.3: the highlight clears whenever the dock leaves the bar state.
         viewModelScope.launch {

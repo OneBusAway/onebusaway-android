@@ -176,3 +176,9 @@ internal fun mapControlsBottomInset(
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState = if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
+
+/**
+ * Spec §2.4: the on-demand dock shows nothing when the visible map area is under half the screen
+ * because of the sheet — an expanded sheet, or a collapsed peek taller than half the window.
+ */
+internal fun dockCoveredBySheet(sheetShown: Boolean, expanded: Boolean, peekPx: Int, windowHeightPx: Int): Boolean = sheetShown && (expanded || peekPx * 2 > windowHeightPx)

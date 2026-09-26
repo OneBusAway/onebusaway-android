@@ -74,6 +74,7 @@ import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.ondemand.LocationCheck
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -124,6 +125,8 @@ import org.onebusaway.android.ui.home.nearby.limitExceeded
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRouteRows
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRowActions
 import org.onebusaway.android.ui.home.nearby.rememberNearbyRowCallbacks
+import org.onebusaway.android.ui.home.ondemand.OnDemandDockOverlay
+import org.onebusaway.android.ui.home.ondemand.OnDemandSheetsViewModel
 import org.onebusaway.android.ui.home.weather.WeatherFeature
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.home.widealert.WideAlertDialog
@@ -188,6 +191,8 @@ class HomeCallbacks(
     val onOpenSurvey: (url: String) -> Unit,
     // A tap on a drawn on-demand zone: open that service's page.
     val onOpenOnDemandService: (serviceId: String) -> Unit = {},
+    // Opening a zone from the dock, picker, pin or planner carries the probe's location facts.
+    val onOpenOnDemandServiceAt: (serviceId: String, check: LocationCheck) -> Unit = { id, _ -> onOpenOnDemandService(id) },
     val onShowArrivals: (FocusedStop) -> Unit = {}
 )
 
@@ -603,6 +608,21 @@ fun HomeScreen(
                 // nav-bar strip.
                 val collapsedPeekPx = with(density) { collapsedPeekDp.roundToPx() }
 
+                // Spec §2.4: the on-demand dock yields to a focus, the survey card and a sheet over half the map.
+                val surveyState by surveyViewModel.state.collectAsStateWithLifecycle()
+                val surveyCardShown = surveyState.heroQuestion != null && surveyState.sheet == null
+                val dockCovered = dockCoveredBySheet(
+                    sheetShown = sheetShown,
+                    expanded = sheetState.currentValue == SheetValue.Expanded,
+                    peekPx = collapsedPeekPx,
+                    windowHeightPx = LocalWindowInfo.current.containerSize.height
+                )
+                LaunchedEffect(currentFocus, dockCovered, surveyCardShown) {
+                    mapViewModel.setOnDemandDockSuppressed(currentFocus !is CurrentFocus.None || dockCovered || surveyCardShown)
+                }
+                val onDemandSheetsViewModel = hiltViewModel<OnDemandSheetsViewModel>()
+                var onDemandDockHeightPx by remember { mutableIntStateOf(0) }
+
                 // The peek height actually handed to the scaffold: the real peek while shown, 0 while hidden.
                 // Animating between the two slides the whole sheet up from / down past the bottom edge — the
                 // slide-in/out that the removed `Hidden` anchor used to provide. The finished-listener flips
@@ -891,9 +911,13 @@ fun HomeScreen(
                                     mapViewModel = mapViewModel,
                                     homeViewModel = homeViewModel,
                                     nearbyArrivalsViewModel = nearbyArrivalsViewModel,
-                                    fabBottomInset = fabInsetTarget,
+                                    fabBottomInset = fabInsetTarget + with(density) { onDemandDockHeightPx.toDp() },
                                     onStopsBannerHeight = { stopsBannerHeightPx = it },
-                                    onOpenOnDemandService = onOpenOnDemandService,
+                                    // A region-level pin tap carries the probe's facts when the last probe matched the service (spec §3.6 item 3).
+                                    onOpenOnDemandService = { id ->
+                                        val check = mapViewModel.onDemandLocationCheckFor(id)
+                                        if (check == null) onOpenOnDemandService(id) else onOpenOnDemandServiceAt(id, check)
+                                    },
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -1160,6 +1184,14 @@ fun HomeScreen(
                                         tripPlanViewModel
                                     )
                                 }
+                                // The on-demand dock (spec §2.4) at the top edge of the sheet, and its picker.
+                                OnDemandDockOverlay(
+                                    mapViewModel = mapViewModel,
+                                    sheetsViewModel = onDemandSheetsViewModel,
+                                    bottomInset = fabInsetTarget,
+                                    onOpenDetail = onOpenOnDemandServiceAt,
+                                    onHeight = { onDemandDockHeightPx = it }
+                                )
                                 // Neither Back nor a tap on the map background leaves outright while a trip
                                 // is drawn — each stages this question instead (#2140). The VM owns the latch
                                 // because the two gestures reach it from different places (the BackHandler

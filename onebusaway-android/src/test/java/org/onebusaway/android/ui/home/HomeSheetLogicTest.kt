@@ -263,4 +263,14 @@ class HomeSheetLogicTest {
         assertEquals(ArrivalsSheetState.Expanded, toggleSheetTarget(ArrivalsSheetState.Collapsed))
         assertEquals(ArrivalsSheetState.Expanded, toggleSheetTarget(ArrivalsSheetState.Hidden))
     }
+
+    // --- dockCoveredBySheet ---
+
+    @Test
+    fun `the dock is covered by an expanded sheet or a peek over half the window`() {
+        assertFalse(dockCoveredBySheet(sheetShown = false, expanded = true, peekPx = 900, windowHeightPx = 1000))
+        assertTrue(dockCoveredBySheet(sheetShown = true, expanded = true, peekPx = 100, windowHeightPx = 1000))
+        assertTrue(dockCoveredBySheet(sheetShown = true, expanded = false, peekPx = 501, windowHeightPx = 1000))
+        assertFalse(dockCoveredBySheet(sheetShown = true, expanded = false, peekPx = 500, windowHeightPx = 1000))
+    }
 }

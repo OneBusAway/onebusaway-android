@@ -16,6 +16,8 @@
 package org.onebusaway.android.ui.nav
 
 import android.net.Uri
+import org.onebusaway.android.ondemand.LocationCheck
+import org.onebusaway.android.ondemand.toRouteValue
 
 /**
  * The trip context carried into the reminder editor ([NavRoutes.TRIP_INFO]) when creating a reminder
@@ -189,10 +191,29 @@ object NavRoutes {
 
     // --- On-demand (GTFS-Flex) service page ---
     const val ARG_ONDEMAND_SERVICE_ID = "onDemandServiceId"
-    const val ONDEMAND_SERVICE = "onDemandService/{$ARG_ONDEMAND_SERVICE_ID}"
+    const val ARG_ONDEMAND_INSIDE = "inside"
+    const val ARG_ONDEMAND_SOURCE = "source"
+    const val ARG_ONDEMAND_LOCALITY = "locality"
+    const val ARG_ONDEMAND_LAT = "lat"
+    const val ARG_ONDEMAND_LON = "lon"
+    const val ONDEMAND_SERVICE = "onDemandService/{$ARG_ONDEMAND_SERVICE_ID}?$ARG_ONDEMAND_INSIDE={$ARG_ONDEMAND_INSIDE}&$ARG_ONDEMAND_SOURCE={$ARG_ONDEMAND_SOURCE}&$ARG_ONDEMAND_LOCALITY={$ARG_ONDEMAND_LOCALITY}&$ARG_ONDEMAND_LAT={$ARG_ONDEMAND_LAT}&$ARG_ONDEMAND_LON={$ARG_ONDEMAND_LON}"
 
-    /** Builds a navigable [ONDEMAND_SERVICE] route; service ids equal route ids and may contain `/`. */
-    fun onDemandService(serviceId: String): String = "onDemandService/${Uri.encode(serviceId)}"
+    /**
+     * Builds a navigable [ONDEMAND_SERVICE] route; service ids equal route ids and may contain `/`.
+     * [check] adds the probe's location facts (spec §3.6 item 3); without it the page omits the row.
+     */
+    fun onDemandService(serviceId: String, check: LocationCheck? = null): String {
+        val base = "onDemandService/${Uri.encode(serviceId)}"
+        if (check == null) return base
+        val query = listOfNotNull(
+            "$ARG_ONDEMAND_INSIDE=${check.isInside}",
+            "$ARG_ONDEMAND_SOURCE=${check.source.toRouteValue()}",
+            check.locality?.let { "$ARG_ONDEMAND_LOCALITY=${Uri.encode(it)}" },
+            check.point?.let { "$ARG_ONDEMAND_LAT=${it.latitude}" },
+            check.point?.let { "$ARG_ONDEMAND_LON=${it.longitude}" }
+        ).joinToString("&")
+        return "$base?$query"
+    }
 
     // --- Mapless arrivals and shared stop nav-args ---
     const val ARRIVALS = "arrivals/{stopId}?stopName={stopName}&routeId={routeId}&routeHeadsign={routeHeadsign}"

@@ -34,7 +34,34 @@ import org.onebusaway.android.util.ExternalIntents
 fun NavGraphBuilder.onDemandGraph(navController: NavHostController) {
     composable(
         NavRoutes.ONDEMAND_SERVICE,
-        arguments = listOf(navArgument(NavRoutes.ARG_ONDEMAND_SERVICE_ID) { type = NavType.StringType })
+        arguments = listOf(
+            navArgument(NavRoutes.ARG_ONDEMAND_SERVICE_ID) { type = NavType.StringType },
+            navArgument(NavRoutes.ARG_ONDEMAND_INSIDE) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument(NavRoutes.ARG_ONDEMAND_SOURCE) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument(NavRoutes.ARG_ONDEMAND_LOCALITY) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument(NavRoutes.ARG_ONDEMAND_LAT) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            },
+            navArgument(NavRoutes.ARG_ONDEMAND_LON) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }
+        )
     ) {
         val context = LocalContext.current
         val viewModel: OnDemandServiceViewModel = hiltViewModel()

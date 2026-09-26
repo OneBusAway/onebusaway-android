@@ -29,23 +29,29 @@ class DirectionsSheetHeightTest {
 
     @Test
     fun `fills half the window when the form leaves room`() {
-        assertDp(400.dp, directionsSheetHeight(windowHeight = 800.dp, formBottom = 240.dp, peekHeight = peek))
+        assertDp(400.dp, directionsSheetHeight(windowHeight = 800.dp, formBottom = 240.dp, peekHeight = peek, bottomStrip = 0.dp))
     }
 
     @Test
     fun `stops short of a form that reaches past half the window`() {
         // 640 - 360 - 8dp gap: the half-window sheet (320dp) would slide 48dp over the form.
-        assertDp(272.dp, directionsSheetHeight(windowHeight = 640.dp, formBottom = 360.dp, peekHeight = peek))
+        assertDp(272.dp, directionsSheetHeight(windowHeight = 640.dp, formBottom = 360.dp, peekHeight = peek, bottomStrip = 0.dp))
     }
 
     @Test
     fun `an unmeasured form caps nothing`() {
-        assertDp(400.dp, directionsSheetHeight(windowHeight = 800.dp, formBottom = 0.dp, peekHeight = peek))
+        assertDp(400.dp, directionsSheetHeight(windowHeight = 800.dp, formBottom = 0.dp, peekHeight = peek, bottomStrip = 0.dp))
     }
 
     @Test
     fun `never shorter than its own peek`() {
-        assertDp(peek, directionsSheetHeight(windowHeight = 400.dp, formBottom = 380.dp, peekHeight = peek))
-        assertDp(peek, directionsSheetHeight(windowHeight = 100.dp, formBottom = 0.dp, peekHeight = peek))
+        assertDp(peek, directionsSheetHeight(windowHeight = 400.dp, formBottom = 380.dp, peekHeight = peek, bottomStrip = 0.dp))
+        assertDp(peek, directionsSheetHeight(windowHeight = 100.dp, formBottom = 0.dp, peekHeight = peek, bottomStrip = 0.dp))
+    }
+
+    @Test
+    fun `a navigation-bar strip raises the sheet by its height, still short of the form`() {
+        assertDp(448.dp, directionsSheetHeight(windowHeight = 800.dp, formBottom = 240.dp, peekHeight = peek, bottomStrip = 48.dp))
+        assertDp(272.dp, directionsSheetHeight(windowHeight = 640.dp, formBottom = 360.dp, peekHeight = peek, bottomStrip = 48.dp))
     }
 }

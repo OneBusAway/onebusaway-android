@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
@@ -41,6 +42,10 @@ internal fun ArrivalsSheetContent(
     Box(
         modifier.fillMaxWidth().heightIn(max = maxHeight)
             .onSizeChanged { onHeightChanged(it.height) }
+            // End the rows above the navigation bar — its strip, or the gesture handle (#2337). Inside the
+            // measured size, so the collapsed peek fits the content *and* the bar, and inside the height
+            // cap, so an expanded sheet's last row scrolls clear of it. The directions sheet does the same.
+            .navigationBarsPadding()
     ) {
         content()
     }

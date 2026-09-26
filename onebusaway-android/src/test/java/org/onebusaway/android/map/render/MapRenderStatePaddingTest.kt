@@ -40,4 +40,41 @@ class MapRenderStatePaddingTest {
 
         assertEquals(MapPadding(topPx = 100), state.padding.value)
     }
+
+    @Test
+    fun `the navigation bar is the bottom floor with no sheet open`() {
+        val state = MapRenderState()
+
+        state.setNavigationBarInset(48)
+
+        assertEquals(MapPadding(bottomPx = 48), state.padding.value)
+    }
+
+    @Test
+    fun `a sheet extends rather than stacks on the navigation bar`() {
+        val state = MapRenderState()
+        state.setNavigationBarInset(48)
+
+        state.setBottomPadding(300)
+        assertEquals(MapPadding(bottomPx = 300), state.padding.value)
+
+        state.setBottomPadding(0)
+        state.setDirectionsBottomInset(400)
+        assertEquals(MapPadding(bottomPx = 400), state.padding.value)
+
+        state.setDirectionsBottomInset(0)
+        assertEquals(MapPadding(bottomPx = 48), state.padding.value)
+    }
+
+    @Test
+    fun `a centre pick suspends the navigation bar inset too`() {
+        val state = MapRenderState()
+        state.setNavigationBarInset(48)
+
+        state.setCenterPickActive(true)
+        assertEquals(MapPadding(), state.padding.value)
+
+        state.setCenterPickActive(false)
+        assertEquals(MapPadding(bottomPx = 48), state.padding.value)
+    }
 }

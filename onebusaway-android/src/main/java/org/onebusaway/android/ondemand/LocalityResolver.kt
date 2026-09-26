@@ -45,7 +45,7 @@ class DefaultLocalityResolver @Inject constructor(
                 // Sync getFromLocation is deprecated in API 33; its replacement needs API 33 while minSdk
                 // is 23 — the same degraded path DefaultGeocodeRepository.platformReverse takes.
                 // https://developer.android.com/reference/android/location/Geocoder#getFromLocation(double,%20double,%20int)
-                // tracking issue: to be filed
+                // tracking issue: https://github.com/OneBusAway/onebusaway-android/issues/2345
                 @Suppress("DEPRECATION")
                 val address = Geocoder(context).getFromLocation(point.latitude, point.longitude, 1)?.firstOrNull()
                 address?.locality ?: address?.subAdminArea

@@ -140,6 +140,37 @@ class OnDemandLayerControllerTest {
     }
 
     @Test
+    fun `a viewport taller than the zoom gate clears zones without a request`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(service())))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(viewport)
+        advanceTimeBy(1)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
+
+        // A state-wide view: nothing drawn, nothing asked.
+        camera.emit(viewport.copy(latSpan = 2.0))
+        advanceTimeBy(1)
+        assertTrue(renderState.snapshot.value.onDemandZones.isEmpty())
+        assertEquals(1, source.requests.size)
+
+        // Back to the same view: the cache redraws it without a second request.
+        camera.emit(viewport)
+        advanceTimeBy(1)
+        assertEquals(1, renderState.snapshot.value.onDemandZones.size)
+        assertEquals(1, source.requests.size)
+        subject.stop()
+    }
+
+    @Test
+    fun `the zoom gate is 65 km of latitude`() {
+        val gateLatSpan = ONDEMAND_MAX_VISIBLE_HEIGHT_METERS / 111_133.0
+        assertTrue(isWithinOnDemandZoomGate(gateLatSpan))
+        assertTrue(isWithinOnDemandZoomGate(0.0))
+        assertFalse(isWithinOnDemandZoomGate(gateLatSpan * 1.01))
+    }
+
+    @Test
     fun `unsupported is recorded and not re-probed`() = runTest {
         val source = FakeDataSource(OnDemandResult.Unsupported)
         val subject = controller(source, backgroundScope)

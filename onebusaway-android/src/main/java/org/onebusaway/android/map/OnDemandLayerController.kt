@@ -32,13 +32,15 @@ import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.ZonePolygon
+import org.onebusaway.android.map.rental.visibleHeightMeters
 import org.onebusaway.android.models.OnDemandService
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 
 /**
  * The on-demand zone overlay (GTFS-Flex): a cold driver that loads the flex service areas covering
- * the settled viewport whenever the layer preference is on, and publishes them as
+ * the settled viewport whenever the layer preference is on and the viewport is inside the zoom gate
+ * ([isWithinOnDemandZoomGate]), and publishes them as
  * [org.onebusaway.android.map.render.MapRenderSnapshot.onDemandZones]. Mirrors [RentalLayerController]:
  * [start] launches the loader for a view, [stop] cancels it, [hide] additionally clears the map.
  *
@@ -82,6 +84,13 @@ class OnDemandLayerController(
                 // A newer viewport cancels an in-flight load.
                 .collectLatest { (camera, enabled, deployment) ->
                     if (!enabled || deployment == null || support.isKnownUnsupported(deployment)) {
+                        clearZones()
+                        return@collectLatest
+                    }
+                    // The gate comes before the request, as the rental layer's does: a state-wide
+                    // view costs no round trip and shows no zones, and the cache survives it so
+                    // zooming back in to the same view redraws without asking again.
+                    if (!isWithinOnDemandZoomGate(camera.latSpan)) {
                         clearZones()
                         return@collectLatest
                     }
@@ -152,6 +161,18 @@ class OnDemandLayerController(
 
     private fun clearZones() = renderState.clearOnDemandZones()
 }
+
+/**
+ * The tallest viewport the zone layer draws for, in metres of north-south extent.
+ *
+ * The sibling iOS app hides this layer above a visible-rect height of 600,000 Mercator map points,
+ * which spans about 60 to 70 km of latitude across the mid-latitudes the app serves: a county-sized
+ * zone stays drawn with the whole county on screen, and a state-wide view draws nothing.
+ */
+const val ONDEMAND_MAX_VISIBLE_HEIGHT_METERS = 65_000.0
+
+/** Whether the viewport is tight enough to fetch and draw zones for. */
+fun isWithinOnDemandZoomGate(latSpan: Double): Boolean = visibleHeightMeters(latSpan) <= ONDEMAND_MAX_VISIBLE_HEIGHT_METERS
 
 /** One [ZonePolygon] per polygon of every area of every service, in the route's colour. */
 internal fun zonePolygons(services: List<OnDemandService>): List<ZonePolygon> = services.flatMap { service ->

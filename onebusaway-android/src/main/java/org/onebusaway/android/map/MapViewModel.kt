@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -231,6 +232,7 @@ class MapViewModel @Inject constructor(
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
         demoMode = demoMode,
+        brandColor = ContextCompat.getColor(context, R.color.brand_color),
         scope = viewModelScope
     )
 

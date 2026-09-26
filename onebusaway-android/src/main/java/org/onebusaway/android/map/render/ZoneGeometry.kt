@@ -247,3 +247,45 @@ private fun projectedArea(ring: List<GeoPoint>): Double {
     }
     return abs(twiceArea) / 2
 }
+
+/**
+ * How a zone draws at the current level (spec §2.3): region fills, street strokes only; a highlighted
+ * service draws at full alpha while the others at street level dim.
+ */
+enum class ZoneStyle { REGION, REGION_HIGHLIGHTED, STREET, STREET_DIMMED, STREET_HIGHLIGHTED }
+
+/** Only region-level polygons take a tap (spec §3.1); at street level the polygon covers the screen. */
+val ZoneStyle.clickable: Boolean get() = this == ZoneStyle.REGION || this == ZoneStyle.REGION_HIGHLIGHTED
+
+/** Spec §2.3: 2 pt at region level, 4 pt at street level and for any highlight. */
+val ZoneStyle.strokeWidthDp: Float get() = if (this == ZoneStyle.REGION) 2f else 4f
+
+/** The soft halo drawn beneath a street-level stroke where the platform allows a second overlay. */
+const val ZONE_HALO_WIDTH_DP = 10f
+
+private const val REGION_STROKE_ALPHA = 0xCC
+private const val FULL_ALPHA = 0xFF
+private const val DIMMED_STROKE_ALPHA = 0x99
+private const val HALO_ALPHA = 0x40
+private const val DIMMED_HALO_ALPHA = 0x26
+
+fun zoneFillColor(color: Int, style: ZoneStyle): Int = withAlpha(color, if (style == ZoneStyle.REGION || style == ZoneStyle.REGION_HIGHLIGHTED) FILL_ALPHA else 0)
+
+fun zoneStrokeColor(color: Int, style: ZoneStyle): Int = withAlpha(
+    color,
+    when (style) {
+        ZoneStyle.REGION -> REGION_STROKE_ALPHA
+        ZoneStyle.STREET_DIMMED -> DIMMED_STROKE_ALPHA
+        ZoneStyle.REGION_HIGHLIGHTED, ZoneStyle.STREET, ZoneStyle.STREET_HIGHLIGHTED -> FULL_ALPHA
+    }
+)
+
+/** The halo colour at street level; null at region level, where no halo is drawn. */
+fun zoneHaloColor(color: Int, style: ZoneStyle): Int? = when (style) {
+    ZoneStyle.REGION, ZoneStyle.REGION_HIGHLIGHTED -> null
+    ZoneStyle.STREET_DIMMED -> withAlpha(color, DIMMED_HALO_ALPHA)
+    ZoneStyle.STREET, ZoneStyle.STREET_HIGHLIGHTED -> withAlpha(color, HALO_ALPHA)
+}
+
+/** The topmost *tappable* zone under [point]: region-level only, so street-level taps fall through. */
+fun tappableZone(zones: List<ZonePolygon>, point: GeoPoint): ZonePolygon? = zones.lastOrNull { it.style.clickable && it.contains(point) }

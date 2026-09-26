@@ -185,4 +185,32 @@ class ZoneGeometryTest {
         assertEquals(0xCC112233.toInt(), zoneStrokeColor(0xFF112233.toInt()))
         assertEquals(0x33 shl 24 or (DEFAULT_ROUTE_LINE_COLOR and 0x00FFFFFF), zoneFillColor(null))
     }
+
+    @Test
+    fun `zone styles set fill, stroke, halo and clickability per level`() {
+        val colour = 0xFF112233.toInt()
+        assertEquals(0x33112233, zoneFillColor(colour, ZoneStyle.REGION))
+        assertEquals(0x00112233, zoneFillColor(colour, ZoneStyle.STREET))
+        assertEquals(0xCC112233.toInt(), zoneStrokeColor(colour, ZoneStyle.REGION))
+        assertEquals(0xFF112233.toInt(), zoneStrokeColor(colour, ZoneStyle.STREET))
+        assertEquals(0x99112233.toInt(), zoneStrokeColor(colour, ZoneStyle.STREET_DIMMED))
+        assertEquals(0xFF112233.toInt(), zoneStrokeColor(colour, ZoneStyle.REGION_HIGHLIGHTED))
+        assertEquals(2f, ZoneStyle.REGION.strokeWidthDp)
+        assertEquals(4f, ZoneStyle.REGION_HIGHLIGHTED.strokeWidthDp)
+        assertEquals(4f, ZoneStyle.STREET.strokeWidthDp)
+        assertEquals(null, zoneHaloColor(colour, ZoneStyle.REGION))
+        assertEquals(0x40112233, zoneHaloColor(colour, ZoneStyle.STREET))
+        assertTrue(ZoneStyle.REGION.clickable)
+        assertTrue(ZoneStyle.REGION_HIGHLIGHTED.clickable)
+        assertFalse(ZoneStyle.STREET.clickable)
+        assertFalse(ZoneStyle.STREET_HIGHLIGHTED.clickable)
+    }
+
+    @Test
+    fun `a polygon tap at street level does not find a zone`() {
+        val region = ZonePolygon("svc", "Zone", listOf(outer), null, style = ZoneStyle.REGION)
+        val street = region.copy(style = ZoneStyle.STREET)
+        assertEquals(region, tappableZone(listOf(region), GeoPoint(1.0, 1.0)))
+        assertEquals(null, tappableZone(listOf(street), GeoPoint(1.0, 1.0)))
+    }
 }

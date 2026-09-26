@@ -85,9 +85,10 @@ class OnDemandProbeControllerTest {
 
     private val centre = GeoPoint(45.05, -85.1)
 
-    // 0.02° of latitude is ~2.2 km: street level. 0.1° is ~11 km: region level.
+    // 0.02° of latitude is ~2.2 km: street level. 0.1° is ~11 km: region level. 1.0° is ~111 km: hidden.
     private fun street(center: GeoPoint = centre) = CameraSnapshot(center, 15.0, 0.02, 0.03, GeoPoint(center.latitude - 0.01, center.longitude - 0.015), GeoPoint(center.latitude + 0.01, center.longitude + 0.015))
     private fun region(center: GeoPoint = centre) = street(center).copy(zoom = 11.0, latSpan = 0.1, lonSpan = 0.15)
+    private fun hidden(center: GeoPoint = centre) = street(center).copy(zoom = 4.0, latSpan = 1.0, lonSpan = 1.5)
 
     /** [centre] shifted [meters] north. */
     private fun north(meters: Double, from: GeoPoint = centre) = GeoPoint(from.latitude + meters / 111_194.9, from.longitude)
@@ -114,6 +115,25 @@ class OnDemandProbeControllerTest {
         camera.emit(region())
         advanceTimeBy(1)
         assertTrue(subject.dockState.value is OnDemandDockState.Card)
+        subject.stop()
+    }
+
+    @Test
+    fun `a hidden-level settle updates the zoom level but launches no probe`() = runTest {
+        val source = FakeDataSource(OnDemandResult.Loaded(listOf(insideService)))
+        val subject = controller(source, backgroundScope)
+        subject.start()
+        camera.emit(hidden())
+        advanceTimeBy(1)
+
+        assertEquals(OnDemandZoomLevel.HIDDEN, subject.zoomLevel.value)
+        assertTrue("no request costs the hidden level a round trip", source.nearRequests.isEmpty())
+        assertEquals(OnDemandDockState.Hidden, subject.dockState.value)
+
+        camera.emit(street())
+        advanceTimeBy(1)
+        assertEquals(1, source.nearRequests.size)
+        assertTrue(subject.dockState.value is OnDemandDockState.Bar)
         subject.stop()
     }
 

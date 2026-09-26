@@ -192,7 +192,8 @@ class OnDemandProbeController(
     }
 
     private fun onInputs(inputs: Inputs) {
-        _zoomLevel.value = onDemandZoomLevel(inputs.camera.latSpan)
+        val level = onDemandZoomLevel(inputs.camera.latSpan)
+        _zoomLevel.value = level
         val deployment = inputs.deployment
         if (deployment == null || !inputs.enabled || support.isKnownUnsupported(deployment)) {
             clearState()
@@ -203,6 +204,8 @@ class OnDemandProbeController(
             currentDeployment = deployment
             clearState()
         }
+        // Spec §2.2/§2.4: nothing is shown at the hidden level, so a settle here must not cost a request.
+        if (level == OnDemandZoomLevel.HIDDEN) return
         val probe = ProbePoint(inputs.rider ?: inputs.camera.center, if (inputs.rider != null) ProbeSource.Rider else ProbeSource.MapCenter)
         val last = lastProbe
         // Spec §2.1's real triggers only: a fresh point, a source change (authorization), or a ≥ 100 m

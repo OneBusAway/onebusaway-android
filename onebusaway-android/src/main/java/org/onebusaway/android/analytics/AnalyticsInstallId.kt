@@ -27,12 +27,15 @@ import org.onebusaway.android.preferences.PreferencesRepository
  * Umami derives its visitor/session id as `uuid(website, IP, User-Agent, monthly salt)` *unless* the
  * event payload carries an explicit `payload.id`, in which case it uses `uuid(website, id)` instead.
  * (True through Umami v3.2; v3.3+ hash the IP back in, so the shared server must stay pinned to
- * <= v3.2 for this to dedupe visitors.)
+ * <= v3.2 for this to dedupe visitors — tracked in
+ * https://github.com/OneBusAway/onebusaway-android/issues/2349.)
  * Without one, every IP change (wifi <-> cellular) mints Umami a "new" visitor, inflating reported MAU
  * roughly 2x. Sending this id as `payload.id` on every Umami event keeps a device's sessions stable
  * across IP changes while staying anonymous — it never leaves the device with any other identifying
  * value attached, and it is independent of every other id the app uses (e.g. [org.onebusaway.android.
  * ui.survey.SurveyPreferences]'s survey UUID), so Umami usage can't be cross-referenced against surveys.
+ * Umami never sees [value] itself: each website gets [forWebsite], a one-way derivation, so separately
+ * run Umami servers (regions can each configure their own) can't link the same install.
  *
  * Injected as an app-singleton so every [UmamiAnalytics] instance — one per region, rebuilt on region
  * change by [AnalyticsProvider] — shares the same id for the lifetime of the install.
@@ -48,6 +51,10 @@ class AnalyticsInstallId @Inject constructor(
             prefs.setString(INSTALL_ID_KEY, it)
         }
     }
+
+    /** The id sent to the Umami website [websiteId]: stable per install and website, but not linkable
+     *  across websites or back to [value]. */
+    fun forWebsite(websiteId: String): String = UUID.nameUUIDFromBytes("$value:$websiteId".toByteArray(Charsets.UTF_8)).toString()
 
     companion object {
         private const val INSTALL_ID_KEY = "analyticsInstallId"

@@ -30,21 +30,25 @@ import org.onebusaway.android.analytics.ObaAnalytics.ObaStopDistance
 class ObaAnalyticsTest {
 
     @Test
-    fun `reports the farthest bucket when there is no location fix`() {
+    fun `reports unknown when there is no location fix`() {
         assertEquals(
-            ObaStopDistance.DISTANCE_8,
+            ObaStopDistance.UNKNOWN,
+            stopDistanceBucket(accuracy = null, distanceMeters = null)
+        )
+        assertEquals(
+            ObaStopDistance.UNKNOWN,
             stopDistanceBucket(accuracy = null, distanceMeters = 10f)
         )
     }
 
     @Test
-    fun `reports the farthest bucket when the fix is less accurate than the threshold`() {
+    fun `reports unknown when the fix is less accurate than the threshold`() {
         assertEquals(
-            ObaStopDistance.DISTANCE_8,
+            ObaStopDistance.UNKNOWN,
             stopDistanceBucket(accuracy = LOCATION_ACCURACY_THRESHOLD, distanceMeters = 10f)
         )
         assertEquals(
-            ObaStopDistance.DISTANCE_8,
+            ObaStopDistance.UNKNOWN,
             stopDistanceBucket(accuracy = LOCATION_ACCURACY_THRESHOLD + 1f, distanceMeters = 10f)
         )
     }
@@ -63,5 +67,11 @@ class ObaAnalyticsTest {
             ObaStopDistance.DISTANCE_8,
             stopDistanceBucket(accuracy = 1f, distanceMeters = 5000f)
         )
+    }
+
+    @Test
+    fun `forDistance never picks the unknown bucket`() {
+        assertEquals(ObaStopDistance.DISTANCE_1, ObaStopDistance.forDistance(0f))
+        assertEquals(ObaStopDistance.DISTANCE_8, ObaStopDistance.forDistance(1_000_000f))
     }
 }

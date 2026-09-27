@@ -12,8 +12,9 @@ import org.onebusaway.android.BuildConfig
 /**
  * Fire-and-forget Umami event emitter; failures never escape to callers.
  *
- * @param installId The anonymous, per-install id (see [AnalyticsInstallId]), sent as `payload.id` on
- * every event so Umami derives a stable visitor/session id (`uuid(website, id)`) instead of re-deriving
+ * @param serverUrl The Umami server; must be HTTPS, since every event carries [installId].
+ * @param installId The anonymous per-install, per-website id ([AnalyticsInstallId.forWebsite]), sent as
+ * `payload.id` on every event so Umami derives a stable visitor/session id (`uuid(website, id)`) instead of re-deriving
  * one from IP + User-Agent on every request, which mints a "new" visitor on every IP change.
  */
 class UmamiAnalytics(
@@ -24,6 +25,10 @@ class UmamiAnalytics(
 ) {
     private val sendUrl = joinUrl(serverUrl, "api/send")
     private val userAgent = buildUserAgent()
+
+    init {
+        require(isHttps(sendUrl)) { "Umami endpoint must be HTTPS" }
+    }
 
     @Volatile private var regionName: String? = null
 
@@ -36,11 +41,6 @@ class UmamiAnalytics(
     fun event(name: String?, pageUrl: String?, props: Map<String, Any?>?) = send(name, pageUrl, props)
 
     private fun send(name: String?, pageUrl: String?, props: Map<String, Any?>?) {
-        // Every event carries the persistent install id, so never send one in cleartext.
-        if (!isHttps(sendUrl)) {
-            Log.w(TAG, "Refusing non-HTTPS Umami endpoint")
-            return
-        }
         val payload = try {
             buildPayload(name, reducePath(pageUrl), props)
         } catch (error: Exception) {

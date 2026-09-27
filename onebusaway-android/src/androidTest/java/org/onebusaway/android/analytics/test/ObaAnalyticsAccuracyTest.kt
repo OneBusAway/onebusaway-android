@@ -38,7 +38,7 @@ class ObaAnalyticsAccuracyTest {
         }
         assertNull(ObaAnalytics.usableAccuracy(location))
         assertEquals(
-            ObaAnalytics.ObaStopDistance.DISTANCE_8,
+            ObaAnalytics.ObaStopDistance.UNKNOWN,
             ObaAnalytics.stopDistanceBucket(ObaAnalytics.usableAccuracy(location), distanceMeters = 10f)
         )
     }

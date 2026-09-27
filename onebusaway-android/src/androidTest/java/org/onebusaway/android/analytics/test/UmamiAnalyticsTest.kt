@@ -55,6 +55,11 @@ class UmamiAnalyticsTest {
         assertFalse(UmamiAnalytics.isHttps("not a url"))
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsCleartextEndpoint() {
+        UmamiAnalytics("http://10.0.2.2:3000/", "wid-1", "api.example.com", "install-1")
+    }
+
     @Test fun userAgentFormat() {
         val userAgent = UmamiAnalytics.buildUserAgent()
         assertTrue(userAgent.startsWith("OneBusAway/"))

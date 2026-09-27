@@ -133,7 +133,9 @@ internal fun rememberArrivalsSession(
         val displayMode = rememberArrivalDisplayMode(stop.id) { prefs.arrivalDisplayDefault() }
 
         ArrivalsPolling(viewModel)
-        ArrivalsAnalyticsEffect(viewModel)
+        // Collect only while the sheet is shown (a help dialog hides it while polling continues); the
+        // stop-view Channel holds the event until the sheet is visible again.
+        if (sheetVisible) ArrivalsAnalyticsEffect(viewModel)
 
         // Forward each completed load to the host and start onboarding after the sheet is visible.
         val sheetVisibleState = rememberUpdatedState(sheetVisible)

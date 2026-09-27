@@ -17,6 +17,7 @@ package org.onebusaway.android.analytics
 
 import java.util.UUID
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.testing.FakePreferencesRepository
@@ -57,5 +58,15 @@ class AnalyticsInstallIdTest {
             setString("analyticsInstallId", "existing-id")
         }
         assertEquals("existing-id", AnalyticsInstallId(prefs).value)
+    }
+
+    @Test
+    fun `derives a stable per-website id that differs across websites and from the raw id`() {
+        val installId = AnalyticsInstallId(FakePreferencesRepository())
+        val siteA = installId.forWebsite("site-a")
+        assertEquals(siteA, installId.forWebsite("site-a"))
+        assertNotEquals(siteA, installId.forWebsite("site-b"))
+        assertNotEquals(installId.value, siteA)
+        assertTrue(UUID.fromString(siteA).toString() == siteA)
     }
 }

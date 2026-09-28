@@ -51,6 +51,13 @@ data class RealtimeOutage(
     constructor(agencyName: String) : this(agencyId = agencyName, agencyName = agencyName)
 }
 
+/** Identity of one trip instance whose realtime prediction was present in a prior response. */
+internal data class RealtimeTripInstanceKey(
+    val agencyId: String,
+    val tripId: String,
+    val serviceDate: Long
+)
+
 /**
  * Detects whether any transit agency serving the given [arrivals] is experiencing a realtime data
  * outage (issue #2301).
@@ -58,19 +65,27 @@ data class RealtimeOutage(
  * An agency is flagged as having an outage if:
  * 1. It has at least [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] arrivals at this stop within the time window.
  * 2. None of its arrivals have realtime predictions ([ArrivalInfo.predicted] is false for all).
+ * 3. At least [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] of the same trip instances had realtime predictions
+ *    in the preceding successful response for this stop and region, or an outage was already
+ *    established and predictions have not returned.
  *
  * Arrivals are grouped by their unique [OperatingAgency.id] so that per-agency thresholds and
  * prediction checks remain strictly independent, even if two distinct agencies share the same display
- * name. If an agency has even a single predicted arrival, no outage is flagged for it. Agencies with
- * fewer than [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] arrivals or missing/blank ID/name are ignored to avoid
- * false positives.
+ * name. A first response containing scheduled-only arrivals is not evidence of an outage; prior
+ * realtime observations establish that the affected trip instances were expected to be predicted.
+ * If an agency has even a single predicted arrival, no outage is flagged for it. Agencies with
+ * fewer than [MIN_ARRIVALS_FOR_REALTIME_OUTAGE] arrivals or missing/blank ID/name are ignored.
+ * This remains client-side inference: an outage already active on first observation is unknown, and
+ * ordinary prediction removals for multiple previously-predicted trips can still resemble an outage.
  *
  * @param arrivals the list of arrivals loaded for the stop
  * @param agencyOf resolves an arrival's operating agency (ID and display name) from route references
  * @return a list of [RealtimeOutage] objects for affected agencies, ordered alphabetically by agency name
  */
-fun detectRealtimeOutages(
+internal fun detectRealtimeOutages(
     arrivals: List<ArrivalInfo>,
+    previouslyRealtimeTripKeys: Set<RealtimeTripInstanceKey> = emptySet(),
+    previouslyOutagedAgencyIds: Set<String> = emptySet(),
     agencyOf: (ArrivalInfo) -> OperatingAgency?
 ): List<RealtimeOutage> {
     if (arrivals.isEmpty()) return emptyList()
@@ -86,7 +101,16 @@ fun detectRealtimeOutages(
         }
         .groupBy(keySelector = { it.first }, valueTransform = { it.second })
         .mapNotNull { (agency, agencyArrivals) ->
-            if (agencyArrivals.size >= MIN_ARRIVALS_FOR_REALTIME_OUTAGE && agencyArrivals.none { it.predicted }) {
+            val lostPreviouslyPredictedTrips = agencyArrivals.count { arrival ->
+                RealtimeTripInstanceKey(agency.id, arrival.tripId, arrival.serviceDate) in previouslyRealtimeTripKeys
+            }
+            val outageEstablished = agency.id in previouslyOutagedAgencyIds ||
+                lostPreviouslyPredictedTrips >= MIN_ARRIVALS_FOR_REALTIME_OUTAGE
+            if (
+                agencyArrivals.size >= MIN_ARRIVALS_FOR_REALTIME_OUTAGE &&
+                agencyArrivals.none { it.predicted } &&
+                outageEstablished
+            ) {
                 RealtimeOutage(agencyId = agency.id, agencyName = agency.name)
             } else {
                 null

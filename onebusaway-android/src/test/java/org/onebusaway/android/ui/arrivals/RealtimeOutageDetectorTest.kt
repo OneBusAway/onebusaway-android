@@ -102,12 +102,29 @@ class RealtimeOutageDetectorTest {
     @Test
     fun `agency with at least 3 scheduled-only arrivals flags outage`() {
         val arrivals = listOf(
-            arrival("r1", predicted = false),
-            arrival("r1", predicted = false),
-            arrival("r2", predicted = false)
+            arrival("r1", predicted = false, tripId = "trip-1"),
+            arrival("r1", predicted = false, tripId = "trip-2"),
+            arrival("r2", predicted = false, tripId = "trip-3")
         )
-        val result = detectRealtimeOutages(arrivals) { OperatingAgency("1", "Metro") }
+        val previousPredictions = arrivals.mapTo(mutableSetOf()) {
+            RealtimeTripInstanceKey("1", it.tripId, it.serviceDate)
+        }
+        val result = detectRealtimeOutages(arrivals, previouslyRealtimeTripKeys = previousPredictions) {
+            OperatingAgency("1", "Metro")
+        }
         assertEquals(listOf(RealtimeOutage("1", "Metro")), result)
+    }
+
+    /** A schedule-only first response does not establish that realtime service has failed. */
+    @Test
+    fun `scheduled-only first response does not flag outage`() {
+        val arrivals = listOf(
+            arrival(predicted = false, tripId = "trip-1"),
+            arrival(predicted = false, tripId = "trip-2"),
+            arrival(predicted = false, tripId = "trip-3")
+        )
+
+        assertTrue(detectRealtimeOutages(arrivals) { OperatingAgency("1", "Metro") }.isEmpty())
     }
 
     /**
@@ -130,18 +147,21 @@ class RealtimeOutageDetectorTest {
     fun `multiple agencies with only one affected flags only affected agency`() {
         val arrivals = listOf(
             // Metro: 3 arrivals, 0 predicted -> outage
-            arrival("metro-1", predicted = false),
-            arrival("metro-1", predicted = false),
-            arrival("metro-2", predicted = false),
+            arrival("metro-1", predicted = false, tripId = "metro-trip-1"),
+            arrival("metro-1", predicted = false, tripId = "metro-trip-2"),
+            arrival("metro-2", predicted = false, tripId = "metro-trip-3"),
             // Sound Transit: 3 arrivals, 2 predicted -> no outage
-            arrival("st-1", predicted = true),
-            arrival("st-1", predicted = true),
-            arrival("st-2", predicted = false),
+            arrival("st-1", predicted = true, tripId = "st-trip-1"),
+            arrival("st-1", predicted = true, tripId = "st-trip-2"),
+            arrival("st-2", predicted = false, tripId = "st-trip-3"),
             // Pierce Transit: 2 arrivals, 0 predicted -> below threshold, no outage
-            arrival("pt-1", predicted = false),
-            arrival("pt-1", predicted = false)
+            arrival("pt-1", predicted = false, tripId = "pt-trip-1"),
+            arrival("pt-1", predicted = false, tripId = "pt-trip-2")
         )
-        val result = detectRealtimeOutages(arrivals) {
+        val previousPredictions = arrivals.take(3).mapTo(mutableSetOf()) {
+            RealtimeTripInstanceKey("1", it.tripId, it.serviceDate)
+        }
+        val result = detectRealtimeOutages(arrivals, previouslyRealtimeTripKeys = previousPredictions) {
             when {
                 it.routeId.startsWith("metro") -> OperatingAgency("1", "King County Metro")
                 it.routeId.startsWith("st") -> OperatingAgency("40", "Sound Transit")
@@ -184,15 +204,18 @@ class RealtimeOutageDetectorTest {
     fun `distinct agencies with the same display name evaluate independently`() {
         val arrivals = listOf(
             // Agency 1: 3 arrivals, all scheduled (outage)
-            arrival("agency1-r1", predicted = false),
-            arrival("agency1-r2", predicted = false),
-            arrival("agency1-r3", predicted = false),
+            arrival("agency1-r1", predicted = false, tripId = "agency1-trip-1"),
+            arrival("agency1-r2", predicted = false, tripId = "agency1-trip-2"),
+            arrival("agency1-r3", predicted = false, tripId = "agency1-trip-3"),
             // Agency 2: 3 arrivals, all predicted (no outage)
-            arrival("agency2-r1", predicted = true),
-            arrival("agency2-r2", predicted = true),
-            arrival("agency2-r3", predicted = true)
+            arrival("agency2-r1", predicted = true, tripId = "agency2-trip-1"),
+            arrival("agency2-r2", predicted = true, tripId = "agency2-trip-2"),
+            arrival("agency2-r3", predicted = true, tripId = "agency2-trip-3")
         )
-        val result = detectRealtimeOutages(arrivals) {
+        val previousPredictions = arrivals.take(3).mapTo(mutableSetOf()) {
+            RealtimeTripInstanceKey("id-1", it.tripId, it.serviceDate)
+        }
+        val result = detectRealtimeOutages(arrivals, previouslyRealtimeTripKeys = previousPredictions) {
             when {
                 it.routeId.startsWith("agency1") -> OperatingAgency("id-1", "Metro")
                 it.routeId.startsWith("agency2") -> OperatingAgency("id-2", "Metro")
@@ -208,14 +231,18 @@ class RealtimeOutageDetectorTest {
     @Test
     fun `multiple affected agencies are sorted alphabetically`() {
         val arrivals = listOf(
-            arrival("st-1", predicted = false),
-            arrival("st-2", predicted = false),
-            arrival("st-3", predicted = false),
-            arrival("kcm-1", predicted = false),
-            arrival("kcm-2", predicted = false),
-            arrival("kcm-3", predicted = false)
+            arrival("st-1", predicted = false, tripId = "st-trip-1"),
+            arrival("st-2", predicted = false, tripId = "st-trip-2"),
+            arrival("st-3", predicted = false, tripId = "st-trip-3"),
+            arrival("kcm-1", predicted = false, tripId = "kcm-trip-1"),
+            arrival("kcm-2", predicted = false, tripId = "kcm-trip-2"),
+            arrival("kcm-3", predicted = false, tripId = "kcm-trip-3")
         )
-        val result = detectRealtimeOutages(arrivals) {
+        val previousPredictions = arrivals.mapTo(mutableSetOf()) { arrival ->
+            val agencyId = if (arrival.routeId.startsWith("st")) "40" else "1"
+            RealtimeTripInstanceKey(agencyId, arrival.tripId, arrival.serviceDate)
+        }
+        val result = detectRealtimeOutages(arrivals, previouslyRealtimeTripKeys = previousPredictions) {
             if (it.routeId.startsWith("st")) {
                 OperatingAgency("40", "Sound Transit")
             } else {
@@ -257,11 +284,19 @@ class RealtimeOutageDetectorTest {
     @Test
     fun `recovery with predicted arrival clears the outage`() {
         val outageArrivals = listOf(
-            arrival("r1", predicted = false),
-            arrival("r1", predicted = false),
-            arrival("r2", predicted = false)
+            arrival("r1", predicted = false, tripId = "trip-1"),
+            arrival("r1", predicted = false, tripId = "trip-2"),
+            arrival("r2", predicted = false, tripId = "trip-3")
         )
-        assertEquals(1, detectRealtimeOutages(outageArrivals) { OperatingAgency("1", "Metro") }.size)
+        val previousPredictions = outageArrivals.mapTo(mutableSetOf()) {
+            RealtimeTripInstanceKey("1", it.tripId, it.serviceDate)
+        }
+        assertEquals(
+            1,
+            detectRealtimeOutages(outageArrivals, previouslyRealtimeTripKeys = previousPredictions) {
+                OperatingAgency("1", "Metro")
+            }.size
+        )
 
         // After refresh, predictions return for one or more trips
         val recoveredArrivals = listOf(
@@ -269,7 +304,13 @@ class RealtimeOutageDetectorTest {
             arrival("r1", predicted = false),
             arrival("r2", predicted = false)
         )
-        assertTrue(detectRealtimeOutages(recoveredArrivals) { OperatingAgency("1", "Metro") }.isEmpty())
+        assertTrue(
+            detectRealtimeOutages(
+                recoveredArrivals,
+                previouslyRealtimeTripKeys = previousPredictions,
+                previouslyOutagedAgencyIds = setOf("1")
+            ) { OperatingAgency("1", "Metro") }.isEmpty()
+        )
     }
 
     /**

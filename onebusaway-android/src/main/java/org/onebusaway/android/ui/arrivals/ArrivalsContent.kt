@@ -493,7 +493,7 @@ internal fun RealtimeOutageBanner(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        val uniqueOutages = remember(outages) { outages.distinctBy { it.agencyName } }
+        val uniqueOutages = remember(outages) { outages.distinctBy { it.agencyId } }
         for (outage in uniqueOutages) {
             key(outage.agencyId) {
                 RealtimeOutageRow(outage = outage)

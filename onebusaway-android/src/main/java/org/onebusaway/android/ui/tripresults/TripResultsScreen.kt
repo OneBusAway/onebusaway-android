@@ -54,6 +54,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +64,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -111,6 +115,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -1010,7 +1015,11 @@ fun TripResultsList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
     onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit = { _, _ -> },
+    // Opens a ride's board or exit stop as a page of its own (#2347), from its name's long-press menu;
+    // null offers no menu, which is what a render-only harness wants.
+    onOpenStop: ((RouteStopRef) -> Unit)? = null,
+    // Each ride's inline live ETA strip under its Board row, or null for none (the default, #2347).
+    stopEtaStrip: (@Composable (TripLogEntry.Transit, RouteStopRef) -> Unit)? = null,
     // Which option is pinned right now (#2053), or null when none of these is. Defaulted, like every
     // other action here, so the render-only harnesses that call this directly stay unaffected: a list
     // handed neither of these simply offers no pin affordance, which is the right rendering for them.
@@ -1053,6 +1062,7 @@ fun TripResultsList(
                     onFocusRouteLeg = onFocusRouteLeg,
                     onFocusLeg = onFocusLeg,
                     onFocusPoint = onFocusPoint,
+                    onOpenStop = onOpenStop,
                     stopEtaStrip = stopEtaStrip,
                     pinnedOptionIndex = pinnedOptionIndex,
                     onTogglePin = onTogglePin,
@@ -1089,7 +1099,8 @@ fun TripResultsSheet(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
+    onOpenStop: ((RouteStopRef) -> Unit)?,
+    stopEtaStrip: (@Composable (TripLogEntry.Transit, RouteStopRef) -> Unit)?,
     // A non-null index is an explicit pinned-trip resume, consumed after selecting that option.
     // Null preserves the selection on remount and opens a fresh plan on option zero.
     // Stored snapshots must not re-arm the trip-update monitor for an already departed trip.
@@ -1111,7 +1122,7 @@ fun TripResultsSheet(
     // if needed, keeping the rider's selection and leg focus (#2274). Read the chosen itinerary from
     // the ViewModel so the map and picker agree.
     LaunchedEffect(planGeneration, resumeIndex) {
-        val seeded = resultsViewModel.seedPlan(planGeneration, itineraries, resumeIndex, params?.plannedStart)
+        val seeded = resultsViewModel.seedPlan(planGeneration, itineraries, resumeIndex)
         val itinerary = resultsViewModel.currentItinerary()
         if (seeded) {
             itinerary?.let(showItinerary)
@@ -1153,6 +1164,7 @@ fun TripResultsSheet(
         onFocusRouteLeg = onFocusRouteLeg,
         onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
+        onOpenStop = onOpenStop,
         stopEtaStrip = stopEtaStrip,
         pinnedOptionIndex = pinnedOptionIndex,
         onTogglePin = onTogglePin,
@@ -1296,7 +1308,8 @@ private fun TripLogList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
+    onOpenStop: ((RouteStopRef) -> Unit)?,
+    stopEtaStrip: (@Composable (TripLogEntry.Transit, RouteStopRef) -> Unit)?,
     pinnedOptionIndex: Int?,
     onTogglePin: ((Int) -> Unit)?,
     onUnpinTrip: (() -> Unit)?,
@@ -1380,7 +1393,7 @@ private fun TripLogList(
             }
             Box(anchored) {
                 val day = rowDays[row.key]?.let { dayName(it, today) }
-                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip, day = day)
+                LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, onOpenStop, stopEtaStrip, day = day)
             }
         }
     }
@@ -1422,7 +1435,8 @@ private fun LogRow(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
+    onOpenStop: ((RouteStopRef) -> Unit)?,
+    stopEtaStrip: (@Composable (TripLogEntry.Transit, RouteStopRef) -> Unit)?,
     day: String? = null
 ) {
     val i = model.entryIndex
@@ -1462,17 +1476,20 @@ private fun LogRow(
                 onClick = null,
                 day = day,
                 onToggleExpand = { onToggle(i) },
-                // The board stop's live ETA strip, under the whole row rather than in the content
-                // column, so it runs to the row's edge instead of stopping short at the expand chevron
-                // (#2228). The whole ride, not just its route/stop: the strip also rules the plan's own
-                // arrival at this stop across the live ETAs (#2125), and a pill tap frames the ride's
-                // geometry on the map.
-                footer = transit.routeLeg.board?.let { stop -> { stopEtaStrip(transit, stop) } }
+                // The board stop's live departures, behind "Show realtime arrivals" (#2347): under the
+                // whole row rather than in the content column, so the strip runs to the row's edge instead
+                // of stopping short at the expand chevron (#2228). Only for a stop OBA can look up.
+                footer = stopEtaStrip?.let { strip ->
+                    transit.routeLeg.board?.takeIf { it.isLookedUp }?.let { stop ->
+                        { RealtimeArrivalsToggle { strip(transit, stop) } }
+                    }
+                }
             ) {
                 BoardContent(
                     entry = transit,
                     onFocus = { focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint) },
-                    onFocusPoint = onFocusPoint
+                    onFocusPoint = onFocusPoint,
+                    onOpenStop = onOpenStop.forStop(transit.routeLeg.board)
                 )
             }
         }
@@ -1489,7 +1506,7 @@ private fun LogRow(
 
         is RowContent.ExitNode ->
             LogRowScaffold(model, onClick = content.entry.routeLeg.alight?.point?.let { { onFocusPoint(it) } }, day = day) {
-                ExitContent(content.entry)
+                ExitContent(content.entry, onFocusPoint, onOpenStop.forStop(content.entry.routeLeg.alight))
             }
     }
 }
@@ -2154,7 +2171,8 @@ private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
 private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
     onFocus: () -> Unit,
-    onFocusPoint: (GeoPoint) -> Unit
+    onFocusPoint: (GeoPoint) -> Unit,
+    onOpenStop: (() -> Unit)?
 ) {
     // The route/headsign block highlights the leg on the map; expanding its steps is the scaffold's
     // own chevron segment (#2040), not a side effect of this tap. The board stop below is a third,
@@ -2188,10 +2206,11 @@ private fun ColumnScope.BoardContent(
     LegAlerts(entry.alerts)
     entry.routeLeg.board?.let { stop ->
         Spacer(Modifier.height(6.dp))
-        StopActionLabel(
+        StopAction(
             actionRes = R.string.step_by_step_transit_get_on,
             stopName = stop.name,
-            onClick = { stop.point?.let(onFocusPoint) }
+            onFocus = stop.point?.let { point -> { onFocusPoint(point) } },
+            onOpenStop = onOpenStop
         )
     }
 }
@@ -2283,21 +2302,29 @@ private fun SegmentIdentity(badge: RouteBadge?, name: String?, headsign: String?
 }
 
 @Composable
-private fun ColumnScope.ExitContent(entry: TripLogEntry.Transit) {
-    StopActionLabel(
+private fun ColumnScope.ExitContent(entry: TripLogEntry.Transit, onFocusPoint: (GeoPoint) -> Unit, onOpenStop: (() -> Unit)?) {
+    val stop = entry.routeLeg.alight
+    StopAction(
         actionRes = R.string.step_by_step_transit_get_off,
-        stopName = entry.routeLeg.alight?.name,
-        onClick = null
+        stopName = stop?.name,
+        onFocus = stop?.point?.let { point -> { onFocusPoint(point) } },
+        onOpenStop = onOpenStop
     )
 }
 
-/** A "Get on / Get off <stop>" line — the boarding verb plus the stop name, optionally tappable. */
+/**
+ * A "Get on at / Get off at <stop>" instruction (#2347). The stop's name is set apart as a token — medium
+ * weight on a tonal background — so it reads as something to touch: a tap centers the map on the stop
+ * ([onFocus]), and a long press offers "Go to stop" ([onOpenStop]), which opens the stop's own page the
+ * way the rider's "Open search results in" choice says (its arrivals list, or the stop on the map). A
+ * long name wraps inside its token; the token keeps the minimum touch target.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> Unit)?) {
-    Row(
-        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+private fun StopAction(actionRes: Int, stopName: String?, onFocus: (() -> Unit)?, onOpenStop: (() -> Unit)?) {
+    var menuOpen by remember { mutableStateOf(false) }
+    val goToStop = stringResource(R.string.directions_stop_go_to)
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = stringResource(actionRes),
             style = MaterialTheme.typography.titleSmall,
@@ -2305,12 +2332,85 @@ private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> U
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.width(6.dp))
-        Text(
-            text = stopName.orEmpty(),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
+        Box(Modifier.weight(1f, fill = false)) {
+            Text(
+                text = stopName.orEmpty(),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier
+                    .minimumInteractiveComponentSize()
+                    .clip(RoundedCornerShape(STOP_TOKEN_CORNER))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    // A stop that can be opened always has a place, so [onOpenStop] implies [onFocus].
+                    .then(
+                        if (onFocus != null) {
+                            Modifier.combinedClickable(
+                                onClickLabel = stringResource(R.string.stop_info_recenter),
+                                role = Role.Button,
+                                onLongClickLabel = goToStop.takeIf { onOpenStop != null },
+                                onLongClick = onOpenStop?.let { { menuOpen = true } },
+                                onClick = onFocus
+                            )
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+            if (onOpenStop != null) {
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(goToStop) },
+                        onClick = {
+                            menuOpen = false
+                            onOpenStop()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val STOP_TOKEN_CORNER = 6.dp
+
+/** [this] opener bound to [stop], or null when there is no opener or the stop is one OBA can't look up. */
+private fun ((RouteStopRef) -> Unit)?.forStop(stop: RouteStopRef?): (() -> Unit)? {
+    val open = this ?: return null
+    return stop?.takeIf { it.isLookedUp }?.let { { open(it) } }
+}
+
+/** An OBA stop with a place: one the app can poll for arrivals and open as a stop of its own. */
+private val RouteStopRef.isLookedUp: Boolean get() = stopId != null && point != null
+
+/**
+ * A Board row's live departures, behind "Show realtime arrivals" (#2347). Collapsed by default: the
+ * departures are the stop's *now*, which a plan made for another time can't be read against, so they
+ * are there for the rider who asks rather than laid under every ride — and a collapsed row's stop isn't
+ * polled at all, since [strip] only composes once opened. Saved per row, so it survives HOME's
+ * composition being rebuilt under a pushed destination (#2274).
+ */
+@Composable
+private fun RealtimeArrivalsToggle(strip: @Composable () -> Unit) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    Column {
+        TextButton(
+            onClick = { expanded = !expanded },
+            contentPadding = PaddingValues(start = 0.dp, end = 8.dp)
+        ) {
+            Text(
+                stringResource(
+                    if (expanded) R.string.directions_hide_realtime_arrivals else R.string.directions_show_realtime_arrivals
+                )
+            )
+            Icon(
+                imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier.padding(start = 4.dp).size(18.dp)
+            )
+        }
+        if (expanded) strip()
     }
 }
 
@@ -2443,7 +2543,6 @@ private fun previewTransitLeg(
     mode = mode,
     routeColorHex = routeColorHex,
     headsign = headsign,
-    reachStop = ReachStop.OnFoot(3.minutes, notBefore = null),
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
     // Running 2 min late, so the previews draw the struck timetable time under each end (#2337).
@@ -2475,7 +2574,6 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     rideEvents = emptyList(),
     alerts = alerts
 ).copy(
-    reachStop = ReachStop.OnFoot(20.minutes, notBefore = null),
     boardTime = ServerTime(24 * 60_000L),
     exitTime = ServerTime(84 * 60_000L),
     boardScheduledTime = null,
@@ -2645,8 +2743,7 @@ private fun TripResultsErrorPreview() {
 
 /**
  * Renders [entry] — a ride or an on-street leg — alone, [expanded] or not. The row callbacks are
- * no-ops (nothing is tappable in a static preview) and the ETA strip is empty — it needs a live
- * arrivals session, which is exactly the host dependency previewing one leg is meant to escape.
+ * no-ops (nothing is tappable in a static preview).
  */
 @Composable
 private fun LegPreviewFrame(entry: TripLogEntry, expanded: Boolean = false) {
@@ -2671,7 +2768,8 @@ private fun LegsPreviewFrame(entries: List<TripLogEntry>, expanded: Set<Int> = e
                                 onFocusRouteLeg = { _, _ -> },
                                 onFocusLeg = {},
                                 onFocusPoint = {},
-                                stopEtaStrip = { _, _ -> }
+                                onOpenStop = {},
+                                stopEtaStrip = null
                             )
                         }
                     }

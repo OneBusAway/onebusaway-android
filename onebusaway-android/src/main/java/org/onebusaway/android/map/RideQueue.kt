@@ -169,9 +169,8 @@ internal fun <T> List<T>.pickRideDirection(
 /**
  * The ride's candidate departures among the boarding stop's arrival [groups].
  *
- * No time is consulted: the map shows exactly what the strip lists, including departures ruled out by
- * the plan's reach-the-stop marker (#2125). Those are dimmed in the strip, not hidden, and a rider
- * looking at the map should see the same vehicles.
+ * No time is consulted: the map shows exactly what the strip lists — every upcoming departure, as the
+ * stop's own arrivals do.
  */
 internal fun rideQueueFrom(groups: List<RideRouteGroup>, ride: RideFocus): RideQueue {
     val tripIds = LinkedHashSet<String>()

@@ -87,6 +87,7 @@ import org.onebusaway.android.ui.nav.mapReturnAction
 import org.onebusaway.android.ui.nav.navigateBackOrFinish
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.openRoute
+import org.onebusaway.android.ui.nav.openStop
 import org.onebusaway.android.ui.nav.showArrivals
 import org.onebusaway.android.ui.report.reportGraph
 import org.onebusaway.android.ui.routeinfo.routeInfoGraph
@@ -265,6 +266,13 @@ fun HomeNavHost(
                         } else {
                             navController.showArrivals(StopReveal(stop.id, stop.name, stop.point))
                         }
+                    },
+                    onOpenStop = { stop ->
+                        navController.openStop(
+                            StopReveal(stop.id, stop.name, stop.point),
+                            PreferencesEntryPoint.get(context).searchResultMode(),
+                            prefersMap = true
+                        )
                     }
                 )
             }

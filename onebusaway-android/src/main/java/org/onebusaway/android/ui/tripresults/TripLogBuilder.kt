@@ -51,14 +51,11 @@ object TripLogBuilder {
 
     /**
      * [routeLegRefs] is aligned to [legs]: the resolved route/stop identity per transit leg, else null.
-     * [plannedStart] is [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart] — what stands in
-     * for "the end of the leg before" when the itinerary opens on transit; null when the plan doesn't say.
      */
     fun build(
         legs: List<TripLeg>,
         flatDirections: List<Direction>,
-        routeLegRefs: List<RouteLegRef?>,
-        plannedStart: ServerTime? = null
+        routeLegRefs: List<RouteLegRef?>
     ): List<TripLogEntry> {
         if (legs.isEmpty()) return emptyList()
         val entries = ArrayList<TripLogEntry>(legs.size + 2)
@@ -106,7 +103,6 @@ object TripLogBuilder {
                         board = board,
                         legPoints = legPoints,
                         legIndex = legIndex,
-                        reachStop = legs.reachStopFor(legIndex, plannedStart),
                         ref = routeLegRefs.getOrNull(legIndex)
                     )
                 }
@@ -121,48 +117,6 @@ object TripLogBuilder {
             point = geoPointOrNull(last.to.lat, last.to.lon)
         )
         return entries
-    }
-
-    /**
-     * How the plan gets the rider to the boarding stop of the transit leg at [legIndex] — see
-     * [ReachStop], which carries the whole rationale for the two shapes.
-     *
-     * All this decides is which shape applies, and the line is whether anything before this leg is a
-     * ride. If nothing is, the street legs from the itinerary's origin (usually one walk; a bikeshare
-     * access is a walk to the vehicle then a ride on it) are the whole of how the rider gets here, and
-     * how long that run takes is what carries — measured as the run's own start-to-end span (both ends
-     * wire-guaranteed) rather than a sum of [TripLeg.duration]s, which the adapters default to zero
-     * when the wire omits one and would then quietly rule the strip at "now". The run's legs abut, so
-     * the two agree whenever a sum is possible. Otherwise something *carries* the rider here and the
-     * plan commits to when it lands.
-     *
-     * Street-vs-ride is [isStreet], the same predicate that sorts every leg into a walk or a transit
-     * entry above, so a leg this builder draws as a ride is never counted as part of the walk here.
-     *
-     * When this leg opens the itinerary nothing carries the rider and nothing is walked: they are at the
-     * stop from the plan's own start, which a depart-at plan names ([plannedStart], #2228) and stands
-     * there as the moment they reach it. An arrive-by plan says nothing about when they set out, and
-     * that absence is carried as null rather than substituted for with the ride's own departure — see
-     * [TripLogEntry.Transit.reachStop] for what that would tell the rider. The empty-run guard is what
-     * says so: an empty run would otherwise pass the all-street test and fabricate a zero-length walk.
-     *
-     * [plannedStart] rules the walk too, as the floor on when that run begins ([ReachStop.OnFoot.notBefore],
-     * #2248) — the same fact, spent on both shapes of the itinerary's first entry, so the two agree about
-     * whether a plan hours out has started. The walk keeps the duration shape rather than being resolved
-     * here into `OnArrival(plannedStart + walk)`, because the floor has to be re-taken against the live
-     * clock: past the planned departure the rider is setting out *now*, and an instant fixed at build time
-     * would sit in the past and rule nothing.
-     */
-    private fun List<TripLeg>.reachStopFor(legIndex: Int, plannedStart: ServerTime?): ReachStop? {
-        val precedingLegs = take(legIndex).ifEmpty { return plannedStart?.let(ReachStop::OnArrival) }
-        return if (precedingLegs.all { it.isStreet }) {
-            ReachStop.OnFoot(
-                duration = precedingLegs.last().endTime - precedingLegs.first().startTime,
-                notBefore = plannedStart
-            )
-        } else {
-            ReachStop.OnArrival(precedingLegs.last().endTime)
-        }
     }
 
     /**
@@ -242,7 +196,6 @@ object TripLogBuilder {
         board: Direction,
         legPoints: List<GeoPoint>,
         legIndex: Int,
-        reachStop: ReachStop?,
         ref: RouteLegRef?
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)
@@ -252,7 +205,6 @@ object TripLogBuilder {
             mode = leg.mode.transitMode(),
             routeColorHex = leg.routeColor,
             headsign = leg.headsign ?: routeLeg.headsign,
-            reachStop = reachStop,
             boardTime = leg.startTime,
             exitTime = leg.endTime,
             boardScheduledTime = leg.timetableTime(leg.startTime, leg.departureDelay),

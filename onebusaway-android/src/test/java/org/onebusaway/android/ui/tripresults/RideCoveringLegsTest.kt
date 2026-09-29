@@ -46,7 +46,6 @@ class RideCoveringLegsTest {
         mode = TransitMode.BUS,
         routeColorHex = null,
         headsign = "Downtown",
-        reachStop = ReachStop.OnArrival(ServerTime(3 * 60_000L)),
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,

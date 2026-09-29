@@ -57,6 +57,7 @@ exifinterface = "1.4.2"
 appcompat = "1.8.0"
 coreKtx = "1.19.0"
 datastore = "1.2.1"
+# WorkManager 2.12.0 requires minSdk 24; keep 2.11.x while supporting API 23 (#2350).
 work = "2.11.2"
 room = "2.8.5"
 lifecycle = "2.11.0"

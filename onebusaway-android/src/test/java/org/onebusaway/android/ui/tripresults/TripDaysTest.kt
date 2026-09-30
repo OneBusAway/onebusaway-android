@@ -49,7 +49,6 @@ class TripDaysTest {
             mode = TransitMode.BUS,
             routeColorHex = null,
             headsign = "Seattle",
-            reachStop = ReachStop.OnArrival(board),
             boardTime = board,
             exitTime = exit,
             durationMinutes = 24,

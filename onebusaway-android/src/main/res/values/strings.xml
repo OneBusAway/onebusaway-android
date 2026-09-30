@@ -1054,23 +1054,23 @@
     <!-- The one option a long press on the map offers: plan a trip from where the rider is to the
          point they pressed. Shown in a bubble at that point. -->
     <string name="map_navigate_here">Navigate here</string>
-    <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
+    <!-- Shown under a transit leg's Board row, in place of its live ETA strip, when that stop has no
+         upcoming arrivals for the route -->
     <string name="directions_stop_no_arrivals">No upcoming arrivals</string>
+    <!-- The long-press menu on a stop's name in a trip's itinerary: opens that stop as a page of its own —
+         its arrivals, or the stop on the map (#2347). -->
+    <string name="directions_stop_go_to">Go to stop</string>
+    <!-- A ride's boarding / alighting instruction in the itinerary, followed by the stop's name as a
+         tappable token ("Get on at [Pine St & 3rd Ave]", #2347). The action and its preposition only;
+         the stop name is drawn separately beside it. -->
+    <string name="directions_get_on_at">Get on at</string>
+    <string name="directions_get_off_at">Get off at</string>
+    <!-- Under a ride's boarding stop in the itinerary: reveals / hides that stop's live departures (#2347). -->
+    <string name="directions_show_realtime_arrivals">Show realtime arrivals</string>
+    <string name="directions_hide_realtime_arrivals">Hide realtime arrivals</string>
     <!-- Caption under a transit leg's route lines, when several routes go between the same two stops
          without making the rider late for the rest of the trip (the lines read e.g. "1 Line" / "2 Line"). -->
     <string name="directions_whichever_comes_first">Whichever comes first</string>
-    <!-- Content description for the rule drawn across a Board row's live ETA strip at the moment the
-         plan has the rider reach that stop. %1$s is a clock time, e.g. "3:19pm". -->
-    <string name="directions_stop_eta_reach_stop">You get to this stop at %1$s</string>
-    <!-- Spoken state of each departure drawn before that rule: one leaving before the rider can be at
-         the stop. Read on the departure itself, since its dimmed appearance says nothing aloud. -->
-    <string name="directions_stop_eta_departure_missed">Leaves before you get here</string>
-    <!-- The one-line stand-in for a Board row's live ETA strip when the arrivals feed holds no departure at
-         or after the moment the plan has the rider reach that stop (a trip planned for later than the feed
-         reaches). -->
-    <string name="directions_stop_eta_none_boardable">No live departures yet</string>
-    <!-- Button on that line that shows the strip anyway (its departures all dimmed as already missed). -->
-    <string name="directions_stop_eta_show_anyway">Show</string>
     <!-- Content descriptions for the chevron on a service-alert banner above the directions, which
          expands the alert to its full description. -->
     <string name="directions_alert_show_details">Show alert details</string>

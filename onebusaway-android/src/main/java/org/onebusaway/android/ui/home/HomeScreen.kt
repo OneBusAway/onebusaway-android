@@ -191,7 +191,9 @@ class HomeCallbacks(
     val onNightLight: () -> Unit,
     val onLearnMore: () -> Unit,
     val onOpenSurvey: (url: String) -> Unit,
-    val onShowArrivals: (FocusedStop) -> Unit = {}
+    val onShowArrivals: (FocusedStop) -> Unit = {},
+    // A stop opened as a page of its own, the way the rider's "Open search results in" choice says.
+    val onOpenStop: (FocusedStop) -> Unit = {}
 )
 
 /**
@@ -1074,9 +1076,16 @@ fun HomeScreen(
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
-                                            // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
-                                            // ruled at how the plan gets the rider to the stop (#2125): a transfer's
-                                            // arrival, or — for the first ride — the walk from now (#2227).
+                                            // A ride's stop, from its name's long-press menu, opens as a page of
+                                            // its own (#2347): the arrivals list or the stop on the map, as the
+                                            // rider's "Open search results in" choice says.
+                                            onOpenStop = { stop ->
+                                                stop.stopId?.let { id ->
+                                                    callbacks.onOpenStop(FocusedStop(id = id, name = stop.name, code = stop.stopCode, point = stop.point))
+                                                }
+                                            },
+                                            // Each ride's Board row can open its stop's live departures behind
+                                            // "Show realtime arrivals" (#2347): a plain strip, no rule over it.
                                             stopEtaStrip = { ride, stop ->
                                                 // The focused leg's boarding stop: the one strip that reads the
                                                 // hoisted session rather than opening a second one on the stop the
@@ -1087,7 +1096,6 @@ fun HomeScreen(
                                                 DirectionStopEtaStrip(
                                                     routeLeg = ride.routeLeg,
                                                     stop = stop,
-                                                    reachStop = ride.reachStop,
                                                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                                                     onShowTrip = onShowTrip,
                                                     onEditReminder = onEditReminder,

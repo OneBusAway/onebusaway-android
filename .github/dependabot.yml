@@ -21,13 +21,16 @@ updates:
         update-types:
           - minor
           - patch
-    # Navigation 2.10.0 raised its own minSdk to 24; the app is minSdk 23, so the
-    # manifest merge fails outright. The grouped bump has proposed it three times
-    # (#2280, #2298, #2300) and been reverted each time. Drop this once minSdk
+    # These releases raised their own minSdk to 24; the app is minSdk 23, so the
+    # manifest merge fails outright and takes the whole grouped bump down with it.
+    # Navigation 2.10.0 was proposed and reverted three times (#2280, #2298,
+    # #2300); WorkManager 2.12.0 arrived in #2350. Drop these once minSdk
     # reaches 24.
     ignore:
       - dependency-name: "androidx.navigation:*"
         versions: [">=2.10.0"]
+      - dependency-name: "androidx.work:*"
+        versions: [">=2.12.0"]
     labels:
       - dependencies
 

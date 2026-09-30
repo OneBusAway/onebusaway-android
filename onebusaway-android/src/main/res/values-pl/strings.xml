@@ -815,6 +815,8 @@
     <!-- Transit -->
     <string name="step_by_step_transit_get_on">Wsiądź do</string>
     <string name="step_by_step_transit_get_off">Wysiądź z</string>
+    <string name="directions_get_on_at">Wsiądź na przystanku</string>
+    <string name="directions_get_off_at">Wysiądź na przystanku</string>
     <string name="step_by_step_transit_stops_in_between">przystanków pomiędzy</string>
     <string name="step_by_step_transit_stops_in_between_singular">przystanek pomiędzy</string>
     <string name="step_by_step_transit_connector_stop_name">Na</string>

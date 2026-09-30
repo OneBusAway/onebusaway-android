@@ -783,6 +783,8 @@
     <!-- Step by step transit directions -->
     <string name="step_by_step_transit_get_on">Nouse kyytiin</string>
     <string name="step_by_step_transit_get_off">Poistu</string>
+    <string name="directions_get_on_at">Nouse kyytiin</string>
+    <string name="directions_get_off_at">Poistu</string>
     <string name="step_by_step_transit_stops_in_between">pysäkkiä välissä</string>
     <string name="step_by_step_transit_stops_in_between_singular">pysäkki välissä</string>
     <string name="step_by_step_transit_connector_stop_name">Pysäkillä</string>

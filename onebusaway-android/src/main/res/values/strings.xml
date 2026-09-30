@@ -1060,6 +1060,11 @@
     <!-- The long-press menu on a stop's name in a trip's itinerary: opens that stop as a page of its own —
          its arrivals, or the stop on the map (#2347). -->
     <string name="directions_stop_go_to">Go to stop</string>
+    <!-- A ride's boarding / alighting instruction in the itinerary, followed by the stop's name as a
+         tappable token ("Get on at [Pine St & 3rd Ave]", #2347). The action and its preposition only;
+         the stop name is drawn separately beside it. -->
+    <string name="directions_get_on_at">Get on at</string>
+    <string name="directions_get_off_at">Get off at</string>
     <!-- Under a ride's boarding stop in the itinerary: reveals / hides that stop's live departures (#2347). -->
     <string name="directions_show_realtime_arrivals">Show realtime arrivals</string>
     <string name="directions_hide_realtime_arrivals">Hide realtime arrivals</string>
@@ -1237,8 +1242,8 @@
     <!-- Transit -->
 
     <!-- Transit instruction start -->
-    <string name="step_by_step_transit_get_on">Get on at</string>
-    <string name="step_by_step_transit_get_off">Get off at</string>
+    <string name="step_by_step_transit_get_on">Get on</string>
+    <string name="step_by_step_transit_get_off">Get off</string>
     <!-- Shown when the trip stays aboard the same vehicle but its route changes (a stay-aboard
          interline, #2000). The route the vehicle becomes is named beside this instruction — its badge,
          name and headsign — so the instruction itself only has to give the action (#2071). -->

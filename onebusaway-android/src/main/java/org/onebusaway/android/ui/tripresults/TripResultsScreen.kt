@@ -1481,7 +1481,7 @@ private fun LogRow(
                 // of stopping short at the expand chevron (#2228). Only for a stop OBA can look up.
                 footer = stopEtaStrip?.let { strip ->
                     transit.routeLeg.board?.takeIf { it.isLookedUp }?.let { stop ->
-                        { RealtimeArrivalsToggle { strip(transit, stop) } }
+                        { RealtimeArrivalsToggle(stop.stopId) { strip(transit, stop) } }
                     }
                 }
             ) {
@@ -2207,7 +2207,7 @@ private fun ColumnScope.BoardContent(
     entry.routeLeg.board?.let { stop ->
         Spacer(Modifier.height(6.dp))
         StopAction(
-            actionRes = R.string.step_by_step_transit_get_on,
+            actionRes = R.string.directions_get_on_at,
             stopName = stop.name,
             onFocus = stop.point?.let { point -> { onFocusPoint(point) } },
             onOpenStop = onOpenStop
@@ -2305,7 +2305,7 @@ private fun SegmentIdentity(badge: RouteBadge?, name: String?, headsign: String?
 private fun ColumnScope.ExitContent(entry: TripLogEntry.Transit, onFocusPoint: (GeoPoint) -> Unit, onOpenStop: (() -> Unit)?) {
     val stop = entry.routeLeg.alight
     StopAction(
-        actionRes = R.string.step_by_step_transit_get_off,
+        actionRes = R.string.directions_get_off_at,
         stopName = stop?.name,
         onFocus = stop?.point?.let { point -> { onFocusPoint(point) } },
         onOpenStop = onOpenStop
@@ -2388,12 +2388,14 @@ private val RouteStopRef.isLookedUp: Boolean get() = stopId != null && point != 
  * A Board row's live departures, behind "Show realtime arrivals" (#2347). Collapsed by default: the
  * departures are the stop's *now*, which a plan made for another time can't be read against, so they
  * are there for the rider who asks rather than laid under every ride — and a collapsed row's stop isn't
- * polled at all, since [strip] only composes once opened. Saved per row, so it survives HOME's
- * composition being rebuilt under a pushed destination (#2274).
+ * polled at all, since [strip] only composes once opened. Saved, so it survives HOME's composition being
+ * rebuilt under a pushed destination (#2274) — and keyed by [stopId], since the row's own key is
+ * positional: a re-plan or another option that puts a different stop in this row starts it collapsed
+ * rather than inheriting the opt-in, and polling, of the stop that was there.
  */
 @Composable
-private fun RealtimeArrivalsToggle(strip: @Composable () -> Unit) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
+private fun RealtimeArrivalsToggle(stopId: String?, strip: @Composable () -> Unit) {
+    var expanded by rememberSaveable(stopId) { mutableStateOf(false) }
     Column {
         TextButton(
             onClick = { expanded = !expanded },

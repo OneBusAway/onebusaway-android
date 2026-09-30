@@ -696,8 +696,6 @@
     <!-- Transit instruction start -->
     <string name="step_by_step_transit_get_on">Sali</string>
     <string name="step_by_step_transit_get_off">Scendi</string>
-    <string name="directions_get_on_at">Sali</string>
-    <string name="directions_get_off_at">Scendi</string>
     <!--                This is exactly the formula that should be used, because the app won't include
                     the destination stop under this text, so would be best to avoid expressions like
                      "stops to destination". For example in the trip Barcelona/Paris/London/New York,

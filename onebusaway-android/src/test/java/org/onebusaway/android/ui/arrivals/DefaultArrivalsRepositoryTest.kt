@@ -54,6 +54,7 @@ import org.onebusaway.android.demo.FakeDemoModeState
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.region.FakeRegionRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
@@ -205,9 +206,10 @@ class DefaultArrivalsRepositoryTest {
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
         clock: FakeElapsedClock = FakeElapsedClock(),
-        demoMode: FakeDemoModeState = FakeDemoModeState()
+        demoMode: FakeDemoModeState = FakeDemoModeState(),
+        regionRepository: FakeRegionRepository = FakeRegionRepository()
     ) = DefaultArrivalsRepository(
-        regionRepository = FakeRegionRepository(),
+        regionRepository = regionRepository,
         stopArrivals = dataSource,
         serviceAlertDao = FakeServiceAlertDao(),
         stopDao = stopDao,
@@ -288,6 +290,102 @@ class DefaultArrivalsRepositoryTest {
             setOf(FocusedTrip("trip-A", "route-1", "shape-A", null, directionId = 0)),
             loaded.focusedTrips
         )
+    }
+
+    /**
+     * Verifies that only a loss of previously observed realtime predictions flags an outage.
+     */
+    @Test
+    fun `a fresh load with all scheduled arrivals for an agency flags realtime outage`() = runTest {
+        val dataSource = FakeStopArrivalsDataSource()
+        val arrivals = listOf(
+            ArrivalDeparture(
+                routeId = "route-1",
+                tripId = "trip-1",
+                stopId = STOP_ID,
+                stopSequence = 3,
+                scheduledArrivalTime = T0 + 10 * 60_000L,
+                scheduledDepartureTime = T0 + 10 * 60_000L,
+                predicted = false
+            ),
+            ArrivalDeparture(
+                routeId = "route-1",
+                tripId = "trip-2",
+                stopId = STOP_ID,
+                stopSequence = 3,
+                scheduledArrivalTime = T0 + 20 * 60_000L,
+                scheduledDepartureTime = T0 + 20 * 60_000L,
+                predicted = false
+            ),
+            ArrivalDeparture(
+                routeId = "route-1",
+                tripId = "trip-3",
+                stopId = STOP_ID,
+                stopSequence = 3,
+                scheduledArrivalTime = T0 + 30 * 60_000L,
+                scheduledDepartureTime = T0 + 30 * 60_000L,
+                predicted = false
+            )
+        )
+        fun snapshotFor(
+            arrivalsForSnapshot: List<ArrivalDeparture>,
+            stopIdForSnapshot: String = STOP_ID
+        ) = StopArrivals(
+            data = EntryWithReferences(
+                entry = ArrivalsForStop(
+                    stopId = stopIdForSnapshot,
+                    arrivalsAndDepartures = arrivalsForSnapshot
+                ),
+                references = References(
+                    agencies = listOf(AgencyReference(id = "agency-1", name = "Metro")),
+                    stops = listOf(
+                        StopReference(
+                            id = stopIdForSnapshot,
+                            name = "Pine St & 3rd Ave",
+                            lat = 47.61,
+                            lon = -122.33,
+                            routeIds = listOf("route-1")
+                        )
+                    ),
+                    routes = listOf(RouteReference(id = "route-1", shortName = "5", agencyId = "agency-1")),
+                    trips = listOf(
+                        TripReference(id = "trip-1", routeId = "route-1", shapeId = "shape-1", directionId = "0"),
+                        TripReference(id = "trip-2", routeId = "route-1", shapeId = "shape-1", directionId = "0"),
+                        TripReference(id = "trip-3", routeId = "route-1", shapeId = "shape-1", directionId = "0")
+                    )
+                )
+            ),
+            currentTime = T0,
+            minutesAfter = 65
+        )
+        val snapshotWithOutage = snapshotFor(arrivals)
+        val predictedArrivals = arrivals.mapIndexed { index, arrival ->
+            val predictedTime = T0 + (index + 10) * 60_000L
+            arrival.copy(
+                predicted = true,
+                predictedArrivalTime = predictedTime,
+                predictedDepartureTime = predictedTime
+            )
+        }
+        val snapshotWithRealtime = snapshotFor(predictedArrivals)
+        var requestCount = 0
+        dataSource.respond = {
+            if (requestCount++ == 0) Result.success(snapshotWithRealtime) else Result.success(snapshotWithOutage)
+        }
+        val regionRepository = FakeRegionRepository(Region(id = 1))
+        val repository = repository(dataSource, regionRepository = regionRepository)
+
+        assertTrue(repository.getArrivals(STOP_ID, 65).getOrThrow().realtimeOutages.isEmpty())
+
+        val data = repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(listOf(RealtimeOutage("agency-1", "Metro")), data.realtimeOutages)
+
+        regionRepository.applyRegion(Region(id = 2), regionChanged = true)
+        assertTrue(repository.getArrivals(STOP_ID, 65).getOrThrow().realtimeOutages.isEmpty())
+
+        dataSource.respond = { Result.success(snapshotFor(arrivals, stopIdForSnapshot = "1_999")) }
+        assertTrue(repository.getArrivals("1_999", 65).getOrThrow().realtimeOutages.isEmpty())
     }
 
     @Test

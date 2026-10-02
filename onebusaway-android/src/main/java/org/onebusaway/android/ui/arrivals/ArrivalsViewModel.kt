@@ -260,7 +260,8 @@ class ArrivalsViewModel @AssistedInject constructor(
             hiddenAlertCount = hiddenCount,
             stopCode = stopCode,
             stopLat = stopLat,
-            stopLon = stopLon
+            stopLon = stopLon,
+            realtimeOutages = realtimeOutages
         )
     }
 }

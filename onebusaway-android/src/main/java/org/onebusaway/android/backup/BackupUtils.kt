@@ -11,23 +11,26 @@ import android.widget.Toast
 import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 
 object BackupUtils {
-    fun restore(activityContext: Context, uri: Uri, onRestored: Runnable?) {
+    /** Restores in the lifecycle-aware [scope], returning to main for feedback and [onRestored]. */
+    fun restore(activityContext: Context, uri: Uri, scope: CoroutineScope, onRestored: Runnable?) {
         MaterialAlertDialogBuilder(activityContext)
             .setMessage(R.string.preferences_db_restore_warning)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 dialog.dismiss()
-                doRestore(activityContext, uri, onRestored)
+                scope.launch { doRestore(activityContext, uri, onRestored) }
             }
             .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
             .show()
     }
 
-    private fun doRestore(activityContext: Context, uri: Uri, onRestored: Runnable?) {
+    private suspend fun doRestore(activityContext: Context, uri: Uri, onRestored: Runnable?) {
         val context = activityContext.applicationContext
         AnalyticsEntryPoint.get(context).reportUiEvent(
             PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
@@ -52,14 +55,31 @@ object BackupUtils {
         }
     }
 
-    fun save(activityContext: Context, uri: Uri) {
+    /** Saves in the lifecycle-aware [scope], returning to main for user feedback. */
+    fun save(activityContext: Context, uri: Uri, scope: CoroutineScope) {
         val context = activityContext.applicationContext
         AnalyticsEntryPoint.get(context).reportUiEvent(
             PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
             context.getString(R.string.analytics_label_button_press_save_preference),
             null
         )
-        Backup.backup(context, uri)
+        scope.launch {
+            try {
+                Backup.backup(context, uri)
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.preferences_db_saved),
+                    Toast.LENGTH_LONG
+                ).show()
+            } catch (error: IOException) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.preferences_db_save_error, error.message),
+                    Toast.LENGTH_LONG
+                ).show()
+                Log.e(TAG, "Error saving database backup", error)
+            }
+        }
     }
 
     fun buildCreateBackupFileIntent(): Intent = documentIntent(

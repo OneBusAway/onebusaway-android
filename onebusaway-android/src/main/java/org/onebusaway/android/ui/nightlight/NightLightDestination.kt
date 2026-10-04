@@ -72,8 +72,7 @@ private val WAIT_TIMES = longArrayOf(100, 100, 400)
 
 private const val PREFERENCE_SHOWED_DIALOG = "showed_night_light_dialog"
 
-internal fun shouldFlashNightLight(consentAccepted: Boolean, userWantsFlashing: Boolean): Boolean =
-    consentAccepted && userWantsFlashing
+internal fun shouldFlashNightLight(consentAccepted: Boolean, userWantsFlashing: Boolean): Boolean = consentAccepted && userWantsFlashing
 
 /**
  * The night-light NavHost destination: a flashing light riders show at night to flag

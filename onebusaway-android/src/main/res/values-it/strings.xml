@@ -594,7 +594,8 @@
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Non perdere più l’autobus la sera!</string>
-    <string name="night_light_dialog_message">Non ne puoi più degli autobus che non si fermano perché è notte e l’autista non ti vede? Usa la Luce notturna intermittente e renditi visibile! \n\nATTENZIONE: Questa funzionalità potrebbe scatenare attacchi epilettici in persone affette da epilessia fotosensibile. Utilizzare con cautela.</string>
+    <string name="night_light_dialog_message">Non ne puoi più degli autobus che non si fermano perché è notte e l’autista non ti vede? Usa la Luce notturna intermittente e renditi visibile!</string>
+    <string name="night_light_dialog_warning">ATTENZIONE: Questa funzionalità potrebbe scatenare attacchi epilettici in persone affette da epilessia fotosensibile. Utilizzare con cautela.</string>
     <string name="night_light_create_shortcut">Crea scorciatoia</string>
     <string name="night_light_start">Avvia</string>
     <string name="night_light_cancel">Annulla</string>

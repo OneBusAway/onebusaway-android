@@ -23,16 +23,21 @@ import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,11 +52,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
@@ -109,7 +115,7 @@ fun NightLightRoute(onBack: () -> Unit) {
     // Whether the user has accepted the epilepsy intro (now or on an earlier visit). Both full
     // brightness and the flashing wait for it: the intro dialog doesn't take the activity out of
     // RESUMED, so nothing else keeps the strobe from running behind the warning (#2358).
-    var accepted by remember { mutableStateOf(false) }
+    var accepted by remember { mutableStateOf(PreferenceUtils.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) }
     LaunchedEffect(accepted) {
         if (accepted) {
             val lp = window.attributes
@@ -119,24 +125,19 @@ fun NightLightRoute(onBack: () -> Unit) {
     }
 
     // One-time intro dialog (gated by a pref); "start" accepts, "cancel" leaves without a flash.
-    var introHandled by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (introHandled) return@LaunchedEffect
-        introHandled = true
-        if (PreferenceUtils.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
-            accepted = true
-        } else {
-            MaterialAlertDialogBuilder(activity)
-                .setTitle(R.string.night_light_dialog_title)
-                .setMessage(R.string.night_light_dialog_message)
-                .setCancelable(false)
-                .setPositiveButton(R.string.night_light_start) { _, _ ->
-                    PreferenceUtils.saveBoolean(PREFERENCE_SHOWED_DIALOG, true)
-                    accepted = true
-                }
-                .setNegativeButton(R.string.night_light_cancel) { _, _ -> onBack() }
-                .show()
-        }
+    // Cancel also hides the dialog at once, rather than leaving it up through the pop transition.
+    var cancelled by remember { mutableStateOf(false) }
+    if (!accepted && !cancelled) {
+        NightLightIntroDialog(
+            onStart = {
+                PreferenceUtils.saveBoolean(PREFERENCE_SHOWED_DIALOG, true)
+                accepted = true
+            },
+            onCancel = {
+                cancelled = true
+                onBack()
+            }
+        )
     }
 
     NightLightScreen(accepted = accepted, onBack = onBack, onCreateShortcut = {
@@ -148,6 +149,38 @@ fun NightLightRoute(onBack: () -> Unit) {
         )
         ShortcutManagerCompat.requestPinShortcut(activity, shortcut, null)
     })
+}
+
+/**
+ * The one-time intro: what the night light is for, then the photosensitive-epilepsy warning set apart
+ * on an error-container surface so it can't be skimmed past as part of the pitch. Not dismissible by
+ * back or an outside tap — the user has to choose Start or Cancel.
+ */
+@Composable
+private fun NightLightIntroDialog(onStart: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        title = { Text(stringResource(R.string.night_light_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(stringResource(R.string.night_light_dialog_message))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(stringResource(R.string.night_light_dialog_warning), Modifier.padding(12.dp))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onStart) { Text(stringResource(R.string.night_light_start)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.night_light_cancel)) }
+        }
+    )
 }
 
 /**

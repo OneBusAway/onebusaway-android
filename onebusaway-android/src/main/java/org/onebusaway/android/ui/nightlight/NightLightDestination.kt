@@ -36,8 +36,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -62,7 +64,7 @@ import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.PreferenceUtils
 
 /** The dimmed "off" color between flashes (a dark scrim over the theme background). */
-private val COLOR_DARK = Color(0xCC000000)
+internal val COLOR_DARK = Color(0xCC000000)
 
 /** Amount of time the light is left on for a single flash, in milliseconds. */
 private const val FLASH_TIME_ON = 75L
@@ -104,23 +106,25 @@ fun NightLightRoute(onBack: () -> Unit) {
         }
     }
 
-    // Full brightness once the user has seen (now or previously) the epilepsy intro.
-    var fullBrightness by remember { mutableStateOf(false) }
-    LaunchedEffect(fullBrightness) {
-        if (fullBrightness) {
+    // Whether the user has accepted the epilepsy intro (now or on an earlier visit). Both full
+    // brightness and the flashing wait for it: the intro dialog doesn't take the activity out of
+    // RESUMED, so nothing else keeps the strobe from running behind the warning (#2358).
+    var accepted by remember { mutableStateOf(false) }
+    LaunchedEffect(accepted) {
+        if (accepted) {
             val lp = window.attributes
             lp.screenBrightness = 1.0f
             window.attributes = lp
         }
     }
 
-    // One-time intro dialog (gated by a pref); "start" enables brightness, "cancel" leaves the screen.
+    // One-time intro dialog (gated by a pref); "start" accepts, "cancel" leaves without a flash.
     var introHandled by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (introHandled) return@LaunchedEffect
         introHandled = true
         if (PreferenceUtils.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
-            fullBrightness = true
+            accepted = true
         } else {
             MaterialAlertDialogBuilder(activity)
                 .setTitle(R.string.night_light_dialog_title)
@@ -128,14 +132,14 @@ fun NightLightRoute(onBack: () -> Unit) {
                 .setCancelable(false)
                 .setPositiveButton(R.string.night_light_start) { _, _ ->
                     PreferenceUtils.saveBoolean(PREFERENCE_SHOWED_DIALOG, true)
-                    fullBrightness = true
+                    accepted = true
                 }
                 .setNegativeButton(R.string.night_light_cancel) { _, _ -> onBack() }
                 .show()
         }
     }
 
-    NightLightScreen(onBack = onBack, onCreateShortcut = {
+    NightLightScreen(accepted = accepted, onBack = onBack, onCreateShortcut = {
         val shortcut = Shortcuts.makeShortcutInfo(
             activity,
             activity.getString(R.string.stop_info_option_night_light),
@@ -148,35 +152,16 @@ fun NightLightRoute(onBack: () -> Unit) {
 
 /**
  * The flashing screen: white / theme-color / white blinks with a pause between rounds, matching
- * the legacy flash thread. Tapping the screen pauses and resumes the flashing.
+ * the legacy flash thread. It stays dark until [accepted]; after that, tapping the screen pauses
+ * and resumes the flashing.
  */
 @Composable
-private fun NightLightScreen(onBack: () -> Unit, onCreateShortcut: () -> Unit) {
+private fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShortcut: () -> Unit) {
     // Remembered: NightLightScreen recomposes on every flash tick (~10x/sec) as displayColor changes.
     val themeColor = colorResource(R.color.theme_primary)
     val flashColors = remember(themeColor) { listOf(Color.White, themeColor, Color.White) }
     var flashing by remember { mutableStateOf(true) }
-    // The single source of truth for the screen color: a flash color while on, the dark scrim while off.
-    var displayColor by remember { mutableStateOf(COLOR_DARK) }
-
-    // RESUMED-only flash loop, replacing the legacy background thread.
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(flashing) {
-        if (!flashing) {
-            displayColor = COLOR_DARK
-            return@LaunchedEffect
-        }
-        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            var counter = 0
-            while (isActive) {
-                displayColor = flashColors[counter % flashColors.size]
-                delay(FLASH_TIME_ON)
-                displayColor = COLOR_DARK
-                delay(WAIT_TIMES[counter % WAIT_TIMES.size])
-                counter++
-            }
-        }
-    }
+    val displayColor by rememberFlashColor(enabled = accepted && flashing, flashColors = flashColors)
 
     Scaffold(
         topBar = {
@@ -213,5 +198,32 @@ private fun NightLightScreen(onBack: () -> Unit, onCreateShortcut: () -> Unit) {
                     indication = null
                 ) { flashing = !flashing }
         )
+    }
+}
+
+/**
+ * The screen color over time: while [enabled], cycles [flashColors] (on for [FLASH_TIME_ON], then the
+ * dark scrim for the next [WAIT_TIMES] gap), and only while the lifecycle is RESUMED — replacing the
+ * legacy background thread. While not [enabled] it holds [COLOR_DARK], so nothing flashes before the
+ * user has accepted the epilepsy intro or after they've tapped to pause.
+ */
+@Composable
+internal fun rememberFlashColor(enabled: Boolean, flashColors: List<Color>): State<Color> {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    return produceState(COLOR_DARK, enabled, flashColors) {
+        if (!enabled) {
+            value = COLOR_DARK
+            return@produceState
+        }
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            var counter = 0
+            while (isActive) {
+                value = flashColors[counter % flashColors.size]
+                delay(FLASH_TIME_ON)
+                value = COLOR_DARK
+                delay(WAIT_TIMES[counter % WAIT_TIMES.size])
+                counter++
+            }
+        }
     }
 }

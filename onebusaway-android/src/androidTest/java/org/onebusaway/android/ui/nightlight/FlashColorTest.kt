@@ -36,7 +36,7 @@ import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
  * The night light must not flash until the user has accepted the epilepsy intro (#2358): the intro
- * dialog leaves the activity RESUMED, so [rememberFlashColor]'s `enabled` gate is the only thing
+ * dialog leaves the activity RESUMED, so [rememberFlashColor]'s `accepted` input is the only thing
  * holding the strobe back while the warning is on screen.
  */
 @RunWith(AndroidJUnit4::class)
@@ -52,12 +52,12 @@ class FlashColorTest {
      * RESUMED-only gate is open regardless of the device's screen state (a dozing, locked test
      * device leaves the host activity paused, which would hold the screen dark for the wrong reason).
      */
-    private fun setFlashContent(enabled: () -> Boolean): () -> State<Color> {
+    private fun setFlashContent(accepted: () -> Boolean, paused: () -> Boolean): () -> State<Color> {
         lateinit var color: State<Color>
         compose.setContent {
             val owner = remember { ResumedLifecycleOwner() }
             CompositionLocalProvider(LocalLifecycleOwner provides owner) {
-                color = rememberFlashColor(enabled = enabled(), flashColors = flashColors)
+                color = rememberFlashColor(accepted = accepted(), paused = paused(), flashColors = flashColors)
             }
         }
         return { color }
@@ -74,26 +74,28 @@ class FlashColorTest {
     }
 
     @Test
-    fun staysDarkWhileNotEnabled() {
+    fun staysDarkUntilAccepted() {
         compose.mainClock.autoAdvance = false
-        val color = setFlashContent { false }
+        // The state behind the intro dialog: not yet accepted, not paused.
+        val color = setFlashContent(accepted = { false }, paused = { false })
 
         assertEquals(setOf(COLOR_DARK), colorsOver(2_000, color))
     }
 
     @Test
-    fun flashesOnceEnabled() {
+    fun flashesOnceAcceptedAndDarkWhilePaused() {
         compose.mainClock.autoAdvance = false
-        var enabled by mutableStateOf(false)
-        val color = setFlashContent { enabled }
+        var accepted by mutableStateOf(false)
+        var paused by mutableStateOf(false)
+        val color = setFlashContent(accepted = { accepted }, paused = { paused })
         assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
 
-        compose.runOnIdle { enabled = true }
+        compose.runOnIdle { accepted = true }
         val seen = colorsOver(1_000, color)
-        assertTrue("expected a flash color once enabled, saw $seen", seen.containsAll(flashColors))
+        assertTrue("expected every flash color once accepted, saw $seen", seen.containsAll(flashColors))
 
-        // Disabling (the tap-to-pause) settles back on the dark scrim.
-        compose.runOnIdle { enabled = false }
+        // Tap-to-pause settles back on the dark scrim.
+        compose.runOnIdle { paused = true }
         compose.mainClock.advanceTimeBy(STEP_MS)
         assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
     }

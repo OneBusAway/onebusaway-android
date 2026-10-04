@@ -160,8 +160,8 @@ private fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShor
     // Remembered: NightLightScreen recomposes on every flash tick (~10x/sec) as displayColor changes.
     val themeColor = colorResource(R.color.theme_primary)
     val flashColors = remember(themeColor) { listOf(Color.White, themeColor, Color.White) }
-    var flashing by remember { mutableStateOf(true) }
-    val displayColor by rememberFlashColor(enabled = accepted && flashing, flashColors = flashColors)
+    var paused by remember { mutableStateOf(false) }
+    val displayColor by rememberFlashColor(accepted = accepted, paused = paused, flashColors = flashColors)
 
     Scaffold(
         topBar = {
@@ -196,20 +196,22 @@ private fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShor
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
-                ) { flashing = !flashing }
+                ) { paused = !paused }
         )
     }
 }
 
 /**
- * The screen color over time: while [enabled], cycles [flashColors] (on for [FLASH_TIME_ON], then the
- * dark scrim for the next [WAIT_TIMES] gap), and only while the lifecycle is RESUMED — replacing the
- * legacy background thread. While not [enabled] it holds [COLOR_DARK], so nothing flashes before the
- * user has accepted the epilepsy intro or after they've tapped to pause.
+ * The screen color over time: once the user has [accepted] the epilepsy intro and while not [paused],
+ * cycles [flashColors] (on for [FLASH_TIME_ON], then the dark scrim for the next [WAIT_TIMES] gap), and
+ * only while the lifecycle is RESUMED — replacing the legacy background thread. Otherwise it holds
+ * [COLOR_DARK]. Consent is a required input of the loop itself, not a gate a caller can forget: the
+ * intro dialog leaves the activity RESUMED, so nothing else stops the strobe behind it (#2358).
  */
 @Composable
-internal fun rememberFlashColor(enabled: Boolean, flashColors: List<Color>): State<Color> {
+internal fun rememberFlashColor(accepted: Boolean, paused: Boolean, flashColors: List<Color>): State<Color> {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val enabled = accepted && !paused
     return produceState(COLOR_DARK, enabled, flashColors) {
         if (!enabled) {
             value = COLOR_DARK

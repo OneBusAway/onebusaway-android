@@ -72,6 +72,9 @@ private val WAIT_TIMES = longArrayOf(100, 100, 400)
 
 private const val PREFERENCE_SHOWED_DIALOG = "showed_night_light_dialog"
 
+internal fun shouldFlashNightLight(consentAccepted: Boolean, userWantsFlashing: Boolean): Boolean =
+    consentAccepted && userWantsFlashing
+
 /**
  * The night-light NavHost destination: a flashing light riders show at night to flag
  * bus drivers. Re-hosts the former [NightLightLauncher]'s window-level concerns — keep-screen-on,
@@ -104,7 +107,11 @@ fun NightLightRoute(onBack: () -> Unit) {
         }
     }
 
-    // Full brightness once the user has seen (now or previously) the epilepsy intro.
+    // Consent gates both the flash and full brightness; initialize from the saved choice so
+    // returning users can start immediately without showing the intro again.
+    var consentAccepted by remember {
+        mutableStateOf(PreferenceUtils.getBoolean(PREFERENCE_SHOWED_DIALOG, false))
+    }
     var fullBrightness by remember { mutableStateOf(false) }
     LaunchedEffect(fullBrightness) {
         if (fullBrightness) {
@@ -114,12 +121,13 @@ fun NightLightRoute(onBack: () -> Unit) {
         }
     }
 
-    // One-time intro dialog (gated by a pref); "start" enables brightness, "cancel" leaves the screen.
+    // One-time intro dialog (gated by a pref); "start" enables flashing and brightness,
+    // while "cancel" leaves without flashing.
     var introHandled by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (introHandled) return@LaunchedEffect
         introHandled = true
-        if (PreferenceUtils.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
+        if (consentAccepted) {
             fullBrightness = true
         } else {
             MaterialAlertDialogBuilder(activity)
@@ -128,6 +136,7 @@ fun NightLightRoute(onBack: () -> Unit) {
                 .setCancelable(false)
                 .setPositiveButton(R.string.night_light_start) { _, _ ->
                     PreferenceUtils.saveBoolean(PREFERENCE_SHOWED_DIALOG, true)
+                    consentAccepted = true
                     fullBrightness = true
                 }
                 .setNegativeButton(R.string.night_light_cancel) { _, _ -> onBack() }
@@ -135,15 +144,19 @@ fun NightLightRoute(onBack: () -> Unit) {
         }
     }
 
-    NightLightScreen(onBack = onBack, onCreateShortcut = {
-        val shortcut = Shortcuts.makeShortcutInfo(
-            activity,
-            activity.getString(R.string.stop_info_option_night_light),
-            HomeActivity.navIntent(activity, NavRoutes.NIGHT_LIGHT),
-            R.drawable.lightbulb_2
-        )
-        ShortcutManagerCompat.requestPinShortcut(activity, shortcut, null)
-    })
+    NightLightScreen(
+        consentAccepted = consentAccepted,
+        onBack = onBack,
+        onCreateShortcut = {
+            val shortcut = Shortcuts.makeShortcutInfo(
+                activity,
+                activity.getString(R.string.stop_info_option_night_light),
+                HomeActivity.navIntent(activity, NavRoutes.NIGHT_LIGHT),
+                R.drawable.lightbulb_2
+            )
+            ShortcutManagerCompat.requestPinShortcut(activity, shortcut, null)
+        }
+    )
 }
 
 /**
@@ -151,18 +164,23 @@ fun NightLightRoute(onBack: () -> Unit) {
  * the legacy flash thread. Tapping the screen pauses and resumes the flashing.
  */
 @Composable
-private fun NightLightScreen(onBack: () -> Unit, onCreateShortcut: () -> Unit) {
+private fun NightLightScreen(
+    consentAccepted: Boolean,
+    onBack: () -> Unit,
+    onCreateShortcut: () -> Unit
+) {
     // Remembered: NightLightScreen recomposes on every flash tick (~10x/sec) as displayColor changes.
     val themeColor = colorResource(R.color.theme_primary)
     val flashColors = remember(themeColor) { listOf(Color.White, themeColor, Color.White) }
-    var flashing by remember { mutableStateOf(true) }
+    var userWantsFlashing by remember { mutableStateOf(true) }
+    val shouldFlash = shouldFlashNightLight(consentAccepted, userWantsFlashing)
     // The single source of truth for the screen color: a flash color while on, the dark scrim while off.
     var displayColor by remember { mutableStateOf(COLOR_DARK) }
 
     // RESUMED-only flash loop, replacing the legacy background thread.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(flashing) {
-        if (!flashing) {
+    LaunchedEffect(shouldFlash) {
+        if (!shouldFlash) {
             displayColor = COLOR_DARK
             return@LaunchedEffect
         }
@@ -211,7 +229,7 @@ private fun NightLightScreen(onBack: () -> Unit, onCreateShortcut: () -> Unit) {
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
-                ) { flashing = !flashing }
+                ) { userWantsFlashing = !userWantsFlashing }
         )
     }
 }

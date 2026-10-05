@@ -127,7 +127,9 @@ data class ArrivalsData(
     val hideAlertsByDefault: Boolean,
     val stopCode: String?,
     val stopLat: Double,
-    val stopLon: Double
+    val stopLon: Double,
+    /** Realtime outages detected for transit agencies serving this stop (issue #2301). */
+    val realtimeOutages: List<RealtimeOutage> = emptyList()
 )
 
 /** Loads real-time arrivals for a stop and persists the stop / route favorites. */
@@ -244,6 +246,8 @@ class DefaultArrivalsRepository @Inject constructor(
      *   can project that server clock forward by elapsed device time (#1612).
      * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
      *   [ArrivalsLoaded.focusedTrips] exactly matches the drawer's displayed trips.
+     * - [realtimeTripKeys] and [realtimeOutageAgencyIds] — prior realtime evidence, scoped to the
+     *   same stop and region, so scheduled-only first responses cannot be mistaken for an outage.
      *
      * Published through the single [AtomicReference] [lastGood] with one write per load, so a
      * concurrent getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new
@@ -255,7 +259,10 @@ class DefaultArrivalsRepository @Inject constructor(
     private data class LastGood(
         val snapshot: StopArrivals,
         val receivedAt: ElapsedTime,
-        val loaded: ArrivalsLoaded
+        val loaded: ArrivalsLoaded,
+        val regionId: Long?,
+        val realtimeTripKeys: Set<RealtimeTripInstanceKey>,
+        val realtimeOutageAgencyIds: Set<String>
     )
 
     private val lastGood = AtomicReference<LastGood?>(null)
@@ -291,8 +298,27 @@ class DefaultArrivalsRepository @Inject constructor(
                     // system records nothing, and must not consume the one recording this session owes.
                     snapshot.stop?.let { stopRecorded = recordStop(it, System.currentTimeMillis()) }
                 }
-                val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
-                lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
+                val regionId = regionRepository.currentRegion()?.id
+                val previous = lastGood.get()?.takeIf {
+                    regionId != null && it.regionId == regionId && it.snapshot.stopId == stopId
+                }
+                val data = toData(
+                    snapshot,
+                    isStale = false,
+                    now = ServerTime(snapshot.currentTime),
+                    previouslyRealtimeTripKeys = previous?.realtimeTripKeys.orEmpty(),
+                    previouslyOutagedAgencyIds = previous?.realtimeOutageAgencyIds.orEmpty()
+                )
+                lastGood.set(
+                    LastGood(
+                        snapshot = snapshot,
+                        receivedAt = receivedAt,
+                        loaded = loadedSnapshot(snapshot, data),
+                        regionId = regionId,
+                        realtimeTripKeys = realtimeTripKeys(snapshot, data.arrivals),
+                        realtimeOutageAgencyIds = data.realtimeOutages.mapTo(mutableSetOf()) { it.agencyId }
+                    )
+                )
                 Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
@@ -304,7 +330,13 @@ class DefaultArrivalsRepository @Inject constructor(
                     // so the typed API allows it directly.
                     val now = ServerTime(stale.snapshot.currentTime) +
                         (elapsedClock.now() - stale.receivedAt)
-                    val data = toData(stale.snapshot, isStale = true, now = now)
+                    val data = toData(
+                        stale.snapshot,
+                        isStale = true,
+                        now = now,
+                        previouslyRealtimeTripKeys = stale.realtimeTripKeys,
+                        previouslyOutagedAgencyIds = stale.realtimeOutageAgencyIds
+                    )
                     // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
                     // stale ETAs advance. CAS so this can't roll back a fresh snapshot a concurrent
                     // successful load published while toData ran — if it did, its holder simply stands.
@@ -328,7 +360,9 @@ class DefaultArrivalsRepository @Inject constructor(
         // Server clock as "now" so ETAs/countdowns and alert active-window checks cancel any device
         // clock skew — the fresh response's currentTime, or (on the stale path) the last good server
         // clock projected forward by elapsed device time (#1612).
-        now: ServerTime
+        now: ServerTime,
+        previouslyRealtimeTripKeys: Set<RealtimeTripInstanceKey>,
+        previouslyOutagedAgencyIds: Set<String>
     ): ArrivalsData {
         // The unified route row shows lateness via the ETA pill's color, not a verbose status label,
         // so we don't fold the arrival/departure word in. Every production caller now passes false
@@ -357,6 +391,11 @@ class DefaultArrivalsRepository @Inject constructor(
         // The situation ids that are active right now, so a per-arrival alert indicator lights up
         // only for currently-active alerts — matching the banner's active set (issue #1687 Bug 2).
         val activeSituationIds = situations.filter(isActive).mapTo(HashSet()) { it.id }
+        val realtimeOutages = detectRealtimeOutages(
+            arrivals = arrivals,
+            previouslyRealtimeTripKeys = previouslyRealtimeTripKeys,
+            previouslyOutagedAgencyIds = previouslyOutagedAgencyIds
+        ) { agencyFor(snapshot, it.routeId) }
         return ArrivalsData(
             arrivals = arrivals,
             // Stable (agency, line, headsign) row order (#1822), not ETA — a row's position shouldn't
@@ -374,7 +413,8 @@ class DefaultArrivalsRepository @Inject constructor(
             preferences.getBoolean(R.string.preference_key_hide_alerts, false),
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
-            stopLon = stop?.longitude ?: 0.0
+            stopLon = stop?.longitude ?: 0.0,
+            realtimeOutages = realtimeOutages
         )
     }
 
@@ -401,6 +441,24 @@ class DefaultArrivalsRepository @Inject constructor(
      *  reference is missing from the snapshot. Shared by the route-row sort key and [buildActions] so
      *  the two don't independently reimplement the same route→agency lookup. */
     private fun agencyNameFor(snapshot: StopArrivals, routeId: String): String? = snapshot.route(routeId)?.agencyId?.let(snapshot::agencyName)
+
+    /** The operating agency (id and display name) for a route, or null when either the route or its agency
+     *  reference is missing from the snapshot. */
+    private fun agencyFor(snapshot: StopArrivals, routeId: String): OperatingAgency? {
+        val agencyId = snapshot.route(routeId)?.agencyId ?: return null
+        val name = snapshot.agencyName(agencyId) ?: return null
+        return OperatingAgency(id = agencyId, name = name)
+    }
+
+    /** Realtime evidence is limited to trip instances in the most recent successful response. */
+    private fun realtimeTripKeys(snapshot: StopArrivals, arrivals: List<ArrivalInfo>): Set<RealtimeTripInstanceKey> = arrivals.asSequence()
+        .filter { it.predicted }
+        .mapNotNull { arrival ->
+            agencyFor(snapshot, arrival.routeId)?.let { agency ->
+                RealtimeTripInstanceKey(agency.id, arrival.tripId, arrival.serviceDate)
+            }
+        }
+        .toSet()
 
     /** Precomputes the navigation/dialog data for each arrival (legacy reads these on menu tap). */
     private fun buildActions(

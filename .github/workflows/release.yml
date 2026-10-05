@@ -127,7 +127,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v6.3.0
+        uses: gradle/actions/setup-gradle@v6.4.0
 
       # The build script reads signing config from a properties file named by the `secure.properties`
       # Gradle property (see the signingConfigs block in onebusaway-android/build.gradle.kts), and

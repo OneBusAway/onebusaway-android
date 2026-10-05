@@ -38,6 +38,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
 import org.onebusaway.android.ui.arrivals.ArrivalDisplayMode
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.ArrivalsAnalyticsEffect
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
@@ -132,6 +133,9 @@ internal fun rememberArrivalsSession(
         val displayMode = rememberArrivalDisplayMode(stop.id) { prefs.arrivalDisplayDefault() }
 
         ArrivalsPolling(viewModel)
+        // Collect only while the sheet is shown (a help dialog hides it while polling continues); the
+        // stop-view Channel holds the event until the sheet is visible again.
+        if (sheetVisible) ArrivalsAnalyticsEffect(viewModel)
 
         // Forward each completed load to the host and start onboarding after the sheet is visible.
         val sheetVisibleState = rememberUpdatedState(sheetVisible)

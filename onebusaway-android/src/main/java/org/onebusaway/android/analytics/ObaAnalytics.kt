@@ -52,13 +52,17 @@ class ObaAnalytics @Inject constructor(
         DISTANCE_5("User Distance: 00400-00800m", 800),
         DISTANCE_6("User Distance: 00800-01600m", 1600),
         DISTANCE_7("User Distance: 01600-03200m", 3200),
-        DISTANCE_8("User Distance: 03200-INFINITY", 0);
+        DISTANCE_8("User Distance: 03200-INFINITY", 0),
+
+        /** No usable device fix (none, no accuracy, or coarser than [LOCATION_ACCURACY_THRESHOLD]), so the
+         *  distance is unknown — kept apart from [DISTANCE_8] so "far away" and "unknown" stay separable. */
+        UNKNOWN("User Distance: UNKNOWN", 0);
 
         override fun toString(): String = label
 
         companion object {
             /** The first bucket whose ceiling exceeds [meters], or [DISTANCE_8] (infinity) past 3200m. */
-            fun forDistance(meters: Float): ObaStopDistance = entries.firstOrNull { meters < it.distanceInMeters } ?: DISTANCE_8
+            fun forDistance(meters: Float): ObaStopDistance = entries.firstOrNull { it != UNKNOWN && meters < it.distanceInMeters } ?: DISTANCE_8
         }
     }
 
@@ -111,8 +115,10 @@ class ObaAnalytics @Inject constructor(
     }
 
     /**
-     * Reports the user viewing a stop, bucketing the distance between the device and the stop (only
-     * when the device fix is accurate enough — under [LOCATION_ACCURACY_THRESHOLD]).
+     * Reports the user viewing a stop, bucketing the distance between the device and the stop. Always
+     * reports — when [myLocation] is missing or less accurate than [LOCATION_ACCURACY_THRESHOLD], it
+     * reports [ObaStopDistance.UNKNOWN] rather than skipping, so every stop view counts as an Umami
+     * pageview.
      */
     fun reportViewStopEvent(
         stopId: String,
@@ -120,11 +126,12 @@ class ObaAnalytics @Inject constructor(
         myLocation: Location?,
         stopLocation: Location
     ) {
-        if (!isAnalyticsActive() || myLocation == null) return
-        if (myLocation.accuracy < LOCATION_ACCURACY_THRESHOLD) {
-            val stopDistance = ObaStopDistance.forDistance(myLocation.distanceTo(stopLocation))
-            reportViewStopEvent(stopId, stopName, stopDistance.toString())
-        }
+        if (!isAnalyticsActive()) return
+        val stopDistance = stopDistanceBucket(
+            accuracy = usableAccuracy(myLocation),
+            distanceMeters = myLocation?.distanceTo(stopLocation)
+        )
+        reportViewStopEvent(stopId, stopName, stopDistance.toString())
     }
 
     private fun reportViewStopEvent(
@@ -217,8 +224,25 @@ class ObaAnalytics @Inject constructor(
 
     private fun Boolean.toYesNo(): String = if (this) "YES" else "NO"
 
-    private companion object {
+    internal companion object {
         /** A device fix is only accurate enough to bucket stop distance when below this (meters). */
         const val LOCATION_ACCURACY_THRESHOLD = 50f
+
+        /** [location]'s accuracy, or null when there is no fix or the fix carries no accuracy — a
+         *  `Location` without one reports `accuracy == 0f`, which would otherwise read as a perfect fix. */
+        internal fun usableAccuracy(location: Location?): Float? = location?.takeIf { it.hasAccuracy() }?.accuracy
+
+        /**
+         * The bucket reported for a stop view: [ObaStopDistance.UNKNOWN] when there is no distance or
+         * [accuracy] is missing or at/above [LOCATION_ACCURACY_THRESHOLD] — so a stop view is always
+         * reported even with no or poor location fix — else the bucket [distanceMeters] falls into.
+         * Pure/JVM-testable: takes the plain accuracy/distance rather than a [Location], which can't be
+         * constructed in unit tests.
+         */
+        internal fun stopDistanceBucket(accuracy: Float?, distanceMeters: Float?): ObaStopDistance = if (distanceMeters == null || accuracy == null || accuracy >= LOCATION_ACCURACY_THRESHOLD) {
+            ObaStopDistance.UNKNOWN
+        } else {
+            ObaStopDistance.forDistance(distanceMeters)
+        }
     }
 }

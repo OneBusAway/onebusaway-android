@@ -16,6 +16,7 @@
 package org.onebusaway.android.analytics
 
 import android.content.Context
+import android.util.Log
 import com.onebusaway.plausible.android.Plausible
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.URI
@@ -41,6 +42,7 @@ import org.onebusaway.android.region.RegionRepository
 class AnalyticsProvider @Inject constructor(
     @param:ApplicationContext private val context: Context,
     regionRepository: RegionRepository,
+    private val installId: AnalyticsInstallId,
     @AppScope scope: CoroutineScope
 ) {
 
@@ -83,12 +85,21 @@ class AnalyticsProvider @Inject constructor(
         val serverUrl = region.umamiAnalyticsUrl ?: return null
         val websiteId = region.umamiAnalyticsId ?: return null
         val host = hostOf(baseUrl) ?: return null
-        return UmamiAnalytics(serverUrl, websiteId, host)
+        // Every event carries the install's visitor id, so never send one in cleartext.
+        if (!UmamiAnalytics.isHttps(serverUrl)) {
+            Log.w(TAG, "Umami disabled for this region: analytics URL is not HTTPS")
+            return null
+        }
+        return UmamiAnalytics(serverUrl, websiteId, host, installId.forWebsite(websiteId))
     }
 
     private fun hostOf(url: String): String? = try {
         URI(url).host
     } catch (e: Exception) {
         null
+    }
+
+    private companion object {
+        const val TAG = "AnalyticsProvider"
     }
 }

@@ -30,6 +30,10 @@ object BackupUtils {
             .show()
     }
 
+    /**
+     * Reports the restore attempt, delegates database work to [Backup.restore], and displays the result.
+     * [onRestored] runs only after a successful import.
+     */
     private suspend fun doRestore(activityContext: Context, uri: Uri, onRestored: Runnable?) {
         val context = activityContext.applicationContext
         AnalyticsEntryPoint.get(context).reportUiEvent(

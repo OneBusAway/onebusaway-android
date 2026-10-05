@@ -82,6 +82,11 @@ object Backup {
         }
     }
 
+    /**
+     * Runs the importer transaction and turns a malformed or incompatible backup into an [IOException]
+     * that the UI can display. Cancellation is deliberately rethrown so the owning lifecycle can stop
+     * this coroutine normally.
+     */
     private suspend fun mergeBackup(merge: suspend () -> Unit) {
         try {
             merge()

@@ -21,6 +21,7 @@ import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
@@ -132,7 +133,7 @@ data class ArrivalsData(
     /** Every route the stop serves — its own route list plus any route arriving now — which "show only
      *  this route" hides all the others of (#2366). Wider than [routeGroups], which holds only the routes
      *  with a trip inside the window. */
-    val stopRouteIds: Set<String> = emptySet()
+    val stopRouteIds: Set<String>
 )
 
 /** Loads real-time arrivals for a stop and persists the stop / route favorites. */
@@ -282,7 +283,9 @@ class DefaultArrivalsRepository @Inject constructor(
 
     // Whether this stop's carried-over allow-list filter (#2366) has been checked for this session. The
     // conversion needs a fresh response's route list and deletes what it converts, so once is enough —
-    // not a DB read on every 60s poll.
+    // not a DB read on every 60s poll. Never against the demo transit system (#2164): its anchor stop is a
+    // real Seattle stop id, and converting a rider's filter there against the tour's fixture routes would
+    // rewrite — or drop — the filter they actually kept.
     private var legacyFilterAdopted = false
 
     override suspend fun getArrivals(
@@ -312,7 +315,7 @@ class DefaultArrivalsRepository @Inject constructor(
                     snapshot.stop?.let { stopRecorded = recordStop(it, System.currentTimeMillis()) }
                 }
                 val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
-                if (!legacyFilterAdopted) {
+                if (!legacyFilterAdopted && !demoMode.isActive) {
                     hiddenRoutes.adoptLegacyFilter(snapshot.stopId, data.stopRouteIds)
                     legacyFilterAdopted = true
                 }
@@ -468,6 +471,7 @@ class DefaultArrivalsRepository @Inject constructor(
     override fun hiddenRouteIds(stopId: String): Flow<Set<String>> = hiddenRoutes.observeHiddenRouteIds(stopId)
         .onStart { importGate.awaitReady() }
         .map { it.toSet() }
+        .distinctUntilChanged()
 
     override suspend fun setHiddenRoutes(stopId: String, routeIds: Set<String>) {
         importGate.awaitReady()

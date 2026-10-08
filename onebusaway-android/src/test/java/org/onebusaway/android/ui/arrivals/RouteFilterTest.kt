@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.arrivals
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Test
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 
@@ -47,45 +46,47 @@ class RouteFilterTest {
     }
 
     @Test
-    fun nothingHidden_returnsTheSameList() {
-        assertSame(groups, visibleRouteGroups(groups, emptySet(), selectedKey = null))
+    fun nothingHidden_showsEveryRow() {
+        assertEquals(groups, visibleRouteGroups(groups, emptySet(), selectedKey = null))
+    }
+
+    /** Which items [RouteFilterCallbacks.forRoute] offers, as (show only, hide, show all). */
+    private fun offered(routeId: String, stopRouteIds: Set<String>, hiddenRouteIds: Set<String>): Triple<Boolean, Boolean, Boolean> {
+        val actions = RouteFilterCallbacks({}, {}, {}).forRoute(routeId, stopRouteIds, hiddenRouteIds)
+        return Triple(actions.onShowOnly != null, actions.onHide != null, actions.onShowAll != null)
     }
 
     @Test
     fun unfilteredStop_offersShowOnlyAndHide_butNotShowAll() {
-        assertEquals(
-            RouteFilterMenu(showOnly = true, hide = true, showAll = false),
-            RouteFilterMenu.of("A", setOf("A", "B"), emptySet())
-        )
+        assertEquals(Triple(true, true, false), offered("A", setOf("A", "B"), emptySet()))
     }
 
     @Test
     fun lastRouteShowing_offersNeitherShowOnlyNorHide() {
         // "Only this one" would change nothing, and hiding it would blank the board.
-        assertEquals(
-            RouteFilterMenu(showOnly = false, hide = false, showAll = true),
-            RouteFilterMenu.of("A", setOf("A", "B", "C"), setOf("B", "C"))
-        )
+        assertEquals(Triple(false, false, true), offered("A", setOf("A", "B", "C"), setOf("B", "C")))
     }
 
     @Test
     fun singleRouteStop_offersNothing() {
-        assertEquals(
-            RouteFilterMenu(showOnly = false, hide = false, showAll = false),
-            RouteFilterMenu.of("A", setOf("A"), emptySet())
-        )
+        assertEquals(Triple(false, false, false), offered("A", setOf("A"), emptySet()))
     }
 
     @Test
     fun hiddenRouteShownBySelection_offersShowOnly_butNotHide() {
-        assertEquals(
-            RouteFilterMenu(showOnly = true, hide = false, showAll = true),
-            RouteFilterMenu.of("B", setOf("A", "B"), setOf("B"))
-        )
+        assertEquals(Triple(true, false, true), offered("B", setOf("A", "B"), setOf("B")))
     }
 
     @Test
-    fun showOnly_hidesEveryOtherServedRoute() {
-        assertEquals(setOf("A", "C"), hideAllRoutesExcept("B", setOf("A", "B", "C")))
+    fun offeredItemsActOnTheRowsRoute() {
+        val calls = mutableListOf<String>()
+        val actions = RouteFilterCallbacks({ calls += "only:$it" }, { calls += "hide:$it" }, { calls += "all" })
+            .forRoute("A", setOf("A", "B"), setOf("C"))
+
+        actions.onShowOnly!!()
+        actions.onHide!!()
+        actions.onShowAll!!()
+
+        assertEquals(listOf("only:A", "hide:A", "all"), calls)
     }
 }

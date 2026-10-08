@@ -616,7 +616,7 @@ internal fun RouteActionsMenu(
     onShowSchedule: (() -> Unit)?,
     onToggleTracking: () -> Unit,
     tracked: Boolean,
-    routeFilter: RouteFilterActions? = null
+    routeFilter: RouteFilterActions?
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(

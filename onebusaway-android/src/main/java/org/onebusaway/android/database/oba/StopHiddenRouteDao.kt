@@ -102,12 +102,18 @@ interface StopHiddenRouteDao {
      * [LegacyStopRouteFilterRecord] — now that a load has told us the routes the stop serves
      * ([servedRouteIds]). The old filter replaces whatever is hidden at the stop, and is then deleted,
      * so this happens once per stop.
+     *
+     * The plain read comes first, outside any transaction: almost every stop has nothing to convert, and
+     * opening a stop shouldn't take the write lock to find that out.
      */
-    @Transaction
     suspend fun adoptLegacyFilter(stopId: String, servedRouteIds: Set<String>) {
         val shown = legacyShownRouteIds(stopId).toSet()
-        if (shown.isEmpty()) return
-        replace(stopId, hiddenRoutesFromLegacyFilter(shown, servedRouteIds))
+        if (shown.isNotEmpty()) convertLegacyFilter(stopId, hiddenRoutesFromLegacyFilter(shown, servedRouteIds))
+    }
+
+    @Transaction
+    suspend fun convertLegacyFilter(stopId: String, hiddenRouteIds: Set<String>) {
+        replace(stopId, hiddenRouteIds)
         clearLegacy(stopId)
     }
 }

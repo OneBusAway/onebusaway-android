@@ -283,8 +283,9 @@ class LegacyDataImporter(
             },
             // The old per-stop route filter (#2366): `stop_routes_filter` in a legacy file (or legacy
             // backup) from a release that still had it, or a Room backup's not-yet-converted rows. The
-            // legacy table had no primary key, so duplicate rows collapse here on (stop, route).
-            legacyStopRouteFilters = (db.read("stop_routes_filter", ::legacyFilterRow) + db.read("legacy_stop_route_filters", ::legacyFilterRow)).distinct()
+            // legacy table had no primary key; its duplicate rows collapse on the new table's.
+            legacyStopRouteFilters = db.read("stop_routes_filter", ::legacyFilterRow) +
+                db.read("legacy_stop_route_filters", ::legacyFilterRow)
         )
     }
 

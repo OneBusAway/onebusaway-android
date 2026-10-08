@@ -193,7 +193,7 @@ class ArrivalsViewModel @AssistedInject constructor(
     /** "Show only this route" (#2366): hides every other route the stop serves. */
     fun showOnlyRoute(routeId: String) {
         val content = state.value as? ArrivalsUiState.Content ?: return
-        setHiddenRoutes(hideAllRoutesExcept(routeId, content.stopRouteIds))
+        setHiddenRoutes(content.stopRouteIds - routeId)
     }
 
     /** "Hide this route" (#2366): adds [routeId] to the routes hidden at this stop. */

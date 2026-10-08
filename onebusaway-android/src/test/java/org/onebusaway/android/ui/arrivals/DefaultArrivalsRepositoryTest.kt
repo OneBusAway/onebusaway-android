@@ -375,6 +375,20 @@ class DefaultArrivalsRepositoryTest {
     }
 
     @Test
+    fun `the demo transit system never converts a rider's carried-over filter`() = runTest {
+        // The tour's anchor stop is a real stop id; its fixture routes say nothing about the rider's stop.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot(stopRouteIds = listOf("route-1", "route-2"))) }
+        val hiddenRoutes = FakeStopHiddenRouteDao(legacyShown = mapOf(STOP_ID to setOf("route-9")))
+        val repository = repository(dataSource, demoMode = FakeDemoModeState(true), hiddenRoutes = hiddenRoutes)
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(setOf("route-9"), hiddenRoutes.legacy[STOP_ID])
+        assertEquals(0, hiddenRoutes.legacyReads)
+    }
+
+    @Test
     fun `a stale fallback doesn't convert a carried-over filter`() = runTest {
         // The stale path has no fresh route list to convert against; the next fresh load does it.
         val dataSource = FakeStopArrivalsDataSource()

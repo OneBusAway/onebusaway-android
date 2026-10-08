@@ -15,26 +15,23 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import org.onebusaway.android.ui.arrivals.components.RouteFilterActions
+
 /**
  * The rows a stop's arrivals board shows under its route filter (#2366): every row whose route isn't
  * in [hiddenRouteIds], plus the row keyed [selectedKey] even when its route is hidden — picking a route
  * on the map is an explicit ask to see it, and an empty selection would be worse than a filter briefly
  * stepping aside. Order is kept, so starred routes stay on top within what's shown.
- *
- * Returns [groups] itself when nothing is hidden, so an unfiltered board pays nothing.
  */
 internal fun visibleRouteGroups(
     groups: List<RouteRowGroup>,
     hiddenRouteIds: Set<String>,
     selectedKey: String?
-): List<RouteRowGroup> {
-    if (hiddenRouteIds.isEmpty()) return groups
-    return groups.filter { it.routeId !in hiddenRouteIds || it.key == selectedKey }
-}
+): List<RouteRowGroup> = groups.filter { it.routeId !in hiddenRouteIds || it.key == selectedKey }
 
 /**
- * Which route-filter items a row's long-press menu offers (#2366), for route [routeId] at a stop that
- * serves [stopRouteIds] with [hiddenRouteIds] hidden.
+ * [routeId]'s route-filter menu items (#2366) at a stop that serves [stopRouteIds] with [hiddenRouteIds]
+ * hidden, bound to these callbacks. An item that wouldn't help is left null, so the menu doesn't offer it:
  *
  * - **Show only this route** and **Hide this route** need another route still showing — hiding the last
  *   one would blank the board, and "only this one" would change nothing. A row whose route is itself
@@ -42,23 +39,16 @@ internal fun visibleRouteGroups(
  *   bring it back on its own, and never "hide".
  * - **Show all routes** whenever anything is hidden.
  */
-internal data class RouteFilterMenu(
-    val showOnly: Boolean,
-    val hide: Boolean,
-    val showAll: Boolean
-) {
-    companion object {
-        fun of(routeId: String, stopRouteIds: Set<String>, hiddenRouteIds: Set<String>): RouteFilterMenu {
-            val isHidden = routeId in hiddenRouteIds
-            val othersShowing = stopRouteIds.any { it != routeId && it !in hiddenRouteIds }
-            return RouteFilterMenu(
-                showOnly = isHidden || othersShowing,
-                hide = !isHidden && othersShowing,
-                showAll = hiddenRouteIds.isNotEmpty()
-            )
-        }
-    }
+internal fun RouteFilterCallbacks.forRoute(
+    routeId: String,
+    stopRouteIds: Set<String>,
+    hiddenRouteIds: Set<String>
+): RouteFilterActions {
+    val isHidden = routeId in hiddenRouteIds
+    val othersShowing = stopRouteIds.any { it != routeId && it !in hiddenRouteIds }
+    return RouteFilterActions(
+        onShowOnly = { onShowOnly(routeId) }.takeIf { isHidden || othersShowing },
+        onHide = { onHide(routeId) }.takeIf { !isHidden && othersShowing },
+        onShowAll = onShowAll.takeIf { hiddenRouteIds.isNotEmpty() }
+    )
 }
-
-/** The routes to hide at a stop serving [stopRouteIds] so that only [routeId] shows. */
-internal fun hideAllRoutesExcept(routeId: String, stopRouteIds: Set<String>): Set<String> = stopRouteIds - routeId

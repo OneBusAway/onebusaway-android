@@ -89,6 +89,8 @@
     <string name="bus_options_menu_show_trip_details">Pokaż status kursu</string>
     <string name="bus_options_menu_set_reminder">Ustaw przypomnienie</string>
     <string name="bus_options_menu_show_route_schedule">Pokaż rozkład jazdy linii</string>
+    <string name="bus_options_menu_show_only_this_route">Pokaż tylko tę linię</string>
+    <string name="bus_options_menu_show_all_routes">Pokaż wszystkie linie</string>
     <string name="bus_options_menu_report_trip_problem">Zgłoś problem z kursem</string>
 
     <!-- Stop Info -->

@@ -33,6 +33,7 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopHiddenRouteDao
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.demo.DemoModeState
 import org.onebusaway.android.models.FocusedTrip
@@ -127,7 +128,11 @@ data class ArrivalsData(
     val hideAlertsByDefault: Boolean,
     val stopCode: String?,
     val stopLat: Double,
-    val stopLon: Double
+    val stopLon: Double,
+    /** Every route the stop serves — its own route list plus any route arriving now — which "show only
+     *  this route" hides all the others of (#2366). Wider than [routeGroups], which holds only the routes
+     *  with a trip inside the window. */
+    val stopRouteIds: Set<String> = emptySet()
 )
 
 /** Loads real-time arrivals for a stop and persists the stop / route favorites. */
@@ -164,6 +169,15 @@ interface ArrivalsRepository {
      * See #1593.
      */
     fun alertHideState(): Flow<AlertHideState>
+
+    /**
+     * The routes the rider hid from [stopId]'s arrivals board (#2366), live — the ViewModel filters the
+     * board through this, so a hide/show re-renders it with no re-fetch. Mirrors [favoriteRouteIds].
+     */
+    fun hiddenRouteIds(stopId: String): Flow<Set<String>>
+
+    /** Makes [routeIds] exactly the routes hidden at [stopId]; an empty set shows every route. */
+    suspend fun setHiddenRoutes(stopId: String, routeIds: Set<String>)
 
     /** Records the given service alerts as hidden. */
     suspend fun hideAlerts(ids: List<String>)
@@ -229,6 +243,7 @@ class DefaultArrivalsRepository @Inject constructor(
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
     private val routeFavorites: RouteFavorites,
+    private val hiddenRoutes: StopHiddenRouteDao,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
     private val display: ArrivalsDisplay,
@@ -265,6 +280,11 @@ class DefaultArrivalsRepository @Inject constructor(
     // Recent stops. markAsUsed bumps USE_COUNT, so this is done once — not on every 60s poll/refresh.
     private var stopRecorded = false
 
+    // Whether this stop's carried-over allow-list filter (#2366) has been checked for this session. The
+    // conversion needs a fresh response's route list and deletes what it converts, so once is enough —
+    // not a DB read on every 60s poll.
+    private var legacyFilterAdopted = false
+
     override suspend fun getArrivals(
         stopId: String,
         minutesAfter: Int
@@ -292,6 +312,10 @@ class DefaultArrivalsRepository @Inject constructor(
                     snapshot.stop?.let { stopRecorded = recordStop(it, System.currentTimeMillis()) }
                 }
                 val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
+                if (!legacyFilterAdopted) {
+                    hiddenRoutes.adoptLegacyFilter(snapshot.stopId, data.stopRouteIds)
+                    legacyFilterAdopted = true
+                }
                 lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
                 Result.success(data)
             },
@@ -374,7 +398,8 @@ class DefaultArrivalsRepository @Inject constructor(
             preferences.getBoolean(R.string.preference_key_hide_alerts, false),
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
-            stopLon = stop?.longitude ?: 0.0
+            stopLon = stop?.longitude ?: 0.0,
+            stopRouteIds = stop?.routeIds.orEmpty().toSet() + arrivals.map { it.routeId }
         )
     }
 
@@ -439,6 +464,15 @@ class DefaultArrivalsRepository @Inject constructor(
     override fun alertHideState(): Flow<AlertHideState> = serviceAlertDao.hideDecisions()
         .onStart { importGate.awaitReady() }
         .map { rows -> AlertHideState(rows.associate { it.id to (it.hidden == 1) }) }
+
+    override fun hiddenRouteIds(stopId: String): Flow<Set<String>> = hiddenRoutes.observeHiddenRouteIds(stopId)
+        .onStart { importGate.awaitReady() }
+        .map { it.toSet() }
+
+    override suspend fun setHiddenRoutes(stopId: String, routeIds: Set<String>) {
+        importGate.awaitReady()
+        hiddenRoutes.replace(stopId, routeIds)
+    }
 
     override suspend fun hideAlerts(ids: List<String>) {
         importGate.awaitReady()

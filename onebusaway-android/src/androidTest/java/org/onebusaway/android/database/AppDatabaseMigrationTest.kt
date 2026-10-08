@@ -39,7 +39,8 @@ import org.onebusaway.android.SmokeTest
  * (#2027) reads back as a directory region and survives no differently than before; and that
  * [MIGRATION_11_12] adds `regions.sidecar_region_id` as NULL, so a cached region keeps addressing the
  * sidecar by its own `_id` (#2165); and that [MIGRATION_12_13] creates the empty `pinned_trips` table
- * the parked trip plan lives in (#2053).
+ * the parked trip plan lives in (#2053); and that [MIGRATION_13_14] creates the empty per-stop route
+ * filter tables, `stop_hidden_routes` and `legacy_stop_route_filters` (#2366).
  */
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
@@ -345,6 +346,37 @@ class AppDatabaseMigrationTest {
         db.query("SELECT selected_index FROM pinned_trips WHERE pin_id='pinned_trip'").use { c ->
             c.moveToFirst()
             assertEquals(2, c.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrate13To14_addsEmptyRouteFilterTables() {
+        helper.createDatabase(TEST_DB, 13).use { db ->
+            db.execSQL(
+                "INSERT INTO routes (_id, short_name, long_name, use_count) VALUES ('r1', '1', 'Route 1', 3)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 14.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 14, true, MIGRATION_13_14)
+
+        db.query("SELECT count(*) FROM routes").use { c ->
+            c.moveToFirst()
+            assertEquals("existing rows must survive migration", 1, c.getInt(0))
+        }
+        for (table in listOf("stop_hidden_routes", "legacy_stop_route_filters")) {
+            db.query("SELECT count(*) FROM $table").use { c ->
+                c.moveToFirst()
+                assertEquals("$table starts empty", 0, c.getInt(0))
+            }
+        }
+        // One row per (stop, route): hiding a route twice is still one hidden route.
+        db.execSQL("INSERT OR IGNORE INTO stop_hidden_routes (stop_id, route_id) VALUES ('1_100', 'r1')")
+        db.execSQL("INSERT OR IGNORE INTO stop_hidden_routes (stop_id, route_id) VALUES ('1_100', 'r1')")
+        db.query("SELECT count(*) FROM stop_hidden_routes").use { c ->
+            c.moveToFirst()
+            assertEquals(1, c.getInt(0))
         }
         db.close()
     }

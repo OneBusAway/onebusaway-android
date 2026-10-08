@@ -75,7 +75,8 @@ sealed interface ArrivalsUiState {
     data object Loading : ArrivalsUiState
 
     /**
-     * @param arrivals the existing [ArrivalInfo] display model, already filtered and sorted
+     * @param arrivals the existing [ArrivalInfo] display model, sorted (not route-filtered — see
+     *                 [hiddenRouteIds])
      * @param routeGroups [arrivals] grouped into one row per (route, direction), ordered by favorite,
      *                    agency, line, and headsign — the unit the list and drawer peek both render
      * @param isStale true when showing the last good data after a refresh failed
@@ -105,7 +106,14 @@ sealed interface ArrivalsUiState {
         val hiddenAlertCount: Int = 0,
         val stopCode: String? = null,
         val stopLat: Double = 0.0,
-        val stopLon: Double = 0.0
+        val stopLon: Double = 0.0,
+        /** Every route the stop serves, for "show only this route" (#2366). */
+        val stopRouteIds: Set<String> = emptySet(),
+        /** The routes the rider hid at this stop (#2366), live. Deliberately *not* applied to [arrivals]
+         *  or [routeGroups]: only the arrivals board filters (see [visibleRouteGroups]). A trip plan
+         *  boarding here, or a ride being followed, reads these rows too, and must find its bus even at
+         *  a stop where the rider hides that route. */
+        val hiddenRouteIds: Set<String> = emptySet()
     ) : ArrivalsUiState {
         /** True when the stop has any service alert at all — shown *or* hidden — so the header keeps
          *  its alert icon even after the rider hides every alert. */

@@ -103,7 +103,7 @@
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What’s New?</string>
-    <string name="main_help_whatsnew">&#8226;\u0020Bold new look for a bold new era\n&#8226;\u0020Arrivals are now grouped by route\n&#8226;\u0020Micromobility added to the bike overlay\n&#8226;\u0020Tap a stop to see its routes\n&#8226;\u0020Zoom in to see nearby routes\n&#8226;\u0020Vehicle locations extrapolated and animated\n&#8226;\u0020Track your bus with live notifications\n&#8226;\u0020Significant improvements to the trip planner\n&#8226;\u0020Several small bug fixes\n\nSee https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Bold new look for a bold new era\n&#8226;\u0020Arrivals are now grouped by route\n&#8226;\u0020“Show only this route” is back: long-press a route at a stop\n&#8226;\u0020Micromobility added to the bike overlay\n&#8226;\u0020Tap a stop to see its routes\n&#8226;\u0020Zoom in to see nearby routes\n&#8226;\u0020Vehicle locations extrapolated and animated\n&#8226;\u0020Track your bus with live notifications\n&#8226;\u0020Significant improvements to the trip planner\n&#8226;\u0020Several small bug fixes\n\nSee https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
     <string name="main_help_legend_ontime">Green means “On time” - within a minute and a half of
@@ -158,6 +158,11 @@
     <string name="bus_options_menu_show_route_on_map">Show route on map</string>
     <string name="bus_options_menu_show_stop_list">Show stop list</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
+    <!-- The per-stop route filter (#2366). "Show only this route" keeps the wording the retired filter
+         used (#1815), so riders who relied on it find it again. -->
+    <string name="bus_options_menu_show_only_this_route">Show only this route</string>
+    <string name="bus_options_menu_hide_route">Hide this route</string>
+    <string name="bus_options_menu_show_all_routes">Show all routes</string>
     <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
     <!--  Stop Info -->
@@ -452,6 +457,12 @@
     <plurals name="alert_filter_text">
         <item quantity="one">%1$d hidden alert</item>
         <item quantity="other"><xliff:g id="count">%1$d</xliff:g> hidden alerts</item>
+    </plurals>
+    <!-- The slim line on a filtered arrivals board (#2366), so hidden routes never read as missing
+         service. Followed by a "Show all routes" action. -->
+    <plurals name="stop_info_hidden_routes">
+        <item quantity="one">%1$d route hidden</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> routes hidden</item>
     </plurals>
     <plurals name="alert_show_more">
         <item quantity="one">%1$d more alert</item>

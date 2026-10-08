@@ -74,6 +74,7 @@ import org.onebusaway.android.ui.arrivals.components.ArrivalDisplayModeSwitch
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
+import org.onebusaway.android.ui.arrivals.components.RouteFilterActions
 import org.onebusaway.android.ui.compose.components.AlertSurface
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
@@ -124,6 +125,27 @@ internal fun rememberArrivalRowCallbacks(
         onReportArrivalProblem = handler::onReportArrivalProblem,
         onShowAlert = handler::onShowAlert,
         onRowClick = if (mapless) handler::onShowTripStatus else handler::onShowVehiclesOnMap
+    )
+}
+
+/**
+ * The arrivals board's per-stop route filter (#2366): the row menu's "show only this route" / "hide
+ * this route" / "show all routes", and the hidden-routes line's "show all routes". Pure ViewModel
+ * operations, so they bypass [ArrivalActionHandler].
+ */
+class RouteFilterCallbacks(
+    val onShowOnly: (routeId: String) -> Unit,
+    val onHide: (routeId: String) -> Unit,
+    val onShowAll: () -> Unit
+)
+
+/** The route-filter callbacks over [viewModel]'s filter actions. */
+@Composable
+internal fun rememberRouteFilterCallbacks(viewModel: ArrivalsViewModel): RouteFilterCallbacks = remember(viewModel) {
+    RouteFilterCallbacks(
+        onShowOnly = viewModel::showOnlyRoute,
+        onHide = viewModel::hideRoute,
+        onShowAll = viewModel::showAllRoutes
     )
 }
 
@@ -196,17 +218,22 @@ internal fun ArrivalsList(
     anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
     displayMode: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
     onDisplayModeChange: ((ArrivalDisplayMode) -> Unit)? = null,
-    modeSwitchModifier: Modifier = Modifier
+    modeSwitchModifier: Modifier = Modifier,
+    /** The stop's route filter (#2366). When set, the board hides [ArrivalsUiState.Content.hiddenRouteIds],
+     *  says so in a line above the rows, and offers the filter in each row's menu. */
+    routeFilter: RouteFilterCallbacks? = null
 ) {
     val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {
         resolveSelectedRouteGroupKey(content.routeGroups, selectedRowKey, selectedRouteId)
     }
-    val displayedGroups = remember(content.arrivals, content.routeGroups, effectiveSelectedRowKey, displayMode) {
-        if (displayMode == ArrivalDisplayMode.TIME) {
+    val hiddenRouteIds = if (routeFilter != null) content.hiddenRouteIds else emptySet()
+    val displayedGroups = remember(content.arrivals, content.routeGroups, effectiveSelectedRowKey, displayMode, hiddenRouteIds) {
+        val groups = if (displayMode == ArrivalDisplayMode.TIME) {
             chronologicalArrivals(content.arrivals).map { RouteRowGroup(listOf(it)) }
         } else {
             promoteSelectedRouteGroup(content.routeGroups, effectiveSelectedRowKey)
         }
+        visibleRouteGroups(groups, hiddenRouteIds, effectiveSelectedRowKey)
     }
     var previousMode by rememberSaveable { mutableStateOf(displayMode) }
     LaunchedEffect(displayMode) {
@@ -225,7 +252,8 @@ internal fun ArrivalsList(
             val directionBeforeRoutes = showDirection && content.header.direction != null
             val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
                 (if (directionBeforeRoutes) 1 else 0) +
-                (if (onDisplayModeChange != null) 1 else 0)
+                (if (onDisplayModeChange != null) 1 else 0) +
+                (if (hiddenRouteIds.isNotEmpty()) 1 else 0)
             listState.scrollToItem(firstRouteIndex)
         }
     }
@@ -255,6 +283,12 @@ internal fun ArrivalsList(
                 item(key = "direction") { DirectionLine(direction) }
             }
         }
+        if (routeFilter != null && hiddenRouteIds.isNotEmpty()) {
+            // Above the rows rather than in the footer, so a filtered board says so even in the peek.
+            item(key = "hidden-routes") {
+                HiddenRoutesLine(hiddenRouteIds.size, routeFilter.onShowAll, Modifier.animateItem())
+            }
+        }
         if (displayedGroups.isEmpty()) {
             item(key = "empty") { EmptyArrivals(content.minutesAfter) }
         } else {
@@ -275,6 +309,7 @@ internal fun ArrivalsList(
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     anchors = if (index == 0) anchors else ArrivalRowAnchors(),
                     tracked = group.representative.trackedRouteKey() in content.trackedRows,
+                    routeFilter = routeFilter?.let { rowRouteFilter(it, group.routeId, content.stopRouteIds, hiddenRouteIds) },
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()
                 )
@@ -283,6 +318,52 @@ internal fun ArrivalsList(
         item(key = "load_more") {
             val loading by loadingMore.collectAsStateWithLifecycle()
             LoadMoreFooter(windowEnd = content.windowEnd, loading = loading, onClick = onLoadMore)
+        }
+    }
+}
+
+/** [routeId]'s route-filter menu items, bound to [callbacks] and pruned by [RouteFilterMenu]. */
+private fun rowRouteFilter(
+    callbacks: RouteFilterCallbacks,
+    routeId: String,
+    stopRouteIds: Set<String>,
+    hiddenRouteIds: Set<String>
+): RouteFilterActions {
+    val menu = RouteFilterMenu.of(routeId, stopRouteIds, hiddenRouteIds)
+    return RouteFilterActions(
+        onShowOnly = { callbacks.onShowOnly(routeId) }.takeIf { menu.showOnly },
+        onHide = { callbacks.onHide(routeId) }.takeIf { menu.hide },
+        onShowAll = callbacks.onShowAll.takeIf { menu.showAll }
+    )
+}
+
+/**
+ * The slim line a filtered board carries above its rows (#2366) — "2 routes hidden · Show all
+ * routes" — so routes hidden at this stop never read as missing service, and are one tap from back.
+ */
+@Composable
+private fun HiddenRoutesLine(count: Int, onShowAll: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_filter_list),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = pluralStringResource(R.plurals.stop_info_hidden_routes, count, count),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onShowAll) {
+            Text(stringResource(R.string.bus_options_menu_show_all_routes))
         }
     }
 }

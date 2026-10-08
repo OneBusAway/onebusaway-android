@@ -31,6 +31,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
+import org.onebusaway.android.ui.arrivals.rememberRouteFilterCallbacks
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 
 /**
@@ -100,7 +101,8 @@ fun ArrivalsPanel(
             showAlerts = false,
             contentPadding = PaddingValues(bottom = navBarInset),
             // The onboarding spotlight anchors on the first route row.
-            anchors = anchors
+            anchors = anchors,
+            routeFilter = rememberRouteFilterCallbacks(viewModel)
         )
     }
 }

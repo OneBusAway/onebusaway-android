@@ -274,9 +274,25 @@ class LegacyDataImporter(
                     sequence = int("seq_num") ?: 0,
                     active = int("is_active") ?: 0
                 )
-            }
+            },
+            stopHiddenRoutes = db.read("stop_hidden_routes") {
+                StopHiddenRouteRecord(
+                    stopId = str("stop_id") ?: return@read null,
+                    routeId = str("route_id") ?: return@read null
+                )
+            },
+            // The old per-stop route filter (#2366): `stop_routes_filter` in a legacy file (or legacy
+            // backup) from a release that still had it, or a Room backup's not-yet-converted rows. The
+            // legacy table had no primary key; its duplicate rows collapse on the new table's.
+            legacyStopRouteFilters = db.read("stop_routes_filter", ::legacyFilterRow) +
+                db.read("legacy_stop_route_filters", ::legacyFilterRow)
         )
     }
+
+    private fun legacyFilterRow(c: Cursor): LegacyStopRouteFilterRecord? = LegacyStopRouteFilterRecord(
+        stopId = c.str("stop_id") ?: return null,
+        routeId = c.str("route_id") ?: return null
+    )
 
     private companion object {
         val LEGACY_DB_NAME = "${BuildConfig.APPLICATION_ID}.db"

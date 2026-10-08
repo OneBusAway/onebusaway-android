@@ -44,6 +44,8 @@ import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.ServiceAlertRecord
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopHiddenRouteDao
+import org.onebusaway.android.database.oba.StopHiddenRouteRecord
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
 import org.onebusaway.android.database.oba.StopRecentRow
@@ -170,6 +172,29 @@ class DefaultArrivalsRepositoryTest {
         ) {}
     }
 
+    /** An in-memory [StopHiddenRouteDao]. Only the abstract queries are faked: the interface's own
+     *  `replace` / `adoptLegacyFilter` bodies run over them, so the conversion under test is the real one. */
+    private class FakeStopHiddenRouteDao(legacyShown: Map<String, Set<String>> = emptyMap()) : StopHiddenRouteDao {
+        val hidden = mutableMapOf<String, MutableSet<String>>()
+        val legacy = legacyShown.mapValues { it.value.toMutableSet() }.toMutableMap()
+        var legacyReads = 0
+
+        override fun observeHiddenRouteIds(stopId: String): Flow<List<String>> = flowOf(hidden[stopId].orEmpty().toList())
+        override suspend fun insert(rows: List<StopHiddenRouteRecord>) {
+            rows.forEach { hidden.getOrPut(it.stopId) { mutableSetOf() }.add(it.routeId) }
+        }
+        override suspend fun clear(stopId: String) {
+            hidden.remove(stopId)
+        }
+        override suspend fun legacyShownRouteIds(stopId: String): List<String> {
+            legacyReads++
+            return legacy[stopId].orEmpty().toList()
+        }
+        override suspend fun clearLegacy(stopId: String) {
+            legacy.remove(stopId)
+        }
+    }
+
     private object NoopImportGate : ImportGate {
         override suspend fun awaitReady() {}
         override fun start() {}
@@ -205,13 +230,15 @@ class DefaultArrivalsRepositoryTest {
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
         clock: FakeElapsedClock = FakeElapsedClock(),
-        demoMode: FakeDemoModeState = FakeDemoModeState()
+        demoMode: FakeDemoModeState = FakeDemoModeState(),
+        hiddenRoutes: FakeStopHiddenRouteDao = FakeStopHiddenRouteDao()
     ) = DefaultArrivalsRepository(
         regionRepository = FakeRegionRepository(),
         stopArrivals = dataSource,
         serviceAlertDao = FakeServiceAlertDao(),
         stopDao = stopDao,
         routeFavorites = FakeRouteFavorites(),
+        hiddenRoutes = hiddenRoutes,
         importGate = NoopImportGate,
         preferences = FakePreferencesRepository(),
         display = FakeArrivalsDisplay(),
@@ -228,7 +255,8 @@ class DefaultArrivalsRepositoryTest {
         shapeId: String = "shape-A",
         arrivalAt: Long = currentTime + 10 * 60_000L,
         hasArrivals: Boolean = true,
-        minutesAfter: Int = 65
+        minutesAfter: Int = 65,
+        stopRouteIds: List<String> = listOf("route-1")
     ) = StopArrivals(
         data = EntryWithReferences(
             entry = ArrivalsForStop(
@@ -256,7 +284,7 @@ class DefaultArrivalsRepositoryTest {
                         name = "Pine St & 3rd Ave",
                         lat = 47.61,
                         lon = -122.33,
-                        routeIds = listOf("route-1")
+                        routeIds = stopRouteIds
                     )
                 ),
                 routes = listOf(RouteReference(id = "route-1", shortName = "5", agencyId = "agency-1")),
@@ -315,6 +343,62 @@ class DefaultArrivalsRepositoryTest {
         repository.getArrivals(STOP_ID, 65).getOrThrow()
 
         assertEquals(listOf(STOP_ID), stopDao.markStopUsedCalls)
+    }
+
+    @Test
+    fun `the stop's route list and its arrivals' routes together make up the routes it serves`() = runTest {
+        val dataSource = FakeStopArrivalsDataSource()
+        // route-1 arrives but is missing from the stop's own list; route-2 is listed but not arriving.
+        dataSource.respond = { Result.success(snapshot(stopRouteIds = listOf("route-2"))) }
+
+        val data = repository(dataSource).getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(setOf("route-1", "route-2"), data.stopRouteIds)
+    }
+
+    @Test
+    fun `a carried-over allow-list filter becomes the stop's hidden routes on its first fresh load`() = runTest {
+        // A rider updating straight from 26.1.x showed only route-1 at this stop (#2366).
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot(stopRouteIds = listOf("route-1", "route-2", "route-3"))) }
+        val hiddenRoutes = FakeStopHiddenRouteDao(legacyShown = mapOf(STOP_ID to setOf("route-1")))
+        val repository = repository(dataSource, hiddenRoutes = hiddenRoutes)
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(setOf("route-2", "route-3"), hiddenRoutes.hidden[STOP_ID])
+        assertTrue(hiddenRoutes.legacy.isEmpty())
+
+        // Checked once per session, not on every 60s poll.
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+        assertEquals(1, hiddenRoutes.legacyReads)
+    }
+
+    @Test
+    fun `the demo transit system never converts a rider's carried-over filter`() = runTest {
+        // The tour's anchor stop is a real stop id; its fixture routes say nothing about the rider's stop.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.success(snapshot(stopRouteIds = listOf("route-1", "route-2"))) }
+        val hiddenRoutes = FakeStopHiddenRouteDao(legacyShown = mapOf(STOP_ID to setOf("route-9")))
+        val repository = repository(dataSource, demoMode = FakeDemoModeState(true), hiddenRoutes = hiddenRoutes)
+
+        repository.getArrivals(STOP_ID, 65).getOrThrow()
+
+        assertEquals(setOf("route-9"), hiddenRoutes.legacy[STOP_ID])
+        assertEquals(0, hiddenRoutes.legacyReads)
+    }
+
+    @Test
+    fun `a stale fallback doesn't convert a carried-over filter`() = runTest {
+        // The stale path has no fresh route list to convert against; the next fresh load does it.
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.failure(IOException("down")) }
+        val hiddenRoutes = FakeStopHiddenRouteDao(legacyShown = mapOf(STOP_ID to setOf("route-1")))
+        val repository = repository(dataSource, hiddenRoutes = hiddenRoutes)
+
+        repository.getArrivals(STOP_ID, 65)
+
+        assertEquals(0, hiddenRoutes.legacyReads)
     }
 
     @Test

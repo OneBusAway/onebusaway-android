@@ -126,6 +126,8 @@
     <string name="bus_options_menu_show_trip_details">Mostrar el estado del viaje</string>
     <string name="bus_options_menu_set_reminder">Adicionar un recordatorio</string>
     <string name="bus_options_menu_show_route_schedule">Mostrar el horario de la ruta</string>
+    <string name="bus_options_menu_show_only_this_route">Mostrar solamente esta ruta</string>
+    <string name="bus_options_menu_show_all_routes">Mostrar todas las rutas</string>
     <string name="bus_options_menu_report_trip_problem">Reportar un problema con el viaje</string>
 
     <!--  Stop Info -->

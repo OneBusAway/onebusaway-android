@@ -78,12 +78,13 @@ class ArrivalsViewModel @AssistedInject constructor(
         combine(
             loaded,
             repository.alertHideState(),
-            repository.favoriteRouteIds(),
+            // Paired only to stay within combine's five typed sources; both are per-route overlays.
+            combine(repository.favoriteRouteIds(), repository.hiddenRouteIds(stopId), ::Pair),
             trackedRoutes.trackedKeys,
             fatalError
-        ) { data, hideState, favoriteRouteIds, trackedRows, error ->
+        ) { data, hideState, (favoriteRouteIds, hiddenRouteIds), trackedRows, error ->
             when {
-                data != null -> data.toContent(hideState, favoriteRouteIds, trackedRows)
+                data != null -> data.toContent(hideState, favoriteRouteIds, hiddenRouteIds, trackedRows)
                 error != null -> ArrivalsUiState.Error(error)
                 else -> ArrivalsUiState.Loading
             }
@@ -189,6 +190,26 @@ class ArrivalsViewModel @AssistedInject constructor(
         }
     }
 
+    /** "Show only this route" (#2366): hides every other route the stop serves. */
+    fun showOnlyRoute(routeId: String) {
+        val content = state.value as? ArrivalsUiState.Content ?: return
+        setHiddenRoutes(content.stopRouteIds - routeId)
+    }
+
+    /** "Hide this route" (#2366): adds [routeId] to the routes hidden at this stop. */
+    fun hideRoute(routeId: String) {
+        val content = state.value as? ArrivalsUiState.Content ?: return
+        setHiddenRoutes(content.hiddenRouteIds + routeId)
+    }
+
+    /** "Show all routes" (#2366): clears this stop's route filter. */
+    fun showAllRoutes() = setHiddenRoutes(emptySet())
+
+    /** No reload — the board re-filters reactively from [ArrivalsRepository.hiddenRouteIds]. */
+    private fun setHiddenRoutes(routeIds: Set<String>) {
+        viewModelScope.launch { repository.setHiddenRoutes(stopId, routeIds) }
+    }
+
     /** Hides every currently active alert (the alerts dialog's "hide alerts" action). The reactive
      *  [state] picks up the write with no refresh. */
     fun hideAllAlerts() {
@@ -240,6 +261,7 @@ class ArrivalsViewModel @AssistedInject constructor(
     private fun ArrivalsData.toContent(
         hideState: AlertHideState,
         favoriteRouteIds: Set<String>,
+        hiddenRouteIds: Set<String>,
         trackedRows: Set<TrackedRouteKey>
     ): ArrivalsUiState.Content {
         val shown = activeAlerts.filterNot { hideState.isHidden(it, hideAlertsByDefault) }
@@ -260,7 +282,11 @@ class ArrivalsViewModel @AssistedInject constructor(
             hiddenAlertCount = hiddenCount,
             stopCode = stopCode,
             stopLat = stopLat,
-            stopLon = stopLon
+            stopLon = stopLon,
+            stopRouteIds = stopRouteIds,
+            // Only routes the stop still serves: a stored id it no longer serves hides nothing, and
+            // counting it would announce a hidden route the rider can't find.
+            hiddenRouteIds = hiddenRouteIds intersect stopRouteIds
         )
     }
 }

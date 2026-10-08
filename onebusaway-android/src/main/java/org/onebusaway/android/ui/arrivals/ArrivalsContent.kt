@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeOut
@@ -128,6 +129,27 @@ internal fun rememberArrivalRowCallbacks(
 }
 
 /**
+ * The arrivals board's per-stop route filter (#2366): the row menu's "show only this route" / "hide
+ * this route" / "show all routes", and the hidden-routes line's "show all routes". Pure ViewModel
+ * operations, so they bypass [ArrivalActionHandler].
+ */
+class RouteFilterCallbacks(
+    val onShowOnly: (routeId: String) -> Unit,
+    val onHide: (routeId: String) -> Unit,
+    val onShowAll: () -> Unit
+)
+
+/** The route-filter callbacks over [viewModel]'s filter actions. */
+@Composable
+internal fun rememberRouteFilterCallbacks(viewModel: ArrivalsViewModel): RouteFilterCallbacks = remember(viewModel) {
+    RouteFilterCallbacks(
+        onShowOnly = viewModel::showOnlyRoute,
+        onHide = viewModel::hideRoute,
+        onShowAll = viewModel::showAllRoutes
+    )
+}
+
+/**
  * Navigation/dialog actions for the arrivals screen, implemented by the host activity (it has the
  * Context the targets need). The route-filter and alert hide/show actions are pure
  * ViewModel operations and so are passed as plain lambdas, not through this handler.
@@ -196,17 +218,23 @@ internal fun ArrivalsList(
     anchors: ArrivalRowAnchors = ArrivalRowAnchors(),
     displayMode: ArrivalDisplayMode = ArrivalDisplayMode.ROUTE,
     onDisplayModeChange: ((ArrivalDisplayMode) -> Unit)? = null,
-    modeSwitchModifier: Modifier = Modifier
+    modeSwitchModifier: Modifier = Modifier,
+    /** The stop's route-filter actions (#2366): the row menu's filter items and the hidden-routes line's
+     *  "show all routes". The board hides [ArrivalsUiState.Content.hiddenRouteIds] either way — a host
+     *  without these can't change the filter, but never ignores it. */
+    routeFilter: RouteFilterCallbacks? = null
 ) {
     val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {
         resolveSelectedRouteGroupKey(content.routeGroups, selectedRowKey, selectedRouteId)
     }
-    val displayedGroups = remember(content.arrivals, content.routeGroups, effectiveSelectedRowKey, displayMode) {
-        if (displayMode == ArrivalDisplayMode.TIME) {
+    val hiddenRouteIds = content.hiddenRouteIds
+    val displayedGroups = remember(content.arrivals, content.routeGroups, effectiveSelectedRowKey, displayMode, hiddenRouteIds) {
+        val groups = if (displayMode == ArrivalDisplayMode.TIME) {
             chronologicalArrivals(content.arrivals).map { RouteRowGroup(listOf(it)) }
         } else {
             promoteSelectedRouteGroup(content.routeGroups, effectiveSelectedRowKey)
         }
+        visibleRouteGroups(groups, hiddenRouteIds, effectiveSelectedRowKey)
     }
     var previousMode by rememberSaveable { mutableStateOf(displayMode) }
     LaunchedEffect(displayMode) {
@@ -225,7 +253,8 @@ internal fun ArrivalsList(
             val directionBeforeRoutes = showDirection && content.header.direction != null
             val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
                 (if (directionBeforeRoutes) 1 else 0) +
-                (if (onDisplayModeChange != null) 1 else 0)
+                (if (onDisplayModeChange != null) 1 else 0) +
+                (if (hiddenRouteIds.isNotEmpty()) 1 else 0)
             listState.scrollToItem(firstRouteIndex)
         }
     }
@@ -255,6 +284,18 @@ internal fun ArrivalsList(
                 item(key = "direction") { DirectionLine(direction) }
             }
         }
+        if (hiddenRouteIds.isNotEmpty()) {
+            // Above the rows rather than in the footer, so a filtered board says so even in the peek.
+            item(key = "hidden-routes") {
+                HiddenItemsFootnote(
+                    iconRes = R.drawable.ic_filter_list,
+                    text = pluralStringResource(R.plurals.stop_info_hidden_routes, hiddenRouteIds.size, hiddenRouteIds.size),
+                    actionLabel = stringResource(R.string.bus_options_menu_show_all_routes).takeIf { routeFilter != null },
+                    onClick = routeFilter?.onShowAll,
+                    modifier = Modifier.animateItem()
+                )
+            }
+        }
         if (displayedGroups.isEmpty()) {
             item(key = "empty") { EmptyArrivals(content.minutesAfter) }
         } else {
@@ -275,6 +316,12 @@ internal fun ArrivalsList(
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     anchors = if (index == 0) anchors else ArrivalRowAnchors(),
                     tracked = group.representative.trackedRouteKey() in content.trackedRows,
+                    // Remembered so an unchanged row keeps the same instance and can still skip recomposition.
+                    routeFilter = routeFilter?.let {
+                        remember(it, group.routeId, content.stopRouteIds, hiddenRouteIds) {
+                            it.forRoute(group.routeId, content.stopRouteIds, hiddenRouteIds)
+                        }
+                    },
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()
                 )
@@ -328,31 +375,47 @@ private fun LoadMoreFooter(windowEnd: ServerTime, loading: Boolean, onClick: () 
 }
 
 /**
- * A muted, secondary footnote (not a peer to the alert list's "more" button): the eye-off icon
- * conveys "hidden", tapping reveals the [count] user-hidden alerts again.
+ * A muted, secondary footnote (not a peer to the list's own buttons) saying how many of something the
+ * rider has hidden — [text], e.g. "2 hidden alerts" or "2 routes hidden" (#2366) — with tapping it
+ * ([onClick]) bringing them back. [actionLabel], when given, names that tap at the line's end. The
+ * board's two hidden-things lines share it, so they look and respond alike.
  */
 @Composable
-private fun HiddenAlertsRow(count: Int, onShowHiddenAlerts: () -> Unit) {
+private fun HiddenItemsFootnote(
+    @DrawableRes iconRes: Int,
+    text: String,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .clickable(onClick = onShowHiddenAlerts)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_visibility_off),
+            painter = painterResource(iconRes),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp)
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = pluralStringResource(R.plurals.alert_filter_text, count, count),
+            text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
         )
+        if (actionLabel != null) {
+            Text(
+                text = actionLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
@@ -376,7 +439,12 @@ internal fun ServiceAlertsContent(
             AlertList(alerts, onShowAlert, onHideAlert)
         }
         if (hiddenAlertCount > 0) {
-            HiddenAlertsRow(hiddenAlertCount, onShowHiddenAlerts)
+            // The eye-off icon conveys "hidden"; tapping reveals the user-hidden alerts again.
+            HiddenItemsFootnote(
+                iconRes = R.drawable.ic_visibility_off,
+                text = pluralStringResource(R.plurals.alert_filter_text, hiddenAlertCount, hiddenAlertCount),
+                onClick = onShowHiddenAlerts
+            )
         }
     }
 }

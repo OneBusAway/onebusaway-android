@@ -87,6 +87,8 @@
     <string name="bus_options_menu_show_trip_details">Mostra stato viaggio</string>
     <string name="bus_options_menu_set_reminder">Imposta un promemoria</string>
     <string name="bus_options_menu_show_route_schedule">Mostra orario linea</string>
+    <string name="bus_options_menu_show_only_this_route">Mostra solo questa linea</string>
+    <string name="bus_options_menu_show_all_routes">Mostra tutte le linee</string>
     <string name="bus_options_menu_report_trip_problem">Segnala problema con orario d’arrivo</string>
 
     <!--  Stop Info -->

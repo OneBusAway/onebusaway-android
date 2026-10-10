@@ -102,7 +102,7 @@ fun ArrivalsPanel(
             contentPadding = PaddingValues(bottom = navBarInset),
             // The onboarding spotlight anchors on the first route row.
             anchors = anchors,
-            routeFilter = rememberRouteFilterCallbacks(viewModel)
+            routeFilter = rememberRouteFilterCallbacks(viewModel, handler)
         )
     }
 }

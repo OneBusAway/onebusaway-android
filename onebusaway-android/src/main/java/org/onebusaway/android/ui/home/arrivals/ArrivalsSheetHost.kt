@@ -42,6 +42,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.UndoSnackbarVisuals
 import org.onebusaway.android.ui.arrivals.arrivalDisplayDefault
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowAnchors
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
@@ -93,7 +94,7 @@ internal fun rememberArrivalsSession(
     revealRoute: (ArrivalInfo, ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
+    showUndoSnackbar: (visuals: UndoSnackbarVisuals, onAction: (() -> Unit)?) -> Unit
 ): ArrivalsSession? {
     val stop = focusedStop ?: return null
     return key(stop.id) {
@@ -121,9 +122,7 @@ internal fun rememberArrivalsSession(
                 viewModel = viewModel,
                 currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
                 revealRoute = { arrival, request -> showRouteState.value(arrival, request) },
-                showUndoSnackbar = { messageRes, actionRes, onAction ->
-                    undoSnackbarState.value(messageRes, actionRes, onAction)
-                },
+                showUndoSnackbar = { visuals, onAction -> undoSnackbarState.value(visuals, onAction) },
                 onShowTrip = { tripId, stopId -> showTripState.value(tripId, stopId) },
                 onEditReminder = { args -> editReminderState.value(args) }
             )

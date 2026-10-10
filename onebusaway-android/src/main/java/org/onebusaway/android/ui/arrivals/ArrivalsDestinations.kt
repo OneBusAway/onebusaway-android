@@ -28,15 +28,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +52,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
@@ -120,22 +116,14 @@ private fun ArrivalsBoard(
     )
     val activity = context.findActivity()
     val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val undoSnackbar = rememberUndoSnackbar(snackbar)
     val handler = remember(viewModel, navController) {
         createArrivalActionHandler(
             activity = activity,
             viewModel = viewModel,
             currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
             revealRoute = { _, request -> navController.showRouteMapFromArrivals(request) },
-            showUndoSnackbar = { message, action, undo ->
-                scope.launch {
-                    if (snackbar.showSnackbar(activity.getString(message), action?.let(activity::getString)) ==
-                        SnackbarResult.ActionPerformed
-                    ) {
-                        undo?.invoke()
-                    }
-                }
-            },
+            showUndoSnackbar = undoSnackbar::show,
             onShowTrip = { trip, stop ->
                 navController.navigate(NavRoutes.tripDetails(trip, stop, TripDetailsLauncher.SCROLL_MODE_STOP))
             },
@@ -163,7 +151,7 @@ private fun ArrivalsBoard(
 
     Scaffold(
         modifier = Modifier.testTag("arrivals_board"),
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { UndoSnackbarHost(snackbar) },
         topBar = {
             SearchableTopAppBar(
                 title = title,
@@ -239,7 +227,7 @@ private fun ArrivalsBoard(
                     displayMode = displayMode,
                     onDisplayModeChange = { displayMode = it },
                     modeSwitchModifier = Modifier.padding(top = 3.dp, end = 3.dp),
-                    routeFilter = rememberRouteFilterCallbacks(viewModel)
+                    routeFilter = rememberRouteFilterCallbacks(viewModel, handler)
                 )
             }
         }

@@ -39,10 +39,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxDefaults
+import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,8 +51,10 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
 import org.onebusaway.android.models.RouteDirectionKey
@@ -130,8 +134,9 @@ internal fun rememberArrivalRowCallbacks(
 
 /**
  * The arrivals board's per-stop route filter (#2366): the row menu's "show only this route" / "hide
- * this route" / "show all routes", and the hidden-routes line's "show all routes". Pure ViewModel
- * operations, so they bypass [ArrivalActionHandler].
+ * this route" / "show all routes" (hide is also a right swipe on the row), and the hidden-routes line's
+ * "show all routes". Hide goes through [ArrivalActionHandler.onHideRoute] for its undo snackbar; the
+ * rest are pure ViewModel operations.
  */
 class RouteFilterCallbacks(
     val onShowOnly: (routeId: String) -> Unit,
@@ -139,19 +144,22 @@ class RouteFilterCallbacks(
     val onShowAll: () -> Unit
 )
 
-/** The route-filter callbacks over [viewModel]'s filter actions. */
+/** The route-filter callbacks over [viewModel]'s filter actions, with hide via [handler] (#2366). */
 @Composable
-internal fun rememberRouteFilterCallbacks(viewModel: ArrivalsViewModel): RouteFilterCallbacks = remember(viewModel) {
+internal fun rememberRouteFilterCallbacks(
+    viewModel: ArrivalsViewModel,
+    handler: ArrivalActionHandler
+): RouteFilterCallbacks = remember(viewModel, handler) {
     RouteFilterCallbacks(
         onShowOnly = viewModel::showOnlyRoute,
-        onHide = viewModel::hideRoute,
+        onHide = handler::onHideRoute,
         onShowAll = viewModel::showAllRoutes
     )
 }
 
 /**
  * Navigation/dialog actions for the arrivals screen, implemented by the host activity (it has the
- * Context the targets need). The route-filter and alert hide/show actions are pure
+ * Context the targets need). The alert hide/show actions and most of the route filter are pure
  * ViewModel operations and so are passed as plain lambdas, not through this handler.
  */
 interface ArrivalActionHandler {
@@ -173,6 +181,10 @@ interface ArrivalActionHandler {
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)
     fun onHideAlert(alert: AlertItem)
+
+    /** Hides [routeId] at this stop (#2366) — the row menu's "Hide this route" or a right swipe — and
+     *  offers an undo snackbar, which needs the host's snackbar. */
+    fun onHideRoute(routeId: String)
     fun onReportStopProblem()
 }
 
@@ -290,8 +302,9 @@ internal fun ArrivalsList(
                 HiddenItemsFootnote(
                     iconRes = R.drawable.ic_filter_list,
                     text = pluralStringResource(R.plurals.stop_info_hidden_routes, hiddenRouteIds.size, hiddenRouteIds.size),
-                    actionLabel = stringResource(R.string.bus_options_menu_show_all_routes).takeIf { routeFilter != null },
-                    onClick = routeFilter?.onShowAll,
+                    action = routeFilter?.let {
+                        FootnoteAction(stringResource(R.string.bus_options_menu_show_all_routes), it.onShowAll)
+                    },
                     modifier = Modifier.animateItem()
                 )
             }
@@ -302,29 +315,38 @@ internal fun ArrivalsList(
             itemsIndexed(displayedGroups, key = { _, group -> if (displayMode == ArrivalDisplayMode.TIME) group.representative.arrivalRowKey() else group.key }) { index, group ->
                 // Route selection highlights its group, or each matching departure in Time mode.
                 val isSelectedRow = group.key == effectiveSelectedRowKey
-                RouteArrivalRow(
-                    group = group,
-                    chronological = displayMode == ArrivalDisplayMode.TIME,
-                    actionsFor = { content.actions[it.tripId] },
-                    isFavorite = group.routeId in content.favoriteRouteIds,
-                    callbacks = rowCallbacks,
-                    mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
-                    selectedTripBandColor = selectedTripBandColor,
-                    selected = isSelectedRow,
-                    selectedRouteNames = if (isSelectedRow) selectedRouteNames else emptyList(),
-                    selectedTripId = selectedTripId.takeIf { isSelectedRow },
-                    // The onboarding ETA spotlight anchors on the first route row's pill only.
-                    anchors = if (index == 0) anchors else ArrivalRowAnchors(),
-                    tracked = group.representative.trackedRouteKey() in content.trackedRows,
-                    // Remembered so an unchanged row keeps the same instance and can still skip recomposition.
-                    routeFilter = routeFilter?.let {
-                        remember(it, group.routeId, content.stopRouteIds, hiddenRouteIds) {
-                            it.forRoute(group.routeId, content.stopRouteIds, hiddenRouteIds)
-                        }
-                    },
+                // Remembered so an unchanged row keeps the same instance and can still skip recomposition.
+                val filterActions = routeFilter?.let {
+                    remember(it, group.routeId, content.stopRouteIds, hiddenRouteIds) {
+                        it.forRoute(group.routeId, content.stopRouteIds, hiddenRouteIds)
+                    }
+                }
+                // A right swipe is the row menu's "Hide this route" (#2366), offered exactly where that
+                // item is — never on the last route showing. Always wrapped, only toggled, so a row that
+                // gains or loses the swipe keeps its state. Swipes that start on the ETA pills scroll
+                // the strip instead; the badge and headsign are the grip.
+                SwipeToHide(
+                    onHide = filterActions?.onHide,
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()
-                )
+                ) {
+                    RouteArrivalRow(
+                        group = group,
+                        chronological = displayMode == ArrivalDisplayMode.TIME,
+                        actionsFor = { content.actions[it.tripId] },
+                        isFavorite = group.routeId in content.favoriteRouteIds,
+                        callbacks = rowCallbacks,
+                        mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
+                        selectedTripBandColor = selectedTripBandColor,
+                        selected = isSelectedRow,
+                        selectedRouteNames = if (isSelectedRow) selectedRouteNames else emptyList(),
+                        selectedTripId = selectedTripId.takeIf { isSelectedRow },
+                        // The onboarding ETA spotlight anchors on the first route row's pill only.
+                        anchors = if (index == 0) anchors else ArrivalRowAnchors(),
+                        tracked = group.representative.trackedRouteKey() in content.trackedRows,
+                        routeFilter = filterActions
+                    )
+                }
             }
         }
         item(key = "load_more") {
@@ -367,7 +389,7 @@ private fun LoadMoreFooter(windowEnd: ServerTime, loading: Boolean, onClick: () 
         TextButton(
             onClick = onClick,
             enabled = !loading,
-            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+            contentPadding = COMPACT_LINK_PADDING
         ) {
             Text(stringResource(R.string.stop_info_load_more))
         }
@@ -376,17 +398,20 @@ private fun LoadMoreFooter(windowEnd: ServerTime, loading: Boolean, onClick: () 
 
 /**
  * A muted, secondary footnote (not a peer to the list's own buttons) saying how many of something the
- * rider has hidden — [text], e.g. "2 hidden alerts" or "2 routes hidden" (#2366) — with tapping it
- * ([onClick]) bringing them back. [actionLabel], when given, names that tap at the line's end. The
- * board's two hidden-things lines share it, so they look and respond alike.
+ * rider has hidden — [text], e.g. "2 hidden alerts" or "2 routes hidden" (#2366) — and offering to bring
+ * them back ([onClick]). The board's two hidden-things lines share it, so they look alike.
+ *
+ * With an [action], only its label is the tap target, a text button right after the count: the count
+ * is a statement, and making it tappable too suggests it opens some way to manage what's hidden, when
+ * the tap only ever does what the label says. Without one, [onClick] makes the whole line the target.
  */
 @Composable
 private fun HiddenItemsFootnote(
     @DrawableRes iconRes: Int,
     text: String,
-    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    actionLabel: String? = null
+    onClick: (() -> Unit)? = null,
+    action: FootnoteAction? = null
 ) {
     Row(
         modifier = modifier
@@ -407,17 +432,25 @@ private fun HiddenItemsFootnote(
             text = text,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+            // Shrinks rather than pushing the action off the line, but doesn't fill it: the action sits
+            // beside the count, not at the far end.
+            modifier = Modifier.weight(1f, fill = action == null)
         )
-        if (actionLabel != null) {
-            Text(
-                text = actionLabel,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+        if (action != null) {
+            Spacer(Modifier.width(8.dp))
+            // Compact like the list's "load more" button, so it reads as a link on a footnote.
+            TextButton(onClick = action.onClick, contentPadding = COMPACT_LINK_PADDING) {
+                Text(action.label, style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }
+
+/** A [HiddenItemsFootnote]'s own tap target: [label], doing [onClick]. */
+private class FootnoteAction(val label: String, val onClick: () -> Unit)
+
+/** The board's compact text buttons ("load more", a footnote's action), which read as links. */
+private val COMPACT_LINK_PADDING = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
 
 /**
  * The stop's service alerts, capped at [ALERT_PAGE_SIZE] rows with a paged "show more" link that
@@ -490,30 +523,32 @@ private fun AlertList(
 /**
  * Wraps [content] so a right-swipe (start-to-end) slides it fully off, then collapses the empty
  * space, invoking [onHide] once the collapse finishes (so the list below glides up instead of
- * jumping). Left-swipe is disabled, and there's no swipe-behind affordance — a hidden alert is
- * recovered from the "show hidden alerts" link below the list.
+ * jumping). Left-swipe is disabled, and there's no swipe-behind affordance — a hidden alert or route
+ * is recovered from the "show hidden" line on the board. A null [onHide] disables the swipe.
  */
 @Composable
-private fun SwipeToHide(onHide: () -> Unit, content: @Composable () -> Unit) {
-    // Which swipe directions are allowed is expressed by the box's enableDismissFromStartToEnd /
-    // enableDismissFromEndToStart flags below (the modern "leave disallowed anchors out" approach),
-    // replacing the deprecated confirmValueChange veto callback.
-    val dismissState = rememberSwipeToDismissBoxState()
+internal fun SwipeToHide(onHide: (() -> Unit)?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    // Deliberately not rememberSwipeToDismissBoxState, which is rememberSaveable: a lazy list keeps a
+    // row's saved state under its key, so a row brought back by an undo would return already swiped and
+    // hide itself again — and every row key that ever scrolled by would leave an entry behind.
+    val threshold = SwipeToDismissBoxDefaults.positionalThreshold
+    val dismissState = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, threshold) }
     val rowVisible = remember { MutableTransitionState(true) }
-    // Once the row settles in the dismissed position, start the collapse.
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
-            rowVisible.targetState = false
-        }
+    val currentOnHide by rememberUpdatedState(onHide)
+    // Once the row settles in the dismissed position, collapse it; commit the hide only after the
+    // collapse has fully finished.
+    LaunchedEffect(dismissState) {
+        snapshotFlow { dismissState.currentValue }.first { it == SwipeToDismissBoxValue.StartToEnd }
+        rowVisible.targetState = false
+        snapshotFlow { rowVisible.isIdle }.first { it }
+        currentOnHide?.invoke()
     }
-    // Commit the hide only after the collapse animation has fully finished.
-    LaunchedEffect(rowVisible.isIdle) {
-        if (rowVisible.isIdle && !rowVisible.currentState) onHide()
-    }
-    AnimatedVisibility(visibleState = rowVisible, exit = fadeOut() + shrinkVertically()) {
+    AnimatedVisibility(visibleState = rowVisible, modifier = modifier, exit = fadeOut() + shrinkVertically()) {
+        // Which swipe directions are allowed is expressed by the enableDismissFrom… flags (the modern
+        // "leave disallowed anchors out" approach), replacing the deprecated confirmValueChange veto.
         SwipeToDismissBox(
             state = dismissState,
-            enableDismissFromStartToEnd = true,
+            enableDismissFromStartToEnd = onHide != null,
             enableDismissFromEndToStart = false,
             // No swipe-behind content: the row slides off into empty space.
             backgroundContent = {}

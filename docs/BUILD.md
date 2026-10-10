@@ -21,24 +21,24 @@ If you want more info about building the other brands, please see the [Rebrandin
 ### Prerequisites for both Android Studio and Gradle
 
 1. Clone this repository
-1. Install [Java Development Kit (JDK)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+2. Install [Java Development Kit (JDK)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
 ### Building in Android Studio
 
 1. Download, install, and run the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
-1. At the welcome screen select `Open`, browse to the location of this repository and select it then select Ok.
-1. Open the Android SDK Manager (Tools->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts)) then select OK.
-1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Device Manager).
-1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
-1. Click the green play button (or Alt+Shift+F10) to build and run the project!
+2. At the welcome screen select `Open`, browse to the location of this repository and select it then select Ok.
+3. Open the Android SDK Manager (Tools->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts)) then select OK.
+4. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Device Manager).
+5. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
+6. Click the green play button (or Alt+Shift+F10) to build and run the project!
 
 ### Building from the command line using Gradle
 
 1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
-1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
-1. Set the `ANDROID_HOME` environment variable to your Android SDK location.
-1. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project.
-1. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app).
+2. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
+3. Set the `ANDROID_HOME` environment variable to your Android SDK location.
+4. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project.
+5. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app).
 
 ### Configuration Pelias API key for geocoding
 

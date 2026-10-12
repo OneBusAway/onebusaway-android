@@ -454,6 +454,11 @@
     <string name="alert_hidden_snackbar_text">Alert is now hidden</string>
     <string name="all_alert_hidden_snackbar_text">All alerts are now hidden</string>
     <string name="alert_hidden_snackbar_action">UNDO</string>
+    <!-- After hiding a route from a stop's arrivals board (#2366), by swipe or the row menu; the action
+         reuses alert_hidden_snackbar_action ("UNDO"). %1$s is the route's short name, e.g. "44". -->
+    <string name="route_hidden_named_snackbar_text">Route <xliff:g id="route_short_name">%1$s</xliff:g> arrivals hidden</string>
+    <!-- The same, for a route whose feed gives no short name. -->
+    <string name="route_hidden_snackbar_text">Route hidden</string>
     <plurals name="alert_filter_text">
         <item quantity="one">%1$d hidden alert</item>
         <item quantity="other"><xliff:g id="count">%1$d</xliff:g> hidden alerts</item>

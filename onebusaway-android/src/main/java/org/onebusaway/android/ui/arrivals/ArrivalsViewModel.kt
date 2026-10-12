@@ -202,6 +202,12 @@ class ArrivalsViewModel @AssistedInject constructor(
         setHiddenRoutes(content.hiddenRouteIds + routeId)
     }
 
+    /** Undoes a [hideRoute] (#2366): takes [routeId] back out of the routes hidden at this stop. */
+    fun unhideRoute(routeId: String) {
+        val content = state.value as? ArrivalsUiState.Content ?: return
+        setHiddenRoutes(content.hiddenRouteIds - routeId)
+    }
+
     /** "Show all routes" (#2366): clears this stop's route filter. */
     fun showAllRoutes() = setHiddenRoutes(emptySet())
 

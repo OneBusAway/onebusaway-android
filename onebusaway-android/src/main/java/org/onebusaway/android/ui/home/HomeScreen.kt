@@ -40,9 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -81,7 +79,9 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.StopLauncher
+import org.onebusaway.android.ui.arrivals.UndoSnackbarHost
 import org.onebusaway.android.ui.arrivals.components.etaPillFocus
+import org.onebusaway.android.ui.arrivals.rememberUndoSnackbar
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
@@ -318,6 +318,7 @@ fun HomeScreen(
                     mapViewModel.setCenterPickActive(pickTarget != null)
                 }
                 val snackbarHostState = remember { SnackbarHostState() }
+                val undoSnackbar = rememberUndoSnackbar(snackbarHostState)
                 // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
                 // My-tab lists, via rememberListVm) so MapTopChrome stays a pure, VM-free chrome composable;
                 // empty until it resolves.
@@ -468,16 +469,7 @@ fun HomeScreen(
                     },
                     onShowTrip = onShowTrip,
                     onEditReminder = onEditReminder,
-                    showUndoSnackbar = { messageRes, actionRes, onAction ->
-                        scope.launch {
-                            val result = snackbarHostState.showSnackbar(
-                                message = resources.getString(messageRes),
-                                actionLabel = actionRes?.let { resources.getString(it) },
-                                duration = SnackbarDuration.Short
-                            )
-                            if (result == SnackbarResult.ActionPerformed) onAction?.invoke()
-                        }
-                    }
+                    showUndoSnackbar = undoSnackbar::show
                 )
                 val arrivalsState = arrivalsSession?.viewModel?.state
                     ?.collectAsStateWithLifecycle()?.value ?: ArrivalsUiState.Loading
@@ -501,7 +493,7 @@ fun HomeScreen(
                     revealRoute = { _, request -> homeViewModel.focusDirectionsRouteVehicleInFocusedLeg(request) },
                     onShowTrip = onShowTrip,
                     onEditReminder = onEditReminder,
-                    showUndoSnackbar = { _, _, _ -> }
+                    showUndoSnackbar = { _, _ -> }
                 )
                 // Reduced to the map's own shape here rather than in the view model, which stays free of
                 // UI types (an ArrivalInfo needs a Context to build, which is what keeps HomeViewModel's
@@ -691,7 +683,7 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxSize(),
                             scaffoldState = scaffoldState,
                             snackbarHost = {
-                                SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
+                                UndoSnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
                             },
                             // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
                             sheetPeekHeight = visiblePeekDp,

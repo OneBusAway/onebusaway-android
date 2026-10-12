@@ -536,9 +536,10 @@ internal fun SwipeToHide(onHide: (() -> Unit)?, modifier: Modifier = Modifier, c
     val rowVisible = remember { MutableTransitionState(true) }
     val currentOnHide by rememberUpdatedState(onHide)
     // Once the row settles in the dismissed position, collapse it; commit the hide only after the
-    // collapse has fully finished.
+    // collapse has fully finished. settledValue, not currentValue: currentValue tracks the nearest
+    // anchor mid-drag, so a swipe dragged past halfway and pulled back before release would hide the row.
     LaunchedEffect(dismissState) {
-        snapshotFlow { dismissState.currentValue }.first { it == SwipeToDismissBoxValue.StartToEnd }
+        snapshotFlow { dismissState.settledValue }.first { it == SwipeToDismissBoxValue.StartToEnd }
         rowVisible.targetState = false
         snapshotFlow { rowVisible.isIdle }.first { it }
         currentOnHide?.invoke()

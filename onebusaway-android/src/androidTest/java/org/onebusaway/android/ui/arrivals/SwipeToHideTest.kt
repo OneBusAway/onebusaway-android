@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
@@ -36,10 +37,10 @@ import org.junit.runner.RunWith
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
- * A row hidden by a swipe and brought back by an undo must stay back (#2366). [SwipeToHide]'s swipe
- * state is rememberSaveable, and a lazy list restores saved state under the item's key — so unless
- * the swipe is settled before the hide, the returning row comes back already swiped and hides itself
- * again before it finishes appearing.
+ * [SwipeToHide] hides a row only on a swipe that ends dismissed (#2366): a drag past the threshold
+ * that's pulled back before release must leave it alone, and a row hidden by a swipe and brought back
+ * by an undo must stay back — a lazy list restores saveable state under the item's key, so a saved
+ * swipe state would bring the row back already swiped, and it would hide itself again.
  */
 @RunWith(AndroidJUnit4::class)
 class SwipeToHideTest {
@@ -74,6 +75,36 @@ class SwipeToHideTest {
         compose.waitForIdle()
 
         assertEquals("the returning row must not hide itself again", 1, hides)
+        compose.onNodeWithTag("a").assertIsDisplayed()
+    }
+
+    @Test
+    fun dragPastThresholdThenBackDoesNotHide() {
+        val rows = mutableStateListOf("a", "b")
+        var hides = 0
+        compose.setContent {
+            LazyColumn {
+                items(rows, key = { it }) { row ->
+                    SwipeToHide(onHide = {
+                        hides++
+                        rows.remove(row)
+                    }) {
+                        Text(row, Modifier.fillMaxWidth().height(64.dp).testTag(row))
+                    }
+                }
+            }
+        }
+
+        // Well past the halfway threshold, then all the way back, then release.
+        compose.onNodeWithTag("a").performTouchInput {
+            down(centerLeft)
+            moveBy(Offset(width * 0.8f, 0f))
+            moveBy(Offset(-width * 0.8f, 0f))
+            up()
+        }
+        compose.waitForIdle()
+
+        assertEquals("a swipe pulled back before release must not hide the row", 0, hides)
         compose.onNodeWithTag("a").assertIsDisplayed()
     }
 }

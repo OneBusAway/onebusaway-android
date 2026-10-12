@@ -19,7 +19,8 @@ The below system architecture diagrams come from [this Google Drawing](https://d
 
 The simplest way to get started is to deploy a OneBusAway server, which will give you estimated arrival times and service alerts in the app.  Here's the basic system architecture diagram for this configuration:
 
-![onebusaway system architecture-basic](https://user-images.githubusercontent.com/928045/32296017-5dd339e4-bf21-11e7-962c-327cf071b5ba.png)
+![onebusaway system architecture-basic](https://user-images.githubusercontent.com/928045/32296017-5dd339e4-bf21-11e7-962c-327cf071b5ba.png#gh-light-mode-only)
+![onebusaway system architecture-basic](https://github.com/user-attachments/assets/037712c9-0d4d-4a09-825e-982fc24fff90#gh-dark-mode-only)
 
 ## Add trip planning and/or bike share *(Optional)*
 

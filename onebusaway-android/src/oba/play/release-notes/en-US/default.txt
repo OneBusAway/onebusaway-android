@@ -1,6 +1,7 @@
 • Bold new look for a bold new era
 • Arrivals are now grouped by route
 • “Show only this route” is back: long-press a route at a stop
+• Swipe a route right to hide it at a stop
 • Micromobility added to the bike overlay
 • Tap a stop to see its routes
 • Zoom in to see nearby routes

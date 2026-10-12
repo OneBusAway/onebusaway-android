@@ -34,7 +34,7 @@ If you want to add trip planning and/or bike share information, you'll need to s
 If you use an issue management system that supports the Open311 standard, you can have OneBusAway Android submit problem reports to this system, including metadata from the stop/trip they are reporting the problem about as well as an attached picture.  See [this presentation](https://www.slideshare.net/sjbarbeau/2017-seeclickfix-workshop-closing-the-loop-improving-transit-through-crowdsourced-information) for details about the enhanced issue reporting feature.  Here's the system architecture for a region that's added issue reporting via Open311 (e.g., Tampa Bay):
 
 ![onebusaway system architecture-open311](https://user-images.githubusercontent.com/928045/32296055-721a068a-bf21-11e7-922d-f167118d2390.png#gh-light-mode-only)
-![onebusaway system architecture-open311](https://github.com/user-attachments/assets/5ccd333d-3023-4f32-8590-3115202d0357#gh-dark-mode-only)
+![onebusaway system architecture-open311](https://github.com/user-attachments/assets/c486cabc-8ff5-478e-ad8f-df7ef188f05a#gh-dark-mode-only)
 
 ## Configure your own servers
 

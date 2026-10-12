@@ -21,24 +21,24 @@ If you want more info about building the other brands, please see the [Rebrandin
 ### Prerequisites for both Android Studio and Gradle
 
 1. Clone this repository
-1. Install [Java Development Kit (JDK)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+2. Install [Java Development Kit (JDK)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
 ### Building in Android Studio
 
 1. Download, install, and run the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
-1. At the welcome screen select `Import Project`, browse to the location of this repository and select it then select Ok.
-1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts)) then select OK.
-1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
-1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
-1. Click the green play button (or Alt+Shift+F10) to build and run the project!
+2. At the welcome screen select `Open`, browse to the location of this repository and select it then select Ok.
+3. Open the Android SDK Manager (Tools->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts)) then select OK.
+4. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Device Manager).
+5. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
+6. Click the green play button (or Alt+Shift+F10) to build and run the project!
 
 ### Building from the command line using Gradle
 
 1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
-1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
-1. Set the `ANDROID_HOME` environment variable to your Android SDK location.
-1. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project.
-1. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app).
+2. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
+3. Set the `ANDROID_HOME` environment variable to your Android SDK location.
+4. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project.
+5. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app).
 
 ### Configuration Pelias API key for geocoding
 
@@ -129,7 +129,7 @@ Prior to uploading the app to Google Play, below is the release testing protocol
 3. Download the [latest version available on Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
 4. Launch the app, approve location permissions, ignore tutorial in those popups. Tap on a bus stop and "star" it by tapping on star next to bus stop name. Go to "Starred stops" in the main menu to ensure it saved the stop. This saves something to the database to ensure that data isn't lost in the update.
 5. Install the new APK over the existing APK as an update. I usually upload the new APK to Dropbox, then download to my device using "Export" from the Dropbox app, then using a file manager app to launch it by tapping on it. It will ask you if you want to install as an update, agree.
-6. Openly the newly updated app. Go to "Starred stops" in the main menu and confirm that the stop you starred in the above step is still there.
+6. Open the newly updated app. Go to "Starred stops" in the main menu and confirm that the stop you starred in the above step is still there.
 
 ### Tagging a release on GitHub
 

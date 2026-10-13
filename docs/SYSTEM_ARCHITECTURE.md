@@ -11,7 +11,7 @@ Each region can run one or more servers (details in next section) to add feature
 2. A deployment that adds trip planning and bike share information
 3. A deployment that adds issue reporting via an Open311 server
 
-Note that you can have all three of the above active at once - the Tampa Bay region currently uses all three.
+Note that you can have all three of the above active at once. A region publishes each server in the [Regions API](http://regions.onebusaway.org/regions-v3.json), and not every region runs all three — several have no trip planner at all, and the app hides trip planning there.
 
 The below system architecture diagrams come from [this Google Drawing](https://docs.google.com/drawings/d/1Z4D8n1PPI7U-G1VgYxehsvyGeVBv6mveGTkgfSbKhCo/edit?usp=sharing).
 
@@ -23,7 +23,7 @@ The simplest way to get started is to deploy a OneBusAway server, which will giv
 
 ## Add trip planning and/or bike share *(Optional)*
 
-If you want to add trip planning and/or bike share information, you'll need to set up an OpenTripPlanner server.  See [this article](https://medium.com/@sjbarbeau/bike-share-launches-in-onebusaway-3452c08c0ed) for details about the bike share features.  Here's the system architecture for a region that's added trip planning and bike share information (e.g., Tampa Bay, FL and Puget Sound, Washington):
+If you want to add trip planning and/or bike share information, you'll need to set up an OpenTripPlanner server.  See [this article](https://medium.com/@sjbarbeau/bike-share-launches-in-onebusaway-3452c08c0ed) for details about the bike share features.  Here's the system architecture for a region that's added trip planning and bike share information (e.g., Puget Sound, Washington):
 
 ![onebusaway system architecture-otp](https://user-images.githubusercontent.com/928045/32296042-69aa4726-bf21-11e7-8123-1f80c17fee4c.png)
 

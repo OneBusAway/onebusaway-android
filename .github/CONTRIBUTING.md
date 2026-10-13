@@ -33,6 +33,42 @@ first. The one-time bulk reformat is listed in `.git-blame-ignore-revs`; enable 
 `git config blame.ignoreRevsFile .git-blame-ignore-revs` so `git blame` skips it (GitHub does this
 automatically).
 
+## Before you open a pull request
+
+```bash
+./gradlew spotlessApply                                # format
+./gradlew test check -x lint -PwarningsAsErrors=true   # CI's host-side checks
+```
+
+CI also runs `./gradlew connectedObaGoogleDebugAndroidTest` on an emulator for every PR. For UI or
+device-dependent changes, run it yourself on a device or emulator first.
+
+CI is stricter than a plain local build:
+
+* **Kotlin warnings are errors.** Fix them at the source. A `@Suppress` needs a one-line rationale
+  and a tracking-issue link.
+* **Lint has no baseline** and runs nightly, not on PRs. If your change calls newer platform APIs
+  (`minSdk` is 23) or touches the manifest or resources, run
+  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true` first.
+
+Project rules (the first three are enforced by the compiler or
+[custom lint checks](../lint-rules/README.md)):
+
+* **Measure server timestamps against the server's clock**, never `System.currentTimeMillis()`.
+  Use the typed instants in `org.onebusaway.android.time` (`ServerTime`, `WallTime`, `ElapsedTime`).
+* **Don't swallow `CancellationException`.** In coroutine code, use `runCatchingCancellable`
+  instead of `runCatching`. If you need a broad `catch`, rethrow `CancellationException` before it.
+* **No bare `!!`** in production code. Handle the null, or use `checkNotNull(x) { "why" }`.
+* **No unsanctioned heuristics**, such as magic thresholds, guessing units from a value's size, or
+  fuzzy matching. Get the fact from its source. If a heuristic is unavoidable, flag it in the PR so
+  a maintainer can sign off.
+* **App-name strings use a `%1$s` placeholder** ([Rebranding](../docs/REBRANDING.md)). Add new
+  strings to `values/strings.xml` only.
+* **Write new code in Kotlin**, and cover logic with JVM unit tests in `src/test/`.
+
+See [Code Architecture](../docs/CODE_ARCHITECTURE.md) for a map of the code, and
+[`CLAUDE.md`](../CLAUDE.md) for the reasoning behind these rules.
+
 ## Closing policy for issues and pull requests
 
 OneBusAway for Android is a popular project and the capacity to deal with issues and pull requests is limited. Out of respect for our volunteers, issues and pull requests not in line with the guidelines listed in this document may be closed without notice.
@@ -53,9 +89,9 @@ The [issue tracker](https://github.com/OneBusAway/onebusaway-android/issues) is 
 2. **Steps to reproduce:** How can we reproduce the issue?
 3. **Expected behavior:** What did you expect the app to do?
 4. **Observed behavior:** What did you see instead?  Describe your issue in detail here.
-5. **Device and Android version:** What make and model device (e.g., Samsung Galaxy S3) did you encounter this on?  What Android version (e.g., Android 4.0 Ice Cream Sandwich) are you running?  Is it the stock version from the manufacturer or a custom ROM?
-5. **Screenshots:** Can be created by pressing the Volume Down and Power Button at the same time on Android 4.0 and higher.
-6. **Possible fixes**: If you can, link to the line of code that might be responsible for the problem.
+5. **Device and Android version:** What make and model of device (e.g., Pixel 8) did you see this on, and what Android version (e.g., Android 15) is it running? Which OneBusAway version (Settings → About)?
+6. **Screenshots:** Press the Power and Volume Down buttons at the same time to take one.
+7. **Possible fixes**: If you can, link to the line of code that might be responsible for the problem.
 
 ## Pull requests
 
@@ -68,8 +104,8 @@ If you can, please submit a pull request with the fix or improvements including 
 1. Fork the project on GitHub
 2. Create a feature branch
 3. Write tests and code
-4. Run the unit tests with `gradlew connectedObaGoogleDebugAndroidTest` to make sure you didn't break anything
-5. Format your changes with `./gradlew spotlessApply`.
+4. Format your changes and run the checks in [Before you open a pull request](#before-you-open-a-pull-request)
+5. Rebase onto the latest `main` if your branch has fallen behind
 6. Your PR branch may be a single squashed commit or a string of commits — whichever you prefer. The PR is squashed when it's merged to `main`, so you don't need to squash it yourself.
 7. Push your commits to your fork
 8. Submit a pull request with a motive for your change and the method you used to achieve it
@@ -78,7 +114,7 @@ If you can, please submit a pull request with the fix or improvements including 
 We will accept pull requests if:
 
 * The code has proper tests and all tests pass (or it is a test exposing a failure in existing code)
-* It can be merged without problems (if not please use: `git rebase master`)
+* It can be merged without problems (if not, rebase onto `main`)
 * It doesn't break any existing functionality
 * It's quality code that conforms to standard style guides and best practices
 * The description includes a motive for your change and the method you used to achieve it

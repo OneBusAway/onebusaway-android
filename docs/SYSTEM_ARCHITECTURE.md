@@ -19,19 +19,22 @@ The below system architecture diagrams come from [this Google Drawing](https://d
 
 The simplest way to get started is to deploy a OneBusAway server, which will give you estimated arrival times and service alerts in the app.  Here's the basic system architecture diagram for this configuration:
 
-![onebusaway system architecture-basic](https://user-images.githubusercontent.com/928045/32296017-5dd339e4-bf21-11e7-962c-327cf071b5ba.png)
+![onebusaway system architecture-basic](https://user-images.githubusercontent.com/928045/32296017-5dd339e4-bf21-11e7-962c-327cf071b5ba.png#gh-light-mode-only)
+![onebusaway system architecture-basic](https://github.com/user-attachments/assets/037712c9-0d4d-4a09-825e-982fc24fff90#gh-dark-mode-only)
 
 ## Add trip planning and/or bike share *(Optional)*
 
 If you want to add trip planning and/or bike share information, you'll need to set up an OpenTripPlanner server.  See [this article](https://medium.com/@sjbarbeau/bike-share-launches-in-onebusaway-3452c08c0ed) for details about the bike share features.  Here's the system architecture for a region that's added trip planning and bike share information (e.g., Puget Sound, Washington):
 
-![onebusaway system architecture-otp](https://user-images.githubusercontent.com/928045/32296042-69aa4726-bf21-11e7-8123-1f80c17fee4c.png)
+![onebusaway system architecture-otp](https://user-images.githubusercontent.com/928045/32296042-69aa4726-bf21-11e7-8123-1f80c17fee4c.png#gh-light-mode-only)
+![onebusaway system architecture-otp](https://github.com/user-attachments/assets/1f733b66-3edb-4717-9709-ecf2765862db#gh-dark-mode-only)
 
 ## Add issue reporting via Open311-compliant system *(Optional)*
 
 If you use an issue management system that supports the Open311 standard, you can have OneBusAway Android submit problem reports to this system, including metadata from the stop/trip they are reporting the problem about as well as an attached picture.  See [this presentation](https://www.slideshare.net/sjbarbeau/2017-seeclickfix-workshop-closing-the-loop-improving-transit-through-crowdsourced-information) for details about the enhanced issue reporting feature.  Here's the system architecture for a region that's added issue reporting via Open311 (e.g., Tampa Bay):
 
-![onebusaway system architecture-open311](https://user-images.githubusercontent.com/928045/32296055-721a068a-bf21-11e7-922d-f167118d2390.png)
+![onebusaway system architecture-open311](https://user-images.githubusercontent.com/928045/32296055-721a068a-bf21-11e7-922d-f167118d2390.png#gh-light-mode-only)
+![onebusaway system architecture-open311](https://github.com/user-attachments/assets/c486cabc-8ff5-478e-ad8f-df7ef188f05a#gh-dark-mode-only)
 
 ## Configure your own servers
 

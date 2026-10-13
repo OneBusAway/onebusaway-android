@@ -35,85 +35,39 @@ automatically).
 
 ## Before you open a pull request
 
-CI holds every PR to a stricter standard than a plain local build. Here's what fails a build, and
-how to catch it on your machine first.
-
-### Run these locally
-
 ```bash
-./gradlew spotlessApply                                  # format
-./gradlew test check -x lint -PwarningsAsErrors=true     # unit tests + formatting + compile, CI-strict
+./gradlew spotlessApply                                # format
+./gradlew test check -x lint -PwarningsAsErrors=true   # what CI runs, minus the emulator
 ```
 
-If your change touches UI or anything device-dependent, also run the instrumented tests on a device
-or emulator: `./gradlew connectedObaGoogleDebugAndroidTest`. CI runs them on an API 33 emulator
-for every PR. A nightly job also boots the API 23 floor and runs the `@SmokeTest` subset there.
+For UI or device-dependent changes, also run `./gradlew connectedObaGoogleDebugAndroidTest` on a
+device or emulator.
 
-### What CI enforces
+CI is stricter than a plain local build:
 
-* **Zero Kotlin compiler warnings.** CI builds with `-PwarningsAsErrors=true`, so a deprecation, an
-  unnecessary `!!`, or dead code fails the build. A plain local `./gradlew` only prints these as
-  `w:` lines, so they're easy to miss. Fix a warning at its source. Use `@Suppress` only when the
-  fix truly can't happen in your PR, and then add a one-line rationale and a link to a tracking
-  issue at the suppression site.
-* **Formatting** — `spotlessCheck`, see [Code Style](#code-style).
-* **Android Lint, with no baseline.** Every lint warning is an error and nothing is grandfathered.
-  Lint is slow (5–15 minutes), so it runs **nightly against `main`, not on pull requests**. A lint
-  finding in your change will turn the nightly build red after your PR merges. If your change calls
-  platform APIs or touches the manifest or resources, run
-  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true` before you push. Pay
-  particular attention to `NewApi`. The app's `minSdk` is 23 (Android 6.0), and lint is the only
-  gate that catches an API call newer than that.
+* **Kotlin warnings are errors.** Fix them at the source. A `@Suppress` needs a one-line rationale
+  and a tracking-issue link.
+* **Lint has no baseline** and runs nightly, not on PRs. If your change calls newer platform APIs
+  (`minSdk` is 23) or touches the manifest or resources, run
+  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true` first.
 
-The project also has custom lint checks in [`lint-rules/`](../lint-rules/README.md). They enforce
-the rules below, so learning the rules first saves a round trip.
+Project rules (the first three are enforced by the compiler or
+[custom lint checks](../lint-rules/README.md)):
 
-### Project rules the compiler and lint enforce
+* **Measure server timestamps against the server's clock**, never `System.currentTimeMillis()`.
+  Use the typed instants in `org.onebusaway.android.time` (`ServerTime`, `WallTime`, `ElapsedTime`).
+* **Don't swallow `CancellationException`.** In coroutine code, use `runCatchingCancellable`
+  instead of `runCatching`. If you need a broad `catch`, rethrow `CancellationException` before it.
+* **No bare `!!`** in production code. Handle the null, or use `checkNotNull(x) { "why" }`.
+* **No unsanctioned heuristics**, such as magic thresholds, guessing units from a value's size, or
+  fuzzy matching. Get the fact from its source. If a heuristic is unavoidable, flag it in the PR so
+  a maintainer can sign off.
+* **App-name strings use a `%1$s` placeholder** ([Rebranding](../docs/REBRANDING.md)). Add new
+  strings to `values/strings.xml` only.
+* **Write new code in Kotlin**, and cover logic with JVM unit tests in `src/test/`.
 
-**Server time vs device time.** Any duration shown to a user and measured against a timestamp from
-the OBA server (an ETA, a countdown, "updated N seconds ago" for a vehicle) must use the server's
-clock as "now", never `System.currentTimeMillis()`. Otherwise device clock skew leaks straight into
-the number. New time math uses the typed instants in `org.onebusaway.android.time` (`ServerTime`,
-`WallTime`, `ElapsedTime`). Subtracting two values from different clocks won't compile. The lint
-checks `RawClockArithmetic`, `UnwrappedClockValue`, and `PrematureUnwrap` flag raw clock `Long`s
-that escape that system. Wrap a raw value into its type where it enters the app, and unwrap it only
-where it's handed to a platform API. `WireTimeEscape` keeps raw time fields on the API's data
-classes inside the adapter layer that converts them.
-
-**No bare `!!` in production code.** The `ForcedNonNull` check flags it in `src/main`, `src/google`,
-and `src/maplibre`. Handle the null (`?:`, an early return, `?.let`), or fix the type at the boundary
-that made it nullable. If neither works, assert with a reason: `checkNotNull(x) { "why" }`. Test code
-is exempt.
-
-**Never swallow `CancellationException`.** In coroutine code, `runCatching` and a broad
-`catch (e: Exception)` both catch cancellation, so cancelled work keeps running. Use
-`runCatchingCancellable` (`org.onebusaway.android.util`) instead of `runCatching`. The
-`SwallowedCancellation` lint check fails the build on a bare `runCatching` in a `suspend` function.
-Before a broad `catch`, add `catch (e: CancellationException) { throw e }`.
-
-### Project rules that review enforces
-
-**No unsanctioned heuristics.** Don't guess at things the data should state, such as whether a
-timestamp is in seconds or milliseconds based on its size, a magic threshold, or fuzzy matching where
-an exact key exists. Resolve the fact at its source: normalize at the parse boundary, carry an
-explicit field, or fail loudly. If a heuristic really is unavoidable, call it out in your PR
-description so a maintainer can sign off. Then document the assumption and how it fails at the call
-site.
-
-**Strings that mention the app name** use a `%1$s` placeholder filled with
-`getString(R.string.app_name)`, so rebranded builds can override just the name. See
-[Rebranding](../docs/REBRANDING.md). Add new strings to `values/strings.xml` only. Translators handle
-the other locales.
-
-**New code is Kotlin**, even when Java calls it.
-
-**Add tests with logic.** If a change has real branching logic, pull that logic into a pure function
-and give it a JVM unit test in `src/test/`. Those tests run in seconds, and CI runs them on every PR.
-
-For a map of the codebase, see [Code Architecture](../docs/CODE_ARCHITECTURE.md). The full
-engineering notes, including the reasons behind each rule above, are in
-[`CLAUDE.md`](../CLAUDE.md) at the repository root. It's written for AI coding assistants but is just
-as useful to people.
+See [Code Architecture](../docs/CODE_ARCHITECTURE.md) for a map of the code, and
+[`CLAUDE.md`](../CLAUDE.md) for the reasoning behind these rules.
 
 ## Closing policy for issues and pull requests
 

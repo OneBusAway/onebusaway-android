@@ -19,7 +19,7 @@ The layers, from the screen down:
         │
  ViewModels (@HiltViewModel)           ← hold UI state, call repositories
         │
- Repositories (interface + Default*)   ← the app's data API; bound in RepositoryModule
+ Repositories                          ← the app's data API; bound in RepositoryModule
         │
  ┌──────┴───────────────┬───────────────────────┐
  Data sources            Room AppDatabase        PreferencesRepository
@@ -36,8 +36,8 @@ Two rules hold this together:
   (`ObaStop`, `ObaRoute`, `ArrivalData`, …). The serialization DTOs in `api/contract/` are converted
   in `api/adapters/` and go no further. This is also where units get normalized, such as seconds vs
   milliseconds. The `WireTimeEscape` lint check enforces the boundary for time fields.
-* **Repositories are interfaces.** `app/di/RepositoryModule.kt` binds each one to its `Default*`
-  implementation. Tests swap in hand-written fakes, and demo mode swaps in canned data.
+* **Most repositories are interfaces.** `app/di/RepositoryModule.kt` binds each to its `Default*`
+  implementation, so tests can swap in hand-written fakes.
 
 ## Modules and source sets
 
@@ -51,7 +51,8 @@ Inside the app module, `src/` is split by flavor (see [BUILD.md](BUILD.md#build-
 | `main` | Nearly everything: all shared code and resources |
 | `google` | Map rendering on the Google Maps SDK (`map/googlemapsv2/`) |
 | `maplibre` | Map rendering on MapLibre (`map/maplibre/`), plus a manifest overlay that strips Google Maps metadata |
-| `oba`, `agencyX`, `agencyY`, `kiedybus` | Brand resources only (strings, colors, icons, manifest). `oba` also holds the Play Store release notes |
+| `agencyX`, `agencyY`, `kiedybus` | Brand resources only: launcher icons, strings, colors |
+| `oba` | App Links in the manifest, and the Play Store release notes |
 | `test` | JVM unit tests |
 | `testGoogle` | JVM tests for the Google map layers |
 | `androidTest` | Instrumented tests |
@@ -61,7 +62,8 @@ Brand flavors are declared in `onebusaway-android/flavors/*.gradle`, one file pe
 
 ### The map platform seam
 
-All map logic is flavor-neutral and lives in `main`. Only drawing is platform-specific.
+Map logic lives in `main`. Only drawing is platform-specific, so a behavior change almost never
+touches a flavor.
 
 * `APP/map/compose/ObaComposeMap.kt` defines `ObaComposeMapAdapter` and the `ObaMap(...)`
   composable that screens use.
@@ -70,9 +72,6 @@ All map logic is flavor-neutral and lives in `main`. Only drawing is platform-sp
 * Each adapter hosts a classic, imperative `MapView` inside `AndroidView`. It doesn't use
   android-maps-compose. Its renderer (`GoogleMapRenderer` / `MapLibreRenderer`) diffs a
   render-state snapshot onto native markers and polylines.
-
-If you change map behavior, the change almost always belongs in `main`. Touch a flavor only for how
-something is drawn.
 
 ## Package map
 
@@ -107,7 +106,7 @@ import of pre-Room data, region subsystems, notification channels, push registra
 tracking. `APP/ui/HomeActivity.kt` is the only activity. The manifest's many `<activity-alias>`
 entries exist only so old shortcuts and deep links keep working.
 
-**Navigation has two layers. Knowing which one a screen uses saves time.**
+**Navigation has two layers.**
 
 1. **Navigation-Compose destinations.** `APP/ui/home/HomeNavHost.kt` holds the `NavHost`. Each
    feature contributes a `NavGraphBuilder` extension, such as `arrivalsGraph` in
@@ -131,9 +130,6 @@ Most screens follow the same pattern: a composable observes a `@HiltViewModel`'s
 the ViewModel calls repositories. HomeActivity holds the ViewModels the home screen shares, such as
 `HomeViewModel` and `MapViewModel`. Other destinations get theirs with `hiltViewModel()`.
 
-User-facing strings that mention the app name use a `%1$s` placeholder for white-label builds. See
-the [Contributing Guide](../.github/CONTRIBUTING.md#project-rules-that-review-enforces).
-
 ## Dependency injection
 
 Hilt modules are in `APP/app/di/`, all installed in `SingletonComponent`:
@@ -143,9 +139,9 @@ Hilt modules are in `APP/app/di/`, all installed in `SingletonComponent`:
 * `DatabaseModule` provides `AppDatabase` and the DAOs.
 * `RepositoryModule` binds each repository interface to its implementation.
 
-ViewModels receive dependencies through `@Inject` constructors. For classes Hilt can't construct,
-such as a `BroadcastReceiver` or a static helper, use one of the `*EntryPoint` interfaces in the same
-package. Don't reach for a global `Application` instance.
+ViewModels receive dependencies through `@Inject` constructors. Code Hilt can't inject, such as a top-level
+function or an `object`, reaches dependencies through an `*EntryPoint` interface in the same package.
+Don't reach for a global `Application` instance.
 
 ## Data
 
@@ -153,8 +149,7 @@ package. Don't reach for a global `Application` instance.
 
 `APP/api/net/ObaApiProvider.kt` is the single way to reach the OBA server. It resolves the base URL
 for the current region or a custom server URL (`ObaEndpointResolver`), rebuilds the Retrofit service
-when that URL changes, and routes to `DemoObaWebService` in demo mode. Its `call`/`callOrNull`
-functions return `Result<T>`. The endpoints are declared in `APP/api/contract/ObaWebService.kt`.
+when that URL changes, and routes to `DemoObaWebService` in demo mode. The endpoints are declared in `APP/api/contract/ObaWebService.kt`.
 
 ### Storage
 
@@ -226,7 +221,7 @@ Arrival reminders are scheduled on the server and delivered by Firebase Cloud Me
 
 | Workflow | When | What runs |
 |---|---|---|
-| `android.yml` | Every push and PR | `spotlessCheck`, then unit tests, `check`, and instrumented tests on an API 33 emulator, all with `-PwarningsAsErrors=true` |
+| `android.yml` | Every PR, and pushes to `main` | `spotlessCheck`, then unit tests, `check`, and instrumented tests on an API 33 emulator, all with `-PwarningsAsErrors=true` |
 | `android-nightly.yml` | Nightly | Android Lint; tests for all four brands; the API 23 smoke tests; regions-file drift check |
 | `release.yml` | Manual | Signed release to Google Play ([RELEASING.md](RELEASING.md)) |
 

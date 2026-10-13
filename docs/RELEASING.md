@@ -240,12 +240,11 @@ The CI key can reach the testing tracks only. Promoting to production needs a se
 | `./gradlew promoteObaGoogleReleaseArtifact --from-track beta --promote-track production` | Promote the open-testing release to production. Name both tracks, or the defaults promote a track onto itself |
 | `./gradlew bootstrapObaGoogleReleaseListing` | Download the live store listing into `src/oba/play/`. Review the diff; it overwrites the whole tree |
 
-**Always pass `--track`.** The `play {}` block defaults to `beta`, which is open testing, with a
-`completed` release. A bare `publish*` task therefore pushes the build to every open tester at once.
-That is the full rollout CI's guard step refuses (see [Staged rollouts](#staged-rollouts)), and
-nothing guards against it locally. Follow the same rungs as
-[Cutting a release](#cutting-a-release). For `beta`, add `--release-status inProgress
---user-fraction 0.1`.
+**Always pass `--track`.** The `play {}` block defaults to `beta` (open testing) as a `completed`
+release, so a bare `publish*` task reaches every open tester at once. That's the full rollout CI's
+guard step refuses, and nothing refuses it locally. Climb the same rungs as
+[Cutting a release](#cutting-a-release). For `beta`, add
+`--release-status inProgress --user-fraction 0.1`.
 
 One trap worth repeating: **any** `assembleObaGoogleRelease` consults Play, not just the `publish*`
 tasks, because `resolutionStrategy = AUTO` queries the current `versionCode` on every release

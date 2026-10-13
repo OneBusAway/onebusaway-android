@@ -20,23 +20,17 @@ dimensions.
 * **agencyY** = a sample rebrand for a fictitious fixed-region "Agency Y"
 * **kiedybus** = KiedyBus, a third-party brand (Poland)
 
-Together with the debug/release build types, that makes 4 × 2 × 2 = 16 variants. You'll almost
-always want **`obaGoogleDebug`**, and the instructions below assume it. The brands differ only in
-resources, manifest, and application ID; see the [Rebranding page](REBRANDING.md) to build one of the
-others.
+You'll almost always want **`obaGoogleDebug`**, and the instructions below assume it. To build
+another brand, see [Rebranding](REBRANDING.md).
 
 ## Prerequisites
 
 1. Clone this repository.
-1. Install a **JDK 17 or newer** to run Gradle (CI uses Temurin 21). Android Studio ships with a
-   suitable JDK, so you can skip this if you only build from the IDE. The app itself targets Java 17
-   bytecode, set by `jdk` in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml).
+1. Install a **JDK 17 or newer** to run Gradle (CI uses 21). You can skip this if you only build
+   from Android Studio, which bundles one.
 1. Install the Android SDK platform for the `compileSdk` level in
-   [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). Android Studio's SDK Manager offers it
+   [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). Android Studio offers to install it
    when you first sync the project.
-
-Every dependency, plugin, and SDK level is declared in `gradle/libs.versions.toml`, so you don't need
-to install anything else by hand.
 
 ## Building in Android Studio
 
@@ -82,23 +76,7 @@ Pelias_oba=XXXXXX
 ...where `XXXXXX` is your API key. The suffix names the brand, so `Pelias_agencyX` sets the key for
 the `agencyX` flavor.
 
-## Checking your work
+## Before you open a pull request
 
-These are the commands you'll use before opening a pull request. The
-[Contributing Guide](../.github/CONTRIBUTING.md#before-you-open-a-pull-request) explains what CI
-enforces and why.
-
-| Command | What it does |
-|---|---|
-| `./gradlew spotlessApply` | Formats your changes (ktlint and google-java-format) |
-| `./gradlew test check -x lint -PwarningsAsErrors=true` | JVM unit tests, formatting check, and compile — with warnings treated as errors, as CI does |
-| `./gradlew connectedObaGoogleDebugAndroidTest` | Instrumented tests; needs a connected device or emulator |
-| `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true` | Android Lint (slow, ~5–15 minutes; CI runs it nightly rather than on PRs) |
-
-By default `test` and `check` run only the `oba` brand's tests. Pass `-PbuildAllBrands=true` to run
-all four brands.
-
-## Release builds
-
-Release signing, versioning, and publishing to Google Play are covered in
-[RELEASING.md](RELEASING.md). That includes building a signed release on your own machine.
+See the [Contributing Guide](../.github/CONTRIBUTING.md#before-you-open-a-pull-request) for the
+checks to run locally and what CI enforces.

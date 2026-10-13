@@ -31,26 +31,15 @@ the source. Clean, then rebuild without the cache:
 Don't run two Gradle builds in the same checkout at once. They share one `build/` directory and can
 corrupt each other's generated output.
 
-KSP can also crash with a stack trace that hides an ordinary compile error in a Java file. If KSP
-fails, look further up the log for the first `e:` or `error:` line.
-
 ### My PR passed locally but fails in CI
 
-CI is stricter than a plain local build:
-
-* **Kotlin warnings fail the build.** CI passes `-PwarningsAsErrors=true`. Reproduce it with
-  `./gradlew test check -x lint -PwarningsAsErrors=true`.
-* **Formatting is checked.** Run `./gradlew spotlessApply`.
-* **CI compiles your branch merged into the latest `main`**, not your branch as-is. An error that
-  doesn't reproduce locally often comes from something that landed on `main` since you branched.
-  Rebase onto `main` and build again.
-
-See the [Contributing Guide](../.github/CONTRIBUTING.md#before-you-open-a-pull-request) for the full
-list.
+First run the checks in the
+[Contributing Guide](../.github/CONTRIBUTING.md#before-you-open-a-pull-request). If those pass, keep
+in mind that CI compiles your branch **merged into the latest `main`**. An error you can't reproduce
+locally often comes from something that landed on `main` after you branched, so rebase and build
+again.
 
 ### The build is slow
 
-The default variant set builds and tests only the `oba` brand, so `./gradlew test` isn't fanning
-out across every brand unless you passed `-PbuildAllBrands=true`. Build the one variant you need
-(`installObaGoogleDebug`) rather than `assemble`, which builds all 16. Android Lint takes 5–15
-minutes by itself. Run it only when you're working on a lint finding.
+Build the one variant you need (`installObaGoogleDebug`) rather than `assemble`, which builds
+every brand and platform. Skip lint (5–15 minutes) unless you need it.

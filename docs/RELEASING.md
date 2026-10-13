@@ -82,6 +82,12 @@ rationale — which is precisely how it came to be misread. Hence writing it dow
 
 6. **Let the closed track sit.** Watch Crashlytics and the Play Console's vitals. This is the whole
    point of the closed rung — it is the only audience that can be surprised cheaply.
+
+   Take the update yourself the way a user will: with the previous release installed and some
+   saved state (star a stop), let Play update it to the new build. Then check that the starred stop
+   is still there. CI only ever installs the app fresh, so this is the end-to-end check that an
+   update keeps users' data.
+
 7. **Graduate to open testing** when it looks clean: run the workflow again with `track: beta` and
    `release_status: inProgress`, starting at a small `user_fraction`. A full rollout to `beta` is
    refused by a guard step in the workflow, because that track updates its users silently; widen
@@ -188,14 +194,61 @@ Service-account keys do not expire, so rotate on staff change or suspected expos
 
 ## Publishing from a workstation
 
-CI is the normal path. Publishing by hand — the same GPP tasks, plus the local `secure.properties`
-and `PLAY_STORE_JSON_KEY` setup they need — is documented in [BUILD.md][build]; use it when CI is
-unavailable or when you're promoting a track.
+CI is the normal path. Publish by hand only when CI is unavailable or when you're promoting a track.
+You run the same gradle-play-publisher tasks CI does, after two pieces of local setup.
+
+### Signing
+
+Point `onebusaway-android/gradle.properties` at a `secure.properties` file. Both files are
+gitignored.
+
+```
+secure.properties=<full_path_to_secure_properties_file>
+```
+
+`secure.properties` names the keystore and its credentials (the same four values CI keeps as
+secrets):
+
+```
+key.store=<full_path_to_keystore_file>
+key.alias=<key_alias_name>
+key.storepassword=<your_keystore_password>
+key.keypassword=<your_key_password>
+```
+
+Paths in both files use `/`, even on Windows. A `\` produces
+`No value has been specified for property 'signingConfig.keyAlias'.`
+
+### Play credentials
+
+Add a service-account key (see [The Play service account](#the-play-service-account)) to the same
+`gradle.properties`:
+
+```
+PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
+```
+
+The CI key can reach the testing tracks only. Promoting to production needs a separate key with
+*Manage production releases*.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `./gradlew publishObaGoogleReleaseBundle --track alpha` | Build the release App Bundle, auto-increment `versionCode`, and upload it to closed testing |
+| `./gradlew publishObaGoogleReleaseApps --track alpha` | The same, plus the store listing in `onebusaway-android/src/oba/play/` |
+| `./gradlew promoteObaGoogleReleaseArtifact --from-track beta --promote-track production` | Promote the open-testing release to production. Name both tracks, or the defaults promote a track onto itself |
+| `./gradlew bootstrapObaGoogleReleaseListing` | Download the live store listing into `src/oba/play/`. Review the diff; it overwrites the whole tree |
+
+**Always pass `--track`.** The `play {}` block defaults to `beta`, which is open testing, with a
+`completed` release. A bare `publish*` task therefore pushes the build to every open tester at once.
+That is the full rollout CI's guard step refuses (see [Staged rollouts](#staged-rollouts)), and
+nothing guards against it locally. Follow the same rungs as
+[Cutting a release](#cutting-a-release). For `beta`, add `--release-status inProgress
+--user-fraction 0.1`.
 
 One trap worth repeating: **any** `assembleObaGoogleRelease` consults Play, not just the `publish*`
 tasks, because `resolutionStrategy = AUTO` queries the current `versionCode` on every release
 assemble. Without credentials the `play {}` block falls back to `IGNORE` and uses the `versionCode`
 checked into `build.gradle.kts` — so the build succeeds, but the bundle it produces will collide
 with Play's numbering and must not be uploaded.
-
-[build]: BUILD.md#automated-publishing-with-gradle-play-publisher

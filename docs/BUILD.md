@@ -1,166 +1,104 @@
 # Building the project
 
-We use [Gradle build flavors](http://developer.android.com/tools/building/configuring-gradle.html#workBuildVariants) to enable a number of different build variants of OneBusAway Android.
+This page covers building and running the app for development. Shipping a release is a separate
+process — see [RELEASING.md](RELEASING.md).
 
-We have one Gradle "platform" flavor dimension:
+## Build variants
 
-* **google** = Normal Google Play release
+We use [Gradle product flavors](https://developer.android.com/build/build-variants) in two
+dimensions.
 
-...and three Gradle "brand" flavor dimensions:
+**Platform** — which map SDK the app is built on:
 
-* **oba** = Original OneBusAway brand
-* **agencyX** = A sample rebranded version of OneBusAway for a fictitious "Agency X"
-* **agencyY** = A sample rebranded version of OneBusAway for a fictitious "Agency Y"
+* **google** = Google Maps, the version published on Google Play (the default)
+* **maplibre** = [MapLibre](https://maplibre.org/) with OpenFreeMap tiles, no Google Maps dependency
 
-This results in a total of 1 * 3 = 3 core build variants.  Each of these core variants also has a debug/release build type - the end result is that you'll have 6 build variants to choose to build.
+**Brand** — the name, look, and feel of the app:
 
-The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`).
+* **oba** = the original OneBusAway brand, the one that ships
+* **agencyX** = a sample rebrand for a fictitious multi-region "Agency X"
+* **agencyY** = a sample rebrand for a fictitious fixed-region "Agency Y"
+* **kiedybus** = KiedyBus, a third-party brand (Poland)
 
-If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](REBRANDING.md).
+Together with the debug/release build types, that makes 4 × 2 × 2 = 16 variants. You'll almost
+always want **`obaGoogleDebug`**, and the instructions below assume it. The brands differ only in
+resources, manifest, and application ID; see the [Rebranding page](REBRANDING.md) to build one of the
+others.
 
-### Prerequisites for both Android Studio and Gradle
+## Prerequisites
 
-1. Clone this repository
-1. Install [Java Development Kit (JDK)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+1. Clone this repository.
+1. Install a **JDK 17 or newer** to run Gradle (CI uses Temurin 21). Android Studio ships with a
+   suitable JDK, so you can skip this if you only build from the IDE. The app itself targets Java 17
+   bytecode, set by `jdk` in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml).
+1. Install the Android SDK platform for the `compileSdk` level in
+   [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). Android Studio's SDK Manager offers it
+   when you first sync the project.
 
-### Building in Android Studio
+Every dependency, plugin, and SDK level is declared in `gradle/libs.versions.toml`, so you don't need
+to install anything else by hand.
 
-1. Download, install, and run the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
-1. At the welcome screen select `Import Project`, browse to the location of this repository and select it then select Ok.
-1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts)) then select OK.
-1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
-1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
-1. Click the green play button (or Alt+Shift+F10) to build and run the project!
+## Building in Android Studio
 
-### Building from the command line using Gradle
+1. Install and run the latest stable [Android Studio](https://developer.android.com/studio).
+1. Choose **File → Open** and select the root of this repository. Let Gradle sync finish.
+1. Connect an Android device with
+   [USB debugging enabled](https://developer.android.com/studio/run/device), or create a virtual
+   device in **Tools → Device Manager**.
+1. In the **Build Variants** window, choose **obaGoogleDebug**.
+1. Click **Run** (the green play button).
 
-1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
-1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
-1. Set the `ANDROID_HOME` environment variable to your Android SDK location.
-1. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project.
-1. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app).
+## Building from the command line
 
-### Configuration Pelias API key for geocoding
+1. Set `JAVA_HOME` to your JDK, and `ANDROID_HOME` to your Android SDK. You can also put the SDK
+   location in a `local.properties` file at the project root as `sdk.dir=/path/to/sdk`. Android
+   Studio writes that file for you.
+1. Build the app and install it on a connected device:
 
-If trip planning is active, you'll need to provide an API key for [geocode.earth](https://geocode.earth/).
-
-Add the following to `onebusaway-android/gradle.properties`:
-
-`Pelias_oba=XXXXXX`
-
-...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
-
-### Release builds
-
-To set up a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.
-
-The `gradle.properties` file is located in the `onebusaway-android` directory and has the contents:
-```
-secure.properties=<full_path_to_secure_properties_file>
-```
-
-The `secure.properties` file (in the location specified in gradle.properties) has the contents:
-```
-key.store=<full_path_to_keystore_file>
-key.alias=<key_alias_name>
-key.storepassword=<your_keystore_password>
-key.keypassword=<your_key_password>
-```
-
-Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
-
-Before doing each release build, you'll need to:
-1. Set `versionName` in `onebusaway-android/build.gradle.kts` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
-2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
-3. Update the Play Store "What's new" text in `onebusaway-android/src/oba/play/release-notes/en-US/default.txt` to match `main_help_whatsnew`. Play caps this at 500 characters per locale.
-
-Then, to build all flavors run:
-
-`gradlew assembleRelease`
-
-(If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`)
-
-The APK files will show up in the `onebusaway-android/build/outputs/apk` folder. `obaGoogleRelease-vx.y.z.apk` is the file that's uploaded to Google Play for release.
-
-### Automated publishing with gradle-play-publisher
-
-We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) (GPP) to automate building, versioning, and uploading releases to Google Play.
-
-**Releases normally ship from CI**, not from a workstation: the *Release to Google Play* GitHub Actions workflow runs these same tasks with the signing key and Play credentials held as repository secrets. See [RELEASING.md](RELEASING.md) for how to cut a release, and use the local setup below when CI isn't an option.
-
-#### Setup
-
-1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account under IAM & Admin → Service Accounts and download the JSON key file.
-2. Enable the [Google Play Android Developer API](https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com) in Google Cloud Console.
-3. In [Google Play Console](https://play.google.com/console), go to Users & permissions, invite the service account email, and grant it app permissions. For a CI credential grant only *View app information* and *Manage testing tracks*, so it cannot reach production — see [RELEASING.md](RELEASING.md#the-play-service-account). A workstation credential used for production promotion additionally needs *Manage production releases*. Note: it can take up to 36 hours for credentials to become active.
-4. Add the path to `gradle.properties`:
-   ```
-   PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
+   ```bash
+   ./gradlew installObaGoogleDebug
    ```
 
-#### Publishing commands
+1. Start it, or tap its icon on the device:
 
-| Command | Description |
+   ```bash
+   adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity
+   ```
+
+(The application ID `com.joulespersecond.seattlebusbot` is historical and has to stay that way for
+Google Play. The code's namespace is `org.onebusaway.android`.)
+
+## Pelias API key for geocoding
+
+Trip planning uses [geocode.earth](https://geocode.earth/) (Pelias) to search for addresses. Without
+a key the app still builds and runs, but address search in the trip planner won't work. To enable it,
+add this line to `onebusaway-android/gradle.properties`. Create the file if it doesn't exist; it's
+gitignored, so your key stays local.
+
+```
+Pelias_oba=XXXXXX
+```
+
+...where `XXXXXX` is your API key. The suffix names the brand, so `Pelias_agencyX` sets the key for
+the `agencyX` flavor.
+
+## Checking your work
+
+These are the commands you'll use before opening a pull request. The
+[Contributing Guide](../.github/CONTRIBUTING.md#before-you-open-a-pull-request) explains what CI
+enforces and why.
+
+| Command | What it does |
 |---|---|
-| `./gradlew publishObaGoogleReleaseBundle` | Build release AAB, auto-increment `versionCode`, and upload to the open testing (beta) track |
-| `./gradlew publishObaGoogleReleaseApps` | Same as above, plus upload all Play Store metadata (listing, screenshots, etc.) |
-| `./gradlew promoteObaGoogleReleaseArtifact --from-track beta --promote-track production` | Promote the current beta release to production. Name both tracks explicitly: the defaults promote the configured track (`beta`) onto itself. Needs a credential with production rights — the CI service account has testing-track permission only. |
+| `./gradlew spotlessApply` | Formats your changes (ktlint and google-java-format) |
+| `./gradlew test check -x lint -PwarningsAsErrors=true` | JVM unit tests, formatting check, and compile — with warnings treated as errors, as CI does |
+| `./gradlew connectedObaGoogleDebugAndroidTest` | Instrumented tests; needs a connected device or emulator |
+| `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true` | Android Lint (slow, ~5–15 minutes; CI runs it nightly rather than on PRs) |
 
-#### Managing Play Store metadata
+By default `test` and `check` run only the `oba` brand's tests. Pass `-PbuildAllBrands=true` to run
+all four brands.
 
-You can download your existing Play Store listing into the repo for version control:
+## Release builds
 
-```
-./gradlew bootstrapObaGoogleReleaseListing
-```
-
-This creates a `src/obaGoogleRelease/play/` directory with your listing text, graphics, and release notes. Edits to these files will be uploaded on the next `publishObaGoogleReleaseApps` run.
-
-#### Configuration
-
-The default configuration (in `onebusaway-android/build.gradle.kts`) publishes App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`. To change the target track, update the `track` property in the `play {}` block to `"internal"`, `"alpha"`, or `"production"`.
-
-### Release testing protocol
-
-Prior to uploading the app to Google Play, below is the release testing protocol. This effectively mirrors what a user would experience - installing the new release as an update to the existing release.
-
-1. Uninstall any existing version of OBA Android
-2. [Opt into beta testing](BETA_TESTING.md) if you haven't already
-3. Download the [latest version available on Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
-4. Launch the app, approve location permissions, ignore tutorial in those popups. Tap on a bus stop and "star" it by tapping on star next to bus stop name. Go to "Starred stops" in the main menu to ensure it saved the stop. This saves something to the database to ensure that data isn't lost in the update.
-5. Install the new APK over the existing APK as an update. I usually upload the new APK to Dropbox, then download to my device using "Export" from the Dropbox app, then using a file manager app to launch it by tapping on it. It will ask you if you want to install as an update, agree.
-6. Openly the newly updated app. Go to "Starred stops" in the main menu and confirm that the stop you starred in the above step is still there.
-
-### Tagging a release on GitHub
-
-After testing a release, I create a tag locally by using Android Studio "Git->New tag", and I enter a name in the format of `vx.y.z` and a summary of changes (see the GitHub [Releases](https://github.com/OneBusAway/onebusaway-android/releases)) for examples).
-
-I then push this tag to GitHub using:
-
-```
-git push origin vx.y.z
-```
-
-Then I create a new release on GitHub using https://github.com/OneBusAway/onebusaway-android/releases/new, and reference this tag. I also attach the compiled APKs. I'll also mark "This is a pre-release" because releases go to the [OBA beta testing group](BETA_TESTING.md) first.
-
-### Releasing to Google Play
-
-After you've created the release on GitHub, head to the [Google Play developer console](https://developer.android.com/distribute/console) and follow these steps to publish a beta release:
-1. Go to OneBusAway main app and then "Testing->Open testing"
-2. Create a new release and upload the new `obaGoogleRelease-vx.y.z.apk` APK
-3. Keep all the existing APKs that are already there as "Included", except the current production release. This makes sure that everyone with older version Android devices can still download the app. So only the current production release should be under "Not Included".
-4. Type in the version number `vx.y.z` in the release name, and you can typically copy the release notes from a previous release and edit accordingly for whatever you want users to see in the "What's new" section of Google Play (typically this should match the in-app string `main_help_whatsnew` mentioned above).
-5. Review and publish release to beta testing group (I usually immediately push to all beta testing users)
-6. Announce beta release on the [onebusaway-developers Google Group](https://groups.google.com/g/onebusaway-developers).
-
-After the beta has soaked for at least a week or two and there have been no complaints (I typically check for crashes using Google Play Developer console for this version too), you can push the beta to production:
-1. Go to OneBusAway main app and then "Testing->Open testing". You should see your release listed there
-2. Click on "Promote release", and then "Production". I usually start at 5% or 10% depending on the predicted likelihood of introducing new bugs (e.g., from invasive changes or lots of new code), and roll out over a week to two weeks, again depending on predicted likelihood of new bugs. To update rollout you'll need to look at "Production" "Releases" tab to see your release there, and click on "Manage rollout" and increase percentage. At 100% is full production rollout.
-
-Hot fixes can be released straight to production (similar process as above, but starting on "Production" tab) but are only advised in emergency scenarios where unforeseen events lead to a large number of users experiencing adverse affects that a patch would relieve.
-
-Note that after promoting a beta to production you should go back to GitHub and edit the release and uncheck "This is a pre-release". I typically also include the date of the rollout in the release notes.
-
-### Releasing to Amazon App Store
-
-We have fully deprecated support for the Amazon App Store. We won't pull the existing release from there, or remove the existing APKs from GitHub, but consider support for this platform to be EOL'd.
+Release signing, versioning, and publishing to Google Play are covered in
+[RELEASING.md](RELEASING.md). That includes building a signed release on your own machine.

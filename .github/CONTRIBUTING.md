@@ -33,6 +33,88 @@ first. The one-time bulk reformat is listed in `.git-blame-ignore-revs`; enable 
 `git config blame.ignoreRevsFile .git-blame-ignore-revs` so `git blame` skips it (GitHub does this
 automatically).
 
+## Before you open a pull request
+
+CI holds every PR to a stricter standard than a plain local build. Here's what fails a build, and
+how to catch it on your machine first.
+
+### Run these locally
+
+```bash
+./gradlew spotlessApply                                  # format
+./gradlew test check -x lint -PwarningsAsErrors=true     # unit tests + formatting + compile, CI-strict
+```
+
+If your change touches UI or anything device-dependent, also run the instrumented tests on a device
+or emulator: `./gradlew connectedObaGoogleDebugAndroidTest`. CI runs them on an API 33 emulator
+for every PR. A nightly job also boots the API 23 floor and runs the `@SmokeTest` subset there.
+
+### What CI enforces
+
+* **Zero Kotlin compiler warnings.** CI builds with `-PwarningsAsErrors=true`, so a deprecation, an
+  unnecessary `!!`, or dead code fails the build. A plain local `./gradlew` only prints these as
+  `w:` lines, so they're easy to miss. Fix a warning at its source. Use `@Suppress` only when the
+  fix truly can't happen in your PR, and then add a one-line rationale and a link to a tracking
+  issue at the suppression site.
+* **Formatting** — `spotlessCheck`, see [Code Style](#code-style).
+* **Android Lint, with no baseline.** Every lint warning is an error and nothing is grandfathered.
+  Lint is slow (5–15 minutes), so it runs **nightly against `main`, not on pull requests**. A lint
+  finding in your change will turn the nightly build red after your PR merges. If your change calls
+  platform APIs or touches the manifest or resources, run
+  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true` before you push. Pay
+  particular attention to `NewApi`. The app's `minSdk` is 23 (Android 6.0), and lint is the only
+  gate that catches an API call newer than that.
+
+The project also has custom lint checks in [`lint-rules/`](../lint-rules/README.md). They enforce
+the rules below, so learning the rules first saves a round trip.
+
+### Project rules the compiler and lint enforce
+
+**Server time vs device time.** Any duration shown to a user and measured against a timestamp from
+the OBA server (an ETA, a countdown, "updated N seconds ago" for a vehicle) must use the server's
+clock as "now", never `System.currentTimeMillis()`. Otherwise device clock skew leaks straight into
+the number. New time math uses the typed instants in `org.onebusaway.android.time` (`ServerTime`,
+`WallTime`, `ElapsedTime`). Subtracting two values from different clocks won't compile. The lint
+checks `RawClockArithmetic`, `UnwrappedClockValue`, and `PrematureUnwrap` flag raw clock `Long`s
+that escape that system. Wrap a raw value into its type where it enters the app, and unwrap it only
+where it's handed to a platform API. `WireTimeEscape` keeps raw time fields on the API's data
+classes inside the adapter layer that converts them.
+
+**No bare `!!` in production code.** The `ForcedNonNull` check flags it in `src/main`, `src/google`,
+and `src/maplibre`. Handle the null (`?:`, an early return, `?.let`), or fix the type at the boundary
+that made it nullable. If neither works, assert with a reason: `checkNotNull(x) { "why" }`. Test code
+is exempt.
+
+**Never swallow `CancellationException`.** In coroutine code, `runCatching` and a broad
+`catch (e: Exception)` both catch cancellation, so cancelled work keeps running. Use
+`runCatchingCancellable` (`org.onebusaway.android.util`) instead of `runCatching`. The
+`SwallowedCancellation` lint check fails the build on a bare `runCatching` in a `suspend` function.
+Before a broad `catch`, add `catch (e: CancellationException) { throw e }`.
+
+### Project rules that review enforces
+
+**No unsanctioned heuristics.** Don't guess at things the data should state, such as whether a
+timestamp is in seconds or milliseconds based on its size, a magic threshold, or fuzzy matching where
+an exact key exists. Resolve the fact at its source: normalize at the parse boundary, carry an
+explicit field, or fail loudly. If a heuristic really is unavoidable, call it out in your PR
+description so a maintainer can sign off. Then document the assumption and how it fails at the call
+site.
+
+**Strings that mention the app name** use a `%1$s` placeholder filled with
+`getString(R.string.app_name)`, so rebranded builds can override just the name. See
+[Rebranding](../docs/REBRANDING.md). Add new strings to `values/strings.xml` only. Translators handle
+the other locales.
+
+**New code is Kotlin**, even when Java calls it.
+
+**Add tests with logic.** If a change has real branching logic, pull that logic into a pure function
+and give it a JVM unit test in `src/test/`. Those tests run in seconds, and CI runs them on every PR.
+
+For a map of the codebase, see [Code Architecture](../docs/CODE_ARCHITECTURE.md). The full
+engineering notes, including the reasons behind each rule above, are in
+[`CLAUDE.md`](../CLAUDE.md) at the repository root. It's written for AI coding assistants but is just
+as useful to people.
+
 ## Closing policy for issues and pull requests
 
 OneBusAway for Android is a popular project and the capacity to deal with issues and pull requests is limited. Out of respect for our volunteers, issues and pull requests not in line with the guidelines listed in this document may be closed without notice.
@@ -53,9 +135,9 @@ The [issue tracker](https://github.com/OneBusAway/onebusaway-android/issues) is 
 2. **Steps to reproduce:** How can we reproduce the issue?
 3. **Expected behavior:** What did you expect the app to do?
 4. **Observed behavior:** What did you see instead?  Describe your issue in detail here.
-5. **Device and Android version:** What make and model device (e.g., Samsung Galaxy S3) did you encounter this on?  What Android version (e.g., Android 4.0 Ice Cream Sandwich) are you running?  Is it the stock version from the manufacturer or a custom ROM?
-5. **Screenshots:** Can be created by pressing the Volume Down and Power Button at the same time on Android 4.0 and higher.
-6. **Possible fixes**: If you can, link to the line of code that might be responsible for the problem.
+5. **Device and Android version:** What make and model of device (e.g., Pixel 8) did you see this on, and what Android version (e.g., Android 15) is it running? Which OneBusAway version (Settings → About)?
+6. **Screenshots:** Press the Power and Volume Down buttons at the same time to take one.
+7. **Possible fixes**: If you can, link to the line of code that might be responsible for the problem.
 
 ## Pull requests
 
@@ -68,8 +150,8 @@ If you can, please submit a pull request with the fix or improvements including 
 1. Fork the project on GitHub
 2. Create a feature branch
 3. Write tests and code
-4. Run the unit tests with `gradlew connectedObaGoogleDebugAndroidTest` to make sure you didn't break anything
-5. Format your changes with `./gradlew spotlessApply`.
+4. Format your changes and run the checks in [Before you open a pull request](#before-you-open-a-pull-request)
+5. Rebase onto the latest `main` if your branch has fallen behind
 6. Your PR branch may be a single squashed commit or a string of commits — whichever you prefer. The PR is squashed when it's merged to `main`, so you don't need to squash it yourself.
 7. Push your commits to your fork
 8. Submit a pull request with a motive for your change and the method you used to achieve it
@@ -78,7 +160,7 @@ If you can, please submit a pull request with the fix or improvements including 
 We will accept pull requests if:
 
 * The code has proper tests and all tests pass (or it is a test exposing a failure in existing code)
-* It can be merged without problems (if not please use: `git rebase master`)
+* It can be merged without problems (if not, rebase onto `main`)
 * It doesn't break any existing functionality
 * It's quality code that conforms to standard style guides and best practices
 * The description includes a motive for your change and the method you used to achieve it

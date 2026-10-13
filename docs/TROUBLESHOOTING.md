@@ -1,37 +1,56 @@
 # Troubleshooting
 
-Things not going well building the project?  See the known issues below and some solutions.  If you're a user of the app, check out our [FAQ](FAQ.md).
+Having trouble building the project? Check the known issues and fixes below. If you're a user of
+the app, see our [FAQ](FAQ.md) instead.
 
-### Building the project takes forever (like, 4 minutes) - what's up?
+### Gradle fails with "Unsupported class file major version" or asks for a newer Java
 
-In your `gradle.properties` file in the root of the project, add:
+Gradle needs **JDK 17 or newer** to run. Check which one it's using with `./gradlew --version`. On
+the command line, point `JAVA_HOME` at a suitable JDK. In Android Studio, set it under
+**Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK**. The bundled
+"jbr" JDK works.
 
-`org.gradle.jvmargs=-Xmx2048m`
+### Gradle can't find the Android SDK, or a platform is missing
 
-This must be at least 2 Gb to take advantage of Dex In Process.  See [this post](https://medium.com/google-developers/faster-android-studio-builds-with-dex-in-process-5988ed8aa37e) for more info.
+Make sure Android Studio and the command line use the same SDK. Android Studio stores the SDK
+location in `local.properties` (`sdk.dir=…`) at the project root. On the command line, set
+`ANDROID_HOME` to that same directory. If the build says a platform isn't installed, install the
+`compileSdk` level from [`gradle/libs.versions.toml`](../gradle/libs.versions.toml) through
+**Tools → SDK Manager**.
 
-### I get build errors for the Android Support libraries or Google APIs
+### Unresolved `R.*` references or KSP errors that make no sense
 
-Open the Android SDK Manager and make sure the following are installed:
-* Under Tools
-	* Android SDK Tools
-	* Android SDK Platform-tools
-	* Android SDK Build-tools
-* Under the currently used SDK version (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts))
-	* SDK Platform
-	* Google APIs
-* Extras
-	* Android Support Repository
-	* Android Support Library
-	* Google Play services
-	* Google Repository
+A stale build cache can leave generated code (`R` classes, Hilt/Room KSP output) inconsistent with
+the source. Clean, then rebuild without the cache:
 
-### Android Studio or Gradle can't find my Android SDK, or the API Levels that I have installed
+```bash
+./gradlew clean
+./gradlew installObaGoogleDebug --no-build-cache
+```
 
-Make sure that you're consistently using the same Android SDK throughout Android Studio and your environmental variables.
-Android Studio comes bundled with an Android SDK, and can get confused if you're pointing to this SDK within Android Studio
-but have your environmental variables pointed elsewhere. Click "File->Project Structure", and then under "Android SDK"
-make sure you "Android SDK Location" is the correct location of your Android SDK.
+Don't run two Gradle builds in the same checkout at once. They share one `build/` directory and can
+corrupt each other's generated output.
 
-Also, make sure you've set the `ANDROID_HOME` environmental variable to your Android SDK location and
-the `JAVA_HOME` environmental variables to point to your JDK folder.
+KSP can also crash with a stack trace that hides an ordinary compile error in a Java file. If KSP
+fails, look further up the log for the first `e:` or `error:` line.
+
+### My PR passed locally but fails in CI
+
+CI is stricter than a plain local build:
+
+* **Kotlin warnings fail the build.** CI passes `-PwarningsAsErrors=true`. Reproduce it with
+  `./gradlew test check -x lint -PwarningsAsErrors=true`.
+* **Formatting is checked.** Run `./gradlew spotlessApply`.
+* **CI compiles your branch merged into the latest `main`**, not your branch as-is. An error that
+  doesn't reproduce locally often comes from something that landed on `main` since you branched.
+  Rebase onto `main` and build again.
+
+See the [Contributing Guide](../.github/CONTRIBUTING.md#before-you-open-a-pull-request) for the full
+list.
+
+### The build is slow
+
+The default variant set builds and tests only the `oba` brand, so `./gradlew test` isn't fanning
+out across every brand unless you passed `-PbuildAllBrands=true`. Build the one variant you need
+(`installObaGoogleDebug`) rather than `assemble`, which builds all 16. Android Lint takes 5–15
+minutes by itself. Run it only when you're working on a lint finding.

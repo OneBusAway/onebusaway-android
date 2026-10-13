@@ -35,7 +35,7 @@ We welcome contributions to the project! Please see our [Contributing Guide](htt
 
 ## System Architecture
 
-Curious what servers power certain features in OneBusAway Android?  Check out the [System Architecture page](docs/SYSTEM_ARCHITECTURE.md).
+Curious what servers power certain features in OneBusAway Android?  Check out the [System Architecture page](docs/SYSTEM_ARCHITECTURE.md).  New to the codebase itself?  Start with the [Code Architecture page](docs/CODE_ARCHITECTURE.md).
 
 ## Deploying OneBusAway Android in Your City
 

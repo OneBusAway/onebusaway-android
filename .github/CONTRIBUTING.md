@@ -37,11 +37,11 @@ automatically).
 
 ```bash
 ./gradlew spotlessApply                                # format
-./gradlew test check -x lint -PwarningsAsErrors=true   # what CI runs, minus the emulator
+./gradlew test check -x lint -PwarningsAsErrors=true   # CI's host-side checks
 ```
 
-For UI or device-dependent changes, also run `./gradlew connectedObaGoogleDebugAndroidTest` on a
-device or emulator.
+CI also runs `./gradlew connectedObaGoogleDebugAndroidTest` on an emulator for every PR. For UI or
+device-dependent changes, run it yourself on a device or emulator first.
 
 CI is stricter than a plain local build:
 

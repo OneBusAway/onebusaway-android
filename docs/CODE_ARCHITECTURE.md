@@ -170,8 +170,10 @@ with the directory. `CLAUDE.md` explains why.
 
 ### Trip planning
 
-Trip planning goes to a per-region OpenTripPlanner server, and some regions don't have one.
-`APP/directions/util/OtpTarget.kt` decides which server to use and whether one exists. Ask
+Trip planning goes to the region's OpenTripPlanner server, or to a custom server URL set in the
+app's settings ([Custom Servers](CUSTOM_SERVERS.md#opentripplanner-api-server)). Some regions
+publish no planner. `APP/directions/util/OtpTarget.kt` decides which server to use and whether one
+exists. Ask
 `OtpTarget.isAvailable` and don't re-derive it. `ui/tripplan/TripPlanRepository.kt` calls either
 OTP1 (REST, via Retrofit) or OTP2 (GraphQL, via Apollo; queries in `src/main/graphql/otp2/`).
 

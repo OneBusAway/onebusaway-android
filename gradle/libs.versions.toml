@@ -44,7 +44,7 @@ lint = "32.3.1"
 # --- Libraries ---
 desugar = "2.1.5"
 firebaseAnalytics = "23.2.0"
-firebaseCrashlytics = "20.1.1"
+firebaseCrashlytics = "21.0.0"
 firebaseMessaging = "25.1.3"
 playServicesLocation = "21.4.0"
 playServicesMaps = "20.0.0"

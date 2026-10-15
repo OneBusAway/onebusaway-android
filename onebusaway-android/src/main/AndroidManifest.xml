@@ -353,6 +353,16 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Stop Times home screen widget: configure screen (also the widget's own "reconfigure"
+             target, android:configure in xml/stop_times_widget_info.xml) and its stop picker. -->
+        <activity
+            android:name=".ui.widget.StopTimesWidgetConfigActivity"
+            android:exported="true" />
+        <activity
+            android:name=".ui.widget.StopPickerActivity"
+            android:exported="false"
+            android:label="@string/widget_config_select_a_stop" />
+
 
         <!-- Shares captured/picked report photos with the camera and Open311 endpoints -->
         <provider
@@ -416,6 +426,21 @@
         <receiver
             android:name=".tracking.TripTrackingReceiver"
             android:exported="false" />
+
+        <!-- Stop Times home screen widget: not Hilt-injected (see WidgetEntryPoint) since a
+             BroadcastReceiver's onReceive() is too short-lived for the async arrival fetch, which
+             WidgetArrivalWorker does instead. -->
+        <receiver
+            android:name=".ui.widget.StopTimesWidget"
+            android:label="@string/widget_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/stop_times_widget_info" />
+        </receiver>
 
         <meta-data
             android:name="com.google.android.gms.version"

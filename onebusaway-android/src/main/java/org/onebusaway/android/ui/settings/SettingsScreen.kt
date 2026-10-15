@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
@@ -80,6 +81,7 @@ fun SettingsRoute(
 ) {
     val activity = LocalContext.current.findActivity()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val coroutineScope = activity.lifecycleScope
 
     val ringtoneLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -95,7 +97,7 @@ fun SettingsRoute(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { BackupUtils.save(activity, it) }
+            result.data?.data?.let { BackupUtils.save(activity, it, coroutineScope) }
         }
     }
     val restoreBackupLauncher = rememberLauncherForActivityResult(
@@ -105,7 +107,7 @@ fun SettingsRoute(
             result.data?.data?.let { uri ->
                 // BackupUtils restores the DB + toasts; then re-resolve the region (the restored data may
                 // imply a different one); the forced picker is raised reactively if it's ambiguous.
-                BackupUtils.restore(activity, uri) {
+                BackupUtils.restore(activity, uri, coroutineScope) {
                     viewModel.refreshRegionAfterRestore()
                 }
             }

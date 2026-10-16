@@ -33,10 +33,11 @@ import org.onebusaway.android.map.rental.RentalDensity
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.map.rental.RentalPlacesRepository
+import org.onebusaway.android.map.rental.drawnRentalLayers
 import org.onebusaway.android.map.rental.isWithinRentalZoomGate
+import org.onebusaway.android.map.rental.observeDrawnRentalLayers
 import org.onebusaway.android.map.rental.preferenceKey
 import org.onebusaway.android.map.rental.rentalDensity
-import org.onebusaway.android.map.rental.rentalLayersFromPreferences
 import org.onebusaway.android.map.rental.rentalLayersOf
 import org.onebusaway.android.map.rental.rentalMarkerLayer
 import org.onebusaway.android.map.rental.rentalSource
@@ -67,10 +68,6 @@ class RentalLayerController(
     private val scope: CoroutineScope
 ) {
 
-    // Defaults to nothing visible; the owner calls [syncFromPreferences] on resume (kept off the
-    // construction path so the model stays JVM-constructible, like WeatherViewModel).
-    private val visibleLayers = MutableStateFlow(emptySet<RentalLayer>())
-
     private var loadJob: Job? = null
 
     // The last response and the viewport that produced it — see [placesFor]. Confined to the loader
@@ -100,7 +97,6 @@ class RentalLayerController(
      */
     fun setRentalsVisible(visible: Boolean) {
         prefsRepository.setBoolean(R.string.preference_key_layer_bikeshare_visible, visible)
-        syncFromPreferences()
     }
 
     /**
@@ -111,25 +107,13 @@ class RentalLayerController(
      */
     fun setLayerVisible(layer: RentalLayer, visible: Boolean) {
         prefsRepository.setBoolean(layer.preferenceKey, visible)
-        syncFromPreferences()
     }
 
     /**
-     * Re-read what is on — after a toggle, and on resume.
-     *
-     * Both setters write their preference and come back through here rather than computing the new set
-     * themselves, so the drawn layers always match what [rentalLayersFromPreferences] says: one
-     * definition, no chance of the buttons and the map disagreeing.
-     *
-     * The owner calls this on resume rather than pushing a set in. It used to push one, computed by a
-     * `LayerUtils` helper that answered *empty while no region was selected* — which on a fresh install
-     * ran before region discovery landed and seeded this controller with nothing, permanently, while
-     * the buttons (reading the preferences directly) drew themselves lit over a map that never loaded.
-     * Whether there is a rental server to ask is this loader's question and it asks it on every
-     * emission; a second, region-gated copy of the answer at seed time could only ever go stale.
+     * Show or hide the rental button itself, which takes the layer with it — see [drawnRentalLayers].
      */
-    fun syncFromPreferences() {
-        visibleLayers.value = rentalLayersFromPreferences(prefsRepository)
+    fun setButtonShown(shown: Boolean) {
+        prefsRepository.setBoolean(R.string.preference_key_show_rental_button, shown)
     }
 
     /**
@@ -147,7 +131,11 @@ class RentalLayerController(
                 // Settle on drag-end, matching the stop loader: hold the load until the gesture
                 // settles so a pan fires one load at drag-end, not one per intermediate camera-idle.
                 host.settledCamera(),
-                visibleLayers,
+                // Observed rather than re-read after each write, so every writer — these setters,
+                // Settings, the guided tour — reaches the map without having to tell it. This used to
+                // be a snapshot seeded on resume and after each setter, which a writer elsewhere could
+                // leave stale; whether there is a server to ask is the source input below, not this.
+                prefsRepository.observeDrawnRentalLayers(),
                 // The rental server itself is an input, not a fact read once inside the collector: a
                 // region switch changes which endpoint answers, and neither the camera nor the toggles
                 // need move for that to happen. Demo mode is the second such switch (#2164) — entering

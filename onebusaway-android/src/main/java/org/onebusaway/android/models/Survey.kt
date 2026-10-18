@@ -61,7 +61,7 @@ data class SurveyContent(
     val embeddedDataFields: ArrayList<String>?,
     val surveyProvider: String?,
     val type: String?,
-    val buttonLabel: String? = null
+    val buttonLabel: String?
 )
 
 /** The submit ack: the response id used to update follow-up answers. */

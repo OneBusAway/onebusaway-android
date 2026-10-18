@@ -76,7 +76,9 @@ data class StudyResponse(
                 val url: String? = null,
                 val embedded_data_fields: ArrayList<String>? = null,
                 val survey_provider: String? = null,
-                val type: String? = null
+                val type: String? = null,
+                /** `external_survey` only: which canned title its open button shows; an open set of keys. */
+                val button_label: String? = null
             )
         }
     }

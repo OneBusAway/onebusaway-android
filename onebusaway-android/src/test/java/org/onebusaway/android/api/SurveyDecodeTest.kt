@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.contract.StudyResponse
 import org.onebusaway.android.api.contract.SubmitSurveyResponse
+import org.onebusaway.android.api.data.toSurveys
 
 /**
  * Covers the surveys client decode path. Surveys come from the region's sidecar host as bare JSON
@@ -152,6 +153,53 @@ class SurveyDecodeTest {
         assertEquals("qualtrics", q.content.survey_provider)
         assertEquals(arrayListOf<String>(), q.content.embedded_data_fields)
     }
+
+    @Test
+    fun decodesExternalSurveyButtonLabel() {
+        val response = json.decodeFromString<StudyResponse>(externalSurveyBody(""","button_label": "learn_more""""))
+
+        val content = response.surveys.single().questions.single().content
+        assertEquals("learn_more", content.button_label)
+        assertEquals("learn_more", response.toSurveys().single().questions.single().content.buttonLabel)
+    }
+
+    @Test
+    fun buttonLabelIsNullWhenAbsent() {
+        // Every survey authored before button_label existed, and every one left on the default.
+        val response = json.decodeFromString<StudyResponse>(externalSurveyBody(""))
+
+        assertNull(response.surveys.single().questions.single().content.button_label)
+        assertNull(response.toSurveys().single().questions.single().content.buttonLabel)
+    }
+
+    @Test
+    fun unknownButtonLabelStillDecodesTheSurvey() {
+        // A label added on the server after this build shipped must not cost the rider the survey.
+        val response = json.decodeFromString<StudyResponse>(externalSurveyBody(""","button_label": "rsvp""""))
+
+        val question = response.toSurveys().single().questions.single()
+        assertEquals("rsvp", question.content.buttonLabel)
+        assertEquals("https://example.org/s", question.content.url)
+    }
+
+    private fun externalSurveyBody(extraContent: String) = """
+        {
+          "surveys": [
+            {
+              "id": 1,
+              "questions": [
+                {
+                  "id": 10, "position": 1, "required": false,
+                  "content": {
+                    "type": "external_survey", "label_text": "Tell us", "url": "https://example.org/s",
+                    "embedded_data_fields": [], "survey_provider": "external"$extraContent
+                  }
+                }
+              ]
+            }
+          ]
+        }
+    """.trimIndent()
 
     @Test
     fun decodesSubmitSurveyResponse() {

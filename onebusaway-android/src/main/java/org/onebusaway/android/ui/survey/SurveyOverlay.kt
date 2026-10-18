@@ -195,7 +195,7 @@ private fun SurveyHeroCard(
                 ) {
                     if (external) {
                         Button(onClick = callbacks.onOpenExternalWithoutHero) {
-                            Text(stringResource(R.string.go))
+                            Text(stringResource(SurveyUtils.externalSurveyButtonLabel(hero.content.buttonLabel)))
                         }
                     } else {
                         Button(onClick = callbacks.onSubmitHero) {

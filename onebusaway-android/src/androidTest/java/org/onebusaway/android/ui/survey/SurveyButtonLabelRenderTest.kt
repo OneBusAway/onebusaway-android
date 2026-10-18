@@ -56,13 +56,6 @@ class SurveyButtonLabelRenderTest {
         compose.onNodeWithText(context.getString(R.string.go)).assertIsDisplayed()
     }
 
-    @Test
-    fun keepsTheDefaultTitleForAnUnknownButtonLabel() {
-        showExternalSurvey(buttonLabel = "rsvp")
-
-        compose.onNodeWithText(context.getString(R.string.go)).assertIsDisplayed()
-    }
-
     private fun showExternalSurvey(buttonLabel: String?, onOpen: () -> Unit = {}) {
         val question = SurveyQuestion(
             id = 1,

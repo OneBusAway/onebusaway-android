@@ -182,6 +182,18 @@ class SurveyDecodeTest {
         assertEquals("https://example.org/s", question.content.url)
     }
 
+    @Test
+    fun nonStringButtonLabelFallsBackInsteadOfFailingTheSurvey() {
+        // Only a string can name a label; any other shape is treated as absent, not as a decode error.
+        for (value in listOf("1", "true", "null", "{\"key\": \"learn_more\"}", "[\"learn_more\"]")) {
+            val response = json.decodeFromString<StudyResponse>(externalSurveyBody(",\"button_label\": $value"))
+
+            val content = response.surveys.single().questions.single().content
+            assertNull(value, content.button_label)
+            assertEquals(value, "https://example.org/s", content.url)
+        }
+    }
+
     private fun externalSurveyBody(extraContent: String) = """
         {
           "surveys": [

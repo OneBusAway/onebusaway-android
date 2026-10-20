@@ -31,15 +31,23 @@ import org.onebusaway.android.util.Polyline
 
 const val DEFAULT_POLL_INTERVAL_MS = 10_000L
 private const val MAX_BACKOFF_MULTIPLIER = 8
+private const val FIRST_RETRY_DELAY_MS = 1_000L
 
 /**
- * Next poll delay for a simple exponential backoff: [intervalMs] after a success, otherwise
- * double [previousDelayMs], floored at [intervalMs] and capped at [MAX_BACKOFF_MULTIPLIER] times
- * it. Pure, so it is unit-testable without coroutine machinery.
+ * Next poll delay after [consecutiveFailures] failed polls in a row: [intervalMs] when it is 0,
+ * otherwise an exponential retry starting at [FIRST_RETRY_DELAY_MS] and doubling per failure, capped
+ * at [MAX_BACKOFF_MULTIPLIER] times [intervalMs]. Pure, so it is unit-testable without coroutine
+ * machinery.
+ *
+ * Retries start below the interval because a failed poll is often a session's first (e.g. a 429 from
+ * the request burst that opens a route), with nothing on screen yet.
  */
-internal fun nextPollDelayMs(previousDelayMs: Long, succeeded: Boolean, intervalMs: Long): Long {
-    if (succeeded) return intervalMs
-    return (previousDelayMs * 2).coerceIn(intervalMs, intervalMs * MAX_BACKOFF_MULTIPLIER)
+internal fun nextPollDelayMs(consecutiveFailures: Int, intervalMs: Long): Long {
+    if (consecutiveFailures <= 0) return intervalMs
+    val cap = intervalMs * MAX_BACKOFF_MULTIPLIER
+    // Bound the shift so a long outage can't overflow; the cap is reached long before 2^30 s.
+    val retry = FIRST_RETRY_DELAY_MS shl (consecutiveFailures - 1).coerceAtMost(30)
+    return retry.coerceAtMost(cap)
 }
 
 /**
@@ -113,34 +121,36 @@ class DefaultTripObservationRepository @Inject constructor(
     override fun lookupTripState(tripId: String?): TripState? = cache.lookupTripState(tripId)
 
     override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = flow {
-        var delayMs = intervalMs
+        var failures = 0
         while (true) {
             // The fetcher resolves failures and non-OK codes to null (logged once).
             val details = fetcher.tripDetails(tripId)
-            val ok = details != null
             if (details != null) {
+                failures = 0
                 recordTripDetails(tripId, details)
                 // Emit a tick so a collector can react to a fresh poll (the store holds the data).
                 emit(Unit)
+            } else {
+                failures++
             }
-            delayMs = nextPollDelayMs(delayMs, ok, intervalMs)
-            delay(delayMs)
+            delay(nextPollDelayMs(failures, intervalMs))
         }
     }
 
     override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = channelFlow {
-        var delayMs = intervalMs
+        var failures = 0
         while (true) {
             // The fetcher resolves failures and non-OK codes to null (logged once).
             val response = fetcher.tripsForRoute(routeId)
-            val ok = response != null
             if (response != null) {
+                failures = 0
                 recordTripsForRoute(response)
                 prefetchSchedulesAndShapes(response) // launched into this channelFlow scope
                 send(response)
+            } else {
+                failures++
             }
-            delayMs = nextPollDelayMs(delayMs, ok, intervalMs)
-            delay(delayMs)
+            delay(nextPollDelayMs(failures, intervalMs))
         }
     }
 

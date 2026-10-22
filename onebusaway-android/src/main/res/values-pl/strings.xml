@@ -77,12 +77,14 @@
     </string>
     <string name="main_help_legend_canceled">Szary z przekreśleniem oznacza, że ​​podróż została odwołana – ten autobus NIE przyjedzie
     </string>
-    <string name="main_nolocation_title">Lokacja niedostępna</string>
+    <string name="main_nolocation_title">Lokalizacja niedostępna</string>
     <string name="main_nolocation">%1$s chciałoby uzyskać dostęp do Twojej lokalizacji. Czy chcesz ją teraz włączyć?</string>
     <string name="main_never_ask_again">Nigdy nie pytaj ponownie</string>
     <string name="main_never_show_again">Nigdy nie pokazuj ponownie</string>
     <string name="no_location_permission">Nie można uzyskać Twojej lokalizacji. Przyznaj aplikacji uprawnienia do lokalizacji w ustawieniach systemowych.</string>
-    <string name="main_waiting_for_location">Próba naprawienia Twojej lokacji&#8230;</string>
+    <string name="main_waiting_for_location">Próba naprawienia Twojej lokalizacji&#8230;</string>
+	<string name="map_outside_service_area">Poza obszarem obsługiwanym przez %1$s</string>
+    <string name="map_view_service_area">Zobacz obszar obsługiwany</string>
 
     <string name="bus_options_menu_add_star">Dodaj trasę do ulubionych</string>
     <string name="bus_options_menu_remove_star">Usuń linię z ulubionych</string>
@@ -250,7 +252,13 @@
     </string>
 
     <!-- Stop Details -->
+    <string name="map_choose_stop">Wybierz przystanek</string>
+    <string name="map_stop_currently_selected">Obecnie wybrane</string>
+    <string name="map_stop_routes">Linie: %1$s</string>
+    <string name="map_stop_routes_unavailable">Linie niedostępne</string>
     <string name="stop_details_code">Przystanek # %1$s</string>
+    <string name="stop_wheelchair_accessible">Dostępne dla osób niepełnosprawnych</string>
+    <string name="stop_wheelchair_not_accessible">Niedostępne dla osób niepełnosprawnych</string>
 
     <!-- Route Info -->
     <string name="route_info_no_shape_data">Przepraszamy, informacje na mapie nie są dostępne dla tej trasy.
@@ -1043,4 +1051,25 @@
     <string name="arrival_display_time_description">Każdy odjazd w porządku chronologicznym, dla wszystkich linii.</string>
     <string name="arrival_display_route_description">Odjazdy pogrupowane według linii i kierunku.</string>
     <string name="view_arrivals_only">Pokaż tylko przyjazdy</string>
+
+    <!-- Layout Migration / Onboarding Dialog -->
+    <string name="search_result_mode_migration_title">Nawigacja oparta na mapie?</string>
+    <string name="search_result_mode_migration_body">Gdy dotkniesz przystanku lub linii, czy chcesz zobaczyć widok &lt;b&gt;listy&lt;/b&gt;, czy &lt;b&gt;mapy&lt;/b&gt;? Możesz to zmienić później w Ustawieniach.</string>
+    <string name="search_result_mode_migration_map">Nawigacja na mapie</string>
+    <string name="search_result_mode_migration_lists">Nawigacja z listy</string>
+    <string name="search_result_mode_map_description">Zobacz linię lub przystanek na mapie z odjazdami poniżej.</string>
+    <string name="search_result_mode_lists_description">Wybierz kierunek i przystanek z listy, a następnie sprawdzaj odjazdy bez używania mapy.</string>
+    <string name="migration_back">Wstecz</string>
+    <string name="migration_page">Strona %1$d z %2$d</string>
+    <string name="migration_continue">Dalej</string>
+    <string name="migration_previous_layout">Klasyczny układ</string>
+    <string name="migration_new_layout">Nowy układ</string>
+    <string name="search_result_mode_sample_direction">Dworzec Autobusowy</string>
+    <string name="search_result_mode_sample_first_stop">ul. Dworcowa / Główna</string>
+    <string name="search_result_mode_sample_street">ul. Dworcowa</string>
+    <string name="search_result_mode_sample_avenue">ul. Główna</string>
+    <string name="search_result_mode_sample_water">Jezioro</string>
+    <string name="search_result_mode_sample_stop">ul. Dworcowa / Główna</string>
+    <string name="arrival_display_sample_downtown">Centrum</string>
+    <string name="arrival_display_sample_northgate">Dworzec Główny</string>
 </resources>

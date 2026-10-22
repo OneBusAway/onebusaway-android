@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">PKS Online</string>
+    <string name="app_name">KiedyBus</string>
 
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_starred_stops">Ulubione przystanki</string>
@@ -444,16 +444,28 @@
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Lokalizacja</string>
+    <string name="preferences_category_behavior">Zachowanie</string>
     <string name="preferences_category_display">Wyświetlanie</string>
     <string name="preferences_category_backup">Kopia zapasowa</string>
     <string name="preferences_category_advanced">Zaawansowane</string>
-    <string name="preferences_screen_advanced_summary">Dokop się do korzeni aplikacji</string>
+    <string name="preferences_screen_advanced_summary">Zaawansowane opcje i konfiguracja aplikacji</string>
     <string name="preferences_category_about">O programie</string>
     <string name="preferences_region_title">Twój region</string>
-    <string name="preferences_region_summary_custom_api">Standardowy API server jest w użyciu</string>
+    <string name="preferences_region_summary_custom_api">Dedykowany serwer API jest w użyciu</string>
     <string name="preferences_auto_select_region_title">Automatyczny region</string>
-    <string name="preferences_auto_select_region_summary">Ustaw swój region przejazdu na podstawie Twojej lokalizacji
-    </string>
+    <string name="preferences_auto_select_region_summary">Ustaw swój region przejazdu na podstawie Twojej lokalizacji</string>
+
+    <string name="search_result_mode_title">Otwieraj informacje o przystanku/linii w</string>
+    <string name="search_result_mode_map">Mapa</string>
+    <string name="search_result_mode_list">Lista</string>
+
+    <string name="preferences_focus_timeout_title">Pamiętaj wybrany przystanek przez</string>
+    <string name="preferences_focus_timeout_30_minutes">30 minut</string>
+    <string name="preferences_focus_timeout_1_hour">1 godzinę</string>
+    <string name="preferences_focus_timeout_2_hours">2 godziny</string>
+    <string name="preferences_focus_timeout_4_hours">4 godziny</string>
+    <string name="preferences_focus_timeout_8_hours">8 godzin</string>
+    <string name="preferences_focus_timeout_always">Zawsze</string>
 
     <string name="preferences_category_notifications">Powiadomienia</string>
 
@@ -479,6 +491,12 @@
     <string name="preferences_show_zoom_controls_summary">Wyświetl kontrolki powiększenia na mapie
     </string>
 
+    <string name="preferences_compact_stop_icons_title">Kompaktowe ikony przystanków</string>
+    <string name="preferences_compact_stop_icons_summary">Używaj mniejszych znaczników przystanków bez symboli pojazdów na mapie</string>
+
+    <string name="preferences_show_rental_button_title">Pokaż przycisk rowerów i hulajnóg</string>
+    <string name="preferences_show_rental_button_summary">Wyświetlaj przycisk warstwy rowerów i hulajnóg na mapie</string>
+
     <string name="preferences_trip_plan_notifications_title">Powiadomienia o planowaniu podróży (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Po zaplanowaniu podróży wysyłaj powiadomienia, jeśli podróż jest opóźniona lub nie jest już zalecana.
     </string>
@@ -494,6 +512,11 @@
     <string name="preferences_otp_api_servername_summary">Określa serwer używany w wywołaniach API OpenTripPlanner
     </string>
     <string name="preferences_otp_api_servername_hint">example.opentripplanner.org/otp</string>
+    <string name="preferences_otp_api_url_is_graphql_title">Serwer OTP używa GraphQL (OTP 2.x)</string>
+    <string name="preferences_otp_api_url_is_graphql_summary">Włącz, jeśli własny serwer OpenTripPlanner wymaga GraphQL</string>
+    <string name="preferences_map_stop_cache_size_title">Rozmiar pamięci podręcznej przystanków</string>
+    <string name="preferences_map_stop_cache_size_summary">Maksymalna liczba przystanków na mapie podczas przesuwania (%1$d)</string>
+    <string name="preferences_map_stop_cache_size_error">Wprowadź liczbę od 100 do 5000</string>
     <string name="preferences_save_title">Zapisz w pamięci urządzenia</string>
     <string name="preferences_save_summary">Zapisz swoje ulubione i ostatnie przystanki oraz linie</string>
     <string name="preferences_restore_title">Przywróć poprzedni zapis</string>
@@ -677,8 +700,8 @@
     <string name="about_image_credits_header">Zdjęcia:</string>
     <string name="about_image_credits_intro">Dziękujemy projektantom, którzy stworzyli obrazy wykorzystywane w ikonach pojazdów, które zostały przesłane do Noun Project na licencji CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/us/):</string>
     <string name="about_join_header">Dołącz do podróży: Współtwórz naszą aplikację!</string>
-    <string name="about_join_github">Sprawdź nasz projekt na GitHubie pod adresem https://github.com/OneBusAway/onebusaway-android.</string>
-    <string name="about_join_oba">Dowiedz się więcej o projekcie open-source %1$s na stronie https://onebusaway.org.</string>
+    <string name="about_join_github">Odwiedź naszą stronę internetową https://www.kiedybus.pl</string>
+    <string name="about_join_oba">Dowiedz się więcej o %1$s na stronie https://www.kiedybus.pl</string>
     <string name="about_thanks_material_icons">Szczególne podziękowania dla Google za wizualnie oszałamiające ikony designu materiałowego (https://github.com/google/material-design-icons), które dodają elegancji naszej aplikacji. Ich hojność w udostępnieniu tych ikon na licencji Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) znacznie wzbogaciła nasze doświadczenie użytkownika.</string>
     <string name="about_thanks_amcharts">Specjalne podziękowania dla amcharts za darmowe ikony pogody w formacie SVG (https://www.amcharts.com/free-animated-svg-weather-icons/), te ikony są udostępnione na licencji Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).</string>
     <string name="about_outro">Odkrywaj naszą aplikację i rozpocznij płynną podróż z %1$s!</string>
@@ -1019,4 +1042,5 @@
     <string name="arrival_display_choose_body">Czy chcesz widzieć przyjazdy dla przystanku pogrupowane według linii, czy na jednej liście chronologicznej według czasu?</string>
     <string name="arrival_display_time_description">Każdy odjazd w porządku chronologicznym, dla wszystkich linii.</string>
     <string name="arrival_display_route_description">Odjazdy pogrupowane według linii i kierunku.</string>
+    <string name="view_arrivals_only">Pokaż tylko przyjazdy</string>
 </resources>

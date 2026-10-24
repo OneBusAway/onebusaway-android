@@ -110,6 +110,28 @@ class ObaFailureTest {
         assertFalse(IOException("connection reset").isNotFound)
     }
 
+    @Test
+    fun theEdgeLimitersNonEnvelope429CountsAsRateLimited() {
+        // Verbatim body from api.pugetsound.onebusaway.org's AWS edge (`Server: awselb/2.0`), 2026-10-23.
+        val edge = httpError(
+            429,
+            """{"message": "Too frequent requests.","info": "Email oba_api_key@soundtransit.org to request an api key."}"""
+        )
+
+        val normalized = edge.asObaFailure(json)
+
+        assertSame("not an OBA envelope, so it stays transport", edge, normalized)
+        assertTrue(normalized.isRateLimited)
+    }
+
+    @Test
+    fun onlyA429CountsAsRateLimited() {
+        assertTrue(ObaApiException(429).isRateLimited)
+        assertFalse(ObaApiException(500).isRateLimited)
+        assertFalse(httpError(503, "").isRateLimited)
+        assertFalse(IOException("connection reset").isRateLimited)
+    }
+
     private fun httpError(code: Int, body: String) = HttpException(
         Response.error<Unit>(code, body.toResponseBody("application/json".toMediaType()))
     )

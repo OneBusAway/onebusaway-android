@@ -24,34 +24,46 @@ class BackoffTest {
     private val interval = 10_000L
 
     @Test
-    fun `success returns the base interval`() {
-        assertEquals(interval, nextPollDelayMs(interval, true, interval))
+    fun `no failures returns the base interval`() {
+        assertEquals(interval, nextPollDelayMs(0, interval))
     }
 
     @Test
-    fun `success after a long backoff resets to the interval`() {
-        assertEquals(interval, nextPollDelayMs(80_000L, true, interval))
-    }
-
-    @Test
-    fun `first failure doubles the interval`() {
-        assertEquals(20_000L, nextPollDelayMs(interval, false, interval))
+    fun `first failure retries well inside the interval`() {
+        assertEquals(1_000L, nextPollDelayMs(1, interval))
     }
 
     @Test
     fun `consecutive failures keep doubling`() {
-        assertEquals(40_000L, nextPollDelayMs(20_000L, false, interval))
-        assertEquals(80_000L, nextPollDelayMs(40_000L, false, interval))
+        assertEquals(2_000L, nextPollDelayMs(2, interval))
+        assertEquals(4_000L, nextPollDelayMs(3, interval))
+        assertEquals(8_000L, nextPollDelayMs(4, interval))
+        assertEquals(16_000L, nextPollDelayMs(5, interval))
     }
 
     @Test
     fun `failures are capped at eight times the interval`() {
-        assertEquals(80_000L, nextPollDelayMs(80_000L, false, interval))
-        assertEquals(80_000L, nextPollDelayMs(100_000L, false, interval))
+        assertEquals(64_000L, nextPollDelayMs(7, interval))
+        assertEquals(80_000L, nextPollDelayMs(8, interval))
+        assertEquals(80_000L, nextPollDelayMs(9, interval))
     }
 
     @Test
-    fun `failure never returns below the interval even from a small seed`() {
-        assertEquals(interval, nextPollDelayMs(0L, false, interval))
+    fun `a long outage stays at the cap without overflowing`() {
+        assertEquals(80_000L, nextPollDelayMs(1_000, interval))
+        assertEquals(80_000L, nextPollDelayMs(Int.MAX_VALUE, interval))
+    }
+
+    @Test
+    fun `a 429 retries after the interval, not promptly`() {
+        assertEquals(10_000L, nextPollDelayMs(1, interval, rateLimited = true))
+    }
+
+    @Test
+    fun `consecutive 429s keep doubling up to the same cap`() {
+        assertEquals(20_000L, nextPollDelayMs(2, interval, rateLimited = true))
+        assertEquals(40_000L, nextPollDelayMs(3, interval, rateLimited = true))
+        assertEquals(80_000L, nextPollDelayMs(4, interval, rateLimited = true))
+        assertEquals(80_000L, nextPollDelayMs(5, interval, rateLimited = true))
     }
 }

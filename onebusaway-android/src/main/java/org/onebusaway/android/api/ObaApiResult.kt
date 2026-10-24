@@ -59,6 +59,23 @@ val Throwable.isNotFound: Boolean
     get() = this is ObaApiException && code == HttpURLConnection.HTTP_NOT_FOUND
 
 /**
+ * True when this failure is an HTTP 429 "Too Many Requests" refusal — the cue to slow down rather than
+ * retry promptly.
+ *
+ * Unlike [isNotFound], a bare [HttpException] counts here: the refusal that matters most doesn't come
+ * from the OBA layer. Puget Sound's 429s are answered by the AWS edge in front of the server
+ * (`Server: awselb/2.0`, a non-envelope JSON body), so [asObaFailure] leaves them an [HttpException];
+ * the OBA server's own per-key limiter answers with an envelope, which arrives as [ObaApiException].
+ * Either way the status itself says "too many requests", whoever sent it.
+ */
+val Throwable.isRateLimited: Boolean
+    get() = (this is ObaApiException && code == HTTP_TOO_MANY_REQUESTS) ||
+        (this is HttpException && code() == HTTP_TOO_MANY_REQUESTS)
+
+/** HTTP 429; [HttpURLConnection] has no constant for it. */
+private const val HTTP_TOO_MANY_REQUESTS = 429
+
+/**
  * The OBA answer behind a non-2xx response, as an [ObaApiException] — or this throwable unchanged when
  * the response didn't come from the OBA API itself.
  *

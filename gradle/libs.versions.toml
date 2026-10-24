@@ -47,6 +47,7 @@ firebaseAnalytics = "23.2.0"
 firebaseCrashlytics = "20.1.1"
 firebaseMessaging = "25.1.3"
 playServicesLocation = "21.4.0"
+# play-services-maps 20.1.0 requires minSdk 24; keep 20.0.x while supporting API 23 (#2401).
 playServicesMaps = "20.0.0"
 plausible = "3.3"
 open311 = "1.0.10"

@@ -29,11 +29,13 @@ class FocusedTripRepositoryTest {
         val shapes = mutableMapOf<String, Polyline?>()
         val scheduleFailures = mutableSetOf<String>()
         val shapeRequests = mutableListOf<Pair<String, String>>()
+        val scheduleRequests = mutableListOf<String>()
 
         override fun lookupTripState(tripId: String?): TripState? = null
         override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = emptyFlow()
         override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = emptyFlow()
         override suspend fun ensureSchedule(tripId: String): ObaTripSchedule? {
+            scheduleRequests += tripId
             if (tripId in scheduleFailures) error("schedule failed")
             return schedules[tripId]
         }
@@ -63,6 +65,75 @@ class FocusedTripRepositoryTest {
         assertEquals(listOf("a", "c"), result.stopIdsByTripId["trip"])
         assertEquals(setOf("a", "c"), result.stopIdsByTripId.values.flatten().toSet())
         assertEquals(setOf("a", "b", "c"), result.stopsById.keys)
+    }
+
+    @Test
+    fun `trips sharing a route direction and shape share one schedule fetch`() = runTest {
+        val observations = Observations().apply {
+            schedules["first"] = TripScheduleData(arrayOf(StopTimeData("a"), StopTimeData("b")))
+        }
+        val repository = DefaultFocusedTripRepository(observations, FakeStopsForRouteRepository(), backgroundScope, logFailure = { _, _ -> })
+
+        val result = repository.getStops(
+            setOf(
+                FocusedTrip("first", "route", "shape", null, directionId = 0),
+                FocusedTrip("second", "route", "shape", null, directionId = 0),
+                FocusedTrip("third", "route", "shape", null, directionId = 0)
+            )
+        )
+
+        assertEquals(listOf("first"), observations.scheduleRequests)
+        assertEquals(listOf("a", "b"), result.stopIdsByTripId["second"])
+        assertEquals(listOf("a", "b"), result.stopIdsByTripId["third"])
+    }
+
+    @Test
+    fun `a different direction, shape, or no shape at all gets its own schedule fetch`() = runTest {
+        val observations = Observations().apply {
+            listOf("out", "back", "other-shape", "no-shape-1", "no-shape-2").forEach {
+                schedules[it] = TripScheduleData(arrayOf(StopTimeData("stop-$it")))
+            }
+        }
+        val repository = DefaultFocusedTripRepository(observations, FakeStopsForRouteRepository(), backgroundScope, logFailure = { _, _ -> })
+
+        val result = repository.getStops(
+            setOf(
+                FocusedTrip("out", "route", "shape", null, directionId = 0),
+                FocusedTrip("back", "route", "shape", null, directionId = 1),
+                FocusedTrip("other-shape", "route", "shape2", null, directionId = 0),
+                FocusedTrip("no-shape-1", "route", null, null, directionId = 0),
+                FocusedTrip("no-shape-2", "route", null, null, directionId = 0)
+            )
+        )
+
+        assertEquals(setOf("out", "back", "other-shape", "no-shape-1", "no-shape-2"), observations.scheduleRequests.toSet())
+        assertEquals(5, observations.scheduleRequests.size)
+        assertEquals(listOf("stop-no-shape-2"), result.stopIdsByTripId["no-shape-2"])
+    }
+
+    @Test
+    fun `a failed schedule falls back to the next trip with the same shape`() = runTest {
+        val observations = Observations().apply {
+            scheduleFailures += "first"
+            schedules["second"] = TripScheduleData(arrayOf(StopTimeData("a")))
+        }
+        val repository = DefaultFocusedTripRepository(
+            observations,
+            FakeStopsForRouteRepository(),
+            backgroundScope,
+            logFailure = { _, _ -> }
+        )
+
+        val result = repository.getStops(
+            setOf(
+                FocusedTrip("first", "route", "shape", null),
+                FocusedTrip("second", "route", "shape", null)
+            )
+        )
+
+        assertEquals(listOf("first", "second"), observations.scheduleRequests)
+        assertEquals(listOf("a"), result.stopIdsByTripId["first"])
+        assertEquals(listOf("a"), result.stopIdsByTripId["second"])
     }
 
     @Test

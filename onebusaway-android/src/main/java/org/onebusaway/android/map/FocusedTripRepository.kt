@@ -130,13 +130,12 @@ class DefaultFocusedTripRepository internal constructor(
 
     override suspend fun getStops(trips: Set<FocusedTrip>): FocusedTripStops = coroutineScope {
         val schedules = async {
-            trips.map { trip ->
+            stopListGroups(trips).map { group ->
                 async {
-                    trip.tripId to resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) }
-                        ?.stopTimes
-                        ?.map { it.stopId }
+                    val stopIds = firstStopList(group)
+                    group.map { it.tripId to stopIds }
                 }
-            }.awaitAll()
+            }.awaitAll().flatten()
         }
         val catalogs = async {
             trips.mapTo(LinkedHashSet()) { it.routeId }
@@ -154,6 +153,32 @@ class DefaultFocusedTripRepository internal constructor(
             }
         }
         FocusedTripStops(stopIdsByTripId, stopsById)
+    }
+
+    /**
+     * The focused [trips] grouped so each group needs one schedule fetch for its stop list.
+     *
+     * HEURISTIC, human-signed-off in PR #2405. The assumption: trips of one route-direction that share
+     * a shapeId stop at the same stops, so the first one's schedule stands in for the rest. Why: a
+     * stop list is only in a trip's own schedule, one `trip-details` request each, and a focused stop
+     * shows every trip due in the next hour, about 20–30 requests at once. That burst tripped the
+     * server's rate limit, and no endpoint returns stop lists for a stop's trips in one request.
+     * Failure mode: GTFS doesn't promise it. A trip that runs the same path but skips stops (an
+     * express on the same street) is drawn with its group-mate's stops, so a few stops it passes
+     * without stopping get markers. A trip with no shapeId is never grouped.
+     */
+    private fun stopListGroups(trips: Set<FocusedTrip>): List<List<FocusedTrip>> {
+        val (shaped, unshaped) = trips.partition { it.shapeId != null }
+        return shaped.groupBy { it.routeDirection to it.shapeId }.values + unshaped.map { listOf(it) }
+    }
+
+    /** The stop list of the first trip in [group] whose schedule resolves, tried in order; null if none does. */
+    private suspend fun firstStopList(group: List<FocusedTrip>): List<String>? {
+        for (trip in group) {
+            resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) }
+                ?.let { schedule -> return schedule.stopTimes.map { it.stopId } }
+        }
+        return null
     }
 
     // Caching + coalescing live in the shared StopsForRouteRepository, so the same fetch backs the

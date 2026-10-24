@@ -21,8 +21,9 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.models.ObaTripSchedule
@@ -90,17 +91,17 @@ class DefaultTripObservationFetcher @Inject constructor(
 
     /**
      * Process-lifetime scope the coalesced fetches run on; the network calls hop to
-     * [fetchDispatcher].
+     * [Dispatchers.IO] under [fetchPermits].
      */
     private val fetchScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     /**
-     * All fetches run on this IO-dispatcher view, which admits at most [MAX_CONCURRENT_FETCHES] at
-     * once — so a route backfill observing dozens of trips can't issue dozens of simultaneous API
-     * requests.
+     * Admits at most [MAX_CONCURRENT_FETCHES] schedule/shape requests in flight at once, so a backfill
+     * observing dozens of trips can't issue dozens of simultaneous API requests. A permit is held for
+     * the whole request; a dispatcher's `limitedParallelism` can't do this, because a suspended
+     * Retrofit call gives its thread back while the request is still on the network.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val fetchDispatcher = Dispatchers.IO.limitedParallelism(MAX_CONCURRENT_FETCHES)
+    private val fetchPermits = Semaphore(MAX_CONCURRENT_FETCHES)
 
     private val scheduleFetches = SingleFlight<String, ObaTripSchedule>(fetchScope)
     private val shapeFetches = SingleFlight<String, Polyline>(fetchScope)
@@ -140,10 +141,10 @@ class DefaultTripObservationFetcher @Inject constructor(
     }
 
     override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = scheduleFetches.run(tripId) {
-        // Bounded like shapes: these are the route poll's per-trip fallback (a vehicle whose schedule
-        // trips-for-route didn't carry), and an unbounded set of them is a request burst.
-        withContext(fetchDispatcher) {
-            guarded("schedule for $tripId") { dataSource.tripSchedule(tripId).getOrThrow() }
+        // Bounded like shapes: a burst of per-trip schedules (the route poll's fallback, a focused
+        // stop's trips) would trip the server's rate limit.
+        fetchPermits.withPermit {
+            withContext(Dispatchers.IO) { guarded("schedule for $tripId") { dataSource.tripSchedule(tripId).getOrThrow() } }
         }.also {
             if (it == null) Log.w(TAG, "Schedule fetch for $tripId yielded no schedule")
         }
@@ -153,8 +154,8 @@ class DefaultTripObservationFetcher @Inject constructor(
         // Bound concurrent fetches so a route backfill can't fan out into dozens at once;
         // the data source does the (shared-algorithm) decode. A failed Result re-raises via
         // getOrThrow and resolves to null in guarded, like the old null-coalescing path did.
-        withContext(fetchDispatcher) {
-            guarded("shape for $shapeId") { dataSource.shape(shapeId).getOrThrow() }
+        fetchPermits.withPermit {
+            withContext(Dispatchers.IO) { guarded("shape for $shapeId") { dataSource.shape(shapeId).getOrThrow() } }
         }.also {
             if (it == null) Log.w(TAG, "Shape fetch for $shapeId yielded no polyline")
         }

@@ -39,18 +39,21 @@ private const val FIRST_RETRY_DELAY_MS = 1_000L
  * otherwise an exponential retry doubling per failure, capped at [MAX_BACKOFF_MULTIPLIER] times
  * [intervalMs]. Pure, so it is unit-testable without coroutine machinery.
  *
- * Where the retry starts depends on [rateLimited] — whether the latest failure was an HTTP 429:
+ * Where the retry starts depends on [rateLimited] — whether a failure since the last success was an
+ * HTTP 429:
  * - **Otherwise** (a dropped connection, a 5xx) it starts at [FIRST_RETRY_DELAY_MS], below the
  *   interval: the failed poll may be a session's first, with nothing on screen yet, and a prompt retry
  *   usually lands.
- * - **Rate limited** it starts at twice [intervalMs]. A prompt retry is refused too and may count
- *   against the quota: probing Puget Sound's edge limiter (2026-10-23) found a refusal still standing
- *   10 s after the first 429 and lifted by 20 s.
+ * - **Rate limited** it starts at [intervalMs] — the normal cadence once, then doubling — so a 429
+ *   adds no load beyond healthy polling. A prompt retry would be refused too and may count against
+ *   the quota. How long a refusal lasts is barely measured (one probe of Puget Sound's edge limiter,
+ *   2026-10-23: still refused at 10 s, clear by 20 s), so the interval is chosen to cost nothing
+ *   extra, not to match a known block length.
  */
 internal fun nextPollDelayMs(consecutiveFailures: Int, intervalMs: Long, rateLimited: Boolean = false): Long {
     if (consecutiveFailures <= 0) return intervalMs
     val cap = intervalMs * MAX_BACKOFF_MULTIPLIER
-    val first = if (rateLimited) intervalMs * 2 else FIRST_RETRY_DELAY_MS
+    val first = if (rateLimited) intervalMs else FIRST_RETRY_DELAY_MS
     // Bound the shift so a long outage can't overflow; the cap is reached long before 2^30 s.
     val retry = first shl (consecutiveFailures - 1).coerceAtMost(30)
     return retry.coerceAtMost(cap)

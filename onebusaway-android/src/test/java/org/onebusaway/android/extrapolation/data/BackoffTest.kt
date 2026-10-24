@@ -55,14 +55,15 @@ class BackoffTest {
     }
 
     @Test
-    fun `a 429 retries after twice the interval, not promptly`() {
-        assertEquals(20_000L, nextPollDelayMs(1, interval, rateLimited = true))
+    fun `a 429 retries after the interval, not promptly`() {
+        assertEquals(10_000L, nextPollDelayMs(1, interval, rateLimited = true))
     }
 
     @Test
     fun `consecutive 429s keep doubling up to the same cap`() {
-        assertEquals(40_000L, nextPollDelayMs(2, interval, rateLimited = true))
-        assertEquals(80_000L, nextPollDelayMs(3, interval, rateLimited = true))
+        assertEquals(20_000L, nextPollDelayMs(2, interval, rateLimited = true))
+        assertEquals(40_000L, nextPollDelayMs(3, interval, rateLimited = true))
         assertEquals(80_000L, nextPollDelayMs(4, interval, rateLimited = true))
+        assertEquals(80_000L, nextPollDelayMs(5, interval, rateLimited = true))
     }
 }

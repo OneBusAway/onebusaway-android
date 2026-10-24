@@ -148,16 +148,16 @@ class TripObservationRepositoryTest {
         val fetcher = FakeFetcher(details = { outcomes.removeFirstOrNull() ?: Result.failure(IOException("offline")) })
         val repo = DefaultTripObservationRepository(fetcher)
 
-        repo.tripDetailsStream("trip1", intervalMs = 1_000L).launchIn(backgroundScope)
+        repo.tripDetailsStream("trip1", intervalMs = 10_000L).launchIn(backgroundScope)
         runCurrent()
 
-        advanceTimeBy(2_001)
-        assertEquals("the 429's retry comes after two intervals", 2, fetcher.tripDetailsCalls)
+        advanceTimeBy(10_001)
+        assertEquals("the 429's retry comes after one interval", 2, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(3_998) // t=5_999: a timeout alone would have retried at t=4_000
+        advanceTimeBy(19_998) // t=29_999: a timeout alone would have retried at t=12_000
         assertEquals("the refusal may still stand, so no quick retry", 2, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(2) // past t=6_000
+        advanceTimeBy(2) // past t=30_000
         assertEquals(3, fetcher.tripDetailsCalls)
     }
 
@@ -190,20 +190,20 @@ class TripObservationRepositoryTest {
     }
 
     @Test
-    fun `a 429 waits twice the interval before retrying`() = runTest {
+    fun `a 429 waits the interval before retrying, not the prompt retry`() = runTest {
         val fetcher = FakeFetcher(details = { Result.failure(ObaApiException(429)) })
         val repo = DefaultTripObservationRepository(fetcher)
 
-        repo.tripDetailsStream("trip1", intervalMs = 1_000L).launchIn(backgroundScope)
+        repo.tripDetailsStream("trip1", intervalMs = 10_000L).launchIn(backgroundScope)
 
         runCurrent()
         assertEquals("first poll is immediate", 1, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(1_999)
+        advanceTimeBy(9_999) // a non-429 failure would have retried at t=1_000
         assertEquals("no prompt retry into a rate limit", 1, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(2) // past t=2000
-        assertEquals("the retry comes after two intervals", 2, fetcher.tripDetailsCalls)
+        advanceTimeBy(2) // past t=10_000
+        assertEquals("the retry comes after one interval", 2, fetcher.tripDetailsCalls)
     }
 
     @Test

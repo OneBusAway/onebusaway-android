@@ -127,7 +127,7 @@ class DefaultFocusedTripRepository internal constructor(
         val schedules = async {
             stopListGroups(trips).map { group ->
                 async {
-                    val stopIds = firstStopList(group)
+                    val stopIds = groupStopList(group)
                     group.map { it.tripId to stopIds }
                 }
             }.awaitAll().flatten()
@@ -169,16 +169,13 @@ class DefaultFocusedTripRepository internal constructor(
 
     /**
      * The stop list of [group]: a member's already-stored schedule if one has it (the route poll stores
-     * active trips'), else the first member whose schedule fetch resolves, tried in order; null if none.
+     * active trips'), else its first member's, fetched. One fetch per group, never a retry through the
+     * rest: a failure is usually a 429 or a lost connection, which every member would hit too.
      */
-    private suspend fun firstStopList(group: List<FocusedTrip>): List<String>? {
-        group.firstNotNullOfOrNull { observations.lookupTripState(it.tripId)?.schedule }
-            ?.let { schedule -> return schedule.stopTimes.map { it.stopId } }
-        for (trip in group) {
-            resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) }
-                ?.let { schedule -> return schedule.stopTimes.map { it.stopId } }
-        }
-        return null
+    private suspend fun groupStopList(group: List<FocusedTrip>): List<String>? {
+        val schedule = group.firstNotNullOfOrNull { observations.lookupTripState(it.tripId)?.schedule }
+            ?: group.first().let { trip -> resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) } }
+        return schedule?.stopTimes?.map { it.stopId }
     }
 
     // Caching + coalescing live in the shared StopsForRouteRepository, so the same fetch backs the

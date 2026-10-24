@@ -143,6 +143,25 @@ class TripObservationRepositoryTest {
     }
 
     @Test
+    fun `a 429 keeps the longer backoff through a later non-429 failure`() = runTest {
+        val outcomes = ArrayDeque(listOf<Result<TripDetails>>(Result.failure(ObaApiException(429)), Result.failure(IOException("timeout"))))
+        val fetcher = FakeFetcher(details = { outcomes.removeFirstOrNull() ?: Result.failure(IOException("offline")) })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.tripDetailsStream("trip1", intervalMs = 1_000L).launchIn(backgroundScope)
+        runCurrent()
+
+        advanceTimeBy(2_001)
+        assertEquals("the 429's retry comes after two intervals", 2, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(3_998) // t=5_999: a timeout alone would have retried at t=4_000
+        assertEquals("the refusal may still stand, so no quick retry", 2, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(2) // past t=6_000
+        assertEquals(3, fetcher.tripDetailsCalls)
+    }
+
+    @Test
     fun `a successful poll resets the backoff to the interval`() = runTest {
         val outcomes = ArrayDeque(
             listOf(
@@ -372,7 +391,7 @@ class TripObservationRepositoryTest {
     }
 
     @Test
-    fun `a fallback schedule fetch that keeps failing never turns the route poll heavy`() = runTest {
+    fun `a fallback schedule fetch that keeps failing backs off and never turns the route poll heavy`() = runTest {
         // The rollover case again, but tripB's own schedule can't be had.
         val fetcher = FakeFetcher(
             routeTrips = { include ->
@@ -383,10 +402,10 @@ class TripObservationRepositoryTest {
 
         repo.routeVehiclesStream("route1", intervalMs = 1_000L).launchIn(backgroundScope)
         runCurrent()
-        advanceTimeBy(3_001)
+        advanceTimeBy(7_001) // eight polls
 
-        assertEquals("only the first poll asks for schedules", listOf(true, false, false, false), fetcher.tripsForRouteCalls)
-        assertEquals("the trip is retried on its own each poll", List(4) { "tripB" }, fetcher.tripScheduleCalls)
+        assertEquals("only the first poll asks for schedules", listOf(true) + List(7) { false }, fetcher.tripsForRouteCalls)
+        assertEquals("the trip's own fetch backs off: polls 1, 2, 4 and 8", List(4) { "tripB" }, fetcher.tripScheduleCalls)
     }
 
     @Test

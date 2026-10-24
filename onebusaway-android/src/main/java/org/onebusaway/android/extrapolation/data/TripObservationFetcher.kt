@@ -108,16 +108,27 @@ class DefaultTripObservationFetcher @Inject constructor(
     private val shapeFetches = SingleFlight<String, Polyline>(fetchScope)
     private val tripRouteInfoFetches = SingleFlight<String, TripRouteInfo>(fetchScope)
 
-    override suspend fun tripDetails(tripId: String): Result<TripDetails> = dataSource.tripDetails(tripId).map { routeTrips ->
+    // mapCatching, so a response that fails to distill is a failed poll rather than a crashed Flow. The
+    // data source logs a failed fetch; a failed distillation is logged here.
+    override suspend fun tripDetails(tripId: String): Result<TripDetails> = dataSource.tripDetails(tripId).mapCatching { routeTrips ->
+        try {
+            routeTrips.toTripDetails(tripId)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to read trip details for $tripId", e)
+            throw e
+        }
+    }
+
+    private fun RouteTrips.toTripDetails(tripId: String): TripDetails {
         // A single trip-details fetch yields one trip; its ObaTripDetails carries the
         // schedule + (unfiltered) status the distillation needs.
-        val details = routeTrips.trips.firstOrNull()
-        TripDetails(
-            observations = routeTrips.toObservations(),
+        val details = trips.firstOrNull()
+        return TripDetails(
+            observations = toObservations(),
             schedule = details?.schedule,
             serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
             vehicleActiveTripId = details?.status?.activeTripId,
-            shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
+            shapeId = trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
         )
     }
 
@@ -140,8 +151,8 @@ class DefaultTripObservationFetcher @Inject constructor(
      * Runs [fetch] on [Dispatchers.IO] under one of [fetchPermits], resolving a failure (already logged
      * by the data source) or an empty answer to null.
      */
-    private suspend fun <T : Any> boundedFetch(what: String, fetch: suspend () -> Result<T?>): T? = fetchPermits
-        .withPermit { withContext(Dispatchers.IO) { fetch() } }
-        .getOrNull()
-        .also { if (it == null) Log.w(TAG, "Fetch of $what yielded nothing") }
+    private suspend fun <T : Any> boundedFetch(what: String, fetch: suspend () -> Result<T?>): T? {
+        val result = fetchPermits.withPermit { withContext(Dispatchers.IO) { fetch() } }
+        return result.getOrNull().also { if (it == null && result.isSuccess) Log.w(TAG, "The response for $what carried none") }
+    }
 }

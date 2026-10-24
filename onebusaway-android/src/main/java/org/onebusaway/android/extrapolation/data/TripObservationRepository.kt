@@ -143,7 +143,7 @@ class DefaultTripObservationRepository @Inject constructor(
         // Nothing is known about the route's trips yet, so the first poll asks for their schedules.
         var includeSchedules = true
         // Trips a schedules-included poll has already had its chance at (see backfillSchedulesAndShapes).
-        val offeredSchedules = HashSet<String>()
+        val offeredSchedules = OfferedSchedules()
         pollWithBackoff(intervalMs, fetch = { fetcher.tripsForRoute(routeId, includeSchedules) }) { response ->
             recordTripsForRoute(response)
             // Backfills launch into this channelFlow scope.
@@ -154,17 +154,25 @@ class DefaultTripObservationRepository @Inject constructor(
 
     /**
      * Polls [fetch] until cancelled, handing each OK result to [onSuccess]. The next poll waits
-     * [intervalMs] after a success, or [nextPollDelayMs]'s backoff after a failure (longer for a 429).
+     * [intervalMs] after a success, or [nextPollDelayMs]'s backoff after a failure — the longer one
+     * once any failure since the last success was a 429, since a later timeout doesn't mean the
+     * refusal has lifted.
      */
     private suspend inline fun <T> pollWithBackoff(intervalMs: Long, fetch: () -> Result<T>, onSuccess: (T) -> Unit): Nothing {
         var failures = 0
+        var rateLimited = false
         while (true) {
-            val result = fetch()
-            result.onSuccess {
-                failures = 0
-                onSuccess(it)
-            }.onFailure { failures++ }
-            delay(nextPollDelayMs(failures, intervalMs, rateLimited = result.exceptionOrNull()?.isRateLimited == true))
+            fetch()
+                .onSuccess {
+                    failures = 0
+                    rateLimited = false
+                    onSuccess(it)
+                }
+                .onFailure {
+                    failures++
+                    rateLimited = rateLimited || it.isRateLimited
+                }
+            delay(nextPollDelayMs(failures, intervalMs, rateLimited))
         }
     }
 
@@ -214,22 +222,23 @@ class DefaultTripObservationRepository @Inject constructor(
      * A trip still without one after a [schedulesIncluded] response is one whose own entry wasn't in
      * it — e.g. during a block rollover two entries report the same active trip, and the wire dedup
      * (`dedupeByActiveTripKeepingBestFix`) may keep the other trip's entry, schedule and all. Asking
-     * again wouldn't help, so such a trip goes into [offered] and is fetched on its own from then on;
-     * otherwise one whose fetch failed would turn every other poll into a schedules-included one.
+     * again wouldn't help, so such a trip goes into [offered] and is fetched on its own from then on,
+     * backing off while that fetch keeps failing; otherwise one whose fetch failed would turn every
+     * other poll into a schedules-included one.
      */
     private fun CoroutineScope.backfillSchedulesAndShapes(
         response: RouteTrips,
         schedulesIncluded: Boolean,
-        offered: MutableSet<String>
+        offered: OfferedSchedules
     ): Boolean {
+        offered.nextPoll()
         var needSchedules = false
         response.forEachActiveTrip { tripId, _, activeTrip ->
             if (cache.lookupTripState(tripId)?.schedule == null) {
-                if (schedulesIncluded) offered += tripId
-                if (tripId in offered) {
-                    launch { ensureSchedule(tripId) }
-                } else {
-                    needSchedules = true
+                if (schedulesIncluded) offered.offer(tripId)
+                when {
+                    tripId !in offered -> needSchedules = true
+                    offered.isDue(tripId) -> launch { ensureSchedule(tripId) }
                 }
             }
             activeTrip.shapeId?.let { shapeId ->
@@ -237,5 +246,39 @@ class DefaultTripObservationRepository @Inject constructor(
             }
         }
         return needSchedules
+    }
+}
+
+/**
+ * The trips a route poll's schedules-included response has already offered without carrying their
+ * schedule, each fetched on its own instead (see `backfillSchedulesAndShapes`). A trip whose fetch
+ * keeps failing — a 429 among them — is retried after 1, 2, 4, then every 8 successful polls, the
+ * same doubling to an 8x cap as [nextPollDelayMs], rather than on every poll. Counted in polls, not
+ * clock time, so it needs no clock.
+ */
+internal class OfferedSchedules {
+    private var poll = 0
+    private val tries = HashMap<String, Int>()
+    private val nextTry = HashMap<String, Int>()
+
+    /** Advances to the next successful poll. */
+    fun nextPoll() {
+        poll++
+    }
+
+    fun offer(tripId: String) {
+        nextTry.putIfAbsent(tripId, poll)
+    }
+
+    operator fun contains(tripId: String): Boolean = tripId in nextTry
+
+    /** Whether [tripId]'s own fetch is due this poll; when it is, the following one is pushed back. */
+    fun isDue(tripId: String): Boolean {
+        val due = nextTry[tripId] ?: return false
+        if (poll < due) return false
+        val attempt = (tries[tripId] ?: 0) + 1
+        tries[tripId] = attempt
+        nextTry[tripId] = poll + (1 shl (attempt - 1).coerceAtMost(3))
+        return true
     }
 }

@@ -133,7 +133,7 @@ class FocusedTripRepositoryTest {
     }
 
     @Test
-    fun `a failed schedule falls back to the next trip with the same shape`() = runTest {
+    fun `a failed schedule fetch isn't retried through the rest of the group`() = runTest {
         val observations = Observations().apply {
             scheduleFailures += "first"
             schedules["second"] = TripScheduleData(arrayOf(StopTimeData("a")))
@@ -152,9 +152,8 @@ class FocusedTripRepositoryTest {
             )
         )
 
-        assertEquals(listOf("first", "second"), observations.scheduleRequests)
-        assertEquals(listOf("a"), result.stopIdsByTripId["first"])
-        assertEquals(listOf("a"), result.stopIdsByTripId["second"])
+        assertEquals("one fetch for the group, however it went", listOf("first"), observations.scheduleRequests)
+        assertEquals("the group goes without stops this time", emptyMap<String, List<String>>(), result.stopIdsByTripId)
     }
 
     @Test

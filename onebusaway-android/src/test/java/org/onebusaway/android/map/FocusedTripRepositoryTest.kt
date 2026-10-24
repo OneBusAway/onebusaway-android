@@ -31,7 +31,10 @@ class FocusedTripRepositoryTest {
         val shapeRequests = mutableListOf<Pair<String, String>>()
         val scheduleRequests = mutableListOf<String>()
 
-        override fun lookupTripState(tripId: String?): TripState? = null
+        /** Schedules already in the store, as the route poll leaves them. */
+        val stored = mutableMapOf<String, ObaTripSchedule>()
+
+        override fun lookupTripState(tripId: String?): TripState? = stored[tripId]?.let { TripState.empty(tripId!!).withSchedule(it) }
         override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = emptyFlow()
         override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = emptyFlow()
         override suspend fun ensureSchedule(tripId: String): ObaTripSchedule? {
@@ -109,6 +112,24 @@ class FocusedTripRepositoryTest {
         assertEquals(setOf("out", "back", "other-shape", "no-shape-1", "no-shape-2"), observations.scheduleRequests.toSet())
         assertEquals(5, observations.scheduleRequests.size)
         assertEquals(listOf("stop-no-shape-2"), result.stopIdsByTripId["no-shape-2"])
+    }
+
+    @Test
+    fun `a group reuses a member's stored schedule instead of fetching one`() = runTest {
+        val observations = Observations().apply {
+            stored["second"] = TripScheduleData(arrayOf(StopTimeData("a")))
+        }
+        val repository = DefaultFocusedTripRepository(observations, FakeStopsForRouteRepository(), backgroundScope, logFailure = { _, _ -> })
+
+        val result = repository.getStops(
+            setOf(
+                FocusedTrip("first", "route", "shape", null),
+                FocusedTrip("second", "route", "shape", null)
+            )
+        )
+
+        assertEquals("no fetch", emptyList<String>(), observations.scheduleRequests)
+        assertEquals(listOf("a"), result.stopIdsByTripId["first"])
     }
 
     @Test

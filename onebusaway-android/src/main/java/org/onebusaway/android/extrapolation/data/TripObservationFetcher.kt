@@ -18,7 +18,6 @@ package org.onebusaway.android.extrapolation.data
 import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,7 +46,7 @@ import org.onebusaway.android.util.SingleFlight
  *
  * The polled calls return [Result] so a poll loop can tell *why* it failed (a 429 wants a longer wait
  * than a dropped connection — see [nextPollDelayMs]); the one-shot fetches resolve failures to null.
- * Every failure is logged once, and callers retry on their next attempt.
+ * The data source logs every failure, and callers retry on their next attempt.
  */
 interface TripObservationFetcher {
 
@@ -97,9 +96,11 @@ class DefaultTripObservationFetcher @Inject constructor(
 
     /**
      * Admits at most [MAX_CONCURRENT_FETCHES] schedule/shape requests in flight at once, so a backfill
-     * observing dozens of trips can't issue dozens of simultaneous API requests. A permit is held for
-     * the whole request; a dispatcher's `limitedParallelism` can't do this, because a suspended
-     * Retrofit call gives its thread back while the request is still on the network.
+     * observing dozens of trips can't take over the shared HTTP client's per-host connections. This
+     * bounds concurrency, not the request count the server's rate limit counts: that is held down by
+     * the callers asking for less. A permit is held for the whole request; a dispatcher's
+     * `limitedParallelism` can't do this, because a suspended Retrofit call gives its thread back
+     * while the request is still on the network.
      */
     private val fetchPermits = Semaphore(MAX_CONCURRENT_FETCHES)
 
@@ -107,63 +108,40 @@ class DefaultTripObservationFetcher @Inject constructor(
     private val shapeFetches = SingleFlight<String, Polyline>(fetchScope)
     private val tripRouteInfoFetches = SingleFlight<String, TripRouteInfo>(fetchScope)
 
-    override suspend fun tripDetails(tripId: String): Result<TripDetails> = dataSource.tripDetails(tripId)
-        // mapCatching, so a response that fails to distill is a failed poll rather than a crashed Flow.
-        .mapCatching { routeTrips ->
-            // A single trip-details fetch yields one trip; its ObaTripDetails carries the
-            // schedule + (unfiltered) status the distillation needs.
-            val details = routeTrips.trips.firstOrNull()
-            TripDetails(
-                observations = routeTrips.toObservations(),
-                schedule = details?.schedule,
-                serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
-                vehicleActiveTripId = details?.status?.activeTripId,
-                shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
-            )
-        }
-        .onFailure { Log.e(TAG, "Failed to fetch trip details for $tripId", it) }
-
-    override suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips> = dataSource.tripsForRoute(routeId, includeSchedules)
-        .onFailure { Log.e(TAG, "Failed to fetch trips for route $routeId", it) }
-
-    /**
-     * Runs [block], resolving any failure to null (logged) so a transient network error becomes a
-     * skipped poll tick rather than a crashed Flow. [CancellationException] propagates — a stopped
-     * poll is not a failure. (The SingleFlight-coalesced fetches guard themselves the same way.)
-     */
-    private suspend fun <T : Any> guarded(what: String, block: suspend () -> T?): T? = try {
-        block()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Log.e(TAG, "Failed to fetch $what", e)
-        null
+    override suspend fun tripDetails(tripId: String): Result<TripDetails> = dataSource.tripDetails(tripId).map { routeTrips ->
+        // A single trip-details fetch yields one trip; its ObaTripDetails carries the
+        // schedule + (unfiltered) status the distillation needs.
+        val details = routeTrips.trips.firstOrNull()
+        TripDetails(
+            observations = routeTrips.toObservations(),
+            schedule = details?.schedule,
+            serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
+            vehicleActiveTripId = details?.status?.activeTripId,
+            shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
+        )
     }
 
+    override suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips> = dataSource.tripsForRoute(routeId, includeSchedules)
+
     override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = scheduleFetches.run(tripId) {
-        // Bounded like shapes: a burst of per-trip schedules (the route poll's fallback, a focused
-        // stop's trips) would trip the server's rate limit.
-        fetchPermits.withPermit {
-            withContext(Dispatchers.IO) { guarded("schedule for $tripId") { dataSource.tripSchedule(tripId).getOrThrow() } }
-        }.also {
-            if (it == null) Log.w(TAG, "Schedule fetch for $tripId yielded no schedule")
-        }
+        boundedFetch("schedule for $tripId") { dataSource.tripSchedule(tripId) }
     }
 
     override suspend fun shape(shapeId: String): Polyline? = shapeFetches.run(shapeId) {
-        // Bound concurrent fetches so a route backfill can't fan out into dozens at once;
-        // the data source does the (shared-algorithm) decode. A failed Result re-raises via
-        // getOrThrow and resolves to null in guarded, like the old null-coalescing path did.
-        fetchPermits.withPermit {
-            withContext(Dispatchers.IO) { guarded("shape for $shapeId") { dataSource.shape(shapeId).getOrThrow() } }
-        }.also {
-            if (it == null) Log.w(TAG, "Shape fetch for $shapeId yielded no polyline")
-        }
+        // The data source does the (shared-algorithm) decode, so it runs off the main thread here.
+        boundedFetch("shape $shapeId") { dataSource.shape(shapeId) }
     }
 
     override suspend fun tripRouteInfo(tripId: String): TripRouteInfo? = tripRouteInfoFetches.run(tripId) {
-        guarded("route info for trip $tripId") {
-            dataSource.trip(tripId).getOrThrow()
-        }
+        dataSource.trip(tripId).getOrNull()
     }
+
+    /**
+     * Runs [fetch] on [Dispatchers.IO] under one of [fetchPermits], resolving a failure (already logged
+     * by the data source) or an empty answer to null.
+     */
+    private suspend fun <T : Any> boundedFetch(what: String, fetch: suspend () -> Result<T?>): T? = fetchPermits
+        .withPermit { withContext(Dispatchers.IO) { fetch() } }
+        .getOrNull()
+        .also { if (it == null) Log.w(TAG, "Fetch of $what yielded nothing") }
 }

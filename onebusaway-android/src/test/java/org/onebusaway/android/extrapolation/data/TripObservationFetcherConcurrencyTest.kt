@@ -24,14 +24,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
-import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.api.adapters.toObaTripSchedule
 import org.onebusaway.android.api.contract.TripSchedule
@@ -39,6 +36,7 @@ import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
+import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.Polyline
 
 /**
@@ -70,11 +68,8 @@ class TripObservationFetcherConcurrencyTest {
         override suspend fun trip(tripId: String): Result<TripRouteInfo?> = error("unused")
     }
 
-    @Before
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    @After
-    fun tearDown() = Dispatchers.resetMain()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(UnconfinedTestDispatcher())
 
     @Test
     fun `no more than two schedule requests are in flight at once`() = runBlocking {

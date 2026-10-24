@@ -111,8 +111,7 @@ interface TripVehiclesDataSource {
 
     /**
      * Every trip on [routeId] with its real-time status. [includeSchedules] also carries each entry's
-     * full schedule — one request standing in for a trip-details per vehicle, at about four times the
-     * bytes, so the poll asks for it only while some vehicle still lacks one.
+     * full schedule, at about four times the bytes.
      */
     suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips>
 

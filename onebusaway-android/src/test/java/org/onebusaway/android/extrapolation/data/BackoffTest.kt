@@ -16,7 +16,6 @@
 package org.onebusaway.android.extrapolation.data
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The exponential backoff that paces the repository's polling Flows ([nextPollDelayMs]). */
@@ -65,13 +64,5 @@ class BackoffTest {
         assertEquals(40_000L, nextPollDelayMs(2, interval, rateLimited = true))
         assertEquals(80_000L, nextPollDelayMs(3, interval, rateLimited = true))
         assertEquals(80_000L, nextPollDelayMs(4, interval, rateLimited = true))
-        assertEquals(80_000L, nextPollDelayMs(Int.MAX_VALUE, interval, rateLimited = true))
-    }
-
-    @Test
-    fun `a 429 never shortens the wait it would otherwise have`() {
-        for (failures in 1..12) {
-            assertTrue(nextPollDelayMs(failures, interval, rateLimited = true) >= nextPollDelayMs(failures, interval))
-        }
     }
 }

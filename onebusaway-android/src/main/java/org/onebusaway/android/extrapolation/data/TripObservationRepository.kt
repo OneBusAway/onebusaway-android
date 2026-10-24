@@ -132,45 +132,39 @@ class DefaultTripObservationRepository @Inject constructor(
     override fun lookupTripState(tripId: String?): TripState? = cache.lookupTripState(tripId)
 
     override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = flow {
-        var failures = 0
-        var rateLimited = false
-        while (true) {
-            // The fetcher logs a failure once; the Result says whether it was a 429.
-            fetcher.tripDetails(tripId)
-                .onSuccess { details ->
-                    failures = 0
-                    recordTripDetails(tripId, details)
-                    // Emit a tick so a collector can react to a fresh poll (the store holds the data).
-                    emit(Unit)
-                }
-                .onFailure {
-                    failures++
-                    rateLimited = it.isRateLimited
-                }
-            delay(nextPollDelayMs(failures, intervalMs, rateLimited))
+        pollWithBackoff(intervalMs, fetch = { fetcher.tripDetails(tripId) }) { details ->
+            recordTripDetails(tripId, details)
+            // Emit a tick so a collector can react to a fresh poll (the store holds the data).
+            emit(Unit)
         }
     }
 
     override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = channelFlow {
-        var failures = 0
-        var rateLimited = false
         // Nothing is known about the route's trips yet, so the first poll asks for their schedules.
         var includeSchedules = true
+        // Trips a schedules-included poll has already had its chance at (see backfillSchedulesAndShapes).
+        val offeredSchedules = HashSet<String>()
+        pollWithBackoff(intervalMs, fetch = { fetcher.tripsForRoute(routeId, includeSchedules) }) { response ->
+            recordTripsForRoute(response)
+            // Backfills launch into this channelFlow scope.
+            includeSchedules = backfillSchedulesAndShapes(response, includeSchedules, offeredSchedules)
+            send(response)
+        }
+    }
+
+    /**
+     * Polls [fetch] until cancelled, handing each OK result to [onSuccess]. The next poll waits
+     * [intervalMs] after a success, or [nextPollDelayMs]'s backoff after a failure (longer for a 429).
+     */
+    private suspend inline fun <T> pollWithBackoff(intervalMs: Long, fetch: () -> Result<T>, onSuccess: (T) -> Unit): Nothing {
+        var failures = 0
         while (true) {
-            // The fetcher logs a failure once; the Result says whether it was a 429.
-            fetcher.tripsForRoute(routeId, includeSchedules)
-                .onSuccess { response ->
-                    failures = 0
-                    recordTripsForRoute(response)
-                    // Backfills launch into this channelFlow scope.
-                    includeSchedules = backfillSchedulesAndShapes(response, schedulesIncluded = includeSchedules)
-                    send(response)
-                }
-                .onFailure {
-                    failures++
-                    rateLimited = it.isRateLimited
-                }
-            delay(nextPollDelayMs(failures, intervalMs, rateLimited))
+            val result = fetch()
+            result.onSuccess {
+                failures = 0
+                onSuccess(it)
+            }.onFailure { failures++ }
+            delay(nextPollDelayMs(failures, intervalMs, rateLimited = result.exceptionOrNull()?.isRateLimited == true))
         }
     }
 
@@ -178,8 +172,8 @@ class DefaultTripObservationRepository @Inject constructor(
         // The trip already carries its shape — nothing to fetch or hydrate.
         cache.lookupTripState(tripId)?.polyline?.let { return it }
         // Reuse the shape shared by every trip on this route, fetching it once on the first miss.
-        // Concurrent in-flight first-misses on the fetcher's confined dispatcher coalesce in its
-        // SingleFlight and resolve to the same instance, so they store the same Polyline here too.
+        // Concurrent in-flight first-misses coalesce in the fetcher's SingleFlight and resolve to the
+        // same instance, so they store the same Polyline here too.
         val polyline = shapeCache.get(shapeId)
             ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
         return polyline?.also { cache.putPolyline(tripId, it) }
@@ -207,7 +201,8 @@ class DefaultTripObservationRepository @Inject constructor(
         val localTimeMs = WallTime.now()
         response.toObservations().forEach { cache.record(it, localTimeMs) }
         // An entry's schedule is its own trip's (the entry id), not necessarily the active trip's.
-        response.trips.forEach { cache.putSchedule(it.id, it.schedule) }
+        // Reading it converts the wire schedule, so skip the trips already holding one.
+        response.trips.forEach { if (cache.lookupTripState(it.id)?.schedule == null) cache.putSchedule(it.id, it.schedule) }
     }
 
     /**
@@ -216,16 +211,22 @@ class DefaultTripObservationRepository @Inject constructor(
      * collection. Returns whether the next poll should ask for schedules.
      *
      * A missing schedule normally waits for that next poll, which carries every trip's in one request.
-     * But when [schedulesIncluded] the response already carried them, so a trip still without one is
-     * one whose own entry wasn't in it — e.g. during a block rollover two entries report the same active
-     * trip, and the wire dedup (`dedupeByActiveTripKeepingBestFix`) may keep the other trip's entry,
-     * schedule and all. Asking again wouldn't help, so only those trips are fetched one by one.
+     * A trip still without one after a [schedulesIncluded] response is one whose own entry wasn't in
+     * it — e.g. during a block rollover two entries report the same active trip, and the wire dedup
+     * (`dedupeByActiveTripKeepingBestFix`) may keep the other trip's entry, schedule and all. Asking
+     * again wouldn't help, so such a trip goes into [offered] and is fetched on its own from then on;
+     * otherwise one whose fetch failed would turn every other poll into a schedules-included one.
      */
-    private fun CoroutineScope.backfillSchedulesAndShapes(response: RouteTrips, schedulesIncluded: Boolean): Boolean {
+    private fun CoroutineScope.backfillSchedulesAndShapes(
+        response: RouteTrips,
+        schedulesIncluded: Boolean,
+        offered: MutableSet<String>
+    ): Boolean {
         var needSchedules = false
         response.forEachActiveTrip { tripId, _, activeTrip ->
             if (cache.lookupTripState(tripId)?.schedule == null) {
-                if (schedulesIncluded) {
+                if (schedulesIncluded) offered += tripId
+                if (tripId in offered) {
                     launch { ensureSchedule(tripId) }
                 } else {
                     needSchedules = true

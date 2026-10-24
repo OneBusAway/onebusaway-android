@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -31,8 +30,12 @@ import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.api.adapters.toObaTripSchedule
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.References
+import org.onebusaway.android.api.contract.StopTime
 import org.onebusaway.android.api.contract.TripDetailsEntry
+import org.onebusaway.android.api.contract.TripReference
 import org.onebusaway.android.api.contract.TripSchedule
+import org.onebusaway.android.api.contract.TripStatus
 import org.onebusaway.android.api.data.asRouteTrips
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
@@ -44,7 +47,7 @@ import org.onebusaway.android.util.Polyline
  * no-emit-on-failure, and per-collector cancellation — plus the route poll's schedule budget (ask
  * trips-for-route for schedules only while one is missing; fetch a trip alone only when the route poll
  * can't carry it), driven against a fake fetcher under virtual time. Route responses are decoded from
- * inline JSON through the real wire adapter, as TripsForRouteDecodeTest does.
+ * typed wire DTOs through the real wire adapter (`asRouteTrips`), so the block-rollover case runs the real dedup.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripObservationRepositoryTest {
@@ -103,21 +106,17 @@ class TripObservationRepositoryTest {
     /** One trips-for-route entry: the trip it describes, the trip its vehicle reports active, and whether it carries a schedule. */
     private data class Entry(val tripId: String, val activeTripId: String = tripId, val withSchedule: Boolean)
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-    }
-
     /** A trips-for-route response holding [entries], adapted through the real wire→model seam. */
     private fun routeTrips(vararg entries: Entry): RouteTrips {
-        val list = entries.joinToString(",") { e ->
-            val schedule = if (e.withSchedule) """{"stopTimes":[{"stopId":"s1"}]}""" else "null"
-            """{"tripId":"${e.tripId}","status":{"activeTripId":"${e.activeTripId}","serviceDate":1},"schedule":$schedule}"""
+        val list = entries.map { e ->
+            TripDetailsEntry(
+                tripId = e.tripId,
+                status = TripStatus(activeTripId = e.activeTripId, serviceDate = 1),
+                schedule = TripSchedule(stopTimes = listOf(StopTime(stopId = "s1"))).takeIf { e.withSchedule }
+            )
         }
-        val trips = entries.flatMap { listOf(it.tripId, it.activeTripId) }.distinct()
-            .joinToString(",") { """{"id":"$it","routeId":"route1"}""" }
-        val body = """{"code":200,"currentTime":1000,"data":{"list":[$list],"references":{"trips":[$trips]}}}"""
-        return json.decodeFromString<ObaEnvelope<ListWithReferences<TripDetailsEntry>>>(body).asRouteTrips()
+        val trips = entries.flatMap { listOf(it.tripId, it.activeTripId) }.distinct().map { TripReference(id = it, routeId = "route1") }
+        return ObaEnvelope(code = 200, currentTime = 1000, data = ListWithReferences(list, References(trips = trips))).asRouteTrips()
     }
 
     @Test
@@ -370,6 +369,24 @@ class TripObservationRepositoryTest {
         assertEquals("only the trip the poll couldn't carry is fetched", listOf("tripB"), fetcher.tripScheduleCalls)
         assertNotNull(repo.lookupTripState("tripB")?.schedule)
         assertEquals("with it stored, the next poll doesn't ask again", listOf(true, false), fetcher.tripsForRouteCalls)
+    }
+
+    @Test
+    fun `a fallback schedule fetch that keeps failing never turns the route poll heavy`() = runTest {
+        // The rollover case again, but tripB's own schedule can't be had.
+        val fetcher = FakeFetcher(
+            routeTrips = { include ->
+                Result.success(routeTrips(Entry("tripA", activeTripId = "tripB", withSchedule = include), Entry("tripB", withSchedule = include)))
+            }
+        )
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.routeVehiclesStream("route1", intervalMs = 1_000L).launchIn(backgroundScope)
+        runCurrent()
+        advanceTimeBy(3_001)
+
+        assertEquals("only the first poll asks for schedules", listOf(true, false, false, false), fetcher.tripsForRouteCalls)
+        assertEquals("the trip is retried on its own each poll", List(4) { "tripB" }, fetcher.tripScheduleCalls)
     }
 
     @Test

@@ -17,6 +17,7 @@ package org.onebusaway.android.api
 
 import java.io.IOException
 import java.net.HttpURLConnection
+import kotlin.time.Duration
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -67,10 +68,21 @@ val Throwable.isNotFound: Boolean
  * (`Server: awselb/2.0`, a non-envelope JSON body), so [asObaFailure] leaves them an [HttpException];
  * the OBA server's own per-key limiter answers with an envelope, which arrives as [ObaApiException].
  * Either way the status itself says "too many requests", whoever sent it.
+ *
+ * A [RateLimitedException] counts too: it is the same refusal, just answered locally, without sending
+ * the request, while the deployment is still cooling down from one.
  */
 val Throwable.isRateLimited: Boolean
-    get() = (this is ObaApiException && code == HTTP_TOO_MANY_REQUESTS) ||
+    get() = this is RateLimitedException ||
+        (this is ObaApiException && code == HTTP_TOO_MANY_REQUESTS) ||
         (this is HttpException && code() == HTTP_TOO_MANY_REQUESTS)
+
+/**
+ * A request that was never sent, because its deployment answered another request with a 429 less than
+ * a cooldown ago (see [org.onebusaway.android.api.net.RateLimitGate]). Extends [IOException] like
+ * [ObaApiException], so callers that only care about "the request failed" treat it as one.
+ */
+class RateLimitedException(retryIn: Duration) : IOException("OBA request not sent: rate-limited for another $retryIn")
 
 /** HTTP 429; [HttpURLConnection] has no constant for it. */
 private const val HTTP_TOO_MANY_REQUESTS = 429

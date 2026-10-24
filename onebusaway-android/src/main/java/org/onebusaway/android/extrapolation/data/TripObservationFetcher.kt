@@ -44,13 +44,16 @@ import org.onebusaway.android.util.SingleFlight
  * concurrent callers for the same resource share one fetch — so a route backfill watching dozens
  * of trips can't fan out into dozens of duplicate requests.
  *
- * Failures resolve to null (logged once); callers retry on their next attempt.
+ * The polled calls return [Result] so a poll loop can tell *why* it failed (a 429 wants a longer wait
+ * than a dropped connection — see [nextPollDelayMs]); the one-shot fetches resolve failures to null.
+ * Every failure is logged once, and callers retry on their next attempt.
  */
 interface TripObservationFetcher {
 
-    suspend fun tripDetails(tripId: String): TripDetails?
+    suspend fun tripDetails(tripId: String): Result<TripDetails>
 
-    suspend fun tripsForRoute(routeId: String): RouteTrips?
+    /** See [TripVehiclesDataSource.tripsForRoute] for [includeSchedules]. */
+    suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips>
 
     suspend fun tripSchedule(tripId: String): ObaTripSchedule?
 
@@ -103,25 +106,24 @@ class DefaultTripObservationFetcher @Inject constructor(
     private val shapeFetches = SingleFlight<String, Polyline>(fetchScope)
     private val tripRouteInfoFetches = SingleFlight<String, TripRouteInfo>(fetchScope)
 
-    override suspend fun tripDetails(tripId: String): TripDetails? = guarded("trip details for $tripId") {
-        // The data source returns Result; getOrThrow re-raises a non-OK code so guarded maps it to null.
-        val routeTrips = dataSource.tripDetails(tripId).getOrThrow()
-        // A single trip-details fetch yields one trip; its ObaTripDetails carries the
-        // schedule + (unfiltered) status the distillation needs.
-        val details = routeTrips.trips.firstOrNull()
-        TripDetails(
-            observations = routeTrips.toObservations(),
-            schedule = details?.schedule,
-            serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
-            vehicleActiveTripId = details?.status?.activeTripId,
-            shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
-        )
-    }
+    override suspend fun tripDetails(tripId: String): Result<TripDetails> = dataSource.tripDetails(tripId)
+        // mapCatching, so a response that fails to distill is a failed poll rather than a crashed Flow.
+        .mapCatching { routeTrips ->
+            // A single trip-details fetch yields one trip; its ObaTripDetails carries the
+            // schedule + (unfiltered) status the distillation needs.
+            val details = routeTrips.trips.firstOrNull()
+            TripDetails(
+                observations = routeTrips.toObservations(),
+                schedule = details?.schedule,
+                serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
+                vehicleActiveTripId = details?.status?.activeTripId,
+                shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
+            )
+        }
+        .onFailure { Log.e(TAG, "Failed to fetch trip details for $tripId", it) }
 
-    override suspend fun tripsForRoute(routeId: String): RouteTrips? = guarded("trips for route $routeId") {
-        // The data source returns Result; getOrThrow re-raises a non-OK code so guarded maps it to null.
-        dataSource.tripsForRoute(routeId).getOrThrow()
-    }
+    override suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips> = dataSource.tripsForRoute(routeId, includeSchedules)
+        .onFailure { Log.e(TAG, "Failed to fetch trips for route $routeId", it) }
 
     /**
      * Runs [block], resolving any failure to null (logged) so a transient network error becomes a
@@ -138,8 +140,10 @@ class DefaultTripObservationFetcher @Inject constructor(
     }
 
     override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = scheduleFetches.run(tripId) {
-        guarded("schedule for $tripId") {
-            dataSource.tripSchedule(tripId).getOrThrow()
+        // Bounded like shapes: these are the route poll's per-trip fallback (a vehicle whose schedule
+        // trips-for-route didn't carry), and an unbounded set of them is a request burst.
+        withContext(fetchDispatcher) {
+            guarded("schedule for $tripId") { dataSource.tripSchedule(tripId).getOrThrow() }
         }.also {
             if (it == null) Log.w(TAG, "Schedule fetch for $tripId yielded no schedule")
         }

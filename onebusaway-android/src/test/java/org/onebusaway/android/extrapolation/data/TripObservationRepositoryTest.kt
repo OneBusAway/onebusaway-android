@@ -15,32 +15,47 @@
  */
 package org.onebusaway.android.extrapolation.data
 
+import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Test
+import org.onebusaway.android.api.ObaApiException
+import org.onebusaway.android.api.adapters.toObaTripSchedule
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.TripDetailsEntry
+import org.onebusaway.android.api.contract.TripSchedule
+import org.onebusaway.android.api.data.asRouteTrips
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.util.Polyline
 
 /**
- * The cold polling Flow mechanics — interval, exponential backoff, no-emit-on-failure, and
- * per-collector cancellation — driven against a fake fetcher under virtual time. (Recording OK
- * responses into the store is covered by TripStateCacheTest + AdaptersTest, which have the
- * response/Android fixtures this JVM test deliberately avoids.)
+ * The cold polling Flow mechanics — interval, exponential backoff (longer after a 429),
+ * no-emit-on-failure, and per-collector cancellation — plus the route poll's schedule budget (ask
+ * trips-for-route for schedules only while one is missing; fetch a trip alone only when the route poll
+ * can't carry it), driven against a fake fetcher under virtual time. Route responses are decoded from
+ * inline JSON through the real wire adapter, as TripsForRouteDecodeTest does.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripObservationRepositoryTest {
 
-    /** A fetcher whose trip-details call counts invocations and returns whatever [details] yields. */
+    /** A fetcher that records its calls and answers from the given lambdas; by default every poll fails. */
     private class FakeFetcher(
-        private val details: () -> TripDetails? = { null },
+        private val details: () -> Result<TripDetails> = { Result.failure(IOException("offline")) },
+        /** Answers a trips-for-route poll, given whether it asked for schedules. */
+        private val routeTrips: (includeSchedules: Boolean) -> Result<RouteTrips> = { Result.failure(IOException("offline")) },
+        /** Resolves a tripId to its schedule; null (the default) means "no schedule". */
+        private val scheduleFor: (String) -> ObaTripSchedule? = { null },
         /** Resolves a shapeId to its polyline; null (the default) means "no shape". */
         private val shapeFor: (String) -> Polyline? = { null },
         /** Resolves a tripId to its route info; null (the default) means "not found". */
@@ -53,14 +68,26 @@ class TripObservationRepositoryTest {
         var tripRouteInfoCalls = 0
             private set
 
-        override suspend fun tripDetails(tripId: String): TripDetails? {
+        /** Each trips-for-route poll's `includeSchedules`, in order. */
+        val tripsForRouteCalls = mutableListOf<Boolean>()
+
+        /** Each per-trip schedule fetch's tripId, in order. */
+        val tripScheduleCalls = mutableListOf<String>()
+
+        override suspend fun tripDetails(tripId: String): Result<TripDetails> {
             tripDetailsCalls++
             return details()
         }
 
-        override suspend fun tripsForRoute(routeId: String): RouteTrips? = null
+        override suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips> {
+            tripsForRouteCalls += includeSchedules
+            return routeTrips(includeSchedules)
+        }
 
-        override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = null
+        override suspend fun tripSchedule(tripId: String): ObaTripSchedule? {
+            tripScheduleCalls += tripId
+            return scheduleFor(tripId)
+        }
 
         override suspend fun shape(shapeId: String): Polyline? {
             shapeCalls++
@@ -73,9 +100,29 @@ class TripObservationRepositoryTest {
         }
     }
 
+    /** One trips-for-route entry: the trip it describes, the trip its vehicle reports active, and whether it carries a schedule. */
+    private data class Entry(val tripId: String, val activeTripId: String = tripId, val withSchedule: Boolean)
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    /** A trips-for-route response holding [entries], adapted through the real wire→model seam. */
+    private fun routeTrips(vararg entries: Entry): RouteTrips {
+        val list = entries.joinToString(",") { e ->
+            val schedule = if (e.withSchedule) """{"stopTimes":[{"stopId":"s1"}]}""" else "null"
+            """{"tripId":"${e.tripId}","status":{"activeTripId":"${e.activeTripId}","serviceDate":1},"schedule":$schedule}"""
+        }
+        val trips = entries.flatMap { listOf(it.tripId, it.activeTripId) }.distinct()
+            .joinToString(",") { """{"id":"$it","routeId":"route1"}""" }
+        val body = """{"code":200,"currentTime":1000,"data":{"list":[$list],"references":{"trips":[$trips]}}}"""
+        return json.decodeFromString<ObaEnvelope<ListWithReferences<TripDetailsEntry>>>(body).asRouteTrips()
+    }
+
     @Test
     fun `polls immediately, then backs off exponentially on consecutive failures`() = runTest {
-        val fetcher = FakeFetcher() // always null -> every tick is a failure
+        val fetcher = FakeFetcher() // every tick is a (non-429) failure
         val repo = DefaultTripObservationRepository(fetcher)
 
         repo.tripDetailsStream("trip1", intervalMs = 1_000L).launchIn(backgroundScope)
@@ -83,14 +130,62 @@ class TripObservationRepositoryTest {
         runCurrent()
         assertEquals("first poll is immediate", 1, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(1_000)
-        assertEquals("no second poll before the 2s backoff elapses", 1, fetcher.tripDetailsCalls)
+        advanceTimeBy(1_001)
+        assertEquals("second poll after the first failure's 1s retry", 2, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(1_001) // now past t=2000
-        assertEquals("second poll after the first failure's 2s backoff", 2, fetcher.tripDetailsCalls)
+        advanceTimeBy(1_000) // t=2001
+        assertEquals("no third poll before the 2s backoff elapses", 2, fetcher.tripDetailsCalls)
 
-        advanceTimeBy(4_000) // next failure doubles to 4s -> t=6000
-        assertEquals("third poll after a 4s backoff", 3, fetcher.tripDetailsCalls)
+        advanceTimeBy(1_000) // past t=3000
+        assertEquals("third poll after a 2s backoff", 3, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(4_000) // past t=7000
+        assertEquals("fourth poll after a 4s backoff", 4, fetcher.tripDetailsCalls)
+    }
+
+    @Test
+    fun `a successful poll resets the backoff to the interval`() = runTest {
+        val outcomes = ArrayDeque(
+            listOf(
+                Result.failure(IOException("offline")),
+                Result.success(TripDetails(emptyList(), null, null, null, null)),
+                Result.failure(IOException("offline"))
+            )
+        )
+        val fetcher = FakeFetcher(details = { outcomes.removeFirstOrNull() ?: Result.failure(IOException("offline")) })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.tripDetailsStream("trip1", intervalMs = 10_000L).launchIn(backgroundScope)
+        runCurrent()
+
+        advanceTimeBy(1_001)
+        assertEquals("the failure retries after 1s, and that retry succeeds", 2, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(9_998) // t=10_999
+        assertEquals("after a success the next poll waits the full interval", 2, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(2) // past t=11_000
+        assertEquals(3, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(1_000) // past t=12_000
+        assertEquals("a fresh failure starts over at the 1s retry", 4, fetcher.tripDetailsCalls)
+    }
+
+    @Test
+    fun `a 429 waits twice the interval before retrying`() = runTest {
+        val fetcher = FakeFetcher(details = { Result.failure(ObaApiException(429)) })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.tripDetailsStream("trip1", intervalMs = 1_000L).launchIn(backgroundScope)
+
+        runCurrent()
+        assertEquals("first poll is immediate", 1, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(1_999)
+        assertEquals("no prompt retry into a rate limit", 1, fetcher.tripDetailsCalls)
+
+        advanceTimeBy(2) // past t=2000
+        assertEquals("the retry comes after two intervals", 2, fetcher.tripDetailsCalls)
     }
 
     @Test
@@ -208,7 +303,7 @@ class TripObservationRepositoryTest {
 
     @Test
     fun `failed fetches are never emitted`() = runTest {
-        val fetcher = FakeFetcher() // null -> failure -> nothing to emit
+        val fetcher = FakeFetcher() // failure -> nothing to emit
         val repo = DefaultTripObservationRepository(fetcher)
 
         val emissions = mutableListOf<Unit>()
@@ -217,6 +312,80 @@ class TripObservationRepositoryTest {
             .launchIn(backgroundScope)
 
         advanceTimeBy(50_000)
-        assertEquals("a null fetch must not emit", 0, emissions.size)
+        assertEquals("a failed fetch must not emit", 0, emissions.size)
+    }
+
+    @Test
+    fun `the route poll asks for schedules only until every active trip has one`() = runTest {
+        val fetcher = FakeFetcher(routeTrips = { include -> Result.success(routeTrips(Entry("tripA", withSchedule = include))) })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.routeVehiclesStream("route1", intervalMs = 1_000L).launchIn(backgroundScope)
+        runCurrent()
+        advanceTimeBy(2_001)
+
+        assertEquals("first poll asks for schedules, later ones don't", listOf(true, false, false), fetcher.tripsForRouteCalls)
+        assertNotNull("the schedule the poll carried is stored", repo.lookupTripState("tripA")?.schedule)
+        assertEquals("no per-trip schedule fetch", emptyList<String>(), fetcher.tripScheduleCalls)
+    }
+
+    @Test
+    fun `a vehicle that appears without a schedule is covered by the next poll, not its own request`() = runTest {
+        var polls = 0
+        val fetcher = FakeFetcher(
+            routeTrips = { include ->
+                polls++
+                // tripB starts its run on the second poll.
+                val entries = listOfNotNull(Entry("tripA", withSchedule = include), Entry("tripB", withSchedule = include).takeIf { polls >= 2 })
+                Result.success(routeTrips(*entries.toTypedArray()))
+            }
+        )
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.routeVehiclesStream("route1", intervalMs = 1_000L).launchIn(backgroundScope)
+        runCurrent()
+        advanceTimeBy(3_001)
+
+        assertEquals(listOf(true, false, true, false), fetcher.tripsForRouteCalls)
+        assertNotNull(repo.lookupTripState("tripB")?.schedule)
+        assertEquals("no per-trip schedule fetch", emptyList<String>(), fetcher.tripScheduleCalls)
+    }
+
+    @Test
+    fun `a schedule the route poll can't carry is fetched for that trip alone`() = runTest {
+        // A block rollover: tripA's entry reports tripB active, and the wire dedup keeps it over tripB's
+        // own entry, so the response carries tripA's schedule but not tripB's.
+        val fetcher = FakeFetcher(
+            routeTrips = { include ->
+                Result.success(routeTrips(Entry("tripA", activeTripId = "tripB", withSchedule = include), Entry("tripB", withSchedule = include)))
+            },
+            scheduleFor = { TripSchedule().toObaTripSchedule() }
+        )
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.routeVehiclesStream("route1", intervalMs = 1_000L).launchIn(backgroundScope)
+        runCurrent()
+        advanceTimeBy(1_001)
+
+        assertEquals("only the trip the poll couldn't carry is fetched", listOf("tripB"), fetcher.tripScheduleCalls)
+        assertNotNull(repo.lookupTripState("tripB")?.schedule)
+        assertEquals("with it stored, the next poll doesn't ask again", listOf(true, false), fetcher.tripsForRouteCalls)
+    }
+
+    @Test
+    fun `a failed route poll asks for schedules again on its retry`() = runTest {
+        var polls = 0
+        val fetcher = FakeFetcher(
+            routeTrips = { include ->
+                if (polls++ == 0) Result.failure(IOException("offline")) else Result.success(routeTrips(Entry("tripA", withSchedule = include)))
+            }
+        )
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        repo.routeVehiclesStream("route1", intervalMs = 1_000L).launchIn(backgroundScope)
+        runCurrent()
+        advanceTimeBy(1_001)
+
+        assertEquals(listOf(true, true), fetcher.tripsForRouteCalls)
     }
 }

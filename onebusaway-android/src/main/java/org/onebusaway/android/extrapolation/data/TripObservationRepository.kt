@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import org.onebusaway.android.api.isRateLimited
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
@@ -35,18 +36,23 @@ private const val FIRST_RETRY_DELAY_MS = 1_000L
 
 /**
  * Next poll delay after [consecutiveFailures] failed polls in a row: [intervalMs] when it is 0,
- * otherwise an exponential retry starting at [FIRST_RETRY_DELAY_MS] and doubling per failure, capped
- * at [MAX_BACKOFF_MULTIPLIER] times [intervalMs]. Pure, so it is unit-testable without coroutine
- * machinery.
+ * otherwise an exponential retry doubling per failure, capped at [MAX_BACKOFF_MULTIPLIER] times
+ * [intervalMs]. Pure, so it is unit-testable without coroutine machinery.
  *
- * Retries start below the interval because a failed poll is often a session's first (e.g. a 429 from
- * the request burst that opens a route), with nothing on screen yet.
+ * Where the retry starts depends on [rateLimited] — whether the latest failure was an HTTP 429:
+ * - **Otherwise** (a dropped connection, a 5xx) it starts at [FIRST_RETRY_DELAY_MS], below the
+ *   interval: the failed poll may be a session's first, with nothing on screen yet, and a prompt retry
+ *   usually lands.
+ * - **Rate limited** it starts at twice [intervalMs]. A prompt retry is refused too and may count
+ *   against the quota: probing Puget Sound's edge limiter (2026-10-23) found a refusal still standing
+ *   10 s after the first 429 and lifted by 20 s.
  */
-internal fun nextPollDelayMs(consecutiveFailures: Int, intervalMs: Long): Long {
+internal fun nextPollDelayMs(consecutiveFailures: Int, intervalMs: Long, rateLimited: Boolean = false): Long {
     if (consecutiveFailures <= 0) return intervalMs
     val cap = intervalMs * MAX_BACKOFF_MULTIPLIER
+    val first = if (rateLimited) intervalMs * 2 else FIRST_RETRY_DELAY_MS
     // Bound the shift so a long outage can't overflow; the cap is reached long before 2^30 s.
-    val retry = FIRST_RETRY_DELAY_MS shl (consecutiveFailures - 1).coerceAtMost(30)
+    val retry = first shl (consecutiveFailures - 1).coerceAtMost(30)
     return retry.coerceAtMost(cap)
 }
 
@@ -71,7 +77,7 @@ interface TripObservationRepository {
      * and records each successful poll (status/schedule/shape) into the store, which callers read via
      * [lookupTripState]. Collect it to drive the polling for the trip's lifetime on screen; each
      * emission is a "polled" tick (the payload is [Unit] — the data lives in the store, not the
-     * stream). Consecutive failures back off exponentially (see [nextPollDelayMs]).
+     * stream). Consecutive failures back off exponentially, longer for a 429 (see [nextPollDelayMs]).
      */
     fun tripDetailsStream(
         tripId: String,
@@ -82,6 +88,11 @@ interface TripObservationRepository {
      * Polls trips-for-route for [routeId] every [intervalMs] while collected, records each OK
      * response into the store, backfills schedules and shapes for the observed trips, and emits
      * each OK response. Backfills are children of the collection, so they stop with it.
+     *
+     * Schedules ride in the poll itself: while some active trip lacks one, the next poll asks
+     * trips-for-route to include them, so a route's schedules cost one request instead of one
+     * trip-details per vehicle. That per-vehicle burst was what tripped the server's rate limit.
+     * Failures back off as [tripDetailsStream]'s do.
      */
     fun routeVehiclesStream(
         routeId: String,
@@ -122,35 +133,44 @@ class DefaultTripObservationRepository @Inject constructor(
 
     override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = flow {
         var failures = 0
+        var rateLimited = false
         while (true) {
-            // The fetcher resolves failures and non-OK codes to null (logged once).
-            val details = fetcher.tripDetails(tripId)
-            if (details != null) {
-                failures = 0
-                recordTripDetails(tripId, details)
-                // Emit a tick so a collector can react to a fresh poll (the store holds the data).
-                emit(Unit)
-            } else {
-                failures++
-            }
-            delay(nextPollDelayMs(failures, intervalMs))
+            // The fetcher logs a failure once; the Result says whether it was a 429.
+            fetcher.tripDetails(tripId)
+                .onSuccess { details ->
+                    failures = 0
+                    recordTripDetails(tripId, details)
+                    // Emit a tick so a collector can react to a fresh poll (the store holds the data).
+                    emit(Unit)
+                }
+                .onFailure {
+                    failures++
+                    rateLimited = it.isRateLimited
+                }
+            delay(nextPollDelayMs(failures, intervalMs, rateLimited))
         }
     }
 
     override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = channelFlow {
         var failures = 0
+        var rateLimited = false
+        // Nothing is known about the route's trips yet, so the first poll asks for their schedules.
+        var includeSchedules = true
         while (true) {
-            // The fetcher resolves failures and non-OK codes to null (logged once).
-            val response = fetcher.tripsForRoute(routeId)
-            if (response != null) {
-                failures = 0
-                recordTripsForRoute(response)
-                prefetchSchedulesAndShapes(response) // launched into this channelFlow scope
-                send(response)
-            } else {
-                failures++
-            }
-            delay(nextPollDelayMs(failures, intervalMs))
+            // The fetcher logs a failure once; the Result says whether it was a 429.
+            fetcher.tripsForRoute(routeId, includeSchedules)
+                .onSuccess { response ->
+                    failures = 0
+                    recordTripsForRoute(response)
+                    // Backfills launch into this channelFlow scope.
+                    includeSchedules = backfillSchedulesAndShapes(response, schedulesIncluded = includeSchedules)
+                    send(response)
+                }
+                .onFailure {
+                    failures++
+                    rateLimited = it.isRateLimited
+                }
+            delay(nextPollDelayMs(failures, intervalMs, rateLimited))
         }
     }
 
@@ -182,24 +202,39 @@ class DefaultTripObservationRepository @Inject constructor(
         details.observations.forEach { cache.record(it, localTimeMs) }
     }
 
+    /** Records a trips-for-route response's observations, and the schedules it carries when it was asked for them. */
     private fun recordTripsForRoute(response: RouteTrips) {
         val localTimeMs = WallTime.now()
         response.toObservations().forEach { cache.record(it, localTimeMs) }
+        // An entry's schedule is its own trip's (the entry id), not necessarily the active trip's.
+        response.trips.forEach { cache.putSchedule(it.id, it.schedule) }
     }
 
     /**
-     * Backfills schedules and shapes for every active trip in a trips-for-route response that
-     * doesn't already have them, launching the fetches into the receiver scope (the channelFlow's)
-     * so they're cancelled with the collection.
+     * Backfills what the store still lacks for each active trip in a trips-for-route response,
+     * launching the fetches into the receiver scope (the channelFlow's) so they're cancelled with the
+     * collection. Returns whether the next poll should ask for schedules.
+     *
+     * A missing schedule normally waits for that next poll, which carries every trip's in one request.
+     * But when [schedulesIncluded] the response already carried them, so a trip still without one is
+     * one whose own entry wasn't in it — e.g. during a block rollover two entries report the same active
+     * trip, and the wire dedup (`dedupeByActiveTripKeepingBestFix`) may keep the other trip's entry,
+     * schedule and all. Asking again wouldn't help, so only those trips are fetched one by one.
      */
-    private fun CoroutineScope.prefetchSchedulesAndShapes(response: RouteTrips) {
+    private fun CoroutineScope.backfillSchedulesAndShapes(response: RouteTrips, schedulesIncluded: Boolean): Boolean {
+        var needSchedules = false
         response.forEachActiveTrip { tripId, _, activeTrip ->
             if (cache.lookupTripState(tripId)?.schedule == null) {
-                launch { fetcher.tripSchedule(tripId)?.let { cache.putSchedule(tripId, it) } }
+                if (schedulesIncluded) {
+                    launch { ensureSchedule(tripId) }
+                } else {
+                    needSchedules = true
+                }
             }
             activeTrip.shapeId?.let { shapeId ->
                 launch { ensureShape(tripId, shapeId) } // no-op when the polyline is already cached
             }
         }
+        return needSchedules
     }
 }

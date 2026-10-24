@@ -43,6 +43,8 @@ lint = "32.3.1"
 
 # --- Libraries ---
 desugar = "2.1.5"
+# Firebase Analytics 24 / Crashlytics 21 / Messaging 26 require minSdk 24; keep these majors while
+# supporting API 23 (#2385-#2387).
 firebaseAnalytics = "23.2.0"
 firebaseCrashlytics = "20.1.1"
 firebaseMessaging = "25.1.3"

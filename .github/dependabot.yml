@@ -22,10 +22,11 @@ updates:
           - minor
           - patch
     # These releases raised their own minSdk to 24; the app is minSdk 23, so the
-    # manifest merge fails outright and takes the whole grouped bump down with it.
-    # Navigation 2.10.0 was proposed and reverted three times (#2280, #2298,
-    # #2300); WorkManager 2.12.0 arrived in #2350; play-services-maps 20.1.0
-    # in #2401. Drop these once minSdk reaches 24.
+    # manifest merge fails outright (and takes the whole grouped bump down with
+    # it when the release is a minor/patch). Navigation 2.10.0 was proposed and
+    # reverted three times (#2280, #2298, #2300); WorkManager 2.12.0 arrived in
+    # #2350; play-services-maps 20.1.0 in #2401; the Firebase majors in
+    # #2385-#2387. Drop these once minSdk reaches 24.
     ignore:
       - dependency-name: "androidx.navigation:*"
         versions: [">=2.10.0"]
@@ -33,6 +34,12 @@ updates:
         versions: [">=2.12.0"]
       - dependency-name: "com.google.android.gms:play-services-maps"
         versions: [">=20.1.0"]
+      - dependency-name: "com.google.firebase:firebase-analytics"
+        versions: [">=24.0.0"]
+      - dependency-name: "com.google.firebase:firebase-crashlytics"
+        versions: [">=21.0.0"]
+      - dependency-name: "com.google.firebase:firebase-messaging"
+        versions: [">=26.0.0"]
     labels:
       - dependencies
 

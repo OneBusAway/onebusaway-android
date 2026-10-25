@@ -134,6 +134,12 @@ class ObaFailureTest {
         assertFalse(IOException("connection reset").isRateLimited)
     }
 
+    @Test
+    fun aLocalRefusalCarriesNoStackTrace() {
+        // Every data source logs each failure; a cooldown's refusals mustn't flood logcat with traces.
+        assertEquals(0, RateLimitedException(5.seconds).stackTrace.size)
+    }
+
     private fun httpError(code: Int, body: String) = HttpException(
         Response.error<Unit>(code, body.toResponseBody("application/json".toMediaType()))
     )

@@ -108,6 +108,19 @@ class ArrivalsViewModel @AssistedInject constructor(
         private set
 
     /**
+     * How soon after [lastResponseTime] to poll again when that refresh met a rate limit, instead of
+     * the full period: until the server may be asked again (#2410), so a stop opened during a 429
+     * cooldown isn't left on an error or stale arrivals for a minute. Only after the first refresh in a
+     * row that wasn't fresh: one early retry per streak, so a limit that persists doesn't speed the
+     * board up. Null otherwise.
+     */
+    var earlyRetryAfter: Duration? = null
+        private set
+
+    /** Refreshes in a row that didn't land fresh data, for [earlyRetryAfter]. */
+    private var staleRefreshes = 0
+
+    /**
      * Bumped at the start of every [refresh]; a refresh applies its result only while it's still the
      * latest. The poll loop awaits its own `refresh()` sequentially, but [manualRefresh]/[loadMore]
      * each launch one, so a user refresh can run concurrently with an in-flight poll and finish out of
@@ -125,8 +138,8 @@ class ArrivalsViewModel @AssistedInject constructor(
      *
      * Returns true when a *fresh* network response landed and was applied — a stale fallback (the
      * repository returns the last good data flagged `isStale` on failure-with-content), a hard failure,
-     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore] and the
-     * poll loop ([nextArrivalsPollDelayMs]).
+     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore], and
+     * sets [earlyRetryAfter].
      */
     suspend fun refresh(): Boolean {
         val generation = ++refreshGeneration
@@ -136,7 +149,7 @@ class ArrivalsViewModel @AssistedInject constructor(
         // (measured against the *shown* data) past the fresher completion. See #1933.
         if (generation != refreshGeneration) return false
         lastResponseTime = WallTime.now()
-        return result.fold(
+        val fresh = result.fold(
             onSuccess = { data ->
                 minutesAfter = data.minutesAfter
                 fatalError.value = null
@@ -149,11 +162,10 @@ class ArrivalsViewModel @AssistedInject constructor(
                 false
             }
         )
+        staleRefreshes = if (fresh) 0 else staleRefreshes + 1
+        earlyRetryAfter = if (staleRefreshes == 1) rateLimit.rateLimitedFor() else null
+        return fresh
     }
-
-    /** See [ObaRateLimit.rateLimitedFor]. */
-    val rateLimitedFor: Duration?
-        get() = rateLimit.rateLimitedFor()
 
     /** Refreshes from a user action (the toolbar refresh button or Retry). */
     fun manualRefresh() {

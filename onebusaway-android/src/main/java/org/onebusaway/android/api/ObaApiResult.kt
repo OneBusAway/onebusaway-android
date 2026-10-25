@@ -81,8 +81,13 @@ val Throwable.isRateLimited: Boolean
  * A request that was never sent, because its deployment answered another request with a 429 less than
  * a cooldown ago (see [org.onebusaway.android.api.net.RateLimitGate]). Extends [IOException] like
  * [ObaApiException], so callers that only care about "the request failed" treat it as one.
+ *
+ * It carries no stack trace: the message says all there is to say, and every data source logs each
+ * failure, so a cooldown's refusals would otherwise flood logcat with traces of requests never sent.
  */
-class RateLimitedException(retryIn: Duration) : IOException("OBA request not sent: rate-limited for another $retryIn")
+class RateLimitedException(retryIn: Duration) : IOException("OBA request not sent: rate-limited for another $retryIn") {
+    override fun fillInStackTrace(): Throwable = this
+}
 
 /** HTTP 429; [HttpURLConnection] has no constant for it. */
 private const val HTTP_TOO_MANY_REQUESTS = 429

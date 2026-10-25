@@ -19,27 +19,34 @@ import kotlin.time.Duration.Companion.milliseconds
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** When the arrivals board polls next: every 60s, or as soon as a rate limit lifts after a failed refresh (#2410). */
+/** When the arrivals board polls next: every 60s, or once as soon as a rate limit lifts (#2410). */
 class ArrivalsPollDelayTest {
 
     @Test
-    fun aFreshRefreshWaitsThePeriod() {
-        assertEquals(60_000L, nextArrivalsPollDelayMs(refreshedFresh = true, rateLimitedFor = null))
+    fun rightAfterAResponseItWaitsThePeriod() {
+        assertEquals(60_000L, nextArrivalsPollDelayMs(sinceLastResponseMs = 0, earlyRetryAfter = null))
     }
 
     @Test
-    fun aFailedRefreshWithNoRateLimitWaitsThePeriod() {
-        // Offline, or a server error: nothing says asking sooner would help.
-        assertEquals(60_000L, nextArrivalsPollDelayMs(refreshedFresh = false, rateLimitedFor = null))
+    fun theWaitIsMeasuredFromTheResponse() {
+        // Resumed 20 s after the last response: only the rest of the period is left.
+        assertEquals(40_000L, nextArrivalsPollDelayMs(sinceLastResponseMs = 20_000, earlyRetryAfter = null))
     }
 
     @Test
-    fun aFailedRefreshUnderARateLimitRetriesWhenItLifts() {
-        assertEquals(7_879L, nextArrivalsPollDelayMs(refreshedFresh = false, rateLimitedFor = 7_879.milliseconds))
+    fun anEarlyRetryWaitsOnlyUntilTheRateLimitLifts() {
+        assertEquals(7_879L, nextArrivalsPollDelayMs(sinceLastResponseMs = 0, earlyRetryAfter = 7_879.milliseconds))
     }
 
     @Test
-    fun aFreshRefreshIgnoresARateLimitSomeoneElseMet() {
-        assertEquals(60_000L, nextArrivalsPollDelayMs(refreshedFresh = true, rateLimitedFor = 7_879.milliseconds))
+    fun anEarlyRetrySurvivesAPauseAndResume() {
+        // Switched away for 2 s after the refused refresh: still retries when the limit lifts, not 58 s later.
+        assertEquals(5_879L, nextArrivalsPollDelayMs(sinceLastResponseMs = 2_000, earlyRetryAfter = 7_879.milliseconds))
+    }
+
+    @Test
+    fun anOverdueWaitPollsAtOnce() {
+        assertEquals(0L, nextArrivalsPollDelayMs(sinceLastResponseMs = 70_000, earlyRetryAfter = null))
+        assertEquals(0L, nextArrivalsPollDelayMs(sinceLastResponseMs = 9_000, earlyRetryAfter = 7_879.milliseconds))
     }
 }

@@ -19,13 +19,12 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import kotlinx.coroutines.runBlocking
-import org.onebusaway.android.BuildConfig
-import org.onebusaway.android.R
+import java.util.concurrent.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.oba.LegacyDataImporter
@@ -48,39 +47,25 @@ object Backup {
 
     private fun dbFile(context: Context): File = context.getDatabasePath(AppDatabase.DATABASE_NAME)
 
-    fun backup(context: Context, uri: Uri) {
-        try {
-            // Fold committed WAL pages into the main file so the byte copy captures the latest state.
-            DatabaseEntryPoint.get(context).appDatabase().openHelper.writableDatabase
-                .query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }
-            // A null stream means the destination couldn't be opened — treat that as a failure, not a
-            // silent success (otherwise the success Toast would fire without any bytes written).
-            val out = context.contentResolver.openOutputStream(uri)
-                ?: throw IOException("Could not open output stream for backup: $uri")
-            out.use { FileInputStream(dbFile(context)).use { input -> input.copyTo(it) } }
-            Toast.makeText(
-                context,
-                context.getString(R.string.preferences_db_saved),
-                Toast.LENGTH_LONG
-            ).show()
-            if (BuildConfig.DEBUG) Log.d(TAG, "Database backup saved successfully to: $uri")
-        } catch (e: IOException) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.preferences_db_save_error, e.message),
-                Toast.LENGTH_LONG
-            ).show()
-            Log.e(TAG, "Error saving database backup", e)
-        }
+    /** Writes the database copy on an IO dispatcher; user feedback belongs to the UI caller. */
+    suspend fun backup(context: Context, uri: Uri) = withContext(Dispatchers.IO) {
+        // Fold committed WAL pages into the main file so the byte copy captures the latest state.
+        DatabaseEntryPoint.get(context).appDatabase().openHelper.writableDatabase
+            .query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }
+        // A null stream means the destination couldn't be opened — treat that as a failure, not a
+        // silent success (otherwise the success Toast would fire without any bytes written).
+        val out = context.contentResolver.openOutputStream(uri)
+            ?: throw IOException("Could not open output stream for backup: $uri")
+        out.use { FileInputStream(dbFile(context)).use { input -> input.copyTo(it) } }
     }
 
     /**
      * Restores [uri] into the live app database in place. Both formats are merged via
-     * [LegacyDataImporter] in a single transaction (rare, user-initiated, so blocking) — no file swap and
-     * no close, so no consumer is left holding a stale/closed [AppDatabase] and the process is never
-     * restarted.
+     * [LegacyDataImporter] in a single transaction — no file swap and no close, so no consumer is left
+     * holding a stale/closed [AppDatabase] and the process is never restarted. Document, SQLite, and
+     * database work run on [Dispatchers.IO].
      */
-    fun restore(context: Context, uri: Uri) {
+    suspend fun restore(context: Context, uri: Uri) = withContext(Dispatchers.IO) {
         val backupFile = uriToTempFile(context, uri)
             ?: throw IOException("Could not read backup file")
         try {
@@ -97,9 +82,16 @@ object Backup {
         }
     }
 
-    private fun mergeBackup(merge: suspend () -> Unit) {
+    /**
+     * Runs the importer transaction and turns a malformed or incompatible backup into an [IOException]
+     * that the UI can display. Cancellation is deliberately rethrown so the owning lifecycle can stop
+     * this coroutine normally.
+     */
+    private suspend fun mergeBackup(merge: suspend () -> Unit) {
         try {
-            runBlocking { merge() }
+            merge()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // The merge is one transaction, so an incompatible backup — an unreadable file, or a schema/
             // FK mismatch surfacing mid-write — rolls back with the live database untouched. Nothing was

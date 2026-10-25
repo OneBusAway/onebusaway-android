@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.tracking.TrackedRouteStore
@@ -51,7 +52,8 @@ import org.onebusaway.android.tracking.TrackedRouteStore
 class ArrivalsViewModel @AssistedInject constructor(
     @Assisted private val stopId: String,
     private val repository: ArrivalsRepository,
-    private val trackedRoutes: TrackedRouteStore
+    private val trackedRoutes: TrackedRouteStore,
+    private val rateLimit: ObaRateLimit
 ) : ViewModel() {
 
     @AssistedFactory
@@ -123,8 +125,8 @@ class ArrivalsViewModel @AssistedInject constructor(
      *
      * Returns true when a *fresh* network response landed and was applied — a stale fallback (the
      * repository returns the last good data flagged `isStale` on failure-with-content), a hard failure,
-     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore], and by
-     * the poll loop, which retries early when a refresh that wasn't fresh met a rate limit.
+     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore] and the
+     * poll loop ([nextArrivalsPollDelayMs]).
      */
     suspend fun refresh(): Boolean {
         val generation = ++refreshGeneration
@@ -149,9 +151,9 @@ class ArrivalsViewModel @AssistedInject constructor(
         )
     }
 
-    /** See [ArrivalsRepository.rateLimitedFor]; read by the screen's polling loop after a failed refresh. */
+    /** See [ObaRateLimit.rateLimitedFor]. */
     val rateLimitedFor: Duration?
-        get() = repository.rateLimitedFor
+        get() = rateLimit.rateLimitedFor()
 
     /** Refreshes from a user action (the toolbar refresh button or Retry). */
     fun manualRefresh() {

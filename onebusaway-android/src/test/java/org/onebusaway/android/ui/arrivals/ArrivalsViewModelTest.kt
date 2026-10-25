@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
-import kotlin.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +29,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.ServerTime
@@ -42,7 +42,7 @@ import org.onebusaway.android.ui.compose.components.AlertSeverity
  * saves threading the same throwaway store through every construction. Named for the type it
  * returns, so it shadows the constructor and the call sites read unchanged.
  */
-private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository) = ArrivalsViewModel(stopId, repository, TrackedRouteStore(FakePreferencesRepository()))
+private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository) = ArrivalsViewModel(stopId, repository, TrackedRouteStore(FakePreferencesRepository()), ObaRateLimit { null })
 
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
 private data class FavoriteRouteCall(
@@ -107,8 +107,6 @@ private class FakeArrivalsRepository(
     }
 
     override fun favoriteRouteIds(): Flow<Set<String>> = favoriteRoutes
-
-    override val rateLimitedFor: Duration? = null
 
     override fun alertHideState(): Flow<AlertHideState> = hideState
 

@@ -64,7 +64,7 @@ internal class RateLimitGate(private val clock: ElapsedClock) {
     @Synchronized
     private fun close(deployment: String, sentAt: ElapsedTime) {
         val until = sentAt + COOLDOWN
-        closedUntil[deployment] = closedUntil[deployment]?.let { maxOf(it, until) } ?: until
+        closedUntil[deployment] = maxOf(until, closedUntil[deployment] ?: until)
     }
 
     companion object {

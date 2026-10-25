@@ -100,8 +100,8 @@ internal fun nextArrivalsPollDelayMs(refreshedFresh: Boolean, rateLimitedFor: Du
 private const val ALERT_PAGE_SIZE = 3
 
 /**
- * The lifecycle-scoped 60s polling loop (sooner after a rate-limited refresh, see
- * [nextArrivalsPollDelayMs]), shared by the standalone screen and the map panel.
+ * The lifecycle-scoped 60s polling loop (see [nextArrivalsPollDelayMs]), shared by the standalone
+ * screen and the map panel.
  * Runs only while RESUMED (cancelled on pause, like the legacy Handler) and refreshes immediately
  * on resume if the window already elapsed.
  */

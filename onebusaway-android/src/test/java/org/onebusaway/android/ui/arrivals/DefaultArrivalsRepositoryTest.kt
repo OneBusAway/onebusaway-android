@@ -93,8 +93,6 @@ class DefaultArrivalsRepositoryTest {
             requestedMinutes.add(minutesAfter)
             return respond(minutesAfter)
         }
-
-        override val rateLimitedFor: Duration? = null
     }
 
     /**

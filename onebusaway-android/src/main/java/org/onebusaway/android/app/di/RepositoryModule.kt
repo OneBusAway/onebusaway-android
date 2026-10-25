@@ -44,6 +44,8 @@ import org.onebusaway.android.api.data.SurveyDataSource
 import org.onebusaway.android.api.data.TripDetailsDataSource
 import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.api.data.VehicleSearchDataSource
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.demo.DemoModeController
@@ -125,6 +127,9 @@ import org.onebusaway.android.ui.tripresults.TripResultsRepository
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    internal abstract fun bindObaRateLimit(impl: ObaApiProvider): ObaRateLimit
 
     @Binds
     @Singleton

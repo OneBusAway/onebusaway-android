@@ -117,8 +117,8 @@ class ArrivalsViewModel @AssistedInject constructor(
     var earlyRetryAfter: Duration? = null
         private set
 
-    /** Refreshes in a row that didn't land fresh data, for [earlyRetryAfter]. */
-    private var staleRefreshes = 0
+    /** Whether the refresh before the latest one landed fresh data, for [earlyRetryAfter]. */
+    private var lastRefreshFresh = true
 
     /**
      * Bumped at the start of every [refresh]; a refresh applies its result only while it's still the
@@ -162,8 +162,8 @@ class ArrivalsViewModel @AssistedInject constructor(
                 false
             }
         )
-        staleRefreshes = if (fresh) 0 else staleRefreshes + 1
-        earlyRetryAfter = if (staleRefreshes == 1) rateLimit.rateLimitedFor() else null
+        earlyRetryAfter = if (!fresh && lastRefreshFresh) rateLimit.rateLimitedFor() else null
+        lastRefreshFresh = fresh
         return fresh
     }
 

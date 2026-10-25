@@ -15,7 +15,9 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -24,29 +26,29 @@ class ArrivalsPollDelayTest {
 
     @Test
     fun rightAfterAResponseItWaitsThePeriod() {
-        assertEquals(60_000L, nextArrivalsPollDelayMs(sinceLastResponseMs = 0, earlyRetryAfter = null))
+        assertEquals(60.seconds, nextArrivalsPollDelay(Duration.ZERO, earlyRetryAfter = null))
     }
 
     @Test
     fun theWaitIsMeasuredFromTheResponse() {
         // Resumed 20 s after the last response: only the rest of the period is left.
-        assertEquals(40_000L, nextArrivalsPollDelayMs(sinceLastResponseMs = 20_000, earlyRetryAfter = null))
+        assertEquals(40.seconds, nextArrivalsPollDelay(20.seconds, earlyRetryAfter = null))
     }
 
     @Test
     fun anEarlyRetryWaitsOnlyUntilTheRateLimitLifts() {
-        assertEquals(7_879L, nextArrivalsPollDelayMs(sinceLastResponseMs = 0, earlyRetryAfter = 7_879.milliseconds))
+        assertEquals(7_879.milliseconds, nextArrivalsPollDelay(Duration.ZERO, earlyRetryAfter = 7_879.milliseconds))
     }
 
     @Test
     fun anEarlyRetrySurvivesAPauseAndResume() {
         // Switched away for 2 s after the refused refresh: still retries when the limit lifts, not 58 s later.
-        assertEquals(5_879L, nextArrivalsPollDelayMs(sinceLastResponseMs = 2_000, earlyRetryAfter = 7_879.milliseconds))
+        assertEquals(5_879.milliseconds, nextArrivalsPollDelay(2.seconds, earlyRetryAfter = 7_879.milliseconds))
     }
 
     @Test
     fun anOverdueWaitPollsAtOnce() {
-        assertEquals(0L, nextArrivalsPollDelayMs(sinceLastResponseMs = 70_000, earlyRetryAfter = null))
-        assertEquals(0L, nextArrivalsPollDelayMs(sinceLastResponseMs = 9_000, earlyRetryAfter = 7_879.milliseconds))
+        assertEquals(Duration.ZERO, nextArrivalsPollDelay(70.seconds, earlyRetryAfter = null))
+        assertEquals(Duration.ZERO, nextArrivalsPollDelay(9.seconds, earlyRetryAfter = 7_879.milliseconds))
     }
 }

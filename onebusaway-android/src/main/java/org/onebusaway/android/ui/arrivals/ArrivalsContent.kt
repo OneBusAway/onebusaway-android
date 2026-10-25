@@ -68,6 +68,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -85,22 +86,22 @@ import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
-private const val REFRESH_PERIOD_MS = 60_000L
+private val REFRESH_PERIOD = 60.seconds
 
 /**
- * The wait before the next arrivals poll, [sinceLastResponseMs] after the last one: what's left of the
+ * The wait before the next arrivals poll, [sinceLastResponse] after the last one: what's left of the
  * 60s period, or of [earlyRetryAfter] when that refresh met a rate limit (see
  * [ArrivalsViewModel.earlyRetryAfter]). Measured from the response either way, so a pause and resume
  * keeps the same schedule.
  */
-internal fun nextArrivalsPollDelayMs(sinceLastResponseMs: Long, earlyRetryAfter: Duration?): Long = ((earlyRetryAfter?.inWholeMilliseconds ?: REFRESH_PERIOD_MS) - sinceLastResponseMs).coerceIn(0L, REFRESH_PERIOD_MS)
+internal fun nextArrivalsPollDelay(sinceLastResponse: Duration, earlyRetryAfter: Duration?): Duration = ((earlyRetryAfter ?: REFRESH_PERIOD) - sinceLastResponse).coerceIn(Duration.ZERO, REFRESH_PERIOD)
 
 /** How many service alerts the alert list shows before the "show more" link, and the page size each
  *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */
 private const val ALERT_PAGE_SIZE = 3
 
 /**
- * The lifecycle-scoped 60s polling loop (see [nextArrivalsPollDelayMs]), shared by the standalone
+ * The lifecycle-scoped 60s polling loop (see [nextArrivalsPollDelay]), shared by the standalone
  * screen and the map panel.
  * Runs only while RESUMED (cancelled on pause, like the legacy Handler) and refreshes immediately
  * on resume if the wait already elapsed.
@@ -111,8 +112,7 @@ internal fun ArrivalsPolling(viewModel: ArrivalsViewModel) {
     LaunchedEffect(viewModel) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             while (isActive) {
-                val sinceLast = (WallTime.now() - viewModel.lastResponseTime).inWholeMilliseconds
-                delay(nextArrivalsPollDelayMs(sinceLast, viewModel.earlyRetryAfter))
+                delay(nextArrivalsPollDelay(WallTime.now() - viewModel.lastResponseTime, viewModel.earlyRetryAfter))
                 viewModel.refresh()
             }
         }

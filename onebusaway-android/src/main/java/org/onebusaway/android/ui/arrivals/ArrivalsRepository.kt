@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.arrivals
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -143,6 +144,9 @@ interface ArrivalsRepository {
         stopId: String,
         minutesAfter: Int
     ): Result<ArrivalsData>
+
+    /** How long until the OBA server may be asked again after a 429, or null when it may be asked now. */
+    val rateLimitedFor: Duration?
 
     /**
      * Stars (or unstars) a route wholesale (#1751), then backfills the route's full details
@@ -288,17 +292,21 @@ class DefaultArrivalsRepository @Inject constructor(
     // rewrite — or drop — the filter they actually kept.
     private var legacyFilterAdopted = false
 
+    override val rateLimitedFor: Duration?
+        get() = stopArrivals.rateLimitedFor
+
     override suspend fun getArrivals(
         stopId: String,
         minutesAfter: Int
     ): Result<ArrivalsData> = withContext(Dispatchers.IO) {
         importGate.awaitReady()
         var minutes = minutesAfter
-        // Widen the window while the fetch is empty (or failing), matching the legacy loader.
+        // Widen the window while the fetch comes back empty. Not while it's failing: a wider window
+        // can't fix the request, and the legacy loader's retries were a burst of up to 23 (#2410).
         var result: Result<StopArrivals>
         do {
             result = stopArrivals.arrivals(stopId, minutes)
-            if (result.getOrNull()?.hasArrivals == true) break
+            if (result.getOrNull()?.hasArrivals != false) break
             minutes += MINUTES_AFTER_INCREMENT
         } while (minutes <= MINUTES_AFTER_MAX)
 

@@ -51,14 +51,14 @@ internal class RateLimitGate(private val clock: ElapsedClock) {
      * 429 counts: a local refusal passed back out of [block] was never sent, so it says nothing new.
      */
     suspend fun <T> pass(deployment: String, block: suspend () -> Result<T>): Result<T> {
-        retryIn(deployment)?.let { return Result.failure(RateLimitedException(it)) }
+        closedFor(deployment)?.let { return Result.failure(RateLimitedException(it)) }
         val sentAt = clock.now()
         return block().onFailure { if (it.isRateLimited && it !is RateLimitedException) close(deployment, sentAt) }
     }
 
     /** How long [deployment]'s gate stays closed, or null when it is open. */
     @Synchronized
-    private fun retryIn(deployment: String): Duration? = closedUntil[deployment]?.let { it - clock.now() }?.takeIf { it.isPositive() }
+    fun closedFor(deployment: String): Duration? = closedUntil[deployment]?.let { it - clock.now() }?.takeIf { it.isPositive() }
 
     /** Closes [deployment]'s gate until [COOLDOWN] after [sentAt], unless a later-sent 429 already holds it longer. */
     @Synchronized

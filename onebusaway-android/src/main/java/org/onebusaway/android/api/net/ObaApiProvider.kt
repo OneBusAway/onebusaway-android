@@ -19,6 +19,7 @@ import android.net.Uri
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -152,6 +153,13 @@ class ObaApiProvider @Inject constructor(
      */
     val deploymentKey: String
         get() = if (demoMode.isActive) DEMO_DEPLOYMENT else resolver.baseUrl()?.toString() ?: NO_DEPLOYMENT
+
+    /**
+     * How long until the current deployment may be asked again after a 429 (see [RateLimitGate]), or
+     * null when it may be asked now. Never limited on the demo deployment, which the gate doesn't cover.
+     */
+    val rateLimitedFor: Duration?
+        get() = if (demoMode.isActive) null else resolver.baseUrl()?.let { rateLimitGate.closedFor(it.toString()) }
 
     /** Runs [block], mapping an OBA-stated failure to [ObaApiException] and keeping cancellation out. */
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = runCatchingCancellable { block() }

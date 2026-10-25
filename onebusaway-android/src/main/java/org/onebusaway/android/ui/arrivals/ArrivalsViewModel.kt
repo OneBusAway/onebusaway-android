@@ -20,6 +20,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlin.time.Duration
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -122,8 +123,8 @@ class ArrivalsViewModel @AssistedInject constructor(
      *
      * Returns true when a *fresh* network response landed and was applied — a stale fallback (the
      * repository returns the last good data flagged `isStale` on failure-with-content), a hard failure,
-     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore]; the
-     * poll loop ignores it.
+     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore], and by
+     * the poll loop, which retries early when a refresh that wasn't fresh met a rate limit.
      */
     suspend fun refresh(): Boolean {
         val generation = ++refreshGeneration
@@ -147,6 +148,10 @@ class ArrivalsViewModel @AssistedInject constructor(
             }
         )
     }
+
+    /** See [ArrivalsRepository.rateLimitedFor]; read by the screen's polling loop after a failed refresh. */
+    val rateLimitedFor: Duration?
+        get() = repository.rateLimitedFor
 
     /** Refreshes from a user action (the toolbar refresh button or Retry). */
     fun manualRefresh() {

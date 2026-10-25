@@ -67,6 +67,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import kotlin.time.Duration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -86,12 +87,21 @@ import org.onebusaway.android.util.DisplayFormat
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
 private const val REFRESH_PERIOD_MS = 60_000L
 
+/**
+ * The wait before the next arrivals poll: the 60s period, unless the last refresh didn't land fresh
+ * data while the OBA server is rate-limiting ([rateLimitedFor] non-null). Then it's only until the
+ * server may be asked again (#2410), so a stop opened during a 429 cooldown doesn't sit on an error
+ * or stale arrivals for a whole minute after the cooldown ends.
+ */
+internal fun nextArrivalsPollDelayMs(refreshedFresh: Boolean, rateLimitedFor: Duration?): Long = if (!refreshedFresh && rateLimitedFor != null) rateLimitedFor.inWholeMilliseconds else REFRESH_PERIOD_MS
+
 /** How many service alerts the alert list shows before the "show more" link, and the page size each
  *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */
 private const val ALERT_PAGE_SIZE = 3
 
 /**
- * The lifecycle-scoped 60s polling loop, shared by the standalone screen and the map panel.
+ * The lifecycle-scoped 60s polling loop (sooner after a rate-limited refresh, see
+ * [nextArrivalsPollDelayMs]), shared by the standalone screen and the map panel.
  * Runs only while RESUMED (cancelled on pause, like the legacy Handler) and refreshes immediately
  * on resume if the window already elapsed.
  */
@@ -103,8 +113,8 @@ internal fun ArrivalsPolling(viewModel: ArrivalsViewModel) {
             val sinceLast = (WallTime.now() - viewModel.lastResponseTime).inWholeMilliseconds
             delay((REFRESH_PERIOD_MS - sinceLast).coerceIn(0L, REFRESH_PERIOD_MS))
             while (isActive) {
-                viewModel.refresh()
-                delay(REFRESH_PERIOD_MS)
+                val fresh = viewModel.refresh()
+                delay(nextArrivalsPollDelayMs(fresh, viewModel.rateLimitedFor))
             }
         }
     }

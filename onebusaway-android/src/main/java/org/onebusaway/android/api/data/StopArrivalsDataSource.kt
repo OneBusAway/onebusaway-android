@@ -17,6 +17,7 @@ package org.onebusaway.android.api.data
 
 import android.util.Log
 import javax.inject.Inject
+import kotlin.time.Duration
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoStop
 import org.onebusaway.android.api.adapters.DtoTrip
@@ -121,6 +122,9 @@ interface StopArrivalsDataSource {
      * [requireData]) rather than throwing; the caller owns the widen-on-empty + stale-fallback policy.
      */
     suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals>
+
+    /** See [ObaApiProvider.rateLimitedFor]. */
+    val rateLimitedFor: Duration?
 }
 
 class DefaultStopArrivalsDataSource @Inject constructor(
@@ -131,6 +135,9 @@ class DefaultStopArrivalsDataSource @Inject constructor(
         val envelope = it.arrivalsAndDeparturesForStop(stopId, minutesAfter)
         StopArrivals(envelope.requireData(), serverNowOrDeviceClock(envelope.currentTime), minutesAfter)
     }.onFailure { Log.e(TAG, "arrivals($stopId) failed", it) }
+
+    override val rateLimitedFor: Duration?
+        get() = api.rateLimitedFor
 
     private companion object {
         const val TAG = "StopArrivalsDataSource"

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
+import kotlin.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -106,6 +107,8 @@ private class FakeArrivalsRepository(
     }
 
     override fun favoriteRouteIds(): Flow<Set<String>> = favoriteRoutes
+
+    override val rateLimitedFor: Duration? = null
 
     override fun alertHideState(): Flow<AlertHideState> = hideState
 

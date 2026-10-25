@@ -333,6 +333,18 @@ class DefaultArrivalsRepositoryTest {
     }
 
     @Test
+    fun `a failing fetch isn't retried with wider windows`() = runTest {
+        // A wider window can't fix a failed request; retrying all the way to a day was a burst of 23 (#2410).
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.failure(ObaApiException(429)) }
+        val repository = repository(dataSource)
+
+        repository.getArrivals(STOP_ID, 65)
+
+        assertEquals(listOf(65), dataSource.requestedMinutes)
+    }
+
+    @Test
     fun `the stop is recorded once per session, not on every poll`() = runTest {
         val dataSource = FakeStopArrivalsDataSource()
         dataSource.respond = { Result.success(snapshot()) }

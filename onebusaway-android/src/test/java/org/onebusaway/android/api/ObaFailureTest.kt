@@ -16,6 +16,7 @@
 package org.onebusaway.android.api
 
 import java.io.IOException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
@@ -125,11 +126,18 @@ class ObaFailureTest {
     }
 
     @Test
-    fun onlyA429CountsAsRateLimited() {
+    fun onlyA429OrALocalRefusalCountsAsRateLimited() {
         assertTrue(ObaApiException(429).isRateLimited)
+        assertTrue("refused locally, while cooling down from one", RateLimitedException(5.seconds).isRateLimited)
         assertFalse(ObaApiException(500).isRateLimited)
         assertFalse(httpError(503, "").isRateLimited)
         assertFalse(IOException("connection reset").isRateLimited)
+    }
+
+    @Test
+    fun aLocalRefusalCarriesNoStackTrace() {
+        // Every data source logs each failure; a cooldown's refusals mustn't flood logcat with traces.
+        assertEquals(0, RateLimitedException(5.seconds).stackTrace.size)
     }
 
     private fun httpError(code: Int, body: String) = HttpException(

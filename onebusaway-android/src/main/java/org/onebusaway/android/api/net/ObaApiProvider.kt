@@ -19,6 +19,7 @@ import android.net.Uri
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -28,6 +29,7 @@ import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.api.asObaFailure
 import org.onebusaway.android.api.contract.ObaWebService
 import org.onebusaway.android.demo.DemoModeController
+import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.util.runCatchingCancellable
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -51,10 +53,12 @@ class ObaApiProvider @Inject constructor(
     private val resolver: ObaEndpointResolver,
     private val client: OkHttpClient,
     private val json: Json,
-    private val demoMode: DemoModeController
-) {
+    private val demoMode: DemoModeController,
+    clock: ElapsedClock
+) : ObaRateLimit {
     private var cachedBase: Uri? = null
     private var cachedService: ObaWebService? = null
+    private val rateLimitGate = RateLimitGate(clock)
 
     /**
      * Runs [block] against the [ObaWebService] for the current region and maps the outcome to a
@@ -65,11 +69,14 @@ class ObaApiProvider @Inject constructor(
      * A failure the OBA layer itself stated is normalized to [ObaApiException] here (see
      * [asObaFailure]), whichever side of the HTTP status/envelope divide it arrived on, so callers
      * classify app-level codes on one type.
+     *
+     * While the deployment is cooling down from a 429, [block] isn't run at all and the result is a
+     * [org.onebusaway.android.api.RateLimitedException] failure (see [RateLimitGate]).
      */
     suspend fun <T> call(block: suspend (ObaWebService) -> T): Result<T> {
         if (demoMode.isActive) return attempt { onDemoDeployment(block) }
-        val service = service() ?: return Result.failure(noEndpoint())
-        return attempt { block(service) }
+        val base = baseUrl() ?: return Result.failure(noEndpoint())
+        return attemptLive(base, block)
     }
 
     /**
@@ -78,8 +85,8 @@ class ObaApiProvider @Inject constructor(
      */
     suspend fun <T> callOrNull(block: suspend (ObaWebService) -> T): Result<T?> {
         if (demoMode.isActive) return attempt { onDemoDeployment(block) }
-        val service = service() ?: return Result.success(null)
-        return attempt { block(service) }
+        val base = baseUrl() ?: return Result.success(null)
+        return attemptLive(base, block)
     }
 
     /**
@@ -96,17 +103,14 @@ class ObaApiProvider @Inject constructor(
     suspend fun <T> callOrNullFromDeployment(block: suspend (ObaWebService, String) -> T): Result<T?> {
         if (demoMode.isActive) return attempt { onDemoDeployment { block(it, DEMO_DEPLOYMENT) } }
         // One read of the base URL, shared by the service and the identity reported for it.
-        val base = resolver.baseUrl() ?: run {
-            forgetService()
-            return Result.success(null)
-        }
-        return attempt { block(serviceFor(base), base.toString()) }
+        val base = baseUrl() ?: return Result.success(null)
+        return attemptLive(base) { block(it, base.toString()) }
     }
 
     /**
      * Runs [block] against the demo deployment, off whatever thread asked for it.
      *
-     * Reached ahead of [service] rather than from inside it, so the demo tour needs no endpoint at all:
+     * Reached ahead of [baseUrl] rather than from inside it, so the demo tour needs no endpoint at all:
      * it runs with no region selected, no API key and no network, which is precisely the fragility in
      * the live-data tutorial that #2164 set out to remove.
      *
@@ -150,16 +154,25 @@ class ObaApiProvider @Inject constructor(
     val deploymentKey: String
         get() = if (demoMode.isActive) DEMO_DEPLOYMENT else resolver.baseUrl()?.toString() ?: NO_DEPLOYMENT
 
+    // The gate only ever closes under a live base URL, so the demo and no-endpoint keys read as open.
+    override fun rateLimitedFor(): Duration? = rateLimitGate.closedFor(deploymentKey)
+
     /** Runs [block], mapping an OBA-stated failure to [ObaApiException] and keeping cancellation out. */
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = runCatchingCancellable { block() }
         .recoverCatching { throw it.asObaFailure(json) }
 
     /**
-     * The [ObaWebService] bound to the current region's base URL, or null when there's no endpoint to
-     * contact yet. Rebuilds when the base URL has changed. Private: callers go through [call] /
-     * [callOrNull] so the no-endpoint policy lives in one place.
+     * [attempt]s [block] against the service for [base], through [base]'s rate-limit gate. The gate
+     * sees the normalized failure, so a 429 closes it whichever side of the envelope divide it came
+     * from. Its key is the same string [deploymentKey] reports for a live deployment.
      */
-    private fun service(): ObaWebService? = resolver.baseUrl()?.let(::serviceFor) ?: run {
+    private suspend fun <T> attemptLive(base: Uri, block: suspend (ObaWebService) -> T): Result<T> = rateLimitGate.pass(base.toString()) { attempt { block(serviceFor(base)) } }
+
+    /**
+     * The current region's base URL, or null when there's no endpoint to contact yet (forgetting the
+     * service built for the last one).
+     */
+    private fun baseUrl(): Uri? = resolver.baseUrl() ?: run {
         forgetService()
         null
     }

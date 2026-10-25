@@ -294,11 +294,12 @@ class DefaultArrivalsRepository @Inject constructor(
     ): Result<ArrivalsData> = withContext(Dispatchers.IO) {
         importGate.awaitReady()
         var minutes = minutesAfter
-        // Widen the window while the fetch is empty (or failing), matching the legacy loader.
+        // Widen the window only while the fetch comes back empty; a wider window can't fix a failed
+        // request (#2410).
         var result: Result<StopArrivals>
         do {
             result = stopArrivals.arrivals(stopId, minutes)
-            if (result.getOrNull()?.hasArrivals == true) break
+            if (result.getOrNull()?.hasArrivals != false) break
             minutes += MINUTES_AFTER_INCREMENT
         } while (minutes <= MINUTES_AFTER_MAX)
 

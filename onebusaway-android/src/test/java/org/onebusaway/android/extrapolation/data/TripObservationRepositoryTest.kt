@@ -103,6 +103,12 @@ class TripObservationRepositoryTest {
         }
     }
 
+    /** A fetcher whose trip details polls answer [outcomes] in order, then fail as offline. */
+    private fun scriptedFetcher(outcomes: List<Result<TripDetails>>): FakeFetcher {
+        val remaining = ArrayDeque(outcomes)
+        return FakeFetcher(details = { remaining.removeFirstOrNull() ?: Result.failure(IOException("offline")) })
+    }
+
     /** One trips-for-route entry: the trip it describes, the trip its vehicle reports active, and whether it carries a schedule. */
     private data class Entry(val tripId: String, val activeTripId: String = tripId, val withSchedule: Boolean)
 
@@ -144,8 +150,7 @@ class TripObservationRepositoryTest {
 
     @Test
     fun `a 429 keeps the longer backoff through a later non-429 failure`() = runTest {
-        val outcomes = ArrayDeque(listOf<Result<TripDetails>>(Result.failure(ObaApiException(429)), Result.failure(IOException("timeout"))))
-        val fetcher = FakeFetcher(details = { outcomes.removeFirstOrNull() ?: Result.failure(IOException("offline")) })
+        val fetcher = scriptedFetcher(listOf(Result.failure(ObaApiException(429)), Result.failure(IOException("timeout"))))
         val repo = DefaultTripObservationRepository(fetcher)
 
         repo.tripDetailsStream("trip1", intervalMs = 10_000L).launchIn(backgroundScope)
@@ -163,14 +168,13 @@ class TripObservationRepositoryTest {
 
     @Test
     fun `a successful poll resets the backoff to the interval`() = runTest {
-        val outcomes = ArrayDeque(
+        val fetcher = scriptedFetcher(
             listOf(
                 Result.failure(IOException("offline")),
                 Result.success(TripDetails(emptyList(), null, null, null, null)),
                 Result.failure(IOException("offline"))
             )
         )
-        val fetcher = FakeFetcher(details = { outcomes.removeFirstOrNull() ?: Result.failure(IOException("offline")) })
         val repo = DefaultTripObservationRepository(fetcher)
 
         repo.tripDetailsStream("trip1", intervalMs = 10_000L).launchIn(backgroundScope)

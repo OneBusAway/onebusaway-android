@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -26,9 +27,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.ServerTime
@@ -41,7 +44,7 @@ import org.onebusaway.android.ui.compose.components.AlertSeverity
  * saves threading the same throwaway store through every construction. Named for the type it
  * returns, so it shadows the constructor and the call sites read unchanged.
  */
-private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository) = ArrivalsViewModel(stopId, repository, TrackedRouteStore(FakePreferencesRepository()))
+private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository, rateLimit: ObaRateLimit = ObaRateLimit { null }) = ArrivalsViewModel(stopId, repository, TrackedRouteStore(FakePreferencesRepository()), rateLimit)
 
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
 private data class FavoriteRouteCall(
@@ -198,6 +201,35 @@ class ArrivalsViewModelTest {
         viewModel.refresh()
 
         assertEquals(ArrivalsUiState.Error("No network"), viewModel.state.value)
+    }
+
+    @Test
+    fun `the first stale refresh under a rate limit schedules one early retry per streak`() = runTest {
+        val repository = FakeArrivalsRepository(Result.failure(IOException("refused")))
+        val viewModel = ArrivalsViewModel("1_100", repository, rateLimit = { 5.seconds })
+
+        viewModel.refresh()
+        assertEquals("retry when the limit lifts", 5.seconds, viewModel.earlyRetryAfter)
+
+        viewModel.refresh()
+        assertNull("a limit that persists doesn't speed the board up", viewModel.earlyRetryAfter)
+
+        repository.result = Result.success(data())
+        viewModel.refresh()
+        assertNull(viewModel.earlyRetryAfter)
+
+        repository.result = Result.failure(IOException("refused"))
+        viewModel.refresh()
+        assertEquals("a new streak earns a new early retry", 5.seconds, viewModel.earlyRetryAfter)
+    }
+
+    @Test
+    fun `a stale refresh with no rate limit waits the full period`() = runTest {
+        val viewModel = ArrivalsViewModel("1_100", FakeArrivalsRepository(Result.failure(IOException("offline"))))
+
+        viewModel.refresh()
+
+        assertNull(viewModel.earlyRetryAfter)
     }
 
     @Test

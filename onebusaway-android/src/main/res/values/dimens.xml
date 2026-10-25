@@ -78,4 +78,13 @@
 
     <!-- Zoom buttons-->
 
+    <!-- Stop Times widget rows. Shared by the layout and StopTimesWidget's pill-fit measurement. -->
+    <dimen name="widget_row_padding_horizontal">18dp</dimen>
+    <dimen name="widget_route_title_width">68dp</dimen>
+    <dimen name="widget_eta_padding_horizontal">6dp</dimen>
+    <dimen name="widget_eta_gap">5dp</dimen>
+    <dimen name="widget_eta_min_width">50dp</dimen>
+    <dimen name="widget_eta_text_size">15sp</dimen>
+    <!-- A pill's shrunken AM/PM marker. -->
+    <dimen name="widget_eta_marker_text_size">11sp</dimen>
 </resources>

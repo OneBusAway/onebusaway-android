@@ -53,14 +53,15 @@ class SurveyQuestion(
     var multipleAnswer: List<String>? = null
 }
 
-/** A question's presentation content (label, options, external-survey url, type). */
+/** A question's presentation content (label, options, external-survey url and button label, type). */
 data class SurveyContent(
     val labelText: String?,
     val options: List<String>?,
     val url: String?,
     val embeddedDataFields: ArrayList<String>?,
     val surveyProvider: String?,
-    val type: String?
+    val type: String?,
+    val buttonLabel: String?
 )
 
 /** The submit ack: the response id used to update follow-up answers. */

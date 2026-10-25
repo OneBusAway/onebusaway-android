@@ -824,6 +824,9 @@
     <string name="write_your_answer_here">Napisz swoją odpowiedź tutaj</string>
     <string name="submit">Wyślij</string>
     <string name="go">IDŹ!</string>
+    <string name="survey_button_learn_more">Dowiedz się więcej</string>
+    <string name="survey_button_share_feedback">Podziel się opinią</string>
+    <string name="survey_button_sign_up">Zapisz się</string>
     <string name="please_complete_required_questions">Proszę odpowiedzieć na wszystkie pytania obowiązkowe.</string>
     <string name="sharing_survey_info_message">Ta ankieta udostępni twoje</string>
     <string name="dismiss_survey_dialog_title">Potwierdź odrzucenie ankiety</string>

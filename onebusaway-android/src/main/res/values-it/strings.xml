@@ -877,6 +877,9 @@
     <string name="write_your_answer_here">Scrivi qui la tua risposta</string>
     <string name="submit">Invia</string>
     <string name="go">VAI!</string>
+    <string name="survey_button_learn_more">Scopri di più</string>
+    <string name="survey_button_share_feedback">Lascia un feedback</string>
+    <string name="survey_button_sign_up">Iscriviti</string>
     <string name="please_complete_required_questions">Per favore, rispondi a tutte le domande obbligatorie.</string>
     <string name="sharing_survey_info_message">Questo sondaggio condividerà i tuoi</string>
     <string name="dismiss_survey_dialog_title">Conferma ignoramento del sondaggio</string>

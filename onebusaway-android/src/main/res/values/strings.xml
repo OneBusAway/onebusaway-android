@@ -1500,6 +1500,9 @@
     <string name="write_your_answer_here">Write your answer here</string>
     <string name="submit">Submit</string>
     <string name="go">GO!</string>
+    <string name="survey_button_learn_more">Learn More</string>
+    <string name="survey_button_share_feedback">Share Feedback</string>
+    <string name="survey_button_sign_up">Sign Up</string>
     <string name="please_complete_required_questions">Please answer all required questions.</string>
     <string name="sharing_survey_info_message">"This survey will share your "</string>
     <string name="dismiss_survey_dialog_title">Confirm Survey Dismissal</string>

@@ -1,10 +1,12 @@
 package org.onebusaway.android.ui.survey.utils
 
 import android.util.Log
+import androidx.annotation.StringRes
 import java.util.Date
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
@@ -34,6 +36,19 @@ object SurveyUtils {
     const val STOP_ID = "stop_id"
     const val CURRENT_LOCATION = "current_location"
     const val RECENT_STOP_IDS = "recent_stop_ids"
+
+    /**
+     * The title for an external survey's open button, from its question's `button_label`. The server
+     * omits the key for the default (`open_survey`), and may send keys newer than this build; both
+     * get the default title rather than failing.
+     */
+    @StringRes
+    fun externalSurveyButtonLabel(buttonLabel: String?): Int = when (buttonLabel) {
+        "learn_more" -> R.string.survey_button_learn_more
+        "share_feedback" -> R.string.survey_button_share_feedback
+        "sign_up" -> R.string.survey_button_sign_up
+        else -> R.string.go
+    }
 
     /**
      * Returns the index of the first uncompleted survey in the list, based on visibility settings.

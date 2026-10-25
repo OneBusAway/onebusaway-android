@@ -665,6 +665,9 @@
     <string name="write_your_answer_here">Kirjoita vastauksesi tähän</string>
     <string name="submit">Lähetä</string>
     <string name="go">MENE!</string>
+    <string name="survey_button_learn_more">Lue lisää</string>
+    <string name="survey_button_share_feedback">Anna palautetta</string>
+    <string name="survey_button_sign_up">Ilmoittaudu</string>
     <string name="please_complete_required_questions">Ole hyvä ja vastaa kaikkiin pakollisiin kysymyksiin.</string>
     <string name="sharing_survey_info_message">Tämä kysely jakaa tietosi</string>
     <string name="dismiss_survey_dialog_title">Vahvista kyselyn hylkääminen</string>

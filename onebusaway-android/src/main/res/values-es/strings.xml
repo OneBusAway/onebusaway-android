@@ -1016,6 +1016,9 @@
     <string name="write_your_answer_here">Escribe tu respuesta aquí</string>
     <string name="submit">Enviar</string>
     <string name="go">¡IR!</string>
+    <string name="survey_button_learn_more">Más información</string>
+    <string name="survey_button_share_feedback">Dar tu opinión</string>
+    <string name="survey_button_sign_up">Inscribirse</string>
     <string name="please_complete_required_questions">Por favor, responde todas las preguntas obligatorias.</string>
     <string name="sharing_survey_info_message">Esta encuesta compartirá tu</string>
     <string name="dismiss_survey_dialog_title">Confirmar descarte de la encuesta</string>

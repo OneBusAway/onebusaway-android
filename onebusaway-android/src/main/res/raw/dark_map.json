@@ -180,38 +180,31 @@
     ]
   },
   {
-    "_comment": "Freeways and their ramps, demoted to the local-street colours this style already defines. road.highway is the parent of road.highway.controlled_access, so mainlines and on/off ramps are covered together. Appended so it overrides the road.highway colours set earlier in this file.",
+    "_comment": "Freeways use the same color palette as normal roads but are more contrasty, done as per user feedback",
     "featureType": "road.highway",
     "elementType": "geometry.fill",
     "stylers": [
       {
-        "color": "#38414e"
-      },
-      {
-        "weight": 1
+        "color": "#637287"
       }
     ]
   },
   {
-    "_comment": "Matching casing, so the demoted freeway reads as one of the ordinary streets around it.",
+    "_comment": "For contrast",
     "featureType": "road.highway",
     "elementType": "geometry.stroke",
     "stylers": [
       {
-        "color": "#212a37"
-      },
-      {
-        "weight": 1
+        "color": "#364559"
       }
     ]
   },
   {
-    "_comment": "Shields and route numbers are pure driving chrome, and the heaviest thing left once the lines are quiet.",
     "featureType": "road.highway",
     "elementType": "labels",
     "stylers": [
       {
-        "visibility": "off"
+        "visibility": "simplified"
       }
     ]
   }

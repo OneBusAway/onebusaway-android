@@ -28,7 +28,24 @@ data class StopUserInfo(val isFavorite: Boolean, val userName: String?)
 fun stopDisplayName(stop: ObaStop, userInfo: StopUserInfo?): String = stopDisplayName(stop.name, userInfo)
 
 /** Field-based overload, for callers (e.g. the api/ REST DTOs) without an [ObaStop]. */
-fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String = userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
+fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String = customStopName(userInfo?.userName) ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
+
+/** Whether [stopDisplayName] resolves to the rider's own name, which is shown with its glyph (#2414). */
+val StopUserInfo?.hasCustomName: Boolean get() = customStopName(this?.userName) != null
+
+/**
+ * A stored `user_name` as a custom name, or null when there is none. The one Kotlin statement of the
+ * rule that an empty name is no name (the list SQL's `UI_NAME` states it for sorting); new writes never
+ * store one ([normalizedUserName]), but rows imported before the importer normalized it may hold one.
+ */
+fun customStopName(userName: String?): String? = userName?.takeIf { it.isNotEmpty() }
+
+/**
+ * What a rename stores as the custom name: the rider's [input], trimmed, or null — meaning "show the
+ * official name" — when it's blank or exactly the [officialName]. Storing the official name verbatim
+ * would freeze it, so a later server-side rename would never show through.
+ */
+fun normalizedUserName(input: String, officialName: String?): String? = input.trim().takeIf { it.isNotEmpty() && it != officialName }
 
 /**
  * Builds the id → [StopUserInfo] map from the Room rows (the legacy UIUtils.StopUserInfoMap), so each

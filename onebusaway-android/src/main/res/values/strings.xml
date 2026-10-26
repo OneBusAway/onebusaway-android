@@ -261,6 +261,11 @@
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
+    <string name="stop_info_option_editname">Edit stop name</string>
+    <string name="stop_info_save">Save</string>
+    <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
+    <string name="stop_info_use_official_name">Use official name</string>
+    <string name="stop_info_custom_name_description">%1$s, your name for this stop</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
     <string name="stop_info_arrival_service_alert">View service alert for this arrival</string>
     <string name="stop_info_show_alerts">Show service alerts</string>

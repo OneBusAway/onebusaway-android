@@ -48,6 +48,7 @@ import org.onebusaway.android.database.oba.StopHiddenRouteDao
 import org.onebusaway.android.database.oba.StopHiddenRouteRecord
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
+import org.onebusaway.android.database.oba.StopNamesRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
@@ -135,6 +136,8 @@ class DefaultArrivalsRepositoryTest {
         }
 
         override suspend fun setFavorite(stopId: String, favorite: Int) {}
+        override suspend fun setUserName(stopId: String, userName: String?) {}
+        override fun names(stopId: String): Flow<StopNamesRow?> = flowOf(null)
         override suspend fun userInfoMap(): List<StopUserInfoMapRow> = emptyList()
         override suspend fun location(stopId: String): StopLocationRow? = null
         override suspend fun nameForStop(stopId: String): String? = null

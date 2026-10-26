@@ -60,6 +60,7 @@ import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
 /** A labelled action in a row's overflow (⋮) menu. */
@@ -142,8 +143,9 @@ fun StopRow(
             FavoriteStarSlot(item.isFavorite)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
+                StopNameText(
                     item.name,
+                    isCustomName = item.isCustomName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp

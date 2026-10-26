@@ -45,6 +45,7 @@ class StopSearchMappingTest {
         assertEquals("Spring St & 3rd Ave", result.serverName)
         assertEquals("NE", result.direction)
         assertFalse(result.isFavorite)
+        assertFalse(result.isCustomName)
         assertEquals(47.6, result.latitude, 0.0)
         assertEquals(-122.33, result.longitude, 0.0)
     }
@@ -57,6 +58,7 @@ class StopSearchMappingTest {
         assertEquals("Home stop", result.name)
         assertEquals("Spring St & 3rd Ave", result.serverName)
         assertTrue(result.isFavorite)
+        assertTrue(result.isCustomName)
     }
 
     @Test
@@ -64,6 +66,7 @@ class StopSearchMappingTest {
         val result = stop.toStopSearchResult(StopUserInfo(isFavorite = false, userName = ""))
 
         assertEquals("Spring St & 3rd Ave", result.name)
+        assertFalse(result.isCustomName)
     }
 
     @Test

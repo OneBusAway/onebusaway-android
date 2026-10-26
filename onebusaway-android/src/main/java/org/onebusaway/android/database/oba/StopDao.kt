@@ -26,10 +26,15 @@ import kotlinx.coroutines.flow.Flow
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.MyTextUtils
 
-/** A stop row projected for the My-tab lists; [uiName] is the legacy UI_NAME (user name or name). */
+/**
+ * A stop row projected for the My-tab lists; [uiName] is the legacy UI_NAME (user name or name), with
+ * the [name] and [userName] it was chosen from, for the custom-name glyph and rename dialog (#2414).
+ */
 data class StopListRow(
     val id: String,
     @ColumnInfo(name = "ui_name") val uiName: String?,
+    val name: String?,
+    @ColumnInfo(name = "user_name") val userName: String?,
     val direction: String?,
     val latitude: Double,
     val longitude: Double,
@@ -43,7 +48,8 @@ data class StopRecentRow(
 )
 
 /** The legacy projected UI_NAME expression, reused across the stop list queries. */
-private const val UI_NAME = "(CASE WHEN user_name IS NOT NULL THEN user_name ELSE name END)"
+// An empty user_name is no custom name, the rule stopDisplayName / hasCustomName apply in code.
+private const val UI_NAME = "(CASE WHEN user_name IS NOT NULL AND user_name != '' THEN user_name ELSE name END)"
 
 /** The legacy region scope: rows for the active region, or with no region, or (when none active) all. */
 private const val REGION_SCOPE = "(:regionId IS NULL OR region_id = :regionId OR region_id IS NULL)"
@@ -78,8 +84,34 @@ interface StopDao {
         }
     }
 
+    /** Sets (or, with null, clears) the custom name. A no-op when the row doesn't exist. */
+    @Query("UPDATE stops SET user_name = :userName WHERE _id = :stopId")
+    suspend fun setUserName(stopId: String, userName: String?)
+
+    /**
+     * Sets the custom name, first ensuring the stop row exists — the [setFavoriteEnsuringRow] shape, so
+     * a stop focused before its arrivals have loaded can still be named. [userName] is resolved against
+     * the row's own official name by [normalizedUserName] (blank or unchanged means "no custom name"),
+     * and an existing row's favorite / use_count / access_time are left alone. Naming a stop doesn't
+     * star it.
+     */
+    @Transaction
+    suspend fun setUserNameEnsuringRow(identity: StopRecord, userName: String) {
+        val existing = getStop(identity.id)
+        if (existing == null) {
+            normalizedUserName(userName, officialName = identity.name)
+                ?.let { upsert(identity.copy(userName = it)) }
+        } else {
+            setUserName(identity.id, normalizedUserName(userName, officialName = existing.name))
+        }
+    }
+
     @Query("SELECT favorite, user_name FROM stops WHERE _id = :stopId LIMIT 1")
     suspend fun userInfo(stopId: String): StopUserInfoRow?
+
+    /** The stop's official and custom names, live; null when the stop has no row. */
+    @Query("SELECT name, user_name FROM stops WHERE _id = :stopId LIMIT 1")
+    fun names(stopId: String): Flow<StopNamesRow?>
 
     /** Every stop the user has favorited or renamed (the legacy StopUserInfoMap query). */
     @Query(
@@ -145,26 +177,26 @@ interface StopDao {
     // --- Recents/starred lists (reactive) ---
 
     @Query(
-        "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite FROM stops " +
+        "SELECT _id AS id, $UI_NAME AS ui_name, name, user_name, direction, latitude, longitude, favorite FROM stops " +
             "WHERE $RECENT_FILTER $RECENT_ORDER"
     )
     fun recents(cutoff: Long, regionId: Long?): Flow<List<StopListRow>>
 
     /** Same rows as [recents], but carrying access_time so callers can merge stops and routes by recency. */
     @Query(
-        "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite, access_time " +
+        "SELECT _id AS id, $UI_NAME AS ui_name, name, user_name, direction, latitude, longitude, favorite, access_time " +
             "FROM stops WHERE $RECENT_FILTER $RECENT_ORDER"
     )
     fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<StopRecentRow>>
 
     @Query(
-        "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite FROM stops " +
+        "SELECT _id AS id, $UI_NAME AS ui_name, name, user_name, direction, latitude, longitude, favorite FROM stops " +
             "WHERE favorite = 1 AND $REGION_SCOPE ORDER BY $UI_NAME ASC"
     )
     fun starredByName(regionId: Long?): Flow<List<StopListRow>>
 
     @Query(
-        "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite FROM stops " +
+        "SELECT _id AS id, $UI_NAME AS ui_name, name, user_name, direction, latitude, longitude, favorite FROM stops " +
             "WHERE favorite = 1 AND $REGION_SCOPE ORDER BY use_count DESC"
     )
     fun starredByFrequency(regionId: Long?): Flow<List<StopListRow>>
@@ -200,6 +232,15 @@ suspend fun StopDao.markStopUsed(stop: ObaStop, regionId: Long?, now: Long) = ma
     regionId = regionId,
     now = now
 )
+
+/** A stop's official [name] and the rider's own [userName] for it, if any (#2414). */
+data class StopNamesRow(
+    val name: String,
+    @ColumnInfo(name = "user_name") val userName: String?
+) {
+    /** The custom name, or null when there is none ([customStopName]). */
+    val customName: String? get() = customStopName(userName)
+}
 
 /** The favorite flag + custom name for a single stop (the legacy StopUserInfo read). */
 data class StopUserInfoRow(

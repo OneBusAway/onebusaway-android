@@ -23,6 +23,7 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.database.oba.StopUserInfo
+import org.onebusaway.android.database.oba.hasCustomName
 import org.onebusaway.android.database.oba.stopDisplayName
 import org.onebusaway.android.database.oba.toStopUserInfoMap
 import org.onebusaway.android.location.SearchCenter
@@ -44,7 +45,9 @@ data class StopSearchResult(
     val direction: String,
     val isFavorite: Boolean,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    /** [name] is the rider's own name for the stop (#2414). */
+    val isCustomName: Boolean = false
 )
 
 /** Searches stops by stop number/name near the user. */
@@ -95,5 +98,6 @@ internal fun ObaStop.toStopSearchResult(userInfo: StopUserInfo?) = StopSearchRes
     direction = direction.orEmpty(),
     isFavorite = userInfo?.isFavorite == true,
     latitude = latitude,
-    longitude = longitude
+    longitude = longitude,
+    isCustomName = userInfo.hasCustomName
 )

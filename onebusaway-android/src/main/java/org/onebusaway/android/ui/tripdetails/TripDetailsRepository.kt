@@ -35,7 +35,10 @@ import org.onebusaway.android.api.data.TripDetailsDataSource
 import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopUserInfo
+import org.onebusaway.android.database.oba.customStopName
 import org.onebusaway.android.database.oba.markStopUsed
+import org.onebusaway.android.database.oba.toStopUserInfoMap
 import org.onebusaway.android.extrapolation.data.serviceDateOrNull
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
@@ -118,7 +121,13 @@ class DefaultTripDetailsRepository @Inject constructor(
         val result = tripDetailsDataSource.tripDetails(tripId)
         // A fresh load replaces lastGood; a failure keeps the prior snapshot (legacy stale fallback).
         result.getOrNull()?.let { lastGood = it }
-        lastGood?.let { Result.success(toData(it, stopId, scrollMode, destinationId)) }
+        lastGood?.let { snapshot ->
+            // Read each load, so the stops show a rename made since the last one (#2414); only when
+            // there is a trip to draw them on.
+            importGate.awaitReady()
+            val userInfo = stopDao.userInfoMap().toStopUserInfoMap()
+            Result.success(toData(snapshot, stopId, scrollMode, destinationId, userInfo))
+        }
             ?: Result.failure(
                 IOException(
                     ObaRequestErrors.getRouteErrorString(
@@ -158,7 +167,8 @@ class DefaultTripDetailsRepository @Inject constructor(
         td: TripDetails,
         stopId: String?,
         scrollMode: String?,
-        destinationId: String?
+        destinationId: String?,
+        userInfo: Map<String, StopUserInfo>
     ): TripDetailsData {
         val trip = td.trip
         val route = td.route
@@ -188,9 +198,13 @@ class DefaultTripDetailsRepository @Inject constructor(
             // deviation (a server-clock ServerTime + Duration group action). Stays typed; the epoch
             // millis is unwrapped only at the formatting sink below.
             val stopTimeOnServerClock = stopTime.arrivalTime.resolve(serviceDate) + deviation
+            val officialName = MyTextUtils.formatDisplayText(stop?.name).orEmpty()
+            val customName = customStopName(userInfo[stopTime.stopId]?.userName)
             TripStopItem(
                 stopId = stopTime.stopId,
-                name = MyTextUtils.formatDisplayText(stop?.name).orEmpty(),
+                name = customName ?: officialName,
+                isCustomName = customName != null,
+                officialName = officialName,
                 direction = stop?.direction,
                 timeText = DisplayFormat.formatTime(context, stopTimeOnServerClock.epochMs),
                 canceled = canceled,

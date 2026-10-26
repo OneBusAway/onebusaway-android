@@ -29,6 +29,10 @@ import org.onebusaway.android.tracking.TrackedRoute
 data class StopListItem(
     val id: String,
     val name: String,
+    /** The official name, which [name] differs from when the rider has renamed the stop (#2414). */
+    val officialName: String? = null,
+    /** [name] is the rider's own name for the stop, shown with the custom-name glyph (#2414). */
+    val isCustomName: Boolean = false,
     val rawDirection: String?,
     val directionText: String?,
     val lat: Double,

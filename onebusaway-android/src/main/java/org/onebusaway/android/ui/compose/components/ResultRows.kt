@@ -62,7 +62,9 @@ fun StopRowContent(
     name: String,
     direction: String,
     isFavorite: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // [name] is the rider's own name for the stop, led by the custom-name glyph (#2414).
+    isCustomName: Boolean = false
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         if (isFavorite) {
@@ -74,7 +76,7 @@ fun StopRowContent(
             Spacer(Modifier.width(8.dp))
         }
         Column {
-            Text(name, style = MaterialTheme.typography.bodyLarge)
+            StopNameText(name, isCustomName = isCustomName, style = MaterialTheme.typography.bodyLarge)
             val directionText = stringResource(DisplayFormat.getStopDirectionText(direction))
             if (directionText.isNotEmpty()) {
                 Text(

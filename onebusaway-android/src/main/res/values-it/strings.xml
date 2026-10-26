@@ -178,6 +178,9 @@
     <string name="stop_info_option_refresh">Aggiorna</string>
     <string name="stop_info_option_report_problem">Segnala problema con fermata</string>
     <string name="stop_info_option_night_light">Luce notturna</string>
+    <string name="stop_info_option_editname">Modifica nome fermata</string>
+    <string name="stop_info_save">Salva</string>
+    <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>
     <string name="stop_info_option_hide_alerts">Nascondi avvisi attivi</string>
     <string name="stop_info_nodata_minutes">Nessun arrivo nei prossimi %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>

@@ -160,6 +160,7 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
+import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.components.alertAccentColor
 import org.onebusaway.android.ui.compose.components.openRental
 import org.onebusaway.android.ui.compose.components.rentalVehicleRes
@@ -1956,8 +1957,9 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-    Text(
-        text = entry.place,
+    StopNameText(
+        name = entry.place,
+        isCustomName = entry.isCustomPlaceName,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurface

@@ -65,8 +65,8 @@ internal fun AppCompatActivity.recentStopsTab(
         viewModel,
         emptyText = R.string.my_no_recent_stops,
         onClick = { onRevealStop(it.toStopReveal()) },
-        actions = {
-            stopActions(it, R.string.my_context_remove_recent) { viewModel.remove(it.id) }
+        actions = { stop, onRename ->
+            stopActions(stop, R.string.my_context_remove_recent, onRename) { viewModel.remove(stop.id) }
         }
     )
 }
@@ -95,8 +95,8 @@ internal fun AppCompatActivity.starredStopsTab(
         viewModel,
         emptyText = R.string.my_no_starred_stops,
         onClick = { onRevealStop(it.toStopReveal()) },
-        actions = {
-            stopActions(it, R.string.my_context_remove_star) { viewModel.remove(it.id) }
+        actions = { stop, onRename ->
+            stopActions(stop, R.string.my_context_remove_star, onRename) { viewModel.remove(stop.id) }
         },
         onToggleTracking = badgeTracking()
     )

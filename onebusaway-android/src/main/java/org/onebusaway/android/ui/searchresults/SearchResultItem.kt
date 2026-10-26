@@ -48,7 +48,9 @@ sealed interface SearchResultItem {
         val direction: String,
         val isFavorite: Boolean,
         val latitude: Double,
-        val longitude: Double
+        val longitude: Double,
+        /** [name] is the rider's own name for the stop (#2414). */
+        val isCustomName: Boolean = false
     ) : SearchResultItem
 
     /**

@@ -49,16 +49,19 @@ class FrequencyArrivalsTest {
         .decodeFromString<ObaEnvelope<EntryWithReferences<ArrivalsForStop>>>(BULL_RUNNER_203)
         .let { StopArrivals(checkNotNull(it.data), it.currentTime, minutesAfter = 65) }
 
+    /**
+     * Neither row is the collapsed no-prediction sentinel that ArrivalAdapters discards: only the
+     * predicted times are 0, and the scheduled times are a real instance.
+     */
     @Test
     fun `both frequency rows survive adaptation`() {
-        // Neither row is the collapsed no-prediction sentinel that ArrivalAdapters discards: only the
-        // predicted times are 0, and the scheduled times are a real instance.
         assertEquals(
             listOf("USF Bull Runner_11", "USF Bull Runner_8"),
             snapshot.arrivals.map { it.tripId }
         )
     }
 
+    /** The wire `frequency` object becomes a [FrequencyWindow] in the server clock domain. */
     @Test
     fun `the frequency window decodes onto the server clock`() {
         val window = FrequencyWindow(ServerTime(WINDOW_START), ServerTime(WINDOW_END), headway = 600L)
@@ -66,6 +69,7 @@ class FrequencyArrivalsTest {
         snapshot.arrivals.forEach { assertEquals(window, it.frequency) }
     }
 
+    /** With no prediction, the ETA uses the scheduled instance, not the frequency window. */
     @Test
     fun `an unpredicted frequency row counts down to its scheduled instance`() {
         val info = ArrivalInfo(null, snapshot.arrivals.first(), ServerTime(snapshot.currentTime), true)
@@ -75,6 +79,7 @@ class FrequencyArrivalsTest {
         assertEquals(5L, info.eta)
     }
 
+    /** The negative case: a `"frequency": null` row adapts with no window. */
     @Test
     fun `a schedule-based row carries no frequency window`() {
         val row = json.decodeFromString<ArrivalDeparture>(

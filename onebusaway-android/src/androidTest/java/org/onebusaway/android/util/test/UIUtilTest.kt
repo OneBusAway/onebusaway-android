@@ -20,12 +20,14 @@ import org.onebusaway.android.util.MyTextUtils
 
 @RunWith(AndroidJUnit4::class)
 class UIUtilTest : ObaTestCase() {
+    /** Converts all-caps headsigns to title case, and keeps mixed-case text and acronyms unchanged. */
     @Test fun formatDisplayText() {
         assertEquals("SDSU Transit Center", MyTextUtils.formatDisplayText("SDSU Transit Center"))
         assertEquals("North To University Area Tc", MyTextUtils.formatDisplayText("NORTH TO UNIVERSITY AREA TC"))
         assertEquals("SPLC / SR 513", MyTextUtils.formatDisplayText("SPLC / SR 513"))
     }
 
+    /** Finds the first upcoming and preferred arrivals in a HART fixture, and checks their status labels. */
     @Test fun arrivalTimeIndexSearchAndLabels() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val tampa = MockRegion.getTampa(context)
@@ -70,6 +72,7 @@ class UIUtilTest : ObaTestCase() {
         before.forEach { assertEquals(from, it.statusText) }
     }
 
+    /** Separates stop-level service alerts from route alerts in two MTS fixtures. */
     @Test fun getAllSituations() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         PreferencesEntryPoint.get(context).setString(R.string.preference_key_oba_api_url, "sdmts.onebusway.org/api")

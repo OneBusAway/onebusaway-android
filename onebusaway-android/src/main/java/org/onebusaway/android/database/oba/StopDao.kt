@@ -48,8 +48,9 @@ data class StopRecentRow(
 )
 
 /** The legacy projected UI_NAME expression, reused across the stop list queries. */
-// An empty user_name is no custom name, the rule stopDisplayName / hasCustomName apply in code.
-private const val UI_NAME = "(CASE WHEN user_name IS NOT NULL AND user_name != '' THEN user_name ELSE name END)"
+// A blank user_name is no custom name, the rule customStopName applies in code. SQLite's TRIM strips
+// spaces, which is all the legacy single-line editor could leave behind.
+private const val UI_NAME = "(CASE WHEN user_name IS NOT NULL AND TRIM(user_name) != '' THEN user_name ELSE name END)"
 
 /** The legacy region scope: rows for the active region, or with no region, or (when none active) all. */
 private const val REGION_SCOPE = "(:regionId IS NULL OR region_id = :regionId OR region_id IS NULL)"

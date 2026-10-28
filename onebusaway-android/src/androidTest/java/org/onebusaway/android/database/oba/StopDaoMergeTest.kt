@@ -212,12 +212,17 @@ class StopDaoMergeTest {
     }
 
     @Test
-    fun anEmptyUserName_isNoCustomName() = runBlocking {
+    fun aBlankUserName_isNoCustomName() = runBlocking {
         // Only a non-normalizing writer (a legacy import) can leave "", but it must read as no name.
         dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
         dao.setFavorite("s1", 1)
         dao.setUserName("s1", "")
 
+        assertEquals("Main St", dao.starredByName(regionId = 1L).first().single().uiName)
+        assertEquals(null, dao.names("s1").first()?.customName)
+
+        // 26.1.0 only refused an empty name, so a legacy row can hold spaces: no name either.
+        dao.setUserName("s1", "   ")
         assertEquals("Main St", dao.starredByName(regionId = 1L).first().single().uiName)
         assertEquals(null, dao.names("s1").first()?.customName)
     }

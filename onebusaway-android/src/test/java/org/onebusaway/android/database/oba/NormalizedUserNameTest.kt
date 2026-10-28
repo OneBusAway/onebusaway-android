@@ -45,6 +45,14 @@ class NormalizedUserNameTest {
     }
 
     @Test
+    fun aStoredBlankNameIsNoCustomName() {
+        assertNull(customStopName(null))
+        assertNull(customStopName(""))
+        assertNull(customStopName("   "))
+        assertEquals("Home", customStopName("Home"))
+    }
+
+    @Test
     fun noOfficialNameKeepsAnyNonBlankName() {
         assertEquals("Home", normalizedUserName("Home", officialName = null))
     }

@@ -35,10 +35,11 @@ val StopUserInfo?.hasCustomName: Boolean get() = customStopName(this?.userName) 
 
 /**
  * A stored `user_name` as a custom name, or null when there is none. The one Kotlin statement of the
- * rule that an empty name is no name (the list SQL's `UI_NAME` states it for sorting); new writes never
- * store one ([normalizedUserName]), but rows imported before the importer normalized it may hold one.
+ * rule that a blank name is no name (the list SQL's `UI_NAME` states it for sorting). New writes never
+ * store one ([normalizedUserName] trims), but 26.1.0's editor only refused an *empty* name, so a legacy
+ * row can hold spaces, and rows imported before the importer normalized names can hold either.
  */
-fun customStopName(userName: String?): String? = userName?.takeIf { it.isNotEmpty() }
+fun customStopName(userName: String?): String? = userName?.takeIf { it.isNotBlank() }
 
 /**
  * What a rename stores as the custom name: the rider's [input], trimmed, or null — meaning "show the

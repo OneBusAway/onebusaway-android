@@ -53,6 +53,7 @@ import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.ScheduleDeviation
+import org.onebusaway.android.util.runCatchingCancellable
 
 /** A loaded snapshot of a trip's header + ordered stops, ready for the UI. */
 data class TripDetailsData(
@@ -123,9 +124,11 @@ class DefaultTripDetailsRepository @Inject constructor(
         result.getOrNull()?.let { lastGood = it }
         lastGood?.let { snapshot ->
             // Read each load, so the stops show a rename made since the last one (#2414); only when
-            // there is a trip to draw them on.
+            // there is a trip to draw them on. Best-effort, like search results': a failed lookup shows
+            // official names rather than costing the rider a good trip snapshot.
             importGate.awaitReady()
-            val userInfo = stopDao.userInfoMap().toStopUserInfoMap()
+            val userInfo = runCatchingCancellable { stopDao.userInfoMap().toStopUserInfoMap() }
+                .getOrDefault(emptyMap())
             Result.success(toData(snapshot, stopId, scrollMode, destinationId, userInfo))
         }
             ?: Result.failure(

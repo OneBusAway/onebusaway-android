@@ -64,6 +64,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -80,6 +81,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.components.CustomStopNameGlyph
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -459,6 +461,17 @@ private fun EndpointRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             EndpointRail(endpoint = endpoint, slot = slot)
+            // A renamed stop's name, marked as the rider's own (#2414). Beside the field rather than in
+            // it, since an editable field can't hold inline content; it goes the moment the rider types,
+            // because the endpoint is then their query rather than the stop.
+            if (endpoint.isCustomName) {
+                CustomStopNameGlyph(
+                    contentDescription = stringResource(R.string.stop_info_custom_name_description, endpointText),
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(with(LocalDensity.current) { MaterialTheme.typography.bodyLarge.fontSize.toDp() })
+                )
+            }
             BasicTextField(
                 value = field,
                 onValueChange = { value ->

@@ -46,6 +46,7 @@ import org.onebusaway.android.database.oba.RouteRecentRow
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.TripDepartureTime
+import org.onebusaway.android.database.oba.customStopName
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
@@ -95,6 +96,8 @@ private fun StopListRow.toStopItem(context: Context): StopListItem {
     return StopListItem(
         id = id,
         name = uiName.orEmpty(),
+        officialName = name,
+        isCustomName = customStopName(userName) != null,
         rawDirection = direction,
         directionText = directionText,
         lat = latitude,

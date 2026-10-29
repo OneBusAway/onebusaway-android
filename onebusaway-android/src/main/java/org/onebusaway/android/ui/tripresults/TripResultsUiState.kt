@@ -149,7 +149,9 @@ sealed interface TripLogEntry {
         val kind: TerminalKind,
         val time: ServerTime,
         val place: String,
-        val point: GeoPoint? = null
+        val point: GeoPoint? = null,
+        /** [place] is the rider's own name for the stop, shown with the custom-name glyph (#2414). */
+        val isCustomPlaceName: Boolean = false
     ) : TripLogEntry
 
     /**

@@ -15,10 +15,12 @@
  */
 package org.onebusaway.android.ui.home.map
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.StopFavoritesRepository
+import org.onebusaway.android.database.oba.StopNamesRow
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.util.runCatchingCancellable
@@ -143,5 +146,34 @@ class FocusBannerViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /** The stop's official and custom names as stored, live; null when the stop has no row yet. */
+    fun stopNames(stopId: String): Flow<StopNamesRow?> = stopFavorites.names(stopId)
+
+    /**
+     * Names the focused [stop] — or, with a blank name or its official one, removes the custom name.
+     * Like starring it ensures the stop row exists, so it needs the stop's location for the same reason.
+     */
+    fun renameStop(stop: FocusedStop, userName: String) {
+        val point = stop.point ?: return
+        viewModelScope.launch {
+            // Guarded like the star: a failed write must not take the app down. Nothing to roll back,
+            // since the name shown is read from the store, which the failed write never changed.
+            runCatchingCancellable {
+                stopFavorites.setUserName(
+                    id = stop.id,
+                    code = stop.code,
+                    name = stop.name,
+                    latitude = point.latitude,
+                    longitude = point.longitude,
+                    userName = userName
+                )
+            }.onFailure { Log.e(TAG, "Renaming stop ${stop.id} failed", it) }
+        }
+    }
+
+    private companion object {
+        const val TAG = "FocusBannerViewModel"
     }
 }

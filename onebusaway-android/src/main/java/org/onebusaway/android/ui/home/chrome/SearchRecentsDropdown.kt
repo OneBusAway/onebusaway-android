@@ -90,7 +90,8 @@ fun SearchRecentsDropdown(
                             name = item.stop.name,
                             direction = item.stop.rawDirection.orEmpty(),
                             isFavorite = item.stop.isFavorite,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            isCustomName = item.stop.isCustomName
                         )
                     }
 

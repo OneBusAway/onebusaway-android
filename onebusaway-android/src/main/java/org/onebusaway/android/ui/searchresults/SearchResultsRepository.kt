@@ -27,6 +27,7 @@ import org.onebusaway.android.api.data.VehicleSearchDataSource
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopUserInfo
+import org.onebusaway.android.database.oba.hasCustomName
 import org.onebusaway.android.database.oba.stopDisplayName
 import org.onebusaway.android.database.oba.toStopUserInfoMap
 import org.onebusaway.android.location.SearchCenter
@@ -161,6 +162,7 @@ class DefaultSearchResultsRepository @Inject constructor(
         direction = stop.direction.orEmpty(),
         isFavorite = userInfo?.isFavorite == true,
         latitude = stop.latitude,
-        longitude = stop.longitude
+        longitude = stop.longitude,
+        isCustomName = userInfo.hasCustomName
     )
 }

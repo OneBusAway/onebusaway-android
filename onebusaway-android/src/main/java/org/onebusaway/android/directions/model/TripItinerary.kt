@@ -197,7 +197,10 @@ data class TripPlace(
     // null everywhere else. Replaces the bare `bikeShareId` this used to carry: the id alone can only
     // filter the map's bike layer, while a rider being sent to a shared bike also needs to know whose
     // it is and how to unlock it (#2150).
-    val rental: TripVehicleRental? = null
+    val rental: TripVehicleRental? = null,
+    // [name] is the rider's own name for this stop, stamped by the requester alongside the name itself
+    // (`withTerminalPlaceNames`), so the trip shows it with the custom-name glyph (#2414).
+    val isCustomName: Boolean = false
 )
 
 /**

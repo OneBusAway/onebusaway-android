@@ -65,7 +65,8 @@ object TripLogBuilder {
             kind = TerminalKind.START,
             time = first.startTime,
             place = first.from.name.orEmpty(),
-            point = geoPointOrNull(first.from.lat, first.from.lon)
+            point = geoPointOrNull(first.from.lat, first.from.lon),
+            isCustomPlaceName = first.from.isCustomName
         )
 
         // Continuation legs of a stay-aboard interline (#2000) — every transit leg after a chain leader.
@@ -114,7 +115,8 @@ object TripLogBuilder {
             kind = TerminalKind.ARRIVE,
             time = last.endTime,
             place = last.to.name.orEmpty(),
-            point = geoPointOrNull(last.to.lat, last.to.lon)
+            point = geoPointOrNull(last.to.lat, last.to.lon),
+            isCustomPlaceName = last.to.isCustomName
         )
         return entries
     }

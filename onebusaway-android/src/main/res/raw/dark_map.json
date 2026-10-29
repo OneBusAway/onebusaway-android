@@ -17,7 +17,7 @@
         "invert_lightness": true
       },
       {
-        "hue": "#0066ff"
+        "hue": "#162640"
       },
       {
         "saturation": 0
@@ -36,6 +36,26 @@
     "stylers": [
       {
         "lightness": -80
+      }
+    ]
+  },
+  {
+    "_comment": "Preserve natural greenery, forests, and nature reserves with a subtle dark green tint instead of the base blue invert",
+    "featureType": "landscape.natural",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#1e2c26",
+        "lightness": -10
+      }
+    ]
+  },
+  {
+    "featureType": "landscape.natural.terrain",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#1c2e28"
       }
     ]
   },
@@ -170,7 +190,7 @@
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#17263c"
+        "color": "#000d2a"
       }
     ]
   },

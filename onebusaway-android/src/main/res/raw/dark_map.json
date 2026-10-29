@@ -9,11 +9,24 @@
     ]
   },
   {
+    "_comment": "Relative stylers invert the basemap instead of painting a flat hex colour over all geometry, preserving native building-to-ground contrast across zoom levels.",
     "featureType": "all",
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#242f3e"
+        "invert_lightness": true
+      },
+      {
+        "hue": "#0066ff"
+      },
+      {
+        "saturation": 0
+      },
+      {
+        "lightness": 0
+      },
+      {
+        "gamma": 1
       }
     ]
   },

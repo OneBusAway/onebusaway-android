@@ -26,12 +26,14 @@ updates:
     # it when the release is a minor/patch). Navigation 2.10.0 was proposed and
     # reverted three times (#2280, #2298, #2300); WorkManager 2.12.0 arrived in
     # #2350; play-services-maps 20.1.0 in #2401; the Firebase majors in
-    # #2385-#2387. Drop these once minSdk reaches 24.
+    # #2385-#2387; DataStore 1.3.0 in #2415. Drop these once minSdk reaches 24.
     ignore:
       - dependency-name: "androidx.navigation:*"
         versions: [">=2.10.0"]
       - dependency-name: "androidx.work:*"
         versions: [">=2.12.0"]
+      - dependency-name: "androidx.datastore:*"
+        versions: [">=1.3.0"]
       - dependency-name: "com.google.android.gms:play-services-maps"
         versions: [">=20.1.0"]
       - dependency-name: "com.google.firebase:firebase-analytics"

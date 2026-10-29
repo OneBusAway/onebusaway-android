@@ -229,6 +229,9 @@ class MapViewModel @Inject constructor(
     /** Show/hide one rental mode, under the master button. */
     fun setRentalLayerVisible(layer: RentalLayer, visible: Boolean) = rentalController.setLayerVisible(layer, visible)
 
+    /** Show/hide the rental button, and the rentals with it. */
+    fun setRentalButtonShown(shown: Boolean) = rentalController.setButtonShown(shown)
+
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
     // stopsController `routeActive` lambda above can resolve it without a circular inference.)
@@ -788,7 +791,6 @@ class MapViewModel @Inject constructor(
 
     /** Refresh prefs-backed state and restart the vehicle poll if in route mode (the host's onResume). */
     fun onResume() {
-        rentalController.syncFromPreferences()
         mapHost.refreshMyLocationEnabled()
         // Begin the live location feed for as long as the map is shown (permission-gated; a no-op until
         // granted). This is what makes `location` a live stream — the legacy host's LocationHelper feed.

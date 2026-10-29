@@ -35,6 +35,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.ServiceAlertDao
+import org.onebusaway.android.map.rental.RENTAL_BUTTON_SHOWN_BY_DEFAULT
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
@@ -103,7 +104,7 @@ class SettingsViewModel @Inject constructor(
         hideAlerts = prefs.getBoolean(R.string.preference_key_hide_alerts, false),
         showZoomControls = prefs.getBoolean(R.string.preference_key_show_zoom_controls, false),
         compactStopIcons = prefs.getBoolean(R.string.preference_key_compact_stop_icons, false),
-        showRentalButton = prefs.getBoolean(R.string.preference_key_show_rental_button, true),
+        showRentalButton = prefs.getBoolean(R.string.preference_key_show_rental_button, RENTAL_BUTTON_SHOWN_BY_DEFAULT),
         displayWeatherView = prefs.getBoolean(R.string.preference_key_display_weather_view, true),
         showAvailableStudies = prefs.getBoolean(R.string.preference_key_show_available_studies, true),
         leftHandMode = prefs.getBoolean(R.string.preference_key_left_hand_mode, false),

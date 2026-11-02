@@ -22,6 +22,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -52,12 +54,12 @@ class FlashColorTest {
      * RESUMED-only gate is open regardless of the device's screen state (a dozing, locked test
      * device leaves the host activity paused, which would hold the screen dark for the wrong reason).
      */
-    private fun setFlashContent(accepted: () -> Boolean, paused: () -> Boolean): () -> State<Color> {
+    private fun setFlashContent(accepted: () -> Boolean): () -> State<Color> {
         lateinit var color: State<Color>
         compose.setContent {
             val owner = remember { ResumedLifecycleOwner() }
             CompositionLocalProvider(LocalLifecycleOwner provides owner) {
-                color = rememberFlashColor(accepted = accepted(), paused = paused(), flashColors = flashColors)
+                color = rememberFlashColor(accepted = accepted(), flashColors = flashColors)
             }
         }
         return { color }
@@ -76,28 +78,31 @@ class FlashColorTest {
     @Test
     fun staysDarkUntilAccepted() {
         compose.mainClock.autoAdvance = false
-        // The state behind the intro dialog: not yet accepted, not paused.
-        val color = setFlashContent(accepted = { false }, paused = { false })
+        // The state behind the intro dialog: not yet accepted.
+        val color = setFlashContent(accepted = { false })
 
         assertEquals(setOf(COLOR_DARK), colorsOver(2_000, color))
     }
 
     @Test
-    fun flashesOnceAcceptedAndDarkWhilePaused() {
+    fun flashesOnceAccepted() {
         compose.mainClock.autoAdvance = false
         var accepted by mutableStateOf(false)
-        var paused by mutableStateOf(false)
-        val color = setFlashContent(accepted = { accepted }, paused = { paused })
+        val color = setFlashContent(accepted = { accepted })
         assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
 
         compose.runOnIdle { accepted = true }
         val seen = colorsOver(1_000, color)
         assertTrue("expected every flash color once accepted, saw $seen", seen.containsAll(flashColors))
+    }
 
-        // Tap-to-pause settles back on the dark scrim.
-        compose.runOnIdle { paused = true }
-        compose.mainClock.advanceTimeBy(STEP_MS)
-        assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
+    /** #2424: see [NightLightScreen]. */
+    @Test
+    fun flashAreaIgnoresTouches() {
+        // The flash loop never idles, so hold the clock rather than let the rule chase it.
+        compose.mainClock.autoAdvance = false
+        compose.setContent { NightLightScreen(accepted = true, onBack = {}, onCreateShortcut = {}) }
+        compose.onNodeWithTag(FLASH_AREA_TEST_TAG).assertHasNoClickAction()
     }
 
     private class ResumedLifecycleOwner : LifecycleOwner {

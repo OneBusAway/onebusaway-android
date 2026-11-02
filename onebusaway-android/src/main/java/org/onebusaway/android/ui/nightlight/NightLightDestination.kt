@@ -21,8 +21,6 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.view.WindowManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -79,6 +78,8 @@ private const val FLASH_TIME_ON = 75L
 private val WAIT_TIMES = longArrayOf(100, 100, 400)
 
 private const val PREFERENCE_SHOWED_DIALOG = "showed_night_light_dialog"
+
+internal const val FLASH_AREA_TEST_TAG = "nightLightFlashArea"
 
 /**
  * The night-light NavHost destination: a flashing light riders show at night to flag
@@ -185,16 +186,16 @@ private fun NightLightIntroDialog(onStart: () -> Unit, onCancel: () -> Unit) {
 
 /**
  * The flashing screen: white / theme-color / white blinks with a pause between rounds, matching
- * the legacy flash thread. It stays dark until [accepted]; after that, tapping the screen pauses
- * and resumes the flashing.
+ * the legacy flash thread. It stays dark until [accepted], then flashes until the rider leaves.
+ * The flash area deliberately ignores touches: a rider holds the phone up to a bus, so a stray
+ * thumb that paused it would leave the screen dark with nothing to say why (#2424).
  */
 @Composable
-private fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShortcut: () -> Unit) {
+internal fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShortcut: () -> Unit) {
     // Remembered: NightLightScreen recomposes on every flash tick (~10x/sec) as displayColor changes.
     val themeColor = colorResource(R.color.theme_primary)
     val flashColors = remember(themeColor) { listOf(Color.White, themeColor, Color.White) }
-    var paused by remember { mutableStateOf(false) }
-    val displayColor by rememberFlashColor(accepted = accepted, paused = paused, flashColors = flashColors)
+    val displayColor by rememberFlashColor(accepted = accepted, flashColors = flashColors)
 
     Scaffold(
         topBar = {
@@ -226,27 +227,23 @@ private fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShor
                 .fillMaxSize()
                 .padding(padding)
                 .background(displayColor)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { paused = !paused }
+                .testTag(FLASH_AREA_TEST_TAG)
         )
     }
 }
 
 /**
- * The screen color over time: once the user has [accepted] the epilepsy intro and while not [paused],
- * cycles [flashColors] (on for [FLASH_TIME_ON], then the dark scrim for the next [WAIT_TIMES] gap), and
- * only while the lifecycle is RESUMED — replacing the legacy background thread. Otherwise it holds
- * [COLOR_DARK]. Consent is a required input of the loop itself, not a gate a caller can forget: the
- * intro dialog leaves the activity RESUMED, so nothing else stops the strobe behind it (#2358).
+ * The screen color over time: once the user has [accepted] the epilepsy intro, cycles [flashColors]
+ * (on for [FLASH_TIME_ON], then the dark scrim for the next [WAIT_TIMES] gap), and only while the
+ * lifecycle is RESUMED — replacing the legacy background thread. Otherwise it holds [COLOR_DARK].
+ * Consent is a required input of the loop itself, not a gate a caller can forget: the intro dialog
+ * leaves the activity RESUMED, so nothing else stops the strobe behind it (#2358).
  */
 @Composable
-internal fun rememberFlashColor(accepted: Boolean, paused: Boolean, flashColors: List<Color>): State<Color> {
+internal fun rememberFlashColor(accepted: Boolean, flashColors: List<Color>): State<Color> {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val enabled = accepted && !paused
-    return produceState(COLOR_DARK, enabled, flashColors) {
-        if (!enabled) {
+    return produceState(COLOR_DARK, accepted, flashColors) {
+        if (!accepted) {
             value = COLOR_DARK
             return@produceState
         }

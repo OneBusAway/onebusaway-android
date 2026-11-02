@@ -26,10 +26,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -47,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -190,17 +195,22 @@ private fun NightLightIntroDialog(onStart: () -> Unit, onCancel: () -> Unit) {
 
 /**
  * The flashing screen: white / theme-color / white blinks with a pause between rounds, matching
- * the legacy flash thread. It stays dark until [accepted]; after that, tapping the screen stops the
- * flashing. A stopped light says so and offers Restart: a rider holding the phone up to a bus can
- * stop it with a stray thumb, and a silently dark screen reads as frozen (#2424).
+ * the legacy flash thread. It stays dark until [accepted]; after that, tapping anywhere below the
+ * top bar toggles the light, and a Start/Stop Light button stays on screen in both states. A stopped
+ * light says so: a rider holding the phone up to a bus can stop it with a stray thumb, and a
+ * silently dark screen reads as frozen (#2424).
  */
 @Composable
 internal fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShortcut: () -> Unit) {
     // Remembered: NightLightScreen recomposes on every flash tick (~10x/sec) as displayColor changes.
     val themeColor = colorResource(R.color.theme_primary)
     val flashColors = remember(themeColor) { listOf(Color.White, themeColor, Color.White) }
-    var paused by remember { mutableStateOf(false) }
+    // Saveable: a stopped light must stay stopped through a recreation (e.g. a sunset dark-mode switch).
+    var paused by rememberSaveable { mutableStateOf(false) }
     val displayColor by rememberFlashColor(accepted = accepted, paused = paused, flashColors = flashColors)
+    // The screen tap and the button are one control: same action, same label.
+    val togglePaused = { paused = !paused }
+    val toggleLabel = stringResource(if (paused) R.string.night_light_start_light else R.string.night_light_stop_light)
 
     Scaffold(
         topBar = {
@@ -234,25 +244,37 @@ internal fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateSho
                 .background(displayColor)
                 .testTag(FLASH_AREA_TEST_TAG)
                 .clickable(
-                    enabled = accepted && !paused,
-                    onClickLabel = stringResource(R.string.night_light_stop),
+                    enabled = accepted,
+                    onClickLabel = toggleLabel,
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { paused = true },
+                    indication = null,
+                    onClick = togglePaused
+                ),
             contentAlignment = Alignment.Center
         ) {
             if (paused) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                // White, not a theme color: it sits on the dark scrim in both themes.
+                Text(
+                    stringResource(R.string.night_light_stopped),
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            if (accepted) {
+                // Pinned to the bottom in both states, so the control doesn't move under the thumb.
+                Button(
+                    onClick = togglePaused,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 32.dp)
                 ) {
-                    // White, not a theme color: it sits on the dark scrim in both themes.
-                    Text(
-                        stringResource(R.string.night_light_stopped),
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge
+                    Icon(
+                        imageVector = if (paused) AppIcons.PlayArrow else AppIcons.Stop,
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
-                    Button(onClick = { paused = false }) { Text(stringResource(R.string.night_light_restart)) }
+                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                    Text(toggleLabel)
                 }
             }
         }

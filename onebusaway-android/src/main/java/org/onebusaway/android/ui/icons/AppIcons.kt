@@ -335,6 +335,25 @@ object AppIcons {
             close()
         }
     }
+
+    val PlayArrow: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
+        materialIcon(name = "play_arrow") {
+            moveTo(8f, 5f)
+            verticalLineToRelative(14f)
+            lineToRelative(11f, -7f)
+            close()
+        }
+    }
+
+    val Stop: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
+        materialIcon(name = "stop") {
+            moveTo(6f, 6f)
+            horizontalLineToRelative(12f)
+            verticalLineToRelative(12f)
+            horizontalLineTo(6f)
+            close()
+        }
+    }
 }
 
 private inline fun materialIcon(

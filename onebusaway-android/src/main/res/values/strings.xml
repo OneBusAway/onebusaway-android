@@ -908,6 +908,9 @@
     <string name="night_light_create_shortcut">Create shortcut</string>
     <string name="night_light_start">Start</string>
     <string name="night_light_cancel">Cancel</string>
+    <string name="night_light_stopped">Night light stopped</string>
+    <string name="night_light_start_light">Start Light</string>
+    <string name="night_light_stop_light">Stop Light</string>
 
     <!-- Tutorials -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->

@@ -22,18 +22,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
@@ -54,12 +58,12 @@ class FlashColorTest {
      * RESUMED-only gate is open regardless of the device's screen state (a dozing, locked test
      * device leaves the host activity paused, which would hold the screen dark for the wrong reason).
      */
-    private fun setFlashContent(accepted: () -> Boolean): () -> State<Color> {
+    private fun setFlashContent(accepted: () -> Boolean, paused: () -> Boolean): () -> State<Color> {
         lateinit var color: State<Color>
         compose.setContent {
             val owner = remember { ResumedLifecycleOwner() }
             CompositionLocalProvider(LocalLifecycleOwner provides owner) {
-                color = rememberFlashColor(accepted = accepted(), flashColors = flashColors)
+                color = rememberFlashColor(accepted = accepted(), paused = paused(), flashColors = flashColors)
             }
         }
         return { color }
@@ -78,31 +82,50 @@ class FlashColorTest {
     @Test
     fun staysDarkUntilAccepted() {
         compose.mainClock.autoAdvance = false
-        // The state behind the intro dialog: not yet accepted.
-        val color = setFlashContent(accepted = { false })
+        // The state behind the intro dialog: not yet accepted, not paused.
+        val color = setFlashContent(accepted = { false }, paused = { false })
 
         assertEquals(setOf(COLOR_DARK), colorsOver(2_000, color))
     }
 
     @Test
-    fun flashesOnceAccepted() {
+    fun flashesOnceAcceptedAndDarkWhilePaused() {
         compose.mainClock.autoAdvance = false
         var accepted by mutableStateOf(false)
-        val color = setFlashContent(accepted = { accepted })
+        var paused by mutableStateOf(false)
+        val color = setFlashContent(accepted = { accepted }, paused = { paused })
         assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
 
         compose.runOnIdle { accepted = true }
         val seen = colorsOver(1_000, color)
         assertTrue("expected every flash color once accepted, saw $seen", seen.containsAll(flashColors))
+
+        // Tap-to-pause settles back on the dark scrim.
+        compose.runOnIdle { paused = true }
+        compose.mainClock.advanceTimeBy(STEP_MS)
+        assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
     }
 
-    /** #2424: see [NightLightScreen]. */
+    /** A tap stops the light and says so, and Restart is the way back (#2424). */
     @Test
-    fun flashAreaIgnoresTouches() {
-        // The flash loop never idles, so hold the clock rather than let the rule chase it.
+    fun tapShowsStoppedMessageUntilRestart() {
+        // The flash loop never idles, so step the clock by hand rather than let the rule chase it.
         compose.mainClock.autoAdvance = false
         compose.setContent { NightLightScreen(accepted = true, onBack = {}, onCreateShortcut = {}) }
-        compose.onNodeWithTag(FLASH_AREA_TEST_TAG).assertHasNoClickAction()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val stopped = context.getString(R.string.night_light_stopped)
+        val restart = context.getString(R.string.night_light_restart)
+        compose.onNodeWithText(stopped).assertDoesNotExist()
+
+        compose.onNodeWithTag(FLASH_AREA_TEST_TAG).performClick()
+        compose.mainClock.advanceTimeByFrame()
+        compose.onNodeWithText(stopped).assertExists()
+        // While stopped, only Restart restarts it; another tap on the light does nothing.
+        compose.onNodeWithTag(FLASH_AREA_TEST_TAG).assertIsNotEnabled()
+
+        compose.onNodeWithText(restart).performClick()
+        compose.mainClock.advanceTimeByFrame()
+        compose.onNodeWithText(stopped).assertDoesNotExist()
     }
 
     private class ResumedLifecycleOwner : LifecycleOwner {

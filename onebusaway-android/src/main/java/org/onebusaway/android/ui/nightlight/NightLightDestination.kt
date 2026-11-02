@@ -21,12 +21,15 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.view.WindowManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -45,6 +48,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -186,16 +190,17 @@ private fun NightLightIntroDialog(onStart: () -> Unit, onCancel: () -> Unit) {
 
 /**
  * The flashing screen: white / theme-color / white blinks with a pause between rounds, matching
- * the legacy flash thread. It stays dark until [accepted], then flashes until the rider leaves.
- * The flash area deliberately ignores touches: a rider holds the phone up to a bus, so a stray
- * thumb that paused it would leave the screen dark with nothing to say why (#2424).
+ * the legacy flash thread. It stays dark until [accepted]; after that, tapping the screen stops the
+ * flashing. A stopped light says so and offers Restart: a rider holding the phone up to a bus can
+ * stop it with a stray thumb, and a silently dark screen reads as frozen (#2424).
  */
 @Composable
 internal fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateShortcut: () -> Unit) {
     // Remembered: NightLightScreen recomposes on every flash tick (~10x/sec) as displayColor changes.
     val themeColor = colorResource(R.color.theme_primary)
     val flashColors = remember(themeColor) { listOf(Color.White, themeColor, Color.White) }
-    val displayColor by rememberFlashColor(accepted = accepted, flashColors = flashColors)
+    var paused by remember { mutableStateOf(false) }
+    val displayColor by rememberFlashColor(accepted = accepted, paused = paused, flashColors = flashColors)
 
     Scaffold(
         topBar = {
@@ -228,22 +233,45 @@ internal fun NightLightScreen(accepted: Boolean, onBack: () -> Unit, onCreateSho
                 .padding(padding)
                 .background(displayColor)
                 .testTag(FLASH_AREA_TEST_TAG)
-        )
+                .clickable(
+                    enabled = accepted && !paused,
+                    onClickLabel = stringResource(R.string.night_light_stop),
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { paused = true },
+            contentAlignment = Alignment.Center
+        ) {
+            if (paused) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // White, not a theme color: it sits on the dark scrim in both themes.
+                    Text(
+                        stringResource(R.string.night_light_stopped),
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Button(onClick = { paused = false }) { Text(stringResource(R.string.night_light_restart)) }
+                }
+            }
+        }
     }
 }
 
 /**
- * The screen color over time: once the user has [accepted] the epilepsy intro, cycles [flashColors]
- * (on for [FLASH_TIME_ON], then the dark scrim for the next [WAIT_TIMES] gap), and only while the
- * lifecycle is RESUMED — replacing the legacy background thread. Otherwise it holds [COLOR_DARK].
- * Consent is a required input of the loop itself, not a gate a caller can forget: the intro dialog
- * leaves the activity RESUMED, so nothing else stops the strobe behind it (#2358).
+ * The screen color over time: once the user has [accepted] the epilepsy intro and while not [paused],
+ * cycles [flashColors] (on for [FLASH_TIME_ON], then the dark scrim for the next [WAIT_TIMES] gap), and
+ * only while the lifecycle is RESUMED — replacing the legacy background thread. Otherwise it holds
+ * [COLOR_DARK]. Consent is a required input of the loop itself, not a gate a caller can forget: the
+ * intro dialog leaves the activity RESUMED, so nothing else stops the strobe behind it (#2358).
  */
 @Composable
-internal fun rememberFlashColor(accepted: Boolean, flashColors: List<Color>): State<Color> {
+internal fun rememberFlashColor(accepted: Boolean, paused: Boolean, flashColors: List<Color>): State<Color> {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    return produceState(COLOR_DARK, accepted, flashColors) {
-        if (!accepted) {
+    val enabled = accepted && !paused
+    return produceState(COLOR_DARK, enabled, flashColors) {
+        if (!enabled) {
             value = COLOR_DARK
             return@produceState
         }

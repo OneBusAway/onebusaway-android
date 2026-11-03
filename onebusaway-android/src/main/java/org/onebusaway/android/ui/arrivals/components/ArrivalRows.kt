@@ -22,7 +22,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -78,6 +77,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.COMPACT_LINK_PADDING
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
@@ -339,9 +339,8 @@ internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
  * - Tapping the row body frames the whole route/direction on the map ([ArrivalRowCallbacks.onShowVehiclesOnMap]).
  * - Tapping a pill focuses that specific trip's vehicle + stop ([ArrivalRowCallbacks.onEtaClick]).
  * - Long-pressing a pill opens that trip's menu (details / reminder / report).
- * - While the row is drilled into one of its trips ([selectedTripId] — a pill tap, or a bus tapped on
- *   the map), a labelled "Show trip status" button under the pills opens that trip's details (#2428),
- *   so the screen isn't reachable only by the long-press or a second tap on the bus.
+ * - While the row is drilled into one of its trips ([selectedTripId]: a pill tap, or a bus tapped on
+ *   the map), a labelled "Show trip status" button under the pills opens that trip's details (#2428).
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
  * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
@@ -581,26 +580,15 @@ fun RouteArrivalRow(
 }
 
 /**
- * The trip of this row the map is drilled into, which the row's "Show trip status" button opens (#2428),
- * or null when there is none to offer. Gated on [selected] for the same reason [focusedPillRimColor] is:
- * [selectedTripId] arrives as one map-wide value, so without the gate a stale id could put the button
- * on a row that isn't the focused one. A drilled-into trip this row doesn't hold (e.g. one that just
- * dropped out of the stop's window) offers nothing rather than a button that opens the wrong trip.
+ * The trip this row is drilled into, for its "Show trip status" button (#2428); null when there's none.
+ * Gated on [selected] like [focusedPillRimColor], since [selectedTripId] is one map-wide value.
  */
-internal fun RouteRowGroup.focusedTrip(selected: Boolean, selectedTripId: String?): ArrivalInfo? {
-    if (!selected || selectedTripId == null) return null
-    return trips.firstOrNull { it.tripId == selectedTripId }
-}
+internal fun RouteRowGroup.focusedTrip(selected: Boolean, selectedTripId: String?): ArrivalInfo? = if (selected) trips.firstOrNull { it.tripId == selectedTripId } else null
 
-/**
- * The selected row's labelled way into trip details (#2428): the rider's pill tap focuses the trip on
- * the map, and this is the next step to its stop-by-stop times, named as the old tap menu and the pill's
- * long-press menu name it. Compact, like the board's other link-style buttons, so the row grows by one
- * short line rather than a full button.
- */
+/** The selected row's labelled way into trip details (#2428), styled as the board's compact links. */
 @Composable
 private fun ShowTripStatusAction(onClick: () -> Unit) {
-    TextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
+    TextButton(onClick = onClick, contentPadding = COMPACT_LINK_PADDING) {
         Icon(MaterialSymbols.TripStatus, contentDescription = null, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
         Text(stringResource(R.string.bus_options_menu_show_trip_details), style = MaterialTheme.typography.labelLarge)

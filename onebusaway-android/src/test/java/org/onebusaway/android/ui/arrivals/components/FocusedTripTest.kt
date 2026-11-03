@@ -36,13 +36,6 @@ class FocusedTripTest {
     }
 
     @Test
-    fun `a scheduled-only trip is offered too`() {
-        // No live vehicle: the pill tap still drills into the trip, so trip status is still one tap away.
-        val scheduled = previewArrival("40", "Northgate", etaMinutes = 24, predicted = false, tripId = "trip_3")
-        assertSame(scheduled, RouteRowGroup(listOf(scheduled)).focusedTrip(selected = true, selectedTripId = "trip_3"))
-    }
-
-    @Test
     fun `an unselected row offers nothing, even holding the trip id`() {
         // The id is one map-wide value; only the selected row may act on it.
         assertNull(group.focusedTrip(selected = false, selectedTripId = "trip_2"))

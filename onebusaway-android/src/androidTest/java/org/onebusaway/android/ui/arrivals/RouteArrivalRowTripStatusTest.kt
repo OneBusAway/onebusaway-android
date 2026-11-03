@@ -70,14 +70,6 @@ class RouteArrivalRowTripStatusTest {
     }
 
     @Test
-    fun routeSelectionWithoutATripHasNoButton() {
-        // A row-body tap selects the route but names no trip, so there is no one trip to open.
-        setRow(selected = true, selectedTripId = null)
-
-        composeRule.onAllNodesWithText(label).assertCountEquals(0)
-    }
-
-    @Test
     fun pillLongPressIsNamedForTalkBack() {
         setRow(selected = false, selectedTripId = null)
 

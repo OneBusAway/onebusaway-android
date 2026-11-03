@@ -104,7 +104,8 @@ internal fun StudyResponse.toSurveys(): List<Survey> = surveys.map { s ->
                     url = q.content.url,
                     embeddedDataFields = q.content.embedded_data_fields,
                     surveyProvider = q.content.survey_provider,
-                    type = q.content.type
+                    type = q.content.type,
+                    buttonLabel = q.content.button_label
                 )
             )
         }

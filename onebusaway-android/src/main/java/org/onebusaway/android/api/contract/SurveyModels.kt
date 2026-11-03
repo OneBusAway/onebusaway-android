@@ -15,9 +15,17 @@
  */
 package org.onebusaway.android.api.contract
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Surveys ("studies") response models for [SurveyWebService]. Unlike the OBA `where` API these come
@@ -76,7 +84,10 @@ data class StudyResponse(
                 val url: String? = null,
                 val embedded_data_fields: ArrayList<String>? = null,
                 val survey_provider: String? = null,
-                val type: String? = null
+                val type: String? = null,
+                /** `external_survey` only: which canned title its open button shows; an open set of keys. */
+                @Serializable(with = OptionalKeySerializer::class)
+                val button_label: String? = null
             )
         }
     }
@@ -86,6 +97,20 @@ data class StudyResponse(
         val name: String? = null,
         val id: Int = 0
     )
+}
+
+/**
+ * Decodes an optional key that only means something as a JSON string; any other shape decodes as
+ * null. Keeps a malformed `button_label` from failing the whole study list, so the rider still gets
+ * the survey with its default button title.
+ */
+private object OptionalKeySerializer : KSerializer<String?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("OptionalKey", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): String? = ((decoder as JsonDecoder).decodeJsonElement() as? JsonPrimitive)?.takeIf { it.isString }?.content
+
+    override fun serialize(encoder: Encoder, value: String?) = encoder.encodeString(value.orEmpty())
 }
 
 /** The ack returned after POSTing survey answers; carries the response id used to update follow-ups. */

@@ -370,7 +370,10 @@ internal fun EtaPillWithMenu(
             routeBadge = routeBadge,
             outline = outline,
             onClick = { callbacks.onEtaClick(trip) },
-            onLongClick = { expanded = true }
+            onLongClick = { expanded = true },
+            // Names the long-press for TalkBack by the menu's lead item, as the row body names its own
+            // by "Show route on map" — so the menu's way into trip details is announced, not hidden.
+            onLongClickLabel = stringResource(R.string.bus_options_menu_show_trip_details)
         )
         TripActionsMenu(expanded, { expanded = false }, trip, actions, callbacks)
     }
@@ -467,7 +470,9 @@ internal fun EtaPill(
     // too. Null is the ordinary unfocused pill.
     outline: BorderStroke? = null,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    // The accessibility label for [onLongClick]'s action; null leaves it unnamed.
+    onLongClickLabel: String? = null
 ) {
     val decoration = strikeThroughIf(canceled)
     val shape = RoundedCornerShape(8.dp)
@@ -490,7 +495,7 @@ internal fun EtaPill(
     // A single combinedClickable serves both tap (focus vehicle) and long-press (trip menu). Placed on
     // the modifier the Surface clips, so the ripple stays inside the pill.
     val interaction = if (onClick != null || onLongClick != null) {
-        Modifier.combinedClickable(onClick = { onClick?.invoke() }, onLongClick = onLongClick)
+        Modifier.combinedClickable(onClick = { onClick?.invoke() }, onLongClickLabel = onLongClickLabel, onLongClick = onLongClick)
     } else {
         Modifier
     }

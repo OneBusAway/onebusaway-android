@@ -49,16 +49,20 @@ object ArrivalsFixtures {
      * The fixture's arrivals projected to display [ArrivalInfo] via the production [convertArrivals].
      * Favorite state is no longer baked into [ArrivalInfo] — it's a live overlay keyed by route id — so
      * promotion tests pass a favorite-route-id set straight to `findPreferredArrivalIndexes`.
+     *
+     * [now] defaults to the fixture's own server `currentTime`; override it to render the same
+     * arrivals at another moment.
      */
     fun convert(
         context: Context,
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>,
-        includeArriveDepartLabels: Boolean
+        includeArriveDepartLabels: Boolean,
+        now: ServerTime = ServerTime(env.currentTime)
     ): ArrayList<ArrivalInfo> = ArrayList(
         convertArrivals(
             context,
             snapshot(env).arrivals,
-            ServerTime(env.currentTime),
+            now,
             includeArriveDepartLabels
         )
     )

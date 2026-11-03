@@ -22,6 +22,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -39,6 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -337,6 +339,9 @@ internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
  * - Tapping the row body frames the whole route/direction on the map ([ArrivalRowCallbacks.onShowVehiclesOnMap]).
  * - Tapping a pill focuses that specific trip's vehicle + stop ([ArrivalRowCallbacks.onEtaClick]).
  * - Long-pressing a pill opens that trip's menu (details / reminder / report).
+ * - While the row is drilled into one of its trips ([selectedTripId] — a pill tap, or a bus tapped on
+ *   the map), a labelled "Show trip status" button under the pills opens that trip's details (#2428),
+ *   so the screen isn't reachable only by the long-press or a second tap on the bus.
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
  * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
@@ -422,6 +427,7 @@ fun RouteArrivalRow(
         selectedTripId,
         focusedPillRimColor(selected, selectedTripBandColor, selectionColor)
     )
+    val focusedTrip = group.focusedTrip(selected, selectedTripId)
     ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(
@@ -488,19 +494,19 @@ fun RouteArrivalRow(
                 // similar-looking rounded colored chips don't read as the same kind of thing.
                 VerticalDivider()
                 Spacer(Modifier.width(10.dp))
-                if (chronological) {
-                    ChronologicalArrivalContent(
-                        arrival = representative,
-                        direction = direction,
-                        stopLabel = stopLabel,
-                        actions = routeActions,
-                        callbacks = callbacks,
-                        focus = pillFocus,
-                        modifier = Modifier.weight(1f),
-                        etaModifier = anchors.eta
-                    )
-                } else {
-                    Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f)) {
+                    if (chronological) {
+                        ChronologicalArrivalContent(
+                            arrival = representative,
+                            direction = direction,
+                            stopLabel = stopLabel,
+                            actions = routeActions,
+                            callbacks = callbacks,
+                            focus = pillFocus,
+                            modifier = Modifier.fillMaxWidth(),
+                            etaModifier = anchors.eta
+                        )
+                    } else {
                         if (direction.isNotBlank()) {
                             DirectionHeadsign(direction)
                         }
@@ -527,6 +533,9 @@ fun RouteArrivalRow(
                             firstPillModifier = anchors.eta,
                             focus = pillFocus
                         )
+                    }
+                    focusedTrip?.let { trip ->
+                        ShowTripStatusAction(onClick = { callbacks.onShowTripStatus(trip) })
                     }
                 }
             }
@@ -568,6 +577,33 @@ fun RouteArrivalRow(
                 routeFilter = routeFilter
             )
         }
+    }
+}
+
+/**
+ * The trip of this row the map is drilled into, which the row's "Show trip status" button opens (#2428),
+ * or null when there is none to offer. Gated on [selected] for the same reason [focusedPillRimColor] is:
+ * [selectedTripId] arrives as one map-wide value, so without the gate a stale id could put the button
+ * on a row that isn't the focused one. A drilled-into trip this row doesn't hold (e.g. one that just
+ * dropped out of the stop's window) offers nothing rather than a button that opens the wrong trip.
+ */
+internal fun RouteRowGroup.focusedTrip(selected: Boolean, selectedTripId: String?): ArrivalInfo? {
+    if (!selected || selectedTripId == null) return null
+    return trips.firstOrNull { it.tripId == selectedTripId }
+}
+
+/**
+ * The selected row's labelled way into trip details (#2428): the rider's pill tap focuses the trip on
+ * the map, and this is the next step to its stop-by-stop times, named as the old tap menu and the pill's
+ * long-press menu name it. Compact, like the board's other link-style buttons, so the row grows by one
+ * short line rather than a full button.
+ */
+@Composable
+private fun ShowTripStatusAction(onClick: () -> Unit) {
+    TextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
+        Icon(MaterialSymbols.TripStatus, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(stringResource(R.string.bus_options_menu_show_trip_details), style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -891,13 +927,14 @@ internal fun previewArrival(
  *  tests, which override just the slots they observe — the one place to grow when a slot is added. */
 internal fun previewRowCallbacks(
     onShowRouteOnMap: (ArrivalInfo) -> Unit = {},
-    onShowRouteSchedule: (String) -> Unit = {}
+    onShowRouteSchedule: (String) -> Unit = {},
+    onShowTripStatus: (ArrivalInfo) -> Unit = {}
 ) = ArrivalRowCallbacks(
     onRouteFavorite = {},
     onShowVehiclesOnMap = {},
     onShowRouteOnMap = onShowRouteOnMap,
     onEtaClick = {},
-    onShowTripStatus = {},
+    onShowTripStatus = onShowTripStatus,
     onSetReminder = {},
     onToggleTracking = {},
     onShowRouteSchedule = onShowRouteSchedule,

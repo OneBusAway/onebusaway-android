@@ -21,7 +21,7 @@ import org.junit.Test
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 
 /**
- * Which trip a row's "Show trip status" button opens (#2428). The button's presence and its click are
+ * Which trip a row's corner ⋮ opens the menu for (#2428). The ⋮'s presence and its menu are
  * covered on-device by `RouteArrivalRowTripStatusTest`; this pins the selection rule it draws from.
  */
 class FocusedTripTest {

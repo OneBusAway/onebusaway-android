@@ -458,9 +458,8 @@ private fun HiddenItemsFootnote(
 /** A [HiddenItemsFootnote]'s own tap target: [label], doing [onClick]. */
 private class FootnoteAction(val label: String, val onClick: () -> Unit)
 
-/** The board's compact text buttons ("load more", a footnote's action, a row's "Show trip status"),
- *  which read as links. */
-internal val COMPACT_LINK_PADDING = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+/** The board's compact text buttons ("load more", a footnote's action), which read as links. */
+private val COMPACT_LINK_PADDING = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
 
 /**
  * The stop's service alerts, capped at [ALERT_PAGE_SIZE] rows with a paged "show more" link that

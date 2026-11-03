@@ -20,23 +20,27 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
- * The labelled way into trip details on the map board (#2428): a row drilled into one of its trips
- * carries a visible "Show trip status" button for that trip, and every pill names its long-press for
- * TalkBack. Which trip the button resolves to is pinned on the JVM by `FocusedTripTest`.
+ * The visible way into trip details on the map board (#2428): a row drilled into one of its trips
+ * carries a ⋮ that opens that trip's menu, led by "Show trip status", and every pill names its
+ * long-press for TalkBack. Which trip the ⋮ resolves to is pinned on the JVM by `FocusedTripTest`.
  */
 class RouteArrivalRowTripStatusTest {
 
@@ -46,10 +50,11 @@ class RouteArrivalRowTripStatusTest {
 
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val label get() = context.getString(R.string.bus_options_menu_show_trip_details)
+    private val tripOptions get() = context.getString(R.string.stop_info_trip_options)
 
     private val soonest = previewArrival("40", "Northgate", etaMinutes = 3, tripId = "trip_1")
 
-    // Scheduled-only: no live vehicle, which the button must serve as well as a tracked trip.
+    // Scheduled-only: no live vehicle, which the ⋮ must serve as well as a tracked trip.
     private val scheduled = previewArrival("40", "Northgate", etaMinutes = 24, predicted = false, tripId = "trip_2")
 
     @Test
@@ -57,16 +62,71 @@ class RouteArrivalRowTripStatusTest {
         var opened: ArrivalInfo? = null
         setRow(selected = true, selectedTripId = scheduled.tripId, onShowTripStatus = { opened = it })
 
-        composeRule.onNodeWithText(label).assertHasClickAction().performClick()
+        composeRule.onNodeWithContentDescription(tripOptions).assertHasClickAction().performClick()
+        // The centered menu opens in a Dialog (a separate window) that can lay out a frame after the
+        // main composition reports idle; wait for its lead item (see RouteArrivalRowLongPressTest).
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(label).performClick()
 
         assertEquals(scheduled.tripId, opened?.tripId)
     }
 
     @Test
-    fun unselectedRowHasNoButton() {
+    fun unselectedRowHasNoTripOptions() {
         setRow(selected = false, selectedTripId = scheduled.tripId)
 
-        composeRule.onAllNodesWithText(label).assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(tripOptions).assertCountEquals(0)
+    }
+
+    @Test
+    fun chronologicalRowAlwaysOffersItsTripOptions() {
+        var opened: ArrivalInfo? = null
+        setChronologicalRow(callbacks = previewRowCallbacks(onShowTripStatus = { opened = it }))
+
+        // Unselected: a row of one trip needs no selection to say which trip the menu is for.
+        composeRule.onNodeWithContentDescription(tripOptions).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(label).performClick()
+
+        assertEquals(scheduled.tripId, opened?.tripId)
+    }
+
+    @Test
+    fun chronologicalRowTapSplitsAtTheDivider() {
+        var tripTapped: ArrivalInfo? = null
+        var routeTapped: ArrivalInfo? = null
+        setChronologicalRow(
+            callbacks = previewRowCallbacks(onEtaClick = { tripTapped = it }, onShowVehiclesOnMap = { routeTapped = it })
+        )
+
+        // Right of the divider is the trip: its pill tap, focusing that trip.
+        composeRule.onNodeWithText("Northgate").performClick()
+        assertEquals(scheduled.tripId, tripTapped?.tripId)
+        assertEquals(null, routeTapped)
+
+        // The badge side keeps the row's route focus.
+        tripTapped = null
+        composeRule.onNodeWithText("40").performClick()
+        assertEquals(scheduled.tripId, routeTapped?.tripId)
+        assertEquals(null, tripTapped)
+    }
+
+    @Test
+    fun chronologicalTripSideLongPressOpensTheTripMenu() {
+        var opened: ArrivalInfo? = null
+        setChronologicalRow(callbacks = previewRowCallbacks(onShowTripStatus = { opened = it }))
+
+        composeRule.onNodeWithText("Northgate").performSemanticsAction(SemanticsActions.OnLongClick)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(label).performClick()
+
+        assertEquals(scheduled.tripId, opened?.tripId)
     }
 
     @Test
@@ -78,6 +138,18 @@ class RouteArrivalRowTripStatusTest {
                 node.config.getOrNull(SemanticsActions.OnLongClick)?.label == label
             }
         ).assertCountEquals(2)
+    }
+
+    private fun setChronologicalRow(callbacks: ArrivalRowCallbacks) {
+        composeRule.setContent {
+            RouteArrivalRow(
+                group = RouteRowGroup(listOf(scheduled)),
+                actionsFor = { null },
+                isFavorite = false,
+                callbacks = callbacks,
+                chronological = true
+            )
+        }
     }
 
     private fun setRow(

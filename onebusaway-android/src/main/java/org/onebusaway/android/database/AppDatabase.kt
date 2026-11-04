@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import org.onebusaway.android.database.oba.CachedRouteTypeRecord
 import org.onebusaway.android.database.oba.CachedStopRecord
 import org.onebusaway.android.database.oba.LegacyImportDao
+import org.onebusaway.android.database.oba.LegacyStopRouteFilterRecord
 import org.onebusaway.android.database.oba.MapStopCacheDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.NavigationSessionDao
@@ -20,6 +21,8 @@ import org.onebusaway.android.database.oba.RouteRecord
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.ServiceAlertRecord
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopHiddenRouteDao
+import org.onebusaway.android.database.oba.StopHiddenRouteRecord
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.TripAlertRecord
 import org.onebusaway.android.database.oba.TripDao
@@ -70,6 +73,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * v13 adds `pinned_trips` (#2053): the single trip-plan itinerary the rider parked, so they can leave
  * directions to explore the system and come back to it. Created empty — nothing is pinned until the
  * rider pins something.
+ *
+ * v14 adds `stop_hidden_routes` (#2366): the per-stop route filter v7 retired, restored as the routes the
+ * rider hid at each stop. Also `legacy_stop_route_filters`, where the legacy import parks an old
+ * allow-list filter until the stop's first load converts it. Both created empty.
  */
 @Database(
     entities = [
@@ -88,9 +95,11 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         NavigationSessionRecord::class,
         CachedStopRecord::class,
         CachedRouteTypeRecord::class,
-        PinnedTripRecord::class
+        PinnedTripRecord::class,
+        StopHiddenRouteRecord::class,
+        LegacyStopRouteFilterRecord::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -117,6 +126,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     // The parked trip plan (#2053).
     abstract fun pinnedTripDao(): PinnedTripDao
+
+    // The per-stop route filter (#2366).
+    abstract fun stopHiddenRouteDao(): StopHiddenRouteDao
 
     companion object {
         /** The Room database filename (also the backup target). */

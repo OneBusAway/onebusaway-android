@@ -29,6 +29,7 @@ import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.AlertDetails
+import org.onebusaway.android.ui.arrivals.UndoSnackbarVisuals
 
 /**
  * Shows a service alert (situation) in a dialog and marks it read. The buttons mirror the legacy
@@ -55,7 +56,7 @@ fun showSituationDialog(
     onUnhide: () -> Unit,
     onHideAll: () -> Unit,
     onDismiss: (isAlertHidden: Boolean) -> Unit,
-    showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
+    showUndoSnackbar: (visuals: UndoSnackbarVisuals, onAction: (() -> Unit)?) -> Unit
 ) {
     val dialog = MaterialAlertDialogBuilder(activity)
         .setTitle(alert.summary)
@@ -63,8 +64,10 @@ fun showSituationDialog(
         .setPositiveButton(R.string.hide) { d, _ ->
             onHide()
             showUndoSnackbar(
-                R.string.alert_hidden_snackbar_text,
-                R.string.alert_hidden_snackbar_action
+                UndoSnackbarVisuals(
+                    activity.getString(R.string.alert_hidden_snackbar_text),
+                    activity.getString(R.string.alert_hidden_snackbar_action)
+                )
             ) {
                 onUnhide()
             }
@@ -73,7 +76,7 @@ fun showSituationDialog(
         }
         .setNeutralButton(R.string.hide_all) { d, _ ->
             onHideAll()
-            showUndoSnackbar(R.string.all_alert_hidden_snackbar_text, null, null)
+            showUndoSnackbar(UndoSnackbarVisuals(activity.getString(R.string.all_alert_hidden_snackbar_text), null), null)
             d.dismiss()
             onDismiss(true)
         }

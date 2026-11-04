@@ -16,8 +16,8 @@ What did you see instead?  Describe your issue in detail here.
 
 **Device and Android version:** 
 
-What make and model device (e.g., Samsung Galaxy S3) did you encounter this on?  What Android version (e.g., Android 4.0 Ice Cream Sandwich) are you running?  Is it the stock version from the manufacturer or a custom ROM?  What version of Google Play Services is running on your device?
+What make and model of device (e.g., Pixel 8) did you see this on, and what Android version (e.g., Android 15) is it running? Which OneBusAway version (Settings → About)?
 
 **Screenshots:** 
 
-Can be created by pressing the Volume Down and Power Button at the same time on Android 4.0 and higher.
+Press the Power and Volume Down buttons at the same time to take one.

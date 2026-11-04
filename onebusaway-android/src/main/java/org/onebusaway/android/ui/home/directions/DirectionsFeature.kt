@@ -479,7 +479,7 @@ internal fun DirectionStopEtaStrip(
         revealRoute = { _, request -> onFocusVehicle(request) },
         onShowTrip = onShowTrip,
         onEditReminder = onEditReminder,
-        showUndoSnackbar = { _, _, _ -> }
+        showUndoSnackbar = { _, _ -> }
     )
     // The focused leg's row reads HOME's hoisted session, so a focused ride polls its boarding stop
     // exactly once and the map and this strip see the same arrivals.

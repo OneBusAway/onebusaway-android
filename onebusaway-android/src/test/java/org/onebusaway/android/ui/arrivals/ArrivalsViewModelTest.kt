@@ -83,6 +83,9 @@ private class FakeArrivalsRepository(
      *  for a star toggle from any surface. */
     val favoriteRoutes = MutableStateFlow<Set<String>>(emptySet())
 
+    /** The routes hidden at the stop (#2366); [setHiddenRoutes] writes it as the real store would. */
+    val hiddenRoutes = MutableStateFlow<Set<String>>(emptySet())
+
     override suspend fun getArrivals(
         stopId: String,
         minutesAfter: Int
@@ -105,6 +108,12 @@ private class FakeArrivalsRepository(
     override fun favoriteRouteIds(): Flow<Set<String>> = favoriteRoutes
 
     override fun alertHideState(): Flow<AlertHideState> = hideState
+
+    override fun hiddenRouteIds(stopId: String): Flow<Set<String>> = hiddenRoutes
+
+    override suspend fun setHiddenRoutes(stopId: String, routeIds: Set<String>) {
+        hiddenRoutes.value = routeIds
+    }
 
     override suspend fun hideAlerts(ids: List<String>) {
         hiddenAlertIds = ids
@@ -141,7 +150,8 @@ class ArrivalsViewModelTest {
         minutesAfter: Int = 65,
         isStale: Boolean = false,
         favorite: Boolean = false,
-        hideAlertsByDefault: Boolean = false
+        hideAlertsByDefault: Boolean = false,
+        stopRouteIds: Set<String> = emptySet()
     ) = ArrivalsData(
         arrivals = emptyList(),
         routeGroups = emptyList(),
@@ -154,7 +164,8 @@ class ArrivalsViewModelTest {
         hideAlertsByDefault = hideAlertsByDefault,
         stopCode = null,
         stopLat = 0.0,
-        stopLon = 0.0
+        stopLon = 0.0,
+        stopRouteIds = stopRouteIds
     )
 
     @Test
@@ -498,5 +509,46 @@ class ArrivalsViewModelTest {
         val content = viewModel.state.value as ArrivalsUiState.Content
         assertEquals(listOf("a1"), content.alerts.map { it.situationId })
         assertEquals(0, content.hiddenAlertCount)
+    }
+
+    // --- The per-stop route filter (#2366) --------------------------------------------------------
+
+    private suspend fun filterViewModel(): Pair<ArrivalsViewModel, FakeArrivalsRepository> {
+        val repository = FakeArrivalsRepository(Result.success(data(stopRouteIds = setOf("A", "B", "C"))))
+        val viewModel = ArrivalsViewModel("1_100", repository)
+        viewModel.refresh()
+        return viewModel to repository
+    }
+
+    private val ArrivalsViewModel.hiddenRouteIds get() = (state.value as ArrivalsUiState.Content).hiddenRouteIds
+
+    @Test
+    fun `show only this route hides every other route the stop serves`() = runTest {
+        val (viewModel, _) = filterViewModel()
+
+        viewModel.showOnlyRoute("B")
+
+        assertEquals(setOf("A", "C"), viewModel.hiddenRouteIds)
+    }
+
+    @Test
+    fun `hiding routes accumulates and show all clears them`() = runTest {
+        val (viewModel, _) = filterViewModel()
+
+        viewModel.hideRoute("A")
+        viewModel.hideRoute("C")
+        assertEquals(setOf("A", "C"), viewModel.hiddenRouteIds)
+
+        viewModel.showAllRoutes()
+        assertEquals(emptySet<String>(), viewModel.hiddenRouteIds)
+    }
+
+    @Test
+    fun `a stored hidden route the stop no longer serves isn't reported hidden`() = runTest {
+        val (viewModel, repository) = filterViewModel()
+
+        repository.hiddenRoutes.value = setOf("A", "withdrawn")
+
+        assertEquals(setOf("A"), viewModel.hiddenRouteIds)
     }
 }

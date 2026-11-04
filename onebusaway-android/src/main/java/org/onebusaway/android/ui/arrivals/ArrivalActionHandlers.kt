@@ -24,6 +24,7 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.tracking.TrackedRoute
 import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueLauncher
@@ -48,7 +49,7 @@ fun createArrivalActionHandler(
     revealRoute: (ArrivalInfo, ShowRouteRequest) -> Unit,
     // How to show the alert hide/undo snackbar — supplied by the host so the dialog isn't tied to a
     // specific View (the standalone activity anchors to its root; Compose hosts use a SnackbarHost).
-    showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
+    showUndoSnackbar: (visuals: UndoSnackbarVisuals, onAction: (() -> Unit)?) -> Unit,
     // How to open trip details — defaults to launching TripDetailsActivity (standalone/sheet hosts);
     // the in-NavHost arrivals destination overrides it to navigate to the trip-details destination.
     onShowTrip: (tripId: String, stopId: String) -> Unit = { tripId, stopId ->
@@ -212,6 +213,24 @@ fun createArrivalActionHandler(
 
     override fun onHideAlert(alert: AlertItem) {
         viewModel.hideAlert(alert)
+    }
+
+    override fun onHideRoute(routeId: String) {
+        // Named by the badge its row wears (short name + route color); a route the feed gives no short
+        // name gets the plain message.
+        val badge = currentContent()?.let { content ->
+            val representative = content.routeGroups.firstOrNull { it.routeId == routeId }?.representative
+            representative?.shortName?.takeIf { it.isNotBlank() }
+                ?.let { RouteBadge(it, content.actions[representative.tripId]?.routeColor) }
+        }
+        viewModel.hideRoute(routeId)
+        val visuals = UndoSnackbarVisuals(
+            message = badge?.let { activity.getString(R.string.route_hidden_named_snackbar_text, it.shortName) }
+                ?: activity.getString(R.string.route_hidden_snackbar_text),
+            actionLabel = activity.getString(R.string.alert_hidden_snackbar_action),
+            routeMention = badge?.let { RouteMention.of(activity.getString(R.string.route_hidden_named_snackbar_text), it) }
+        )
+        showUndoSnackbar(visuals) { viewModel.unhideRoute(routeId) }
     }
 
     override fun onReportStopProblem() {

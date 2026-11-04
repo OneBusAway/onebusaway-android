@@ -68,10 +68,13 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
 - **Android Lint is gated the same way.** Lint *errors* always fail the build (`abortOnError`) —
   notably `NewApi`/minSdk violations the API-33 tests can't catch. Under `-PwarningsAsErrors=true`,
   lint *warnings* fail too (`warningsAsErrors`), so keep lint clean.
-  - **Don't run lint locally just to pre-empt a CI failure.** `lintObaGoogleDebug` takes ~5–15 minutes
-    (worse when other builds are contending for the machine), which stalls the loop for little gain.
-    Compile clean locally (the command above), then **let CI run lint** and react to its report.
-    Reproduce lint locally *only* when you're specifically iterating on a lint finding CI already flagged:
+  - **Lint runs nightly, not on PRs** (#1901). The PR/push job passes `-x lint`; the `lint` job in
+    `android-nightly.yml` runs it against `main`. So a lint finding surfaces the night *after* merge.
+  - **Don't run lint locally by reflex.** `lintObaGoogleDebug` takes ~5–15 minutes (worse when other
+    builds are contending for the machine), which stalls the loop for little gain. Compile clean
+    locally (the command above) and react to the nightly report. Run lint locally when you're
+    iterating on a finding the nightly flagged, or before merging a change that leans on lint's
+    specialty (new platform API calls that could trip `NewApi`, manifest/resource changes):
     `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`.
   - Lint runs the **full catalog** (`checkAllWarnings true`) with **no baseline** — the codebase is kept
     lint-clean, so *every* finding is reported and (under `-PwarningsAsErrors`) fails the build; nothing is
@@ -88,7 +91,7 @@ Releases ship from the **Release to Google Play** workflow (`.github/workflows/r
 manual dispatch only, builds a signed `obaGoogle` release App Bundle, and uploads it with
 [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher). Full procedure — cutting
 a release, the six repository secrets, the Play service account and how to rotate its key — is in
-**`docs/RELEASING.md`**; local publishing is in `docs/BUILD.md`.
+**`docs/RELEASING.md`**, including publishing from a workstation.
 
 A release climbs the tracks one rung at a time, each rung a human decision: `alpha` (closed testing,
 the default, and the only track with testers attached) → `beta` → `production`. **`beta` is Play's
@@ -119,8 +122,8 @@ Two things that bite:
 ## Build Variants
 
 The project uses two flavor dimensions:
-- **Platform**: `google` (Google Play release)
-- **Brand**: `oba` (original OneBusAway), `agencyX`, `agencyY` (sample rebrands)
+- **Platform**: `google` (Google Maps; the Play release), `maplibre` (MapLibre + OpenFreeMap tiles)
+- **Brand**: `oba` (original OneBusAway), `agencyX`, `agencyY` (sample rebrands), `kiedybus` (third-party)
 
 Default variant: `obaGoogleDebug`
 
@@ -278,11 +281,11 @@ domain model is unambiguously millis. See `situationEpochToMillis` and `Situatio
 ## Key Technical Details
 
 - **Min SDK**: 23 (Android 6.0)
-- **Target SDK**: 36 (Android 15)
+- **Target SDK**: 36 (Android 16)
 - **Application ID**: `com.joulespersecond.seattlebusbot` (historical, must keep for Google Play)
 - **Namespace**: `org.onebusaway.android`
 - **Java compatibility**: 17
-- **Kotlin version**: see `kotlin` in `gradle/libs.versions.toml` (2.4.10)
+- **Kotlin version**: see `kotlin` in `gradle/libs.versions.toml`
 
 ## Multi-Region Support
 

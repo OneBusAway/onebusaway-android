@@ -22,7 +22,7 @@
         For production, add your own key restricted to pl.kiedybus.android:
         <string name="apiv2_key">YOUR_API_KEY</string>
     -->
-
+    <string name="apiv2_key">AIzaSyAfndYYEwBXWIUGOzC1Zh0RDBk4awhj8Nw</string>
     <!-- KiedyBus custom regions API -->
     <string name="regions_api_url">https://kiedybus.pl/regions-v4.json</string>
 

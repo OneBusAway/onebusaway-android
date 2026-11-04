@@ -228,6 +228,7 @@
     <!-- Used by the MapLibre renderer's most-recent-data marker (the Google flavor hardcodes the title),
          so it reads as unused to the Google-variant lint. -->
     <string name="marker_most_recent_data" tools:ignore="UnusedResources">Most recent data</string>
+    <string name="marker_fast_estimate" tools:ignore="UnusedResources">Fast estimate</string>
 
     <!-- Stop ETA snippets -->
 

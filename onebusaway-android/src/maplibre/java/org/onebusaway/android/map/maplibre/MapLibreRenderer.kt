@@ -702,7 +702,7 @@ class MapLibreRenderer(
                 MarkerOptions()
                     .position(point.toLatLng())
                     .icon(fastEstimateIcon(fillColor))
-                    .title(FAST_ESTIMATE_TITLE)
+                    .title(context.getString(R.string.marker_fast_estimate))
             )
             fastEstimateFill = fillColor
             fastEstimateSmoother.prime(overlay.tripId, point, overlay.fixTimeMs)
@@ -780,10 +780,6 @@ class MapLibreRenderer(
     companion object {
         private const val ROUTE_WIDTH_DP = 3f
         private const val TRIP_BAND_WIDTH_DP = 6f
-
-        // The fast-estimate marker's info-window title, fixed at creation (the marker's subject changes,
-        // its job on the map doesn't). Mirrors the Google flavor's TripEstimateMarker title.
-        private const val FAST_ESTIMATE_TITLE = "Fast estimate"
 
         // Sized to hold a whole zoom session's worth of the labels currently on the map, so panning the
         // ramp end to end never evicts a label that is still drawn: a directions itinerary, or a focused

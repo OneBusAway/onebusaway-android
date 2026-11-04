@@ -76,6 +76,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.firstUpcomingIndex
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
@@ -98,7 +99,9 @@ import org.onebusaway.android.util.DisplayFormat
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
  * in feed order; the strip never auto-scrolls, so a trip whose ETA has gone negative just keeps
- * counting down in place. When the pills overflow the row, a chevron appears at that edge to signal
+ * counting down in place. On first composition the strip opens on the first upcoming pill (ETA >= 0),
+ * with any departed pills scrolled off to the left; it never moves itself after that. When the pills
+ * overflow the row, a chevron appears at that edge to signal
  * there's more to scroll to; tapping it moves the strip one viewport that direction (or to the end,
  * whichever is closer). The chevron's own tap target is a narrow side gutter separate from the pills,
  * so it never blocks the strip's own drag-to-scroll.
@@ -114,8 +117,14 @@ internal fun EtaStrip(
     /** The trip this strip's row is drilled into, if any — see [EtaPillFocus]. */
     focus: EtaPillFocus? = null,
     // Hoisted for previews/tests ONLY (the real call sites use the default) so a caller can start
-    // the strip mid-scroll.
-    state: LazyListState = rememberLazyListState()
+    // the strip mid-scroll. The default opens the strip on the first upcoming pill (#2463): a fixed
+    // initial position, read once when the state is created, never a scroll. Departed pills stay
+    // one swipe (or chevron tap) to the left.
+    state: LazyListState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex =
+            firstUpcomingIndex(trips) { it.liveEta(it.serverNow) >= 0 }
+        )
 ) {
     // All of this strip's trips share one poll (one route/direction group from a single
     // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
@@ -141,6 +150,11 @@ internal fun EtaStrip(
         // there are one or two clock lines.
         ArrivalClock(expected = "0:00", corrects = "0:01".takeIf { clocks.any { clock -> clock.corrects != null } })
     }
+    // Anchor the tutorial spotlight to the first pill that is visible at the initial position.
+    val anchorIndex = remember(trips) {
+        firstUpcomingIndex(trips) { it.liveEta(it.serverNow) >= 0 }
+    }
+
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
 
@@ -211,8 +225,9 @@ internal fun EtaStrip(
                     // escape rather than pasted raw, which had made this file binary to grep (#2012).
                     key = { _, trip -> "${trip.routeId}\u0000${trip.tripId}\u0000${trip.serviceDate}\u0000${trip.stopSequence}" }
                 ) { index, trip ->
-                    // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
-                    val pillModifier = if (index == 0) firstPillModifier else Modifier
+                    // The first visible upcoming pill carries the caller's anchor modifier
+                    // (e.g. the tutorial spotlight).
+                    val pillModifier = if (index == anchorIndex) firstPillModifier else Modifier
                     EtaPillWithMenu(
                         trip = trip,
                         clock = clocks[index],

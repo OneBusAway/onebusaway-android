@@ -184,7 +184,7 @@ class GoogleMapRenderer(
     // The selected vehicle's fast-estimate marker: it owns its native marker + ease state, a fixed
     // info-window title, and a z-index above the band, and glides to a fresh fix. Icon resolves lazily
     // on first show, in the band's own colour (#1990), and is re-stamped when that colour changes.
-    private val fastEstimate = TripEstimateMarker(::fastEstimateIcon, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
+    private val fastEstimate = TripEstimateMarker(::fastEstimateIcon, context.getString(R.string.marker_fast_estimate), FAST_ESTIMATE_Z_INDEX)
 
     // Smooths the most-recent-data dot to a fresh fix (it's static between fixes). Tracks the dot's current
     // selection + fix so we only move / refresh on an actual change or while settling — never while its

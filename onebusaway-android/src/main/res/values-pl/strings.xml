@@ -1072,4 +1072,10 @@
     <string name="search_result_mode_sample_stop">ul. Dworcowa / Główna</string>
     <string name="arrival_display_sample_downtown">Centrum</string>
     <string name="arrival_display_sample_northgate">Dworzec Główny</string>
+
+    <!-- Additional UI & Map Renderers -->
+    <string name="route_header_all_directions">Wszystkie kierunki</string>
+    <string name="trip_status">Status kursu</string>
+    <string name="marker_most_recent_data">Najświeższe dane</string>
+    <string name="marker_fast_estimate">Szacowana pozycja</string>
 </resources>

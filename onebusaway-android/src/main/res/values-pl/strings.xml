@@ -72,11 +72,17 @@
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Zielony oznacza „Na czas”</string>
     <string name="main_help_legend_late">Niebieski oznacza „Spóźnienie”</string>
-    <string name="main_help_legend_early">Czerwony oznacza „Bieganie wcześnie”</string>
+    <string name="main_help_legend_early">Czerwony oznacza „Przyspieszenie”</string>
     <string name="main_help_legend_scheduled">Szary oznacza „Planowany przyjazd” – nie wiemy, gdzie teraz jest autobus, ale rozkład jazdy mówi, że jest nadchodzący przyjazd
     </string>
     <string name="main_help_legend_canceled">Szary z przekreśleniem oznacza, że ​​podróż została odwołana – ten autobus NIE przyjedzie
     </string>
+    <string name="tutorial_legend_ontime">Na czas</string>
+    <string name="tutorial_legend_early">Przed czasem</string>
+    <string name="tutorial_legend_late">Opóźniony</string>
+    <string name="tutorial_legend_scheduled">Brak danych na żywo; odjazd rozkładowy</string>
+    <string name="tutorial_legend_on_map">Pojazd jest widoczny na mapie</string>
+    <string name="tutorial_legend_tracked">Pojazd dla tego kursu jest śledzony, ale nie dotarł jeszcze na tę trasę</string>
     <string name="main_nolocation_title">Lokalizacja niedostępna</string>
     <string name="main_nolocation">%1$s chciałoby uzyskać dostęp do Twojej lokalizacji. Czy chcesz ją teraz włączyć?</string>
     <string name="main_never_ask_again">Nigdy nie pytaj ponownie</string>
@@ -685,13 +691,52 @@
     <string name="night_light_cancel">Anuluj</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_arrival_header_arrival_info_title">Jak długo pozostało do przyjazdu Twojego autobusu?
-    </string>
-    <string name="tutorial_arrival_header_arrival_info_text">Kolor tła powie Ci
-        czy autobus będzie wcześniej (czerwony) lub spóźniony (niebieskie). Na czas = zielone tłó. Jeśli nie wiemy gdzie jest autobus, to czas według rozkładu (szare tło).
-    </string>
-    <string name="tutorial_opt_out_dialog_title">Pokazać samouczek?</string>
-    <string name="tutorial_opt_out_dialog_text">Czy chcesz zobaczyć wyskakujące opisy jak korzystać z %1$s? Zawsze możesz włączyć lub wyłączyć wyskakujące okienka w Ustawieniach, lub wyświetlić samouczek później przez Pomoc.</string>
+    <string name="tutorial_opt_out_dialog_title">Wyświetlić samouczek?</string>
+    <string name="tutorial_opt_out_dialog_text">Czy chcesz zobaczyć objaśnienia dotyczące korzystania z %1$s? Zawsze możesz włączyć lub wyłączyć objaśnienia w Ustawieniach lub uruchomić samouczek później z poziomu Pomocy.</string>
+    <string name="tutorial_arrival_header_arrival_info_title">Ile czasu zostało do przyjazdu Twojego autobusu?</string>
+    <string name="tutorial_arrival_header_arrival_info_text">Właśnie tyle! Kolorowe tło informuje, czy autobus jest przyspieszony (czerwone), czy opóźniony (niebieskie). Zgodnie z rozkładem = zielone tło. Jeśli nie wiemy, gdzie znajduje się autobus, wyświetlany jest czas rozkładowy (szare tło). Szary przekreślony tekst oznacza, że kurs został odwołany.</string>
+
+    <string name="tutorial_button_close">Zakończ samouczek</string>
+    <string name="tutorial_button_finish">Zakończ</string>
+    <string name="tutorial_button_back">Wstecz</string>
+
+    <!-- The scripted guided tour -->
+    <string name="tutorial_scripted_map_title">Witamy w %1$s</string>
+    <string name="tutorial_scripted_map_text">To jest mapa. Pokazuje przystanki komunikacji w Twojej okolicy oraz kursujące między nimi pojazdy.</string>
+    <string name="tutorial_scripted_stop_title">Dotknij przystanku</string>
+    <string name="tutorial_scripted_stop_text">Dotknięcie przystanku otwiera listę odjazdów i pokazuje jego trasy na mapie.</string>
+    <string name="tutorial_scripted_arrivals_title">Odjazdy na żywo</string>
+    <string name="tutorial_scripted_arrivals_text">Odjazdy są pogrupowane według tras, przy czym najbliższy odjazd znajduje się po lewej stronie.</string>
+    <string name="tutorial_scripted_arrival_time_title">Zobacz kolejne odjazdy</string>
+    <string name="tutorial_scripted_arrival_time_text">Widok czasu pokazuje jeden odjazd w rzędzie, z najbliższym odjazdem na samej górze.</string>
+    <string name="tutorial_scripted_route_title">Dotknij trasy</string>
+    <string name="tutorial_scripted_route_text">Dotknij znacznika trasy, aby narysować całą trasę i pokazać wszystkie pojazdy obecnie na niej kursujące.</string>
+    <string name="tutorial_scripted_vehicle_title">Dotknij odjazdu</string>
+    <string name="tutorial_scripted_vehicle_text">Dotknij pigułki odjazdu, aby podświetlić odpowiadający jej pojazd na mapie.</string>
+    <string name="tutorial_scripted_legend_title">Co oznaczają kolory</string>
+    <string name="tutorial_scripted_legend_text">Kolor pigułki pokazuje, czy pojazd kursuje zgodnie z rozkładem.</string>
+    <string name="tutorial_scripted_star_title">Zapisz na później</string>
+    <string name="tutorial_scripted_star_text">Przystanki i trasy można oznaczyć gwiazdką, aby zapisać je na później.</string>
+    <string name="tutorial_scripted_starred_list_title">Twoje zapisane elementy</string>
+    <string name="tutorial_scripted_starred_list_text">Wszystko, co oznaczysz gwiazdką, trafi do tego menu.</string>
+    <string name="tutorial_scripted_back_title">Powrót</string>
+    <string name="tutorial_scripted_back_text">Przesuń palcem w prawo lub naciśnij Wstecz, aby cofać się krok po kroku — pojazd, potem trasa, potem przystanek — aż wrócisz do widoku samej mapy.</string>
+    <string name="tutorial_scripted_rentals_title">Rowery i hulajnogi</string>
+    <string name="tutorial_scripted_rentals_text">Mikromobilność ma własną warstwę. Włącz ją tutaj, aby zobaczyć pobliskie rowery, hulajnogi i stacje dokujące.</string>
+    <string name="tutorial_scripted_plan_press_title">Planowanie podróży</string>
+    <string name="tutorial_scripted_plan_press_text">Przytrzymaj dowolne miejsce na mapie, a następnie dotknij Nawiguj tutaj, aby zaplanować podróż w to miejsce.</string>
+    <string name="tutorial_scripted_plan_title">Oto Twoja podróż</string>
+    <string name="tutorial_scripted_plan_text">Oto propozycje tras do wybranego celu.</string>
+    <string name="tutorial_scripted_trip_options_title">Dostosuj opcje</string>
+    <string name="tutorial_scripted_trip_options_text">Wybierz środki transportu, określ maksymalny dystans pieszy oraz czas odjazdu lub przyjazdu.</string>
+    <string name="tutorial_scripted_itineraries_title">Kilka sposobów dotarcia</string>
+    <string name="tutorial_scripted_itineraries_text">Każda kolumna to inny sposób na odbycie podróży.</string>
+    <string name="tutorial_scripted_itinerary_detail_title">Zobacz na mapie</string>
+    <string name="tutorial_scripted_itinerary_detail_text">Dotknij kolumny, aby wyświetlić szczegóły podróży na mapie oraz w panelu ze wskazówkami.</string>
+    <string name="tutorial_scripted_leg_title">Szczegóły odcinka trasy</string>
+    <string name="tutorial_scripted_leg_text">Dotknij odcinka trasy, aby wyświetlić go na mapie wraz z nadjeżdżającymi pojazdami dla tego odcinka.</string>
+    <string name="tutorial_scripted_pin_title">Przypnij podróż</string>
+    <string name="tutorial_scripted_pin_text">Przytrzymaj podróż, aby móc łatwo do niej wrócić z poziomu mapy.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Uprawnienia lokalizacyjne</string>

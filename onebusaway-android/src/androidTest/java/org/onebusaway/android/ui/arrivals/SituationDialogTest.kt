@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.SystemClock
+import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -31,8 +35,9 @@ import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 
 /**
- * The service alert dialog shows a long headline in full, and lets the rider select its text
- * (#2448). The headline used to be the dialog's title, which stops at two lines and ellipsizes.
+ * The service alert dialog shows a long headline in full, lets the rider select its text, and keeps
+ * its links tappable (#2448). The headline used to be the dialog's title, which stops at two lines
+ * and ellipsizes.
  */
 @RunWith(AndroidJUnit4::class)
 class SituationDialogTest {
@@ -59,10 +64,71 @@ class SituationDialogTest {
     }
 
     @Test
-    fun headlineWithoutDescriptionIsShownOnce() {
+    fun descriptionThatRepeatsTheHeadlineIsShownOnce() {
         val message = showAlert(AlertDetails("1_alert", longHeadline, longHeadline, null))
 
         assertEquals(longHeadline, message.text.toString())
+    }
+
+    @Test
+    fun headlineWithNoDescriptionIsShownAlone() {
+        val message = showAlert(AlertDetails("1_alert", longHeadline, null, null))
+
+        assertEquals("no \"No description available\" under a headline", longHeadline, message.text.toString())
+    }
+
+    /**
+     * Making the text selectable installs its own movement method, so this taps each link the way a
+     * rider would and checks that it still opens: a URL linkified in the description, and "More
+     * details" for the alert's own URL.
+     */
+    @Test
+    fun linksStillOpenInTheSelectableText() {
+        val description = "Detour map: https://example.org/route40"
+        val message = showAlert(
+            AlertDetails("1_alert", longHeadline, description, "https://kingcounty.gov/metro/alerts")
+        )
+
+        assertEquals(1, tapAndCountOpens(message, "https://example.org/route40", "example.org"))
+        assertEquals(1, tapAndCountOpens(message, "More details", "kingcounty.gov"))
+    }
+
+    /**
+     * Taps the middle of [linkText] in [message] and returns how many times a view of an https URL
+     * on [host] was started. The launch is blocked, so no browser opens.
+     */
+    private fun tapAndCountOpens(message: TextView, linkText: String, host: String): Int {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val filter = IntentFilter(Intent.ACTION_VIEW).apply {
+            addDataScheme("https")
+            addDataAuthority(host, null)
+        }
+        val monitor = instrumentation.addMonitor(filter, null, true)
+        try {
+            scenarioRule.scenario.onActivity {
+                val start = message.text.indexOf(linkText)
+                assertTrue("\"$linkText\" is not in the message", start >= 0)
+                tap(message, start + linkText.length / 2)
+            }
+            instrumentation.waitForIdleSync()
+            return monitor.hits
+        } finally {
+            instrumentation.removeMonitor(monitor)
+        }
+    }
+
+    /** Sends a short press and release at the character [offset] of [view]'s text. */
+    private fun tap(view: TextView, offset: Int) {
+        val layout = checkNotNull(view.layout) { "message not laid out" }
+        val line = layout.getLineForOffset(offset)
+        val x = layout.getPrimaryHorizontal(offset) + view.totalPaddingLeft - view.scrollX
+        val y = (layout.getLineTop(line) + layout.getLineBottom(line)) / 2f + view.totalPaddingTop - view.scrollY
+        val time = SystemClock.uptimeMillis()
+        listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP).forEach { action ->
+            val event = MotionEvent.obtain(time, time, action, x, y, 0)
+            view.dispatchTouchEvent(event)
+            event.recycle()
+        }
     }
 
     /** Shows the dialog over the home screen and returns its laid-out message view. */

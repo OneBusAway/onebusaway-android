@@ -16,14 +16,17 @@
 package org.onebusaway.android.ui.arrivals.dialogs
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
+import android.text.style.StyleSpan
 import android.text.util.Linkify
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -47,6 +50,7 @@ import org.onebusaway.android.ui.arrivals.UndoSnackbarVisuals
  * @param showUndoSnackbar shows a snackbar (optionally with an undo action). The host supplies this so
  *   the dialog doesn't reach for a specific View — the standalone activity anchors it to its arrivals
  *   root, while the Compose hosts (home sheet, NavHost destination) drive a Compose `SnackbarHost`.
+ * @return the dialog, already shown
  */
 fun showSituationDialog(
     activity: AppCompatActivity,
@@ -57,9 +61,10 @@ fun showSituationDialog(
     onHideAll: () -> Unit,
     onDismiss: (isAlertHidden: Boolean) -> Unit,
     showUndoSnackbar: (visuals: UndoSnackbarVisuals, onAction: (() -> Unit)?) -> Unit
-) {
+): AlertDialog {
+    // No setTitle: the stock dialog title stops at two lines and ellipsizes, which cut long alert
+    // headlines off (#2448). The headline leads the scrolling message instead.
     val dialog = MaterialAlertDialogBuilder(activity)
-        .setTitle(alert.summary)
         .setMessage(buildMessage(activity, alert))
         .setPositiveButton(R.string.hide) { d, _ ->
             onHide()
@@ -86,27 +91,45 @@ fun showSituationDialog(
         }
         .show()
 
-    // Make the description's links (both linkified URLs and "More details") tappable
-    dialog.findViewById<TextView>(android.R.id.message)?.movementMethod =
-        LinkMovementMethod.getInstance()
+    dialog.findViewById<TextView>(android.R.id.message)?.apply {
+        // Riders can copy the alert text, as the legacy dialog allowed. Selectable must come first:
+        // it installs its own movement method, which the link one below replaces so that both the
+        // linkified URLs and "More details" stay tappable.
+        setTextIsSelectable(true)
+        movementMethod = LinkMovementMethod.getInstance()
+    }
 
     onMarkRead()
+    return dialog
 }
 
 /**
- * The dialog body: the alert description (HTML rendered, bare URLs/phones/emails linkified, like
- * the legacy autoLink TextView) plus a "More details" link when the situation has a URL.
+ * The dialog body: the headline in bold, then the description (HTML rendered, bare
+ * URLs/phones/emails linkified, like the legacy autoLink TextView), then a "More details" link
+ * when the situation has a URL. [situationText] decides which of the first two appear.
  */
 private fun buildMessage(activity: AppCompatActivity, alert: AlertDetails): CharSequence {
     val description = alert.description.orEmpty()
-    val message = SpannableStringBuilder(
-        if (description.isNotEmpty()) {
-            @Suppress("DEPRECATION")
-            Html.fromHtml(description.replace(Regex("\\r\\n|\\r|\\n"), "<br>"))
-        } else {
-            activity.getString(R.string.no_description_available)
-        }
-    )
+
+    @Suppress("DEPRECATION")
+    val renderedDescription: CharSequence = if (description.isNotEmpty()) {
+        Html.fromHtml(description.replace(Regex("\\r\\n|\\r|\\n"), "<br>"))
+    } else {
+        ""
+    }
+    val parts = situationText(alert.summary, renderedDescription.toString())
+
+    val message = SpannableStringBuilder()
+    parts.headline?.let { headline ->
+        message.append(headline)
+        message.setSpan(StyleSpan(Typeface.BOLD), 0, message.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+    if (parts.showDescription) {
+        if (message.isNotEmpty()) message.append("\n\n")
+        message.append(renderedDescription.trimEnd())
+    } else if (parts.showNoDescription) {
+        message.append(activity.getString(R.string.no_description_available))
+    }
     @Suppress("DEPRECATION")
     Linkify.addLinks(message, Linkify.ALL)
 

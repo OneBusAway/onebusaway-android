@@ -64,4 +64,12 @@ class OnDemandPlannerQualifierTest {
         assertTrue(oneEnd.qualifying.isEmpty())
         assertEquals(1, oneEnd.hiddenCount)
     }
+
+    @Test
+    fun `eligibility required at the destination alone is hidden`() {
+        val restricted = singleZone.copy(eligibility = OnDemandEligibility(EligibilityRequirement.CERTIFICATION_REQUIRED, null))
+        val hidden = qualifyingServices(listOf(at(singleZone, "CC_area")), listOf(at(restricted, "CC_area")))
+        assertTrue(hidden.qualifying.isEmpty())
+        assertEquals(1, hidden.hiddenCount)
+    }
 }

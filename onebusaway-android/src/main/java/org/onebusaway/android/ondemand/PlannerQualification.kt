@@ -19,7 +19,7 @@ package org.onebusaway.android.ondemand
 data class PlannerQualification(val qualifying: List<OnDemandMatch>, val hiddenCount: Int)
 
 /**
- * A service qualifies when it contains both ends, is not tier 4, and some rule goes from an area
+ * A service qualifies when it contains both ends, is not tier 4 at either end, and some rule goes from an area
  * containing the origin (`distanceToArea == 0` there) to an area containing the destination. Areas
  * are read off the server's per-area distances; no client containment is used.
  */
@@ -28,7 +28,9 @@ fun qualifyingServices(origin: List<OnDemandMatch>, destination: List<OnDemandMa
     val destinationInside = destination.filter { it.isInside }.associateBy { it.service.id }
     val qualifying = originInside.values.filter { atOrigin ->
         val atDestination = destinationInside[atOrigin.service.id] ?: return@filter false
-        if (atOrigin.availability.usabilityTier == TIER_ELIGIBILITY) return@filter false
+        val needsEligibility = atOrigin.availability.usabilityTier == TIER_ELIGIBILITY ||
+            atDestination.availability.usabilityTier == TIER_ELIGIBILITY
+        if (needsEligibility) return@filter false
         val originAreas = atOrigin.service.areas.filter { it.distanceToAreaMeters == 0.0 }.map { it.id }.toSet()
         val destinationAreas = atDestination.service.areas.filter { it.distanceToAreaMeters == 0.0 }.map { it.id }.toSet()
         atOrigin.service.rules.any { rule -> rule.fromIds.any { it in originAreas } && rule.toIds.any { it in destinationAreas } }

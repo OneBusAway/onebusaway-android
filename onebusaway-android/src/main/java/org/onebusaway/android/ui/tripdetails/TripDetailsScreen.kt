@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -206,32 +205,32 @@ fun TripDetailsScreen(
 private fun TripStopList(
     content: TripDetailsUiState.Content,
     onStopClick: (String, String, String?) -> Unit,
-    onSetDestinationReminder: ((Int) -> Unit)?,
-    listState: LazyListState = rememberLazyListState()
+    onSetDestinationReminder: ((Int) -> Unit)?
 ) {
     val lineColor = Color(content.lineColorArgb)
     val vehicleColor = colorResource(content.header.statusColor)
     val passedColor = colorResource(R.color.trip_details_passed)
     val notPassedColor = colorResource(R.color.trip_details_not_passed)
-    // Scroll once to the vehicle/focused/destination stop (item 0 is the header, so +1).
-    LaunchedEffect(Unit) {
-        if (content.scrollToIndex >= 0) listState.scrollToItem(content.scrollToIndex + 1)
-    }
-    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-        item(key = "header") { TripHeaderSection(content.header) }
-        itemsIndexed(content.stops, key = { i, stop -> "$i:${stop.stopId}" }) { i, stop ->
-            TripStopRow(
-                stop = stop,
-                lineColor = lineColor,
-                vehicleColor = vehicleColor,
-                textColor = if (stop.isPassed) passedColor else notPassedColor,
-                isRealtime = content.header.isRealtime,
-                onClick = { onStopClick(stop.stopId, stop.officialName, stop.direction) },
-                // Legacy: only stops past the first two can anchor a reminder (need a "before" stop)
-                onLongClick = onSetDestinationReminder
-                    ?.takeIf { i > 1 }
-                    ?.let { setReminder -> { setReminder(i) } }
-            )
+    // Open at the vehicle/focused/destination stop.
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = content.scrollToIndex.coerceAtLeast(0))
+    // Header outside the list, so opening at the vehicle keeps the schedule status visible (#2471).
+    Column(Modifier.fillMaxSize()) {
+        TripHeaderSection(content.header)
+        LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
+            itemsIndexed(content.stops, key = { i, stop -> "$i:${stop.stopId}" }) { i, stop ->
+                TripStopRow(
+                    stop = stop,
+                    lineColor = lineColor,
+                    vehicleColor = vehicleColor,
+                    textColor = if (stop.isPassed) passedColor else notPassedColor,
+                    isRealtime = content.header.isRealtime,
+                    onClick = { onStopClick(stop.stopId, stop.officialName, stop.direction) },
+                    // Legacy: only stops past the first two can anchor a reminder (need a "before" stop)
+                    onLongClick = onSetDestinationReminder
+                        ?.takeIf { i > 1 }
+                        ?.let { setReminder -> { setReminder(i) } }
+                )
+            }
         }
     }
 }

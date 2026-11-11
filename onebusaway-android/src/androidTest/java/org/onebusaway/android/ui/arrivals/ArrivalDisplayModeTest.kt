@@ -165,7 +165,8 @@ class ArrivalDisplayModeTest {
         composeRule.onNodeWithText(arrival.statusText, useUnmergedTree = true).assertIsDisplayed()
         val etaBounds = composeRule.onNodeWithTag("eta", useUnmergedTree = true).getUnclippedBoundsInRoot()
         assertTrue(soleClockNode(arrival).getUnclippedBoundsInRoot().bottom <= etaBounds.top)
-        composeRule.onNodeWithText("Downtown via Main Street").performSemanticsAction(SemanticsActions.OnLongClick)
+        // The route menu is the badge side's long press; the trip side's opens the trip menu (#2428).
+        composeRule.onNodeWithText("40").performSemanticsAction(SemanticsActions.OnLongClick)
         composeRule.onNodeWithText("Show route schedule").performClick()
         composeRule.runOnIdle { assertEquals("https://example.com/schedule", openedSchedule) }
     }

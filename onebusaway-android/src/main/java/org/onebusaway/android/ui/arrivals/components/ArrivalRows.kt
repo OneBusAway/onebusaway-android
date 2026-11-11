@@ -22,6 +22,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -85,6 +86,7 @@ import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
 
 /**
@@ -337,6 +339,11 @@ internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
  * - Tapping the row body frames the whole route/direction on the map ([ArrivalRowCallbacks.onShowVehiclesOnMap]).
  * - Tapping a pill focuses that specific trip's vehicle + stop ([ArrivalRowCallbacks.onEtaClick]).
  * - Long-pressing a pill opens that trip's menu (details / reminder / report).
+ * - While the row is drilled into one of its trips ([selectedTripId]: a pill tap, or a bus tapped on
+ *   the map), a ⋮ in the top-right corner opens that trip's menu, led by "Show trip status" (#2428).
+ *   A [chronological] row (one trip) always shows its ⋮, and splits its tap at the
+ *   divider: the badge side frames the route and long-presses to the route menu as above; the trip side
+ *   is its pill tap ([ArrivalRowCallbacks.onEtaClick]) and long-presses to the ⋮'s trip menu.
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
  * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
@@ -404,6 +411,8 @@ fun RouteArrivalRow(
     val representative = group.representative
     val routeActions = actionsFor(representative)
     var menuExpanded by remember { mutableStateOf(false) }
+    // The trip menu behind the corner ⋮, also opened by a chronological row's trip-side long press.
+    var tripMenuExpanded by remember { mutableStateOf(false) }
     val (badgeContainer, badgeContent) = rememberRouteBadgeColors(routeActions?.routeColor)
     // Fall back to the route's long name when the feed gives no headsign for this direction.
     val direction = group.headsign?.takeIf { it.isNotBlank() } ?: routeActions?.routeLongName.orEmpty()
@@ -422,6 +431,9 @@ fun RouteArrivalRow(
         selectedTripId,
         focusedPillRimColor(selected, selectedTripBandColor, selectionColor)
     )
+    // The trip the corner ⋮ opens: a chronological row's one trip, always (no ambiguity about which
+    // trip it means); a grouped row's only once a selection has drilled into one of its trips.
+    val optionsTrip = if (chronological) representative else group.focusedTrip(selected, selectedTripId)
     ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(
@@ -437,12 +449,9 @@ fun RouteArrivalRow(
                         onLongClickLabel = routeMenuLabel,
                         onLongClick = { menuExpanded = true }
                     )
-                    .padding(
-                        start = 10.dp,
-                        top = ROW_VERTICAL_PADDING,
-                        end = 10.dp,
-                        bottom = ROW_VERTICAL_PADDING
-                    ),
+                    // A chronological row splits its tap at the divider (see below), so each half
+                    // carries its own share of the padding, and so its own target reaches the card edges.
+                    .padding(if (chronological) PaddingValues(0.dp) else ROW_PADDING),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // The badge "section": the route chip plus its trailing gap, spanning the row's start
@@ -451,7 +460,17 @@ fun RouteArrivalRow(
                 // corner star and overflow icons — so it never reflows the row. It may overlap the
                 // badge, which is acceptable for the rare alert case; same tight 28dp touch box / 20dp
                 // glyph footprint as the corner star.
-                Box(Modifier.fillMaxHeight()) {
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .then(
+                            if (chronological) {
+                                Modifier.padding(start = 10.dp, top = ROW_VERTICAL_PADDING, bottom = ROW_VERTICAL_PADDING)
+                            } else {
+                                Modifier
+                            }
+                        )
+                ) {
                     LineBadge(
                         text = continuationBadgeText(
                             displayedRouteNames,
@@ -486,20 +505,38 @@ fun RouteArrivalRow(
                 }
                 // A full-height thin divider sets the route chip apart from the ETA pills, so the two
                 // similar-looking rounded colored chips don't read as the same kind of thing.
-                VerticalDivider()
-                Spacer(Modifier.width(10.dp))
                 if (chronological) {
-                    ChronologicalArrivalContent(
-                        arrival = representative,
-                        direction = direction,
-                        stopLabel = stopLabel,
-                        actions = routeActions,
-                        callbacks = callbacks,
-                        focus = pillFocus,
-                        modifier = Modifier.weight(1f),
-                        etaModifier = anchors.eta
-                    )
+                    VerticalDivider(Modifier.padding(vertical = ROW_VERTICAL_PADDING))
+                    // A chronological row is one trip, so right of the divider is that trip: its tap is
+                    // the pill's (trip focus) and its long press is the ⋮'s trip menu, while the badge
+                    // side keeps the row's route focus and route menu.
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .combinedClickable(
+                                onClick = { callbacks.onEtaClick(representative) },
+                                onLongClickLabel = stringResource(R.string.bus_options_menu_show_trip_details),
+                                onLongClick = { tripMenuExpanded = true }
+                            )
+                            // The end inset clears the always-present corner ⋮, so the pill never sits under it.
+                            .padding(start = 10.dp, top = ROW_VERTICAL_PADDING, end = TRIP_OPTIONS_TOUCH_SIZE, bottom = ROW_VERTICAL_PADDING),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ChronologicalArrivalContent(
+                            arrival = representative,
+                            direction = direction,
+                            stopLabel = stopLabel,
+                            actions = routeActions,
+                            callbacks = callbacks,
+                            focus = pillFocus,
+                            modifier = Modifier.weight(1f),
+                            etaModifier = anchors.eta
+                        )
+                    }
                 } else {
+                    VerticalDivider()
+                    Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         if (direction.isNotBlank()) {
                             DirectionHeadsign(direction)
@@ -546,17 +583,25 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            if (tracked) {
-                // The row's own top-right corner, opposite the favourite star and past the headsign —
-                // the whole row is what is being watched, not the route chip, so the mark belongs on
-                // the row rather than tucked into the badge beside the alert triangle. Its own layer
-                // for the same reason the star is: a corner mark must not reflow the headsign or the
-                // pills under it.
-                TrackedRouteIndicator(
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = TRACKED_MARK_END_INSET)
-                )
+            // The row's own top-right corner, opposite the favourite star and past the headsign. Its own
+            // layer for the same reason the star is: a corner mark must not reflow the headsign or the
+            // pills under it.
+            if (tracked || optionsTrip != null) {
+                Row(Modifier.align(Alignment.TopEnd)) {
+                    if (tracked) {
+                        // The whole row is what is being watched, not the route chip, so the mark belongs
+                        // on the row rather than tucked into the badge beside the alert triangle.
+                        TrackedRouteIndicator(
+                            Modifier.padding(end = if (optionsTrip == null) TRACKED_MARK_END_INSET else 0.dp)
+                        )
+                    }
+                    if (optionsTrip != null) {
+                        TripOptionsButton(onClick = { tripMenuExpanded = true })
+                    }
+                }
+            }
+            if (optionsTrip != null) {
+                TripActionsMenu(tripMenuExpanded, { tripMenuExpanded = false }, optionsTrip, actionsFor(optionsTrip), callbacks)
             }
             RouteActionsMenu(
                 expanded = menuExpanded,
@@ -568,6 +613,28 @@ fun RouteArrivalRow(
                 routeFilter = routeFilter
             )
         }
+    }
+}
+
+/**
+ * The trip this row is drilled into, for its corner ⋮ (#2428); null when there's none.
+ * Gated on [selected] like [focusedPillRimColor], since [selectedTripId] is one map-wide value.
+ */
+internal fun RouteRowGroup.focusedTrip(selected: Boolean, selectedTripId: String?): ArrivalInfo? = if (selected) trips.firstOrNull { it.tripId == selectedTripId } else null
+
+/**
+ * A trip's corner ⋮ (#2428): opens its menu (trip status / reminder / report), the same one its pill's
+ * long-press opens, so trip status is a visible tap away. One size in both display modes.
+ */
+@Composable
+private fun TripOptionsButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(TRIP_OPTIONS_TOUCH_SIZE)) {
+        Icon(
+            imageVector = AppIcons.MoreVert,
+            contentDescription = stringResource(R.string.stop_info_trip_options),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(TRIP_OPTIONS_GLYPH_SIZE)
+        )
     }
 }
 
@@ -590,11 +657,19 @@ internal fun alertClick(
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
+/** The row's padding around its content (a chronological row splits it between its two tap halves). */
+private val ROW_PADDING = PaddingValues(start = 10.dp, top = ROW_VERTICAL_PADDING, end = 10.dp, bottom = ROW_VERTICAL_PADDING)
+
 /** The footprint of a mark in one of the row's corners, and the glyph inside it — the favourite star,
  *  the service-alert triangle, the tracking eye. One tight box rather than Material's 48dp default, so
  *  each sits flush in its corner with no compensating offset, and so the three read as one family. */
 private val CORNER_TOUCH_SIZE = 28.dp
 private val CORNER_GLYPH_SIZE = 20.dp
+
+/** The trip ⋮'s footprint and glyph: a step up from the corner marks, as it's the row's way into the
+ *  trip menu rather than a status mark. */
+private val TRIP_OPTIONS_TOUCH_SIZE = 32.dp
+private val TRIP_OPTIONS_GLYPH_SIZE = 24.dp
 
 /** Breathing room between the tracking eye and the card's right edge, tuned by eye. Only the eye
  *  takes it: the star sits flush in the opposite corner, where its tapered points read as inset
@@ -891,13 +966,16 @@ internal fun previewArrival(
  *  tests, which override just the slots they observe — the one place to grow when a slot is added. */
 internal fun previewRowCallbacks(
     onShowRouteOnMap: (ArrivalInfo) -> Unit = {},
-    onShowRouteSchedule: (String) -> Unit = {}
+    onShowRouteSchedule: (String) -> Unit = {},
+    onShowTripStatus: (ArrivalInfo) -> Unit = {},
+    onEtaClick: (ArrivalInfo) -> Unit = {},
+    onShowVehiclesOnMap: (ArrivalInfo) -> Unit = {}
 ) = ArrivalRowCallbacks(
     onRouteFavorite = {},
-    onShowVehiclesOnMap = {},
+    onShowVehiclesOnMap = onShowVehiclesOnMap,
     onShowRouteOnMap = onShowRouteOnMap,
-    onEtaClick = {},
-    onShowTripStatus = {},
+    onEtaClick = onEtaClick,
+    onShowTripStatus = onShowTripStatus,
     onSetReminder = {},
     onToggleTracking = {},
     onShowRouteSchedule = onShowRouteSchedule,

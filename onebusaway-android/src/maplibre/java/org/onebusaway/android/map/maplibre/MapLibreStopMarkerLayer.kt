@@ -25,6 +25,7 @@ import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.StopRoute
@@ -53,8 +54,12 @@ internal class MapLibreStopMarkerLayer(
     private val labelIcons = LruCache<String, Icon>(LABEL_ICON_CACHE_SIZE)
 
     private val iconFactory = IconFactory.getInstance(context)
+    private val fadedIcons = HashMap<Icon, Icon>()
+    private var renderedRouteFocused = false
 
-    fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
+    fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand, routeFocused: Boolean) {
+        val routeFocusChanged = renderedRouteFocused != routeFocused
+        renderedRouteFocused = routeFocused
         val markerStops = stops.filter { !it.routeStop || it.id == focusedStopId }
         val liveIds = markerStops.mapTo(HashSet(), StopMarker::id)
         val gone = markerByStopId.iterator()
@@ -71,6 +76,7 @@ internal class MapLibreStopMarkerLayer(
 
         for (stop in markerStops) {
             val nearby = stop.compact && stop.id != focusedStopId
+            val faded = routeFocused && !stop.routeStop && stop.id != focusedStopId
             val kind = stopIconKind(
                 focused = stop.id == focusedStopId,
                 band = if (stop.id == focusedStopId) StopBand.FULL else band,
@@ -80,12 +86,12 @@ internal class MapLibreStopMarkerLayer(
             val existing = markerByStopId[stop.id]
             if (existing == null) {
                 val marker = map.addMarker(
-                    MarkerOptions().position(stop.point.toLatLng()).icon(icon(stop, kind, nearby))
+                    MarkerOptions().position(stop.point.toLatLng()).icon(icon(stop, kind, nearby, faded))
                 )
                 markerByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
             } else {
-                if (kindByStopId[stop.id] != kind || stopByMarker[existing]?.compact != stop.compact) existing.icon = icon(stop, kind, nearby)
+                if (routeFocusChanged || kindByStopId[stop.id] != kind || stopByMarker[existing]?.compact != stop.compact) existing.icon = icon(stop, kind, nearby, faded)
                 if (stopByMarker[existing]?.point != stop.point) {
                     existing.position = stop.point.toLatLng()
                 }
@@ -115,6 +121,7 @@ internal class MapLibreStopMarkerLayer(
         markerByStopId.clear()
         labelByStopId.clear()
         labelIcons.evictAll()
+        fadedIcons.clear()
         stopByMarker.clear()
         kindByStopId.clear()
     }
@@ -172,7 +179,7 @@ internal class MapLibreStopMarkerLayer(
             .also { labelIcons.put(key, it) }
     }
 
-    private fun icon(stop: StopMarker, kind: StopIconKind, nearby: Boolean): Icon = when (kind) {
+    private fun icon(stop: StopMarker, kind: StopIconKind, nearby: Boolean, faded: Boolean): Icon = when (kind) {
         StopIconKind.FULL, StopIconKind.COMPACT -> MapLibreStopIcons.iconForDirection(context, stop.direction)
         StopIconKind.FULL_FOCUSED, StopIconKind.COMPACT_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
         StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
@@ -182,6 +189,13 @@ internal class MapLibreStopMarkerLayer(
         StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
     }.let { if (nearby) MapLibreStopIcons.nearbyIcon(context, it) else it }
+        .let { original ->
+            if (faded) {
+                fadedIcons.getOrPut(original) { iconFactory.fromBitmap(StopBitmaps.faded(original.bitmap)) }
+            } else {
+                original
+            }
+        }
 
     private companion object {
         /** Comfortably more distinct route sets than a viewport at transit-centre zoom holds stops. */

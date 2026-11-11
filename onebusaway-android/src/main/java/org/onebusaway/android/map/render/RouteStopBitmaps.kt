@@ -17,7 +17,9 @@ package org.onebusaway.android.map.render
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
 import kotlin.math.ceil
 import kotlin.math.max
@@ -36,7 +38,7 @@ fun routeStopIconKey(stop: StopMarker, diameterPx: Int, neutralColor: Int): Rout
 )
 
 /** Route-colored rings for unselected stops, centered on their geographic boarding positions. */
-fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int): Bitmap {
+fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int, stopColor: Int): Bitmap {
     val (diameterPx, routeColor, arrowAngleDeg) = key
     val scale = diameterPx / (2f * RouteStopCircles.RADIUS_DP)
     val strokeWidth = RouteStopCircles.STROKE_WIDTH_DP * scale
@@ -61,7 +63,6 @@ fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int): Bitmap {
         )
     }
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    paint.color = surfaceColor
     canvas.drawCircle(center, center, radius, paint)
     paint.color = routeColor
     paint.style = Paint.Style.STROKE

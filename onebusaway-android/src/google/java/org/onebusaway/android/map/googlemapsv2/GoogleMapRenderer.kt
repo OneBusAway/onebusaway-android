@@ -114,7 +114,8 @@ class GoogleMapRenderer(
         map,
         context.resources.displayMetrics.density,
         ContextCompat.getColor(context, R.color.route_stop_fill),
-        ContextCompat.getColor(context, R.color.route_stop_outline)
+        ContextCompat.getColor(context, R.color.route_stop_outline),
+        ContextCompat.getColor(context, R.color.theme_primary)
     )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
 
@@ -280,7 +281,7 @@ class GoogleMapRenderer(
     fun renderStatic(snapshot: MapRenderSnapshot = renderState.snapshot.value) {
         clearStatic()
 
-        stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand, snapshot.compactStopIcons)
+        stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand, snapshot.compactStopIcons, snapshot.routeModeScalesStopsWithZoom)
         routeStopLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,

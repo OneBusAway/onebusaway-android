@@ -262,7 +262,8 @@ class MapLibreRenderer(
         mapStyle,
         density,
         ContextCompat.getColor(context, R.color.route_stop_fill),
-        ContextCompat.getColor(context, R.color.route_stop_outline)
+        ContextCompat.getColor(context, R.color.route_stop_outline),
+        ContextCompat.getColor(context, R.color.theme_primary)
     )
 
     // Reused across the ripple's frames — redrawn in place rather than reallocated each frame (the ring
@@ -284,7 +285,7 @@ class MapLibreRenderer(
         rentalIcons.clear()
         routeBadgeByMarker.clear()
 
-        stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
+        stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand, snapshot.routeModeScalesStopsWithZoom)
         routeStopLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,

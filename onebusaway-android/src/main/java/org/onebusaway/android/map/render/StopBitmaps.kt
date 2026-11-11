@@ -40,6 +40,17 @@ import kotlin.math.sin
  * route-type agnostic; the dot's [color][dot] distinguishes a normal vs focused stop.
  */
 object StopBitmaps {
+    /** opacity for stops outside the selected route and direction. */
+    const val OFF_ROUTE_ALPHA = 0.45f
+
+    /** Keeps the original image dimensions and tap anchor while fading its artwork. */
+    fun faded(bitmap: Bitmap): Bitmap = createBitmap(bitmap.width, bitmap.height).also { output ->
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            alpha = (255 * OFF_ROUTE_ALPHA).roundToInt()
+        }
+        Canvas(output).drawBitmap(bitmap, 0f, 0f, paint)
+    }
+
     /**
      * How much larger the focused (selected) dot is drawn than a normal dot, so the selected stop
      * stays visibly larger than its neighbours even in the zoomed-out dot band (#1679). Mirrors the

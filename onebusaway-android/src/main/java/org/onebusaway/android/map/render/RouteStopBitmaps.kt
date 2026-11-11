@@ -63,6 +63,7 @@ fun drawRouteStopBitmap(key: RouteStopIconKey, surfaceColor: Int, stopColor: Int
         )
     }
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    paint.color = ColorUtils.blendARGB(stopColor, Color.WHITE, 0.5f)
     canvas.drawCircle(center, center, radius, paint)
     paint.color = routeColor
     paint.style = Paint.Style.STROKE

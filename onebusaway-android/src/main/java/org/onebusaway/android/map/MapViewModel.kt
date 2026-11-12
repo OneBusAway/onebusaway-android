@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
@@ -43,6 +45,7 @@ import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
 import org.onebusaway.android.map.rental.RentalLayer
@@ -289,6 +292,24 @@ class MapViewModel @Inject constructor(
      * in it, so the pill and the band on the map read as one object (#1990).
      */
     val selectedTripBandColor: StateFlow<Int?> get() = routeController.selectedTripBandColor
+
+    /** The shown route's line colour as drawn, or null — see [RouteMapController.routeLineColor]. */
+    val routeLineColor: StateFlow<Int?> get() = routeController.routeLineColor
+
+    /**
+     * The selected vehicle's marker as of its latest poll, or null when none is selected or the set doesn't
+     * (yet) hold it — what the focus banner's bus row reads its status from (#2471). Derived from the two
+     * flows the renderer already reconciles from, so the row and the drawn marker come from one poll.
+     */
+    val selectedVehicle: StateFlow<VehicleMarker?> =
+        combine(renderState.vehicleSet, renderState.selectedVehicleTripId) { set, tripId ->
+            tripId?.let { set?.markerFor(it) }
+        }
+            // A republish between polls (a recolour, a direction switch, a fresh position seed) rebuilds
+            // the marker from the same response; only a new poll or another vehicle changes what the
+            // banner says, so only those recompose the home screen.
+            .distinctUntilChanged { old, new -> old?.activeTripId == new?.activeTripId && old?.source === new?.source }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /**
      * Suspend map content padding while the rider aims the centre crosshair at a From/To point. The
@@ -737,6 +758,9 @@ class MapViewModel @Inject constructor(
     fun frameRoute() {
         if (routeController.isActive) mapHost.frameRoute()
     }
+
+    /** Fit the selected vehicle (with its stop) and ping it — see [RouteMapController.frameSelectedVehicle]. */
+    fun frameSelectedVehicle() = routeController.frameSelectedVehicle()
 
     /** Restore the camera paired with an undone semantic action. */
     fun restoreViewport(viewport: MapViewport) = mapHost.restoreViewport(viewport)

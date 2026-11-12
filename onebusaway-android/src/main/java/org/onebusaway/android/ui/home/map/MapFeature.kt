@@ -398,6 +398,7 @@ fun MapFeature(
                 is MapDirective.RestoreViewport ->
                     mapViewModel.restoreViewport(directive.viewport)
                 MapDirective.FrameRoute -> mapViewModel.frameRoute()
+                MapDirective.FrameSelectedVehicle -> mapViewModel.frameSelectedVehicle()
                 is MapDirective.ShowStopRoutes ->
                     mapViewModel.showStopRoutes(
                         directive.stopId,

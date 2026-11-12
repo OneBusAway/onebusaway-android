@@ -39,7 +39,14 @@ object MapNavigation {
 
     /** Opens TripDetails for the tapped vehicle, scoped to the focused stop when there is one. */
     fun openVehicleTripDetails(context: Context, status: ObaTripStatus, focusedStopId: String?) {
-        val tripId = status.activeTripId ?: return
+        status.activeTripId?.let { openTripDetails(context, it, focusedStopId) }
+    }
+
+    /**
+     * Opens TripDetails for [tripId], scrolled to its vehicle and scoped to the focused stop when there is
+     * one — by trip rather than vehicle, for a trip whose bus the map doesn't have yet (#2471).
+     */
+    fun openTripDetails(context: Context, tripId: String, focusedStopId: String?) {
         val builder = TripDetailsLauncher.Builder(context, tripId)
             .setScrollMode(TripDetailsLauncher.SCROLL_MODE_VEHICLE)
         focusedStopId?.let { builder.setStopId(it) }

@@ -2006,6 +2006,49 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `the focus banner frames a route drilled into over a stop, and its bus, as camera-only actions`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val viewport = MapViewport(GeoPoint(47.63, -122.33), 12.0)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        advanceUntilIdle()
+        // A plain stop draws neither a route nor a bus to frame.
+        map.sent.clear()
+        vm.reframeFocusedRoute(viewport)
+        vm.frameFocusedVehicle(viewport)
+        advanceUntilIdle()
+        assertEquals(emptyList<MapDirective>(), map.sent)
+
+        vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
+        advanceUntilIdle()
+        map.sent.clear()
+        vm.reframeFocusedRoute(viewport)
+        // No bus is drilled into yet, so the bus row isn't there to ask.
+        vm.frameFocusedVehicle(viewport)
+        advanceUntilIdle()
+        assertEquals(listOf(MapDirective.FrameRoute), map.sent)
+
+        vm.selectFocusedRouteTrip("trip")
+        advanceUntilIdle()
+        val focus = vm.currentFocus.value
+        map.sent.clear()
+        vm.frameFocusedVehicle(viewport)
+        advanceUntilIdle()
+        assertEquals(listOf(MapDirective.FrameSelectedVehicle), map.sent)
+
+        // A camera move, not a focus change: Back restores the camera and leaves the path as it was.
+        map.sent.clear()
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        assertEquals(focus, vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.RestoreViewport(viewport)), map.sent)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `back from standalone route restores its previous stop after arrivals load`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

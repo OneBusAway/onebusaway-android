@@ -1347,11 +1347,22 @@ class HomeViewModel @Inject constructor(
         exitDirections(backward = true)
     }
 
-    /** Reframe the focused route as one undoable camera action. */
+    /**
+     * Reframe the focused route as one undoable camera action — a standalone route, or the route drilled
+     * into over a stop, whose focus banner row asks the same thing (#2471).
+     */
     fun reframeFocusedRoute(undoViewport: MapViewport?) {
-        if (_currentFocus.value !is CurrentFocus.Route) return
+        val focus = _currentFocus.value
+        if (focus !is CurrentFocus.Route && (focus as? CurrentFocus.Stop)?.selectedRoute == null) return
         recordViewportUndo(undoViewport)
         emitMapDirective(MapDirective.FrameRoute)
+    }
+
+    /** Frame the drilled-into vehicle as one undoable camera action — the focus banner's bus row (#2471). */
+    fun frameFocusedVehicle(undoViewport: MapViewport?) {
+        if (_currentFocus.value.selectedTripId == null) return
+        recordViewportUndo(undoViewport)
+        emitMapDirective(MapDirective.FrameSelectedVehicle)
     }
 
     /** Record a semantic camera-only action without treating manual pan/zoom as navigation history. */
@@ -1586,6 +1597,9 @@ sealed interface MapDirective {
 
     /** Reframe the already-focused route without changing focus. */
     data object FrameRoute : MapDirective
+
+    /** Fit the already-selected vehicle (with its stop) and ping it, without changing focus. */
+    data object FrameSelectedVehicle : MapDirective
 
     /** Draw all upcoming routes for the currently focused stop, without reframing the camera. */
     data class ShowStopRoutes(

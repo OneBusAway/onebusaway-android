@@ -72,6 +72,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
@@ -119,12 +120,15 @@ import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpFeature
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.map.FocusBanner
+import org.onebusaway.android.ui.home.map.FocusBannerRoute
 import org.onebusaway.android.ui.home.map.FocusBannerState
+import org.onebusaway.android.ui.home.map.FocusBannerTrip
 import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.home.map.MapChrome
 import org.onebusaway.android.ui.home.map.MapFeature
 import org.onebusaway.android.ui.home.map.PinnedTripFab
 import org.onebusaway.android.ui.home.map.StopFocusMenu
+import org.onebusaway.android.ui.home.map.toFocusBannerBus
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsSheetHost
 import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
 import org.onebusaway.android.ui.home.nearby.limitExceeded
@@ -534,6 +538,34 @@ fun HomeScreen(
                 }
                 // The stop as the banner, its rename dialog and its shortcut all name it.
                 val stopTitle = stopUserName ?: officialStopTitle.orEmpty()
+                // The deeper levels of the banner's focus path (#2471). The route over a stop is the map's
+                // loaded route, taken only once it is that route — the header lags a route switch by a
+                // load. The trip is the focus's own, so the banner shows it whenever the focus holds one;
+                // its bus is the selected marker while it is that trip's, else the stop's board's word on it.
+                val selectedVehicle by mapViewModel.selectedVehicle.collectAsStateWithLifecycle()
+                // The activity, which opening trip details starts from.
+                val bannerContext = LocalContext.current
+                val bannerTrip = currentFocus.selectedTripId?.let { tripId ->
+                    // The focused stop's own board lists the trip; a route focus has no board.
+                    val boardArrival = arrivalsContent?.arrivals?.firstOrNull { it.tripId == tripId }
+                    FocusBannerTrip(
+                        // The map's marker once its poll holds the bus; until then the board's word on it,
+                        // which is what the tapped pill was already showing.
+                        bus = selectedVehicle?.takeIf { it.activeTripId == tripId }?.toFocusBannerBus()
+                            ?: boardArrival?.toFocusBannerBus(),
+                        bandColor = selectedTripBandColor,
+                        scheduledAtStop = boardArrival?.scheduledTime
+                    )
+                }
+                // Over a stop the route is drawn in the stop's palette — the colour the drawer's row
+                // outline takes — and on its own in its line colour; the banner marks it in whichever
+                // the map is using.
+                val routeLineColor by mapViewModel.routeLineColor.collectAsStateWithLifecycle()
+                val bannerRouteOverStop = stopFocus?.selectedRoute?.let { selection ->
+                    routeHeader?.takeIf { it.routeId == selection.currentLeg.routeId }?.let { header ->
+                        FocusBannerRoute(header, lineColor = mapRouteColors[selection.currentLeg.routeDirection])
+                    }
+                }
                 val focusBannerState: FocusBannerState? = when (currentFocus) {
                     is CurrentFocus.Stop -> FocusBannerState.Stop(
                         title = stopTitle,
@@ -557,12 +589,17 @@ fun HomeScreen(
                         // without the arrivals source the glyph would be missing on most entry points.
                         wheelchairBoarding = arrivalsContent?.header?.wheelchairBoarding
                             ?.takeIf { it != WheelchairBoarding.UNKNOWN }
-                            ?: currentFocus.stop.wheelchairBoarding
+                            ?: currentFocus.stop.wheelchairBoarding,
+                        route = bannerRouteOverStop,
+                        // A bus hangs off its route row, so it waits for that row too.
+                        trip = bannerTrip?.takeIf { bannerRouteOverStop != null }
                     )
                     is CurrentFocus.Route -> routeHeader?.let { header ->
                         FocusBannerState.Route(
                             header = header,
-                            isFavorite = header.routeId in favoriteRouteIds
+                            isFavorite = header.routeId in favoriteRouteIds,
+                            trip = bannerTrip,
+                            lineColor = routeLineColor
                         )
                     }
                     // Directions has no focus banner — the trip-plan form in the top chrome is its affordance.
@@ -946,6 +983,20 @@ fun HomeScreen(
                                                 surveyViewModel = surveyViewModel,
                                                 focusBannerState = focusBannerState,
                                                 onCloseFocus = homeViewModel::clearMapFocus,
+                                                onFrameBus = {
+                                                    homeViewModel.frameFocusedVehicle(mapViewModel.viewport)
+                                                },
+                                                // The bus row's overflow drills in: the same trip details a
+                                                // second tap on the marker opens.
+                                                onOpenBus = {
+                                                    currentFocus.selectedTripId?.let { tripId ->
+                                                        MapNavigation.openTripDetails(
+                                                            bannerContext,
+                                                            tripId,
+                                                            currentFocus.focusedStop?.id
+                                                        )
+                                                    }
+                                                },
                                                 onToggleFavorite = {
                                                     when (focusBannerState) {
                                                         is FocusBannerState.Stop ->
@@ -1433,6 +1484,8 @@ private fun BoxScope.HomeMapOverlays(
     surveyViewModel: SurveyViewModel,
     focusBannerState: FocusBannerState?,
     onCloseFocus: () -> Unit,
+    onFrameBus: () -> Unit,
+    onOpenBus: () -> Unit,
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
     onRecenterStop: () -> Unit,
@@ -1480,6 +1533,8 @@ private fun BoxScope.HomeMapOverlays(
         FocusBanner(
             state = focusBannerState,
             onClose = onCloseFocus,
+            onFrameBus = onFrameBus,
+            onOpenBus = onOpenBus,
             onToggleFavorite = onToggleFavorite,
             onShowAlerts = onShowAlerts,
             onRecenterStop = onRecenterStop,

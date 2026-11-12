@@ -313,6 +313,27 @@
     <string name="stop_info_eta_strip_scroll_earlier">Show earlier arrivals</string>
     <string name="stop_info_eta_strip_scroll_later">Show later arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
+    <!-- The overflow (⋮) on each row of the map focus banner, and the heading of the menu it opens (#2471). -->
+    <string name="focus_banner_stop_options">Stop options</string>
+    <string name="focus_banner_route_options">Route options</string>
+    <string name="focus_banner_trip_options">Trip options</string>
+    <!-- How long ago the focus banner's bus last reported, beside its schedule status (#2471). -->
+    <plurals name="focus_banner_updated_sec">
+        <item quantity="one">Updated %1$d sec ago</item>
+        <item quantity="other">Updated %1$d sec ago</item>
+    </plurals>
+    <plurals name="focus_banner_updated_min">
+        <item quantity="one">Updated %1$d min ago</item>
+        <item quantity="other">Updated %1$d min ago</item>
+    </plurals>
+    <plurals name="focus_banner_updated_hr">
+        <item quantity="one">Updated %1$d hr ago</item>
+        <item quantity="other">Updated %1$d hr ago</item>
+    </plurals>
+    <!-- The focus banner's row for a selected trip whose bus the map has no position for yet. -->
+    <string name="focus_banner_trip_not_on_map">Not on the map yet</string>
+    <!-- The same row when the trip's scheduled time at the focused stop is known; %1$s is that time, e.g. "3:12 PM". -->
+    <string name="focus_banner_timed_trip_not_on_map">%1$s trip not on the map yet</string>
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_favorite">Favorite stop</string>
 

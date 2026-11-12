@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -674,7 +675,13 @@ private fun BusRow(trip: FocusBannerTrip, onFrame: () -> Unit, onOpenDetails: ()
 @Composable
 private fun BusDetails(bus: FocusBannerBus) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        // A flow, so on a narrow banner the freshness drops below the pill whole rather than being cut to
+        // "Updated 1…" beside it.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            itemVerticalAlignment = Alignment.CenterVertically
+        ) {
             StatusPill(
                 text = ArrivalInfoUtils.computeStatusLabel(
                     LocalContext.current.resources,

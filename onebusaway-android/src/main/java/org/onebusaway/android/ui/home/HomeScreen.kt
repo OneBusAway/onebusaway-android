@@ -983,8 +983,13 @@ fun HomeScreen(
                                                 surveyViewModel = surveyViewModel,
                                                 focusBannerState = focusBannerState,
                                                 onCloseFocus = homeViewModel::clearMapFocus,
+                                                // Only with the bus's marker on the map: framing without
+                                                // one moves no camera, and would leave an invisible step
+                                                // for Back to spend before it leaves the trip.
                                                 onFrameBus = {
-                                                    homeViewModel.frameFocusedVehicle(mapViewModel.viewport)
+                                                    if (selectedVehicle != null) {
+                                                        homeViewModel.frameFocusedVehicle(mapViewModel.viewport)
+                                                    }
                                                 },
                                                 // The bus row's overflow drills in: the same trip details a
                                                 // second tap on the marker opens.

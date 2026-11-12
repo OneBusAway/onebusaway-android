@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import org.onebusaway.android.map.render.STOP_ROUTE_LABEL_Z_INDEX
 import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.StopRoute
@@ -52,7 +53,7 @@ internal class GoogleStopMarkerLayer(
     private val labelIcons =
         BitmapDescriptorCache(LABEL_ICON_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
-    fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand, compact: Boolean) {
+    fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand, compact: Boolean, routeFocused: Boolean) {
         val markerStops = stops.filter { !it.routeStop || it.id == focusedStopId }
         val liveIds = markerStops.mapTo(HashSet(), StopMarker::id)
         val gone = markerByStopId.iterator()
@@ -101,6 +102,8 @@ internal class GoogleStopMarkerLayer(
                 }
                 stopByMarker[existing] = stop
             }
+            markerByStopId.getValue(stop.id).alpha =
+                if (routeFocused && !stop.routeStop && stop.id != focusedStopId) StopBitmaps.OFF_ROUTE_ALPHA else 1f
             kindByStopId[stop.id] = kind
         }
 

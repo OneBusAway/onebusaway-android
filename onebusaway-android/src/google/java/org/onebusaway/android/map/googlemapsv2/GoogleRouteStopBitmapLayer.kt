@@ -35,7 +35,8 @@ internal class GoogleRouteStopBitmapLayer(
     private val map: GoogleMap,
     private val density: Float,
     private val fillColor: Int,
-    private val outlineColor: Int
+    private val outlineColor: Int,
+    private val stopColor: Int
 ) {
     private data class RenderedStop(val marker: Marker, var stop: StopMarker, var iconKey: RouteStopIconKey)
     private val stopsById = HashMap<String, RenderedStop>()
@@ -117,7 +118,7 @@ internal class GoogleRouteStopBitmapLayer(
     }
 
     private fun icon(key: RouteStopIconKey): BitmapDescriptor = icons.get(key) ?: BitmapDescriptorFactory
-        .fromBitmap(drawRouteStopBitmap(key, fillColor)).also { icons.put(key, it) }
+        .fromBitmap(drawRouteStopBitmap(key, fillColor, stopColor)).also { icons.put(key, it) }
 }
 
 internal fun routeStopDiameterPx(

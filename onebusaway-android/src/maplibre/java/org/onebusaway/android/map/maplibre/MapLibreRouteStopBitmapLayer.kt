@@ -54,7 +54,8 @@ internal class MapLibreRouteStopBitmapLayer(
     private val style: Style,
     private val density: Float,
     private val fillColor: Int,
-    private val outlineColor: Int
+    private val outlineColor: Int,
+    private val stopColor: Int
 ) {
     private val source = GeoJsonSource(SOURCE_ID, FeatureCollection.fromFeatures(emptyList<Feature>()))
     private val images = HashMap<RouteStopIconKey, String>()
@@ -107,7 +108,7 @@ internal class MapLibreRouteStopBitmapLayer(
             usedImages.add(key)
             val image = images.getOrPut(key) {
                 val id = "oba-route-stop-${nextImageId++}"
-                style.addImage(id, drawRouteStopBitmap(key, fillColor))
+                style.addImage(id, drawRouteStopBitmap(key, fillColor, stopColor))
                 id
             }
             Feature.fromGeometry(Point.fromLngLat(stop.point.longitude, stop.point.latitude)).apply {

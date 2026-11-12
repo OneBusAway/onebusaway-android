@@ -46,6 +46,24 @@ object ArrivalInfoUtils {
         return preferred
     }
 
+    /**
+     * A vehicle's schedule status without "arrive"/"depart" — "3 min late", "On time", "Scheduled" —
+     * as the arrival rows word a passed arrival and the map focus banner words its bus (#2471).
+     * [minutes] is the unsigned rounded deviation ([ScheduleDeviation.roundedMinutes]).
+     */
+    fun computeStatusLabel(
+        resources: Resources,
+        status: ScheduleDeviation.Status,
+        minutes: Long
+    ): String = when (status) {
+        ScheduleDeviation.Status.DELAYED ->
+            resources.getQuantityString(R.plurals.stop_info_status_late_without_arrive_depart, minutes.toInt(), minutes)
+        ScheduleDeviation.Status.EARLY ->
+            resources.getQuantityString(R.plurals.stop_info_status_early_without_arrive_depart, minutes.toInt(), minutes)
+        ScheduleDeviation.Status.ON_TIME -> resources.getString(R.string.stop_info_ontime)
+        ScheduleDeviation.Status.SCHEDULED -> resources.getString(R.string.stop_info_scheduled)
+    }
+
     fun computeArrivalLabel(
         resources: Resources,
         status: ScheduleDeviation.Status,

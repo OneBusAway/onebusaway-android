@@ -397,6 +397,16 @@ class RouteMapController(
      */
     val selectedTripBandColor: StateFlow<Int?> = _selectedTripBandColor.asStateFlow()
 
+    private val _routeLineColor = MutableStateFlow<Int?>(null)
+
+    /**
+     * The colour the shown route's line is drawn in — its colour through the map's route-line policy, not
+     * its GTFS colour — or null when no route is shown. The focus banner marks the route's level of the
+     * path in it (#2471), so the row and the line on the map read as one object, as the band and the bus
+     * row do. Settled by each publish, the same beat as [selectedTripBandColor].
+     */
+    val routeLineColor: StateFlow<Int?> = _routeLineColor.asStateFlow()
+
     // A pending arrivals ETA-pill focus: the trip id whose live vehicle should be fit together with the
     // originating stop once it appears. Held until the first vehicle set arrives, then resolved once by
     // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box;
@@ -557,23 +567,39 @@ class RouteMapController(
     // data rather than firing on the empty pre-poll set.
     private fun tryFocusVehicle(layer: MapVehicles?) {
         val focus = pendingFocus ?: return
-        val marker = layer?.markers?.firstOrNull { it.activeTripId == focus }
+        val marker = layer?.markerFor(focus)
         when (resolveVehicleFocus(directionState is DirectionState.Resolved, vehiclePoller.leaderPoll != null, marker != null)) {
             FocusResolution.WAIT -> Unit
             FocusResolution.FIT -> {
                 pendingFocus = null
-                // Fit the vehicle and its originating stop together (the stop is dropped only if it's
-                // somehow not in the loaded route, leaving the vehicle framed alone at a comfortable zoom).
-                host.frame(FramingIntent.Points(listOfNotNull(marker?.point, originatingStopPoint())))
-                // Radiate a ping from the vehicle so it's clear which one this arrival is querying (#1764);
-                // keyed by trip id so the ripple follows the marker as it settles onto its projected spot.
-                renderState.emitPing(focus)
+                marker?.let(::fitWithStopAndPing)
             }
             // No live vehicle runs this trip right now: drop the focus silently. We deliberately neither
             // frame the whole route (#1992: a pill tap must not yank the camera out to the route extent) nor
             // toast — the arrivals ETA strip's "on the map" pin already signals which pills reframe on tap.
             FocusResolution.DROP -> pendingFocus = null
         }
+    }
+
+    /**
+     * Fit the selected vehicle — with the originating stop, when there is one — and ping it, as an ETA
+     * pill's tap does: the focus banner's bus row asking for its bus on the map (#2471). A no-op with no
+     * vehicle selected, or none on the map for it right now.
+     */
+    fun frameSelectedVehicle() {
+        val tripId = renderState.selectedVehicleTripId.value ?: return
+        currentVehicleLayer()?.markerFor(tripId)?.let(::fitWithStopAndPing)
+    }
+
+    /**
+     * Fit [marker]'s vehicle and its originating stop together (the stop is dropped only if it's somehow
+     * not in the loaded route, leaving the vehicle framed alone at a comfortable zoom), then radiate a ping
+     * from it so it's clear which one is meant (#1764) — keyed by trip id so the ripple follows the marker
+     * as it settles onto its projected spot. One definition for the ETA pill's tap and the banner's.
+     */
+    private fun fitWithStopAndPing(marker: VehicleMarker) {
+        host.frame(FramingIntent.Points(listOfNotNull(marker.point, originatingStopPoint())))
+        renderState.emitPing(marker.activeTripId)
     }
 
     /** The originating stop's position ([directionStopId], looked up in the loaded route), or null. */
@@ -929,6 +955,7 @@ class RouteMapController(
         renderState.setTripOverlaySampler(null)
         selectedTripLineColor = DEFAULT_ROUTE_LINE_COLOR
         _selectedTripBandColor.value = null
+        _routeLineColor.value = null
         renderState.setRouteContinuation(null)
         _loadedRoute.value = null
     }
@@ -953,6 +980,7 @@ class RouteMapController(
         // this only in the one case that has no route to resolve through — and asks for it there itself,
         // rather than every publish resolving it for a span that usually doesn't want it.
         val routeColor = currentRouteColor()
+        _routeLineColor.value = routeId?.let { routeColor }
         // One snapshot of the focused-stop layer for the whole publish, so the plan can't read a
         // half-swapped focus (its geometry and stops resolve independently).
         val focus = stopFocus.presentation

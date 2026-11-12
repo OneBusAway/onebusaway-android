@@ -538,7 +538,10 @@ data class MapRenderSnapshot(
  * marker, which the motion sampler immediately supersedes. The selected vehicle is tracked separately
  * (see [MapRenderState.selectedVehicleTripId]).
  */
-data class MapVehicles(val markers: List<VehicleMarker> = emptyList())
+data class MapVehicles(val markers: List<VehicleMarker> = emptyList()) {
+    /** The marker running [tripId] — markers are keyed by the trip their vehicle is actively serving. */
+    fun markerFor(tripId: String): VehicleMarker? = markers.firstOrNull { it.activeTripId == tripId }
+}
 
 /**
  * Produces a renderable frame [T] — the trip-focus overlay or the live vehicle layer — for a frame

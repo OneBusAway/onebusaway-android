@@ -21,6 +21,7 @@ import androidx.annotation.ColorRes
 import java.text.DateFormat
 import java.util.Date
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
@@ -143,6 +144,12 @@ class ArrivalInfo(
     val stopSequence: Int get() = data.stopSequence
     val serviceDate: Long get() = data.serviceDate
     val vehicleId: String? get() = data.vehicleId
+
+    /** The vehicle's schedule deviation as its trip status reports it: positive late, negative early. */
+    val vehicleScheduleDeviation: Duration get() = data.scheduleDeviation.seconds
+
+    /** See [ArrivalData.vehicleLastUpdateTime]. */
+    val vehicleLastUpdateTime: ServerTime? get() = data.vehicleLastUpdateTime
 
     /** The service-alert (situation) ids that reference this specific arrival; empty when none. */
     val situationIds: List<String> get() = data.situationIds
@@ -327,20 +334,8 @@ class ArrivalInfo(
 
             // Arrival/departure time has passed
             if (!includeArrivalDeparture) {
-                // Don't include "depart" or "arrive" in label
-                return when (deviationStatus) {
-                    ScheduleDeviation.Status.DELAYED -> res.getQuantityString(
-                        R.plurals.stop_info_status_late_without_arrive_depart,
-                        minutes,
-                        deviationMinutes
-                    )
-                    ScheduleDeviation.Status.EARLY -> res.getQuantityString(
-                        R.plurals.stop_info_status_early_without_arrive_depart,
-                        minutes,
-                        deviationMinutes
-                    )
-                    else -> context.getString(R.string.stop_info_ontime)
-                }
+                // Don't include "depart" or "arrive" in label. A prediction is never SCHEDULED here.
+                return ArrivalInfoUtils.computeStatusLabel(res, deviationStatus, deviationMinutes)
             }
 
             return if (isArrival) {

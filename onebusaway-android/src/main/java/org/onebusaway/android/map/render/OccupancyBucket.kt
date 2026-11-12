@@ -35,7 +35,7 @@ import org.onebusaway.android.models.Occupancy
  * differently: no tab at all versus a tab whose pips are all empty. Keeping that distinction in the type
  * is what stopped an unequipped fleet from looking like an empty one.
  */
-internal enum class OccupancyBucket(val pips: Int, @StringRes val labelRes: Int) {
+enum class OccupancyBucket(val pips: Int, @StringRes val labelRes: Int) {
     EMPTY(0, R.string.realtime_empty),
     MANY_SEATS(1, R.string.realtime_many_seats_available),
     STANDING_ROOM(2, R.string.realtime_standing_room),

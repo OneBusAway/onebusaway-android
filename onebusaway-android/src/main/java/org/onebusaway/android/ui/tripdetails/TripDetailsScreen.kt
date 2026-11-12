@@ -75,6 +75,7 @@ import org.onebusaway.android.ui.arrivals.components.RealtimeIndicator
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.StatusPill
 import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
@@ -270,30 +271,6 @@ private fun TripHeaderSection(header: TripHeader) {
             }
             Spacer(Modifier.size(6.dp))
             StatusPill(header.statusText, colorResource(header.statusColor), header.isRealtime)
-        }
-    }
-}
-
-/**
- * The lateness-colored status pill (white text on the deviation color). When the trip is real-time,
- * the real-time indicator sits inside the pill, right of the text, in the same white as the lettering.
- */
-@Composable
-private fun StatusPill(text: String, color: Color, isRealtime: Boolean) {
-    Surface(shape = RoundedCornerShape(6.dp), color = color) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White
-            )
-            if (isRealtime) {
-                Spacer(Modifier.width(6.dp))
-                RealtimeIndicator(color = Color.White, modifier = Modifier.size(10.dp))
-            }
         }
     }
 }

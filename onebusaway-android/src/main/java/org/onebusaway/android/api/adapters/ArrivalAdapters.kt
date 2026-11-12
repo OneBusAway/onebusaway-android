@@ -16,6 +16,7 @@
 package org.onebusaway.android.api.adapters
 
 import org.onebusaway.android.api.contract.ArrivalDeparture
+import org.onebusaway.android.api.data.serverTimeOrNever
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
@@ -120,6 +121,7 @@ private class DtoArrivalData(
     override val predictedOccupancy get() = Occupancy.fromString(d.occupancyStatus)
     override val hasTripStatus get() = d.tripStatus != null
     override val scheduleDeviation get() = d.tripStatus?.scheduleDeviation ?: 0L
+    override val vehicleLastUpdateTime get() = d.tripStatus?.lastUpdateTime?.let(::serverTimeOrNever)
     override val lastKnownLat get() = d.tripStatus?.lastKnownLocation?.lat
     override val lastKnownLon get() = d.tripStatus?.lastKnownLocation?.lon
 

@@ -81,7 +81,7 @@ class FocusBannerTest {
     }
 
     private fun openStopMenu() = composeRule.onNodeWithContentDescription(
-        context.getString(R.string.stop_info_item_options_title)
+        context.getString(R.string.focus_banner_stop_options)
     ).performClick()
 
     @Test

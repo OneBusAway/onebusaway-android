@@ -57,6 +57,13 @@ interface ArrivalData {
     /** Real-time fields, for the report context; defaults when there is no trip status. */
     val hasTripStatus: Boolean
     val scheduleDeviation: Long
+
+    /**
+     * When the trip's vehicle last reported, on the server clock; null when it never has (the wire's 0
+     * sentinel, [ObaTripStatus.lastUpdateTime], decoded at the adapter) or the source carries no trip
+     * status.
+     */
+    val vehicleLastUpdateTime: ServerTime? get() = null
     val lastKnownLat: Double?
     val lastKnownLon: Double?
 

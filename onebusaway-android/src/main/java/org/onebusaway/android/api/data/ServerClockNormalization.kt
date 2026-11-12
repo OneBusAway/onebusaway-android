@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.api.data
 
+import org.onebusaway.android.time.ServerTime
+
 /**
  * The response's server `currentTime` (epoch millis) when present, else the device clock. Every OK OBA
  * response carries a positive `currentTime`, but the wire model defaults it to 0 when the field is
@@ -42,3 +44,10 @@ internal fun situationEpochToMillis(timestamp: Long): Long = if (timestamp in 1 
 
 /** OBA's server-side seconds-vs-millis boundary (`GtfsRealtimeAlertLibrary.toMillis`). */
 private const val SECONDS_MILLIS_THRESHOLD = 1_000_000_000_000L
+
+/**
+ * A trip status's `lastUpdateTime` as a server-clock instant, or null for the wire's 0 — "this vehicle
+ * has never reported", not an instant in 1970. Decoded here, at the wire→domain edge, so no caller can
+ * age a bus by half a century (#2471).
+ */
+internal fun serverTimeOrNever(epochMs: Long): ServerTime? = if (epochMs == 0L) null else ServerTime(epochMs)

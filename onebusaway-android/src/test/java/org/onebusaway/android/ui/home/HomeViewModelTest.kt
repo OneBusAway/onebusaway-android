@@ -2168,6 +2168,70 @@ class HomeViewModelTest {
         mapJob.cancel()
     }
 
+    /**
+     * #2471: an ETA pill lands two levels deep in one tap, and Back used to undo the tap whole — straight
+     * from the bus to the stop, past the route row the focus banner draws between them.
+     */
+    @Test
+    fun `back from an eta pill's trip peels the route level before the stop`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        val viewport = MapViewport(GeoPoint(47.61, -122.31), 15.0)
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", "stop", focusTripId = "trip", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown",
+            undoViewport = viewport
+        )
+        advanceUntilIdle()
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        // The route row: only the vehicle goes — no reload, and the camera stays where the pill put it.
+        assertEquals("65", vm.stopRouteSelection()?.currentLeg?.routeId)
+        assertEquals(null, vm.stopRouteSelection()?.selectedTripId)
+        assertEquals(listOf(MapDirective.SelectVehicle(null)), map.sent)
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        // Then the stop, with the camera the pill moved put back.
+        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.ClearSelectedRoute, MapDirective.RestoreViewport(viewport)), map.sent)
+        mapJob.cancel()
+    }
+
+    /** Trip details' "show on map" for a standalone route lands on its trip the same way a pill does. */
+    @Test
+    fun `back from a standalone route's trip peels the route level first`() = runTest {
+        val vm = viewModel()
+        vm.focusStandaloneRoute(ShowRouteRequest("65", focusTripId = "trip"))
+
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.Route(RouteTarget("65")), vm.currentFocus.value)
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertFalse(vm.navigateBackFocus())
+    }
+
+    /** Switching from one bus to another on the same route is one step: the route was already there. */
+    @Test
+    fun `back from a reselected trip returns to the previous trip`() = runTest {
+        val vm = viewModel()
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
+        vm.selectFocusedRouteTrip("first")
+        vm.selectFocusedRouteTrip("second")
+
+        assertTrue(vm.navigateBackFocus())
+        assertEquals("first", vm.stopRouteSelection()?.selectedTripId)
+    }
+
     @Test
     fun `a row-body tap stops at the route level`() = runTest {
         val vm = viewModel()

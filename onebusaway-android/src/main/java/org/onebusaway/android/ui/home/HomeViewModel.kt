@@ -1397,8 +1397,16 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun pushFocus(focus: CurrentFocus, undoViewport: MapViewport? = null) {
-        if (focus == _currentFocus.value && undoViewport == null) return
-        mapUndoHistory.addLast(MapUndoEntry(_currentFocus.value, undoViewport))
+        val from = _currentFocus.value
+        if (focus == from && undoViewport == null) return
+        mapUndoHistory.addLast(MapUndoEntry(from, undoViewport))
+        // A gesture that lands on a trip in one move — an ETA pill, trip details' "show on map" — also
+        // passes through the route beneath it, so Back peels one level at a time as the banner draws the
+        // path rather than jumping two (#2471). Not when only the trip changed: that route is where the
+        // rider already was. No viewport, so stepping back to it only drops the vehicle selection.
+        focus.selectedTripId?.let { focus.withSelectedTrip(null) }
+            ?.takeIf { it != from && it != from.withSelectedTrip(null) }
+            ?.let { mapUndoHistory.addLast(MapUndoEntry(it)) }
         _canUndoMapAction.value = true
         if (focus != _currentFocus.value) replaceFocus(focus)
     }

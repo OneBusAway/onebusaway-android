@@ -54,7 +54,11 @@ data class TripStopItem(
     val linePosition: LinePosition,
     /** The vehicle's current position (the stop it most recently left). */
     val isVehicleHere: Boolean,
-    val pin: StopPin
+    val pin: StopPin,
+    /** [name] is the rider's own name for the stop, shown with the custom-name glyph (#2414). */
+    val isCustomName: Boolean = false,
+    /** The stop's official name, for handing the stop on to a screen that resolves its own. */
+    val officialName: String = name
 )
 
 /** UI state for the trip details screen. */

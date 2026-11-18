@@ -48,6 +48,7 @@ import org.onebusaway.android.database.oba.StopHiddenRouteDao
 import org.onebusaway.android.database.oba.StopHiddenRouteRecord
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
+import org.onebusaway.android.database.oba.StopNamesRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
@@ -135,6 +136,8 @@ class DefaultArrivalsRepositoryTest {
         }
 
         override suspend fun setFavorite(stopId: String, favorite: Int) {}
+        override suspend fun setUserName(stopId: String, userName: String?) {}
+        override fun names(stopId: String): Flow<StopNamesRow?> = flowOf(null)
         override suspend fun userInfoMap(): List<StopUserInfoMapRow> = emptyList()
         override suspend fun location(stopId: String): StopLocationRow? = null
         override suspend fun nameForStop(stopId: String): String? = null
@@ -330,6 +333,18 @@ class DefaultArrivalsRepositoryTest {
 
         assertEquals(listOf(65, 125, 185), dataSource.requestedMinutes)
         assertEquals(185, data.minutesAfter)
+    }
+
+    @Test
+    fun `a failing fetch isn't retried with wider windows`() = runTest {
+        // A wider window can't fix a failed request; retrying all the way to a day was a burst of 23 (#2410).
+        val dataSource = FakeStopArrivalsDataSource()
+        dataSource.respond = { Result.failure(ObaApiException(429)) }
+        val repository = repository(dataSource)
+
+        repository.getArrivals(STOP_ID, 65)
+
+        assertEquals(listOf(65), dataSource.requestedMinutes)
     }
 
     @Test

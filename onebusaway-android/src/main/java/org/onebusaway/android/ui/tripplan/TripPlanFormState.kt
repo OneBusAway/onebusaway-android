@@ -40,6 +40,9 @@ sealed interface TripEndpoint {
     /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
     val isTransit: Boolean get() = false
 
+    /** [displayText] is the rider's own name for a stop, shown with the custom-name glyph (#2414). */
+    val isCustomName: Boolean get() = false
+
     /**
      * This endpoint *is* the device's own position, which the map already marks with the location
      * layer's blue dot. Such an endpoint is given no pin of its own — neither the standalone From/To
@@ -73,7 +76,8 @@ sealed interface TripEndpoint {
         override val lat: Double?,
         override val lon: Double?,
         /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
-        override val isTransit: Boolean = false
+        override val isTransit: Boolean = false,
+        override val isCustomName: Boolean = false
     ) : TripEndpoint
 
     /** An address-book (contacts) pick; may still need server-side geocoding (null coordinates). */
@@ -105,10 +109,11 @@ sealed interface TripEndpoint {
             name: String?,
             lat: Double,
             lon: Double,
-            isTransit: Boolean = false
+            isTransit: Boolean = false,
+            isCustomName: Boolean = false
         ): TripEndpoint = name
             ?.takeIf { it.isNotBlank() }
-            ?.let { Geocoded(displayName = it, lat = lat, lon = lon, isTransit = isTransit) }
+            ?.let { Geocoded(displayName = it, lat = lat, lon = lon, isTransit = isTransit, isCustomName = isCustomName) }
             ?: MapPoint(lat = lat, lon = lon)
     }
 }

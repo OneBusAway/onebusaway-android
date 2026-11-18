@@ -50,7 +50,8 @@ fun StopSearchContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onStopClick(stop) }
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            isCustomName = stop.isCustomName
         )
     }
 }

@@ -261,6 +261,11 @@
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
+    <string name="stop_info_option_editname">Edit stop name</string>
+    <string name="stop_info_save">Save</string>
+    <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
+    <string name="stop_info_use_official_name">Use official name</string>
+    <string name="stop_info_custom_name_description">%1$s, your name for this stop</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
     <string name="stop_info_arrival_service_alert">View service alert for this arrival</string>
     <string name="stop_info_show_alerts">Show service alerts</string>
@@ -700,7 +705,7 @@
     </string>
 
     <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
-    <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
+    <string name="preferences_show_rental_button_summary">Display the bike and scooter button on the map. Turning it off also hides bikes and scooters.</string>
     <!-- Settings: how long the home screen keeps a selected stop after the rider last left it (#2294) -->
     <string name="preferences_focus_timeout_title">Remember selected stop for</string>
     <string name="preferences_focus_timeout_30_minutes">30 minutes</string>
@@ -903,6 +908,9 @@
     <string name="night_light_create_shortcut">Create shortcut</string>
     <string name="night_light_start">Start</string>
     <string name="night_light_cancel">Cancel</string>
+    <string name="night_light_stopped">Night light stopped</string>
+    <string name="night_light_start_light">Start Light</string>
+    <string name="night_light_stop_light">Stop Light</string>
 
     <!-- Tutorials -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->
@@ -1448,7 +1456,7 @@
     <string name="layers_rentals_hide">Hide bikes and scooters</string>
     <string name="layers_rentals_loading">Loading bikes and scooters</string>
     <string name="layers_rentals_hide_button">Hide this button</string>
-    <string name="layers_rentals_hidden_toast">Bike and scooter button hidden. Turn it back on in Settings.</string>
+    <string name="layers_rentals_hidden_toast">Bikes and scooters hidden from the map. Turn them back on in Settings.</string>
     <string name="layers_bikes_label">Bikes</string>
     <string name="layers_scooters_label">Scooters</string>
     <string name="map_zoom_in_for_rentals">Zoom in to see bikes and scooters</string>

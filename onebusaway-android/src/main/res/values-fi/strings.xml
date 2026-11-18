@@ -217,6 +217,9 @@
     <string name="menu_option_sort_by">Järjestä</string>
     <string name="stop_info_option_refresh">Päivitä</string>
     <string name="stop_info_option_night_light">Yövalo</string>
+    <string name="stop_info_option_editname">Muokkaa nimeä</string>
+    <string name="stop_info_save">Tallenna</string>
+    <string name="stop_info_official_stop_name_label">Virallinen nimi: %1$s</string>
     <string name="stop_info_option_hide_alerts">Piilota aktiiviset hälytykset</string>
     <string name="stop_info_option_report_problem">Ilmoita pysäkkiongelma</string>
     <string name="stop_info_canceled">PERUTTU</string>

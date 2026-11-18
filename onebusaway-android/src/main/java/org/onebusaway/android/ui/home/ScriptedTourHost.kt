@@ -34,6 +34,7 @@ import org.onebusaway.android.demo.DemoModeController
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.rental.RENTALS_VISIBLE_BY_DEFAULT
+import org.onebusaway.android.map.rental.RENTAL_BUTTON_SHOWN_BY_DEFAULT
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.map.rental.preferenceKey
@@ -63,10 +64,12 @@ import org.onebusaway.android.util.GeoPoint
  */
 data class ScriptedTourUndo(
     val viewport: MapViewport?,
-    /** The rental layer's three preferences: the master switch and each mode toggle. */
+    /** The rental layer's preferences: the master switch, each mode toggle, and the button itself. */
     val rentalsVisible: Boolean,
     val bikesVisible: Boolean,
-    val scootersVisible: Boolean
+    val scootersVisible: Boolean,
+    /** The tour has to show the button to show rentals — see `drawnRentalLayers`. */
+    val rentalButtonShown: Boolean
 )
 
 // The tour's undo record on disk. Not user-facing settings, so plain keys rather than strings.xml
@@ -75,6 +78,7 @@ private const val KEY_TOUR_IN_FLIGHT = "demo_scripted_tour_in_flight"
 private const val KEY_TOUR_UNDO_RENTALS = "demo_scripted_tour_undo_rentals_visible"
 private const val KEY_TOUR_UNDO_BIKES = "demo_scripted_tour_undo_bikes_visible"
 private const val KEY_TOUR_UNDO_SCOOTERS = "demo_scripted_tour_undo_scooters_visible"
+private const val KEY_TOUR_UNDO_RENTAL_BUTTON = "demo_scripted_tour_undo_rental_button_shown"
 
 /**
  * What a tour changed and hasn't put back, or null when none is owed an undo.
@@ -97,7 +101,8 @@ private fun PreferencesRepository.pendingTourUndo(): ScriptedTourUndo? = if (!ge
         viewport = null,
         rentalsVisible = getBoolean(KEY_TOUR_UNDO_RENTALS, RENTALS_VISIBLE_BY_DEFAULT),
         bikesVisible = getBoolean(KEY_TOUR_UNDO_BIKES, RentalLayer.BIKES.defaultVisible),
-        scootersVisible = getBoolean(KEY_TOUR_UNDO_SCOOTERS, RentalLayer.SCOOTERS.defaultVisible)
+        scootersVisible = getBoolean(KEY_TOUR_UNDO_SCOOTERS, RentalLayer.SCOOTERS.defaultVisible),
+        rentalButtonShown = getBoolean(KEY_TOUR_UNDO_RENTAL_BUTTON, RENTAL_BUTTON_SHOWN_BY_DEFAULT)
     )
 }
 
@@ -106,6 +111,7 @@ private fun PreferencesRepository.recordTourUndo(undo: ScriptedTourUndo) {
     setBoolean(KEY_TOUR_UNDO_RENTALS, undo.rentalsVisible)
     setBoolean(KEY_TOUR_UNDO_BIKES, undo.bikesVisible)
     setBoolean(KEY_TOUR_UNDO_SCOOTERS, undo.scootersVisible)
+    setBoolean(KEY_TOUR_UNDO_RENTAL_BUTTON, undo.rentalButtonShown)
     // Last, so a record is never advertised before the values it promises are written.
     setBoolean(KEY_TOUR_IN_FLIGHT, true)
 }
@@ -159,7 +165,10 @@ internal fun ScriptedTourHost(
         // re-plan — so the form goes back to empty along with everything else.
         tripPlanViewModel.clearTrip()
         // The rental layer's switches are persisted preferences, so showing it during the tour is the
-        // one change that would otherwise outlive it.
+        // one change that would otherwise outlive it. The button goes back first: the tour only ever
+        // turns it on, so a rider who had hidden it gets the layer hidden before the other three are
+        // put back, and the map never draws the combination in between.
+        mapViewModel.setRentalButtonShown(pending.rentalButtonShown)
         mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, pending.bikesVisible)
         mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, pending.scootersVisible)
         mapViewModel.setRentalsVisible(pending.rentalsVisible)
@@ -200,6 +209,10 @@ internal fun ScriptedTourHost(
                 scootersVisible = prefsRepo.getBoolean(
                     RentalLayer.SCOOTERS.preferenceKey,
                     RentalLayer.SCOOTERS.defaultVisible
+                ),
+                rentalButtonShown = prefsRepo.getBoolean(
+                    R.string.preference_key_show_rental_button,
+                    RENTAL_BUTTON_SHOWN_BY_DEFAULT
                 )
             )
             undo = starting
@@ -322,11 +335,13 @@ internal fun rememberScriptedTutorialActions(
                 unwindAndAim(homeViewModel, mapViewModel, DemoModeController.CAMERA_TARGET)
                 // The master switch alone can leave nothing drawn: it deliberately preserves whichever
                 // modes the rider had, and both default off. The demo set has bikes, docks *and*
-                // scooters, so the tour asks for both modes. All three are preferences, and all three
-                // are put back on teardown.
+                // scooters, so the tour asks for both modes, and for the button that a rider may have
+                // hidden along with the layer — the step points at it. All four are preferences, and
+                // all four are put back on teardown.
                 mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, true)
                 mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, true)
                 mapViewModel.setRentalsVisible(true)
+                mapViewModel.setRentalButtonShown(true)
             },
             planDemoTrip = {
                 homeViewModel.enterDirections()

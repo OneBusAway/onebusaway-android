@@ -148,6 +148,25 @@ class TripDetailsViewModelTest {
     }
 
     @Test
+    fun `a rate limit after an error shows Loading until the trip loads`() = runTest {
+        val repository = FakeTripDetailsRepository(Result.failure(IOException("No network")))
+        val viewModel = tripDetailsViewModel(handle(), repository, rateLimit = { 5.seconds })
+        viewModel.refresh()
+        assertEquals(TripDetailsUiState.Error("No network"), viewModel.state.value)
+
+        repository.result = Result.failure(RateLimitedException(5.seconds))
+        viewModel.refresh()
+
+        assertEquals(TripDetailsUiState.Loading, viewModel.state.value)
+        assertEquals(5.seconds, viewModel.earlyRetryAfter)
+
+        repository.result = Result.success(data())
+        viewModel.refresh()
+
+        assertTrue(viewModel.state.value is TripDetailsUiState.Content)
+    }
+
+    @Test
     fun `a first load that fails without a rate limit shows Error and waits the full period`() = runTest {
         val viewModel = tripDetailsViewModel(handle(), FakeTripDetailsRepository(Result.failure(IOException("No network"))), rateLimit = { 5.seconds })
 

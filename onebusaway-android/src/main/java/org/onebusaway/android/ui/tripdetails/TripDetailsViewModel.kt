@@ -88,6 +88,8 @@ class TripDetailsViewModel @Inject constructor(
                     if (error.isRateLimited || error.cause?.isRateLimited == true) {
                         // The gate may already be open again if the 429 was slow to arrive.
                         earlyRetryAfter = rateLimit.rateLimitedFor() ?: Duration.ZERO
+                        // Replaces an earlier failure's error: the page is waiting, not broken.
+                        _state.value = TripDetailsUiState.Loading
                     } else {
                         _state.value = TripDetailsUiState.Error(error.message.orEmpty())
                     }

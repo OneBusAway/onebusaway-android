@@ -20,10 +20,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlin.time.Duration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.onebusaway.android.api.isRateLimited
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 
@@ -35,7 +38,8 @@ import org.onebusaway.android.ui.nav.NavRoutes
 @HiltViewModel
 class TripDetailsViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    private val repository: TripDetailsRepository
+    private val repository: TripDetailsRepository,
+    private val rateLimit: ObaRateLimit
 ) : ViewModel() {
 
     // Launch args arrive via SavedStateHandle — from the NavHost destination's nav-args, or from the
@@ -60,18 +64,35 @@ class TripDetailsViewModel @Inject constructor(
         private set
 
     /**
+     * How soon after [lastResponseTime] to poll again when a first load met a rate limit, instead of
+     * the full period: until the server may be asked again (#2410), so a trip opened during a 429
+     * cooldown loads when the cooldown ends rather than a minute later (#2416). Null otherwise.
+     */
+    var earlyRetryAfter: Duration? = null
+        private set
+
+    /**
      * Loads the trip details once. A failed refresh keeps any existing content (the repository
      * returns the last good data); it only surfaces [TripDetailsUiState.Error] when there is nothing
-     * to show.
+     * to show. A first load refused by a rate limit stays [TripDetailsUiState.Loading] and sets
+     * [earlyRetryAfter] instead, since the server is busy rather than the trip unavailable.
      */
     suspend fun refresh() {
         val result = repository.getTripDetails(tripId, stopId, scrollMode, destinationId)
         lastResponseTime = WallTime.now()
+        earlyRetryAfter = null
         result.fold(
             onSuccess = { data -> _state.value = data.toContent() },
             onFailure = { error ->
                 if (_state.value !is TripDetailsUiState.Content) {
-                    _state.value = TripDetailsUiState.Error(error.message.orEmpty())
+                    if (error.isRateLimited || error.cause?.isRateLimited == true) {
+                        // The gate may already be open again if the 429 was slow to arrive.
+                        earlyRetryAfter = rateLimit.rateLimitedFor() ?: Duration.ZERO
+                        // Replaces an earlier failure's error: the page is waiting, not broken.
+                        _state.value = TripDetailsUiState.Loading
+                    } else {
+                        _state.value = TripDetailsUiState.Error(error.message.orEmpty())
+                    }
                 }
             }
         )

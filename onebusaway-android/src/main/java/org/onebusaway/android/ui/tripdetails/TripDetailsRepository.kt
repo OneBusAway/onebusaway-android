@@ -136,7 +136,9 @@ class DefaultTripDetailsRepository @Inject constructor(
                     ObaRequestErrors.getRouteErrorString(
                         context,
                         (result.exceptionOrNull() as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
-                    )
+                    ),
+                    // Kept so the view model can tell a rate limit from a real failure (#2416).
+                    result.exceptionOrNull()
                 )
             )
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">KiedyBus</string>
+    <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_starred_stops">Ulubione przystanki</string>
@@ -524,7 +524,7 @@
     <string name="preferences_otp_api_url_is_graphql_summary">Włącz, jeśli własny serwer OpenTripPlanner wymaga GraphQL</string>
     <string name="preferences_map_stop_cache_size_title">Rozmiar pamięci podręcznej przystanków</string>
     <string name="preferences_map_stop_cache_size_summary">Maksymalna liczba przystanków na mapie podczas przesuwania (%1$d)</string>
-    <string name="preferences_map_stop_cache_size_error">Wprowadź liczbę od 100 do 5000</string>
+    <string name="preferences_map_stop_cache_size_error">Wprowadź liczbę od %1$d do %2$d</string>
     <string name="preferences_save_title">Zapisz w pamięci urządzenia</string>
     <string name="preferences_save_summary">Zapisz swoje ulubione i ostatnie przystanki oraz linie</string>
     <string name="preferences_restore_title">Przywróć poprzedni zapis</string>
@@ -708,8 +708,8 @@
     <string name="about_image_credits_header">Zdjęcia:</string>
     <string name="about_image_credits_intro">Dziękujemy projektantom, którzy stworzyli obrazy wykorzystywane w ikonach pojazdów, które zostały przesłane do Noun Project na licencji CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/us/):</string>
     <string name="about_join_header">Dołącz do podróży: Współtwórz naszą aplikację!</string>
-    <string name="about_join_github">Odwiedź naszą stronę internetową https://www.kiedybus.pl</string>
-    <string name="about_join_oba">Dowiedz się więcej o %1$s na stronie https://www.kiedybus.pl</string>
+    <string name="about_join_github">Odwiedź naszą stronę internetową https://github.com/OneBusAway/onebusaway-android</string>
+    <string name="about_join_oba">Dowiedz się więcej o %1$s na stronie https://www.onebusaway.org</string>
     <string name="about_thanks_material_icons">Szczególne podziękowania dla Google za wizualnie oszałamiające ikony designu materiałowego (https://github.com/google/material-design-icons), które dodają elegancji naszej aplikacji. Ich hojność w udostępnieniu tych ikon na licencji Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) znacznie wzbogaciła nasze doświadczenie użytkownika.</string>
     <string name="about_thanks_amcharts">Specjalne podziękowania dla amcharts za darmowe ikony pogody w formacie SVG (https://www.amcharts.com/free-animated-svg-weather-icons/), te ikony są udostępnione na licencji Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).</string>
     <string name="about_outro">Odkrywaj naszą aplikację i rozpocznij płynną podróż z %1$s!</string>

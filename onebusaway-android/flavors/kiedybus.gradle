@@ -15,7 +15,7 @@ android.productFlavors {
         // OneBusAway for iOS. BuildConfig.DEEP_LINK_SCHEME is derived from it (see build.gradle.kts).
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider',
                                 deepLinkScheme: "kiedybus"]
-        buildConfigField "boolean", "USE_FIXED_REGION", "true" // Supports multi-region
+        buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
         buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
         buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey("kiedybus") + "\""
         // Below fields need to be defined so flavor builds, but will not be used by app

@@ -2,5 +2,10 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">iplaner.pl</domain>
+        <trust-anchors>
+            <certificates src="@raw/certum_root_ca" />
+            <certificates src="system" />
+        </trust-anchors>
     </domain-config>
 </network-security-config>

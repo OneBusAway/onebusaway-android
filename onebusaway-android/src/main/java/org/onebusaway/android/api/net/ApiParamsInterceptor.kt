@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.api.net
 
+import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.onebusaway.android.api.ObaApi
@@ -24,17 +25,39 @@ import org.onebusaway.android.api.ObaApi
  * request. The request already carries the correct region host (the Retrofit client [ObaApiProvider]
  * builds is bound to the live base URL), so this only layers on the cross-cutting params; it does no
  * host rewriting.
+ *
+ * Query parameters on a user-entered custom API URL override these defaults (see [withApiParams]).
  */
 class ApiParamsInterceptor(private val resolver: ObaEndpointResolver) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val url = request.url.newBuilder().apply {
-            if (resolver.appVersion != 0) addQueryParameter("app_ver", resolver.appVersion.toString())
-            resolver.appUid?.let { addQueryParameter("app_uid", it) }
-            addQueryParameter("version", ObaApi.VERSION2)
-            addQueryParameter("key", resolver.apiKey)
-        }.build()
+        val url = withApiParams(
+            url = request.url,
+            appVersion = resolver.appVersion,
+            appUid = resolver.appUid,
+            apiKey = resolver.apiKey,
+            customParams = resolver.customQueryParams()
+        )
         return chain.proceed(request.newBuilder().url(url).build())
     }
 }
+
+/**
+ * [url] with the shared OBA query parameters added. [customParams] (from a custom API URL's query)
+ * win over the defaults: a custom `key` replaces the built-in API key rather than being sent
+ * alongside it, and any other custom parameter replaces a default of the same name.
+ */
+internal fun withApiParams(
+    url: HttpUrl,
+    appVersion: Int,
+    appUid: String?,
+    apiKey: String,
+    customParams: List<Pair<String, String?>>
+): HttpUrl = url.newBuilder().apply {
+    if (appVersion != 0) addQueryParameter("app_ver", appVersion.toString())
+    appUid?.let { addQueryParameter("app_uid", it) }
+    addQueryParameter("version", ObaApi.VERSION2)
+    addQueryParameter("key", apiKey)
+    customParams.forEach { (name, value) -> setQueryParameter(name, value) }
+}.build()

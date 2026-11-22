@@ -21,6 +21,7 @@ import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
@@ -43,19 +44,30 @@ class ObaEndpointResolver @Inject constructor(
     /**
      * The base endpoint (scheme + authority + any partial path) for OBA REST requests: a
      * user-entered custom API URL if present, otherwise the active region's base URL, or null if
-     * neither is set. A scheme-less custom URL is assumed to be https (#126).
+     * neither is set. Any query string is stripped: Retrofit would drop it when resolving request
+     * paths, so [ApiParamsInterceptor] applies it per request instead (see [customQueryParams]).
      */
     fun baseUrl(): Uri? {
-        val custom = preferences.getString(R.string.preference_key_oba_api_url, null)
-        val raw = custom?.takeIf { it.isNotEmpty() } ?: regionRepository.region.value?.obaBaseUrl
+        val raw = customApiUrl() ?: regionRepository.region.value?.obaBaseUrl?.let(::withScheme)
             ?: return null
-        // A scheme-less custom URL is assumed to be https (#126).
-        val withScheme = if (raw.toUri().scheme != null) {
-            raw
-        } else {
-            context.getString(R.string.https_prefix) + raw
-        }
-        return withScheme.toUri()
+        return raw.toUri().buildUpon().clearQuery().build()
+    }
+
+    /**
+     * The query parameters of the user-entered custom API URL (e.g. `?key=...` for a server that
+     * needs its own API key), or none when no custom URL is set.
+     */
+    fun customQueryParams(): List<Pair<String, String?>> = queryParamsOf(customApiUrl())
+
+    private fun customApiUrl(): String? = preferences.getString(R.string.preference_key_oba_api_url, null)
+        ?.takeIf { it.isNotEmpty() }
+        ?.let(::withScheme)
+
+    /** A scheme-less URL is assumed to be https (#126). */
+    private fun withScheme(raw: String): String = if (raw.toUri().scheme != null) {
+        raw
+    } else {
+        context.getString(R.string.https_prefix) + raw
     }
 
     /** The OBA API key appended to every request. */
@@ -68,4 +80,10 @@ class ObaEndpointResolver @Inject constructor(
      * other direct readers too, e.g. the Open311 report path). Invariant per process, so read once at
      * construction rather than on every request. */
     val appUid: String? = preferences.getString(ObaApi.APP_UID, null)
+}
+
+/** The query parameters of [url] in order, or none if [url] is null or not a valid http(s) URL. */
+internal fun queryParamsOf(url: String?): List<Pair<String, String?>> {
+    val parsed = url?.toHttpUrlOrNull() ?: return emptyList()
+    return (0 until parsed.querySize).map { parsed.queryParameterName(it) to parsed.queryParameterValue(it) }
 }

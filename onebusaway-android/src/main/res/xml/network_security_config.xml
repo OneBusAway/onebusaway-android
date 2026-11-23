@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The kiedybus flavor replaces this whole file (flavor resources don't merge with main's):
+     mirror any change here in src/kiedybus/res/xml/network_security_config.xml. -->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>

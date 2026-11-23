@@ -24,6 +24,7 @@
 <resources>
     <!-- The only required override - all branded strings use this automatically -->
     <string name="app_name">KiedyBus</string>
-
+    <string name="about_join_github">Odwiedź naszą stronę internetową https://www.kiedybus.pl</string>
+    <string name="about_join_oba">Dowiedz się więcej o %1$s na stronie https://www.kiedybus.pl</string>
     <!-- See src/main/res/values-pl/strings.xml for base Polish translations -->
 </resources>

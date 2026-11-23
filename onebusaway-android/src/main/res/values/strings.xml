@@ -868,6 +868,10 @@
 
     <!-- Trip Details -->
     <string name="trip_status">Trip status</string>
+    <!-- Map marker titles for the selected vehicle's speed estimate: where its data was last
+         corrected from, and its fast-estimated current position. -->
+    <string name="marker_most_recent_data">Most recent data</string>
+    <string name="marker_fast_estimate">Fast estimate</string>
     <string name="trip_details_vehicle">Vehicle: %1$s</string>
     <string name="trip_details_scheduled_data">Schedule data</string>
     <plurals name="trip_details_real_time_sec_late">

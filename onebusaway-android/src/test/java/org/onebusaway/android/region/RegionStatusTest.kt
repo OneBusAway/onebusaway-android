@@ -17,6 +17,7 @@ package org.onebusaway.android.region
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -61,6 +62,33 @@ class RegionStatusTest {
         val fresh = now - 1000
         assertFalse(
             shouldForceReload(hasRegion = true, lastUpdate = fresh, now = now, oldVer = 5, newVer = 5)
+        )
+    }
+
+    // --- stillListed ---
+
+    @Test
+    fun `a current region the directory still lists is kept`() {
+        val current = region(5)
+        assertEquals(current, stillListed(current, listOf(region(2), region(5))))
+    }
+
+    @Test
+    fun `a current region the directory dropped is no region`() {
+        assertNull(stillListed(region(1), listOf(region(2), region(5))))
+    }
+
+    @Test
+    fun `no current region stays none`() {
+        assertNull(stillListed(null, listOf(region(2))))
+    }
+
+    @Test
+    fun `a dropped region with auto-select off needs manual selection instead of staying put`() {
+        val current = stillListed(region(1), listOf(region(2), region(5)))
+        assertTrue(
+            resolveRegionStatus(current, closest = null, autoSelect = false)
+                is RegionStatus.NeedsManualSelection
         )
     }
 

@@ -239,10 +239,10 @@ class DefaultRegionRepository @Inject constructor(
         }
 
         // Force a server reload when we have no region, the cache has expired, or the app updated.
-        val current = region.value
+        val saved = region.value
         val newVer = appVersionCode()
         val force = shouldForceReload(
-            hasRegion = current != null,
+            hasRegion = saved != null,
             lastUpdate = prefs.getLong(R.string.preference_key_last_region_update, 0),
             now = System.currentTimeMillis(),
             oldVer = prefs.getInt(CHECK_REGION_VER, 0),
@@ -260,6 +260,15 @@ class DefaultRegionRepository @Inject constructor(
                 .recordException(IllegalStateException("Region load failed: no regions available"))
             holder.failed()
             return@withContext RegionStatus.Failed
+        }
+
+        // The directory can drop a region (a merge, a retired deployment). A rider standing on one
+        // must not stay on it — its server is going away — so clear it and resolve as if none were
+        // set: auto-select, or the picker. Same shape as deleting the current custom region.
+        val current = stillListed(saved, results)
+        if (saved != null && current == null) {
+            Log.i(TAG, "Region ${saved.id} is no longer in the directory; re-resolving")
+            applyRegion(null, true)
         }
 
         val autoSelect = prefs.getBoolean(R.string.preference_key_auto_select_region, true)

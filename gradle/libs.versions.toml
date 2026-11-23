@@ -19,23 +19,23 @@ targetSdk = "36"
 jdk = "17"
 
 # --- Build tooling / plugins ---
-agp = "9.5.0"
+agp = "9.5.2"
 # Kotlin Gradle plugin + its compiler plugins (serialization, compose) all track this version.
 kotlin = "2.4.21"
 # KSP2 is versioned independently of Kotlin — plain semver, not the old kotlinVersion-kspVersion
 # format. Bump on its own cadence against the compatibility range in the KSP release notes.
-ksp = "2.3.12"
-googleServices = "4.5.0"
+ksp = "2.3.14"
+googleServices = "4.6.0"
 hilt = "2.60.1"
 # Apollo: the Gradle plugin and apollo-runtime share this version.
 apollo = "5.2.0"
 crashlyticsPlugin = "3.0.8"
-playPublisher = "4.1.1"
+playPublisher = "4.1.2"
 # Code formatting: the Spotless Gradle plugin drives ktlint (Kotlin / *.gradle.kts) and
 # google-java-format (the handful of *.java files). See root build.gradle.kts's spotless {} block
 # and .editorconfig (ktlint_code_style = android_studio). ktlint's version is pinned separately so
 # formatting output is reproducible across machines regardless of Spotless's bundled default.
-spotless = "8.10.4"
+spotless = "8.11.0"
 ktlint = "1.7.0"
 # Lint tooling tracks AGP: lintVersion == agpVersion + 23.0.0 (AGP 9.2.0 -> 32.2.0). Consumed by
 # the :lint-rules module.
@@ -68,10 +68,10 @@ lifecycle = "2.11.0"
 # Navigation 2.10.0 requires minSdk 24; keep 2.9.x while supporting API 23 (#2280).
 navigationCompose = "2.9.8"
 hiltNavigationCompose = "1.4.0"
-composeBom = "2026.09.00"
+composeBom = "2026.11.01"
 retrofit = "3.0.0"
 okhttp = "5.5.1"
-kotlinxSerializationJson = "1.12.0"
+kotlinxSerializationJson = "1.13.0"
 coroutines = "1.11.0"
 material = "1.14.0"
 gtfsRealtime = "0.2.0"

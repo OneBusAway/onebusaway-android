@@ -19,7 +19,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_starred_stops">Paradas favoritas</string>

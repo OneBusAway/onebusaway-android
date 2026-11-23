@@ -6,7 +6,8 @@
     </domain-config>
     <!-- KiedyBus's servers (*.iplaner.pl) chain to Certum Trusted Root CA, which isn't in the system
          trust store on older Android releases. Trust it for these hosts only, alongside the system
-         store; HTTPS stays mandatory. -->
+         store; HTTPS stays mandatory. Network security config is only read from API 24, so this
+         does nothing on Android 6.0 (API 23). -->
     <domain-config>
         <domain includeSubdomains="true">iplaner.pl</domain>
         <trust-anchors>

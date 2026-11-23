@@ -70,6 +70,14 @@ internal fun shouldForceReload(
 ): Boolean = !hasRegion || (now - lastUpdate > REGION_UPDATE_THRESHOLD_MS) || (oldVer < newVer)
 
 /**
+ * [current] if the loaded [regions] still contain it (by id, matching `Region.equals`), else null:
+ * a region the directory has dropped is no region at all. [regions] is `RegionCache.loadRegions`'
+ * result, which unions in the rider's custom regions, so a custom region is never delisted by a
+ * directory refresh.
+ */
+internal fun stillListed(current: Region?, regions: List<Region>): Region? = current?.takeIf { c -> regions.any { it.id == c.id } }
+
+/**
  * The pure region-selection branches from `ObaRegionsTask.onPostExecute` (regions compared by id,
  * matching `Region.equals`). [closest] is precomputed by the caller — it is null when
  * auto-selection is off or no usable region is within range.

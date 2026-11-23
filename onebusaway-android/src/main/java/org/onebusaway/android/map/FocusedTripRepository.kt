@@ -25,8 +25,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.models.FocusedTrip
@@ -69,8 +67,6 @@ interface FocusedTripRepository {
     suspend fun getStops(trips: Set<FocusedTrip>): FocusedTripStops
 }
 
-private const val MAX_CONCURRENT_SHAPE_FETCHES = 2
-
 @Singleton
 class DefaultFocusedTripRepository internal constructor(
     private val observations: TripObservationRepository,
@@ -93,7 +89,6 @@ class DefaultFocusedTripRepository internal constructor(
     )
 
     private val shapeFetches = SingleFlight<String, List<GeoPoint>>(fetchScope)
-    private val shapePermits = Semaphore(MAX_CONCURRENT_SHAPE_FETCHES)
 
     override suspend fun getGeometry(trips: Set<FocusedTrip>): FocusedTripGeometry = coroutineScope {
         val tripsWithShapes = ArrayList<FocusedTrip>()
@@ -130,13 +125,12 @@ class DefaultFocusedTripRepository internal constructor(
 
     override suspend fun getStops(trips: Set<FocusedTrip>): FocusedTripStops = coroutineScope {
         val schedules = async {
-            trips.map { trip ->
+            stopListGroups(trips).map { group ->
                 async {
-                    trip.tripId to resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) }
-                        ?.stopTimes
-                        ?.map { it.stopId }
+                    val stopIds = groupStopList(group)
+                    group.map { it.tripId to stopIds }
                 }
-            }.awaitAll()
+            }.awaitAll().flatten()
         }
         val catalogs = async {
             trips.mapTo(LinkedHashSet()) { it.routeId }
@@ -154,6 +148,34 @@ class DefaultFocusedTripRepository internal constructor(
             }
         }
         FocusedTripStops(stopIdsByTripId, stopsById)
+    }
+
+    /**
+     * The focused [trips] grouped so each group needs one schedule fetch for its stop list.
+     *
+     * HEURISTIC, human-signed-off in PR #2405. The assumption: trips of one route-direction that share
+     * a shapeId stop at the same stops, so the first one's schedule stands in for the rest. Why: a
+     * stop list is only in a trip's own schedule, one `trip-details` request each, and a focused stop
+     * shows every trip due in the next hour, about 20–30 requests at once. That burst tripped the
+     * server's rate limit, and no endpoint returns stop lists for a stop's trips in one request.
+     * Failure mode: GTFS doesn't promise it. A trip that runs the same path but skips stops (an
+     * express on the same street) is drawn with its group-mate's stops, so a few stops it passes
+     * without stopping get markers. A trip with no shapeId is never grouped.
+     */
+    private fun stopListGroups(trips: Set<FocusedTrip>): List<List<FocusedTrip>> {
+        val (shaped, unshaped) = trips.partition { it.shapeId != null }
+        return shaped.groupBy { it.routeDirection to it.shapeId }.values + unshaped.map { listOf(it) }
+    }
+
+    /**
+     * The stop list of [group]: a member's already-stored schedule if one has it (the route poll stores
+     * active trips'), else its first member's, fetched. One fetch per group, never a retry through the
+     * rest: a failure is usually a 429 or a lost connection, which every member would hit too.
+     */
+    private suspend fun groupStopList(group: List<FocusedTrip>): List<String>? {
+        val schedule = group.firstNotNullOfOrNull { observations.lookupTripState(it.tripId)?.schedule }
+            ?: group.first().let { trip -> resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) } }
+        return schedule?.stopTimes?.map { it.stopId }
     }
 
     // Caching + coalescing live in the shared StopsForRouteRepository, so the same fetch backs the
@@ -180,13 +202,11 @@ class DefaultFocusedTripRepository internal constructor(
      * inside [TripObservationRepository.ensureShape] (keyed by shapeId, no TTL — GTFS shapes are
      * immutable), so this holds no shape cache of its own: it coalesces concurrent decodes for one
      * shape and re-decodes the (already-cached) polyline per focus. The map is cheap and runs on a
-     * focus change, not the per-frame path; the permit caps concurrent shape fetches.
+     * focus change, not the per-frame path. Concurrent network fetches are bounded by the fetcher.
      */
     private suspend fun fetchShape(tripId: String, shapeId: String): List<GeoPoint>? = shapeFetches.run(shapeId) {
-        shapePermits.withPermit {
-            // The cached [Polyline] already holds decoded [GeoPoint]s — just hand back its points.
-            resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }?.points
-        }
+        // The cached [Polyline] already holds decoded [GeoPoint]s — just hand back its points.
+        resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }?.points
     }
 }
 

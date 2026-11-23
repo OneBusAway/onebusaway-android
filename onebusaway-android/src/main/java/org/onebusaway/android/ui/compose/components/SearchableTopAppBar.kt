@@ -43,10 +43,19 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.icons.AppIcons
 
 /** The familiar toolbar search action is available from restored list sections as well as the map. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchableTopAppBar(
     title: String,
+    onBack: () -> Unit,
+    onSearch: (String) -> Unit,
+    content: @Composable RowScope.() -> Unit = {}
+) = SearchableTopAppBar(title = { Text(title) }, onBack = onBack, onSearch = onSearch, content = content)
+
+/** [SearchableTopAppBar] with a [title] of the caller's own, shown whenever the search field isn't. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchableTopAppBar(
+    title: @Composable () -> Unit,
     onBack: () -> Unit,
     onSearch: (String) -> Unit,
     content: @Composable RowScope.() -> Unit = {}
@@ -74,7 +83,7 @@ fun SearchableTopAppBar(
                     })
                 )
             } else {
-                Text(title)
+                title()
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),

@@ -67,6 +67,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -84,27 +86,34 @@ import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
-private const val REFRESH_PERIOD_MS = 60_000L
+private val REFRESH_PERIOD = 60.seconds
+
+/**
+ * The wait before the next arrivals poll, [sinceLastResponse] after the last one: what's left of the
+ * 60s period, or of [earlyRetryAfter] when that refresh met a rate limit (see
+ * [ArrivalsViewModel.earlyRetryAfter]). Measured from the response either way, so a pause and resume
+ * keeps the same schedule.
+ */
+internal fun nextArrivalsPollDelay(sinceLastResponse: Duration, earlyRetryAfter: Duration?): Duration = ((earlyRetryAfter ?: REFRESH_PERIOD) - sinceLastResponse).coerceIn(Duration.ZERO, REFRESH_PERIOD)
 
 /** How many service alerts the alert list shows before the "show more" link, and the page size each
  *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */
 private const val ALERT_PAGE_SIZE = 3
 
 /**
- * The lifecycle-scoped 60s polling loop, shared by the standalone screen and the map panel.
+ * The lifecycle-scoped 60s polling loop (see [nextArrivalsPollDelay]), shared by the standalone
+ * screen and the map panel.
  * Runs only while RESUMED (cancelled on pause, like the legacy Handler) and refreshes immediately
- * on resume if the window already elapsed.
+ * on resume if the wait already elapsed.
  */
 @Composable
 internal fun ArrivalsPolling(viewModel: ArrivalsViewModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val sinceLast = (WallTime.now() - viewModel.lastResponseTime).inWholeMilliseconds
-            delay((REFRESH_PERIOD_MS - sinceLast).coerceIn(0L, REFRESH_PERIOD_MS))
             while (isActive) {
+                delay(nextArrivalsPollDelay(WallTime.now() - viewModel.lastResponseTime, viewModel.earlyRetryAfter))
                 viewModel.refresh()
-                delay(REFRESH_PERIOD_MS)
             }
         }
     }

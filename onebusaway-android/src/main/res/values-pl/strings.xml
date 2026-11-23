@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_starred_stops">Ulubione przystanki</string>
@@ -184,6 +183,9 @@
     <string name="stop_info_option_refresh">Odśwież</string>
     <string name="stop_info_option_report_problem">Zgłoś problem z przystankiem</string>
     <string name="stop_info_option_night_light">Światło nocne</string>
+    <string name="stop_info_option_editname">Edytuj nazwy przystanków</string>
+    <string name="stop_info_save">Zapisz</string>
+    <string name="stop_info_official_stop_name_label">Oficjalna nazwa: %1$s</string>
     <string name="stop_info_option_hide_alerts">Ukryj aktywne alerty</string>
     <string name="stop_info_nodata_minutes">Brak przyjazdów przez następne %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
@@ -515,7 +517,7 @@
 
     <string name="preferences_oba_api_servername_title">Serwer API %1$s</string>
     <string name="preferences_oba_api_servername_summary">Określa serwer używany w wywołaniach API %1$s</string>
-    <string name="preferences_oba_api_servername_hint">example.KiedyBus.org</string>
+    <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
     <string name="preferences_otp_api_servername_title">Serwer API OpenTripPlanner</string>
     <string name="preferences_otp_api_servername_summary">Określa serwer używany w wywołaniach API OpenTripPlanner
     </string>

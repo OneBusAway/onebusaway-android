@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
@@ -87,6 +88,7 @@ import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
+import org.onebusaway.android.ui.compose.components.RenameStopDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -157,6 +159,7 @@ import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.MyTextUtils
 
 /**
  * The home screen's tap/UI callbacks, bundled into one holder (mirrors [org.onebusaway.android.ui.survey.SurveyCallbacks]) so
@@ -513,10 +516,28 @@ fun HomeScreen(
                     homeViewModel.onRideArrivals(stopId, rideArrivalGroups ?: return@LaunchedEffect)
                 }
                 var serviceAlertsVisible by remember(stopFocus?.stop?.id) { mutableStateOf(false) }
+                var renameStopVisible by remember(stopFocus?.stop?.id) { mutableStateOf(false) }
+                // The focused stop's stored names (#2414). Read live rather than off the arrivals load, so
+                // a rename shows the moment it's saved instead of on the next poll.
+                val storedStopNames by remember(stopFocus?.stop?.id) {
+                    stopFocus?.stop?.id?.let(focusBannerViewModel::stopNames) ?: flowOf(null)
+                }.collectAsStateWithLifecycle(null)
+                val stopUserName = storedStopNames?.customName
+                // The official name: the loaded arrivals', else the stored one, else the focus's own. The
+                // focus's is last because a stop revealed from a search result carries the name shown
+                // there, which may be the rider's, and a map tap carries the server's unformatted one.
+                val officialStopTitle = stopFocus?.let { focus ->
+                    arrivalsContent?.header?.name?.takeIf { it.isNotBlank() }
+                        ?: storedStopNames?.name?.takeIf { it.isNotBlank() }
+                        // Formatted as the other two already are, so a rename compares like with like.
+                        ?: MyTextUtils.formatDisplayText(focus.stop.name).orEmpty()
+                }
+                // The stop as the banner, its rename dialog and its shortcut all name it.
+                val stopTitle = stopUserName ?: officialStopTitle.orEmpty()
                 val focusBannerState: FocusBannerState? = when (currentFocus) {
                     is CurrentFocus.Stop -> FocusBannerState.Stop(
-                        title = arrivalsContent?.header?.name?.takeIf { it.isNotBlank() }
-                            ?: currentFocus.stop.name.orEmpty(),
+                        title = stopTitle,
+                        isCustomName = stopUserName != null,
                         direction = arrivalsContent?.header?.direction,
                         stopCode = arrivalsContent?.stopCode ?: currentFocus.stop.code,
                         // Star state + toggle come from the favorites store keyed by stop id, so the star
@@ -562,7 +583,9 @@ fun HomeScreen(
                                         name = banner.title,
                                         lat = at.latitude,
                                         lon = at.longitude,
-                                        isTransit = true
+                                        isTransit = true,
+                                        // A renamed stop keeps its custom-name glyph in the plan (#2414).
+                                        isCustomName = banner.isCustomName
                                     ),
                                     homeViewModel,
                                     mapViewModel,
@@ -950,16 +973,22 @@ fun HomeScreen(
                                                         onNightLight = callbacks.onNightLight,
                                                         onCreateShortcut = {
                                                             stopFocus?.stop?.let { stop ->
-                                                                val name = stop.name?.takeIf { it.isNotBlank() } ?: stop.id
+                                                                // Labelled as the banner names the stop, the
+                                                                // rider's own name included (#2414); the board
+                                                                // it opens resolves its own title.
+                                                                val name = stopTitle.takeIf { it.isNotBlank() } ?: stop.id
                                                                 Shortcuts.createStopShortcut(
                                                                     app,
                                                                     name,
-                                                                    StopLauncher.Builder(app, stop.id).setStopName(stop.name)
+                                                                    StopLauncher.Builder(app, stop.id).setStopName(officialStopTitle)
                                                                 )
                                                             }
                                                         },
                                                         onShowArrivals = { stopFocus?.stop?.let(callbacks.onShowArrivals) },
-                                                        onNavigateHere = navigateToFocusedStop
+                                                        onNavigateHere = navigateToFocusedStop,
+                                                        onRename = stopFocus?.stop?.point?.let {
+                                                            { renameStopVisible = true }
+                                                        }
                                                     )
                                                 },
                                                 // The direction menu calls straight into the map VM (which
@@ -1205,6 +1234,16 @@ fun HomeScreen(
                                 }
                             }
                         }
+                    }
+
+                    val renamedStop = stopFocus?.stop
+                    if (renameStopVisible && renamedStop != null) {
+                        RenameStopDialog(
+                            currentName = stopTitle,
+                            officialName = officialStopTitle,
+                            onSave = { focusBannerViewModel.renameStop(renamedStop, it) },
+                            onDismiss = { renameStopVisible = false }
+                        )
                     }
 
                     if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {

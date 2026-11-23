@@ -109,7 +109,11 @@ internal fun ObaEnvelope<EntryWithReferences<TripDetailsEntry>>.asSingleRouteTri
  */
 interface TripVehiclesDataSource {
 
-    suspend fun tripsForRoute(routeId: String): Result<RouteTrips>
+    /**
+     * Every trip on [routeId] with its real-time status. [includeSchedules] also carries each entry's
+     * full schedule, at about four times the bytes.
+     */
+    suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips>
 
     suspend fun tripDetails(tripId: String): Result<RouteTrips>
 
@@ -132,8 +136,8 @@ class DefaultTripVehiclesDataSource @Inject constructor(
     private val api: ObaApiProvider
 ) : TripVehiclesDataSource {
 
-    override suspend fun tripsForRoute(routeId: String): Result<RouteTrips> = api.call {
-        it.tripsForRoute(routeId).asRouteTrips()
+    override suspend fun tripsForRoute(routeId: String, includeSchedules: Boolean): Result<RouteTrips> = api.call {
+        it.tripsForRoute(routeId, includeSchedule = includeSchedules).asRouteTrips()
     }.onFailure { Log.e(TAG, "tripsForRoute($routeId) failed", it) }
 
     override suspend fun tripDetails(tripId: String): Result<RouteTrips> = api.call {

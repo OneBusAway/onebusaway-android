@@ -20,6 +20,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlin.time.Duration
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.tracking.TrackedRouteStore
@@ -50,7 +52,8 @@ import org.onebusaway.android.tracking.TrackedRouteStore
 class ArrivalsViewModel @AssistedInject constructor(
     @Assisted private val stopId: String,
     private val repository: ArrivalsRepository,
-    private val trackedRoutes: TrackedRouteStore
+    private val trackedRoutes: TrackedRouteStore,
+    private val rateLimit: ObaRateLimit
 ) : ViewModel() {
 
     @AssistedFactory
@@ -105,6 +108,19 @@ class ArrivalsViewModel @AssistedInject constructor(
         private set
 
     /**
+     * How soon after [lastResponseTime] to poll again when that refresh met a rate limit, instead of
+     * the full period: until the server may be asked again (#2410), so a stop opened during a 429
+     * cooldown isn't left on an error or stale arrivals for a minute. Only after the first refresh in a
+     * row that wasn't fresh: one early retry per streak, so a limit that persists doesn't speed the
+     * board up. Null otherwise.
+     */
+    var earlyRetryAfter: Duration? = null
+        private set
+
+    /** Whether the refresh before the latest one landed fresh data, for [earlyRetryAfter]. */
+    private var lastRefreshFresh = true
+
+    /**
      * Bumped at the start of every [refresh]; a refresh applies its result only while it's still the
      * latest. The poll loop awaits its own `refresh()` sequentially, but [manualRefresh]/[loadMore]
      * each launch one, so a user refresh can run concurrently with an in-flight poll and finish out of
@@ -122,8 +138,8 @@ class ArrivalsViewModel @AssistedInject constructor(
      *
      * Returns true when a *fresh* network response landed and was applied — a stale fallback (the
      * repository returns the last good data flagged `isStale` on failure-with-content), a hard failure,
-     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore]; the
-     * poll loop ignores it.
+     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore], and
+     * sets [earlyRetryAfter].
      */
     suspend fun refresh(): Boolean {
         val generation = ++refreshGeneration
@@ -133,7 +149,7 @@ class ArrivalsViewModel @AssistedInject constructor(
         // (measured against the *shown* data) past the fresher completion. See #1933.
         if (generation != refreshGeneration) return false
         lastResponseTime = WallTime.now()
-        return result.fold(
+        val fresh = result.fold(
             onSuccess = { data ->
                 minutesAfter = data.minutesAfter
                 fatalError.value = null
@@ -146,6 +162,9 @@ class ArrivalsViewModel @AssistedInject constructor(
                 false
             }
         )
+        earlyRetryAfter = if (!fresh && lastRefreshFresh) rateLimit.rateLimitedFor() else null
+        lastRefreshFresh = fresh
+        return fresh
     }
 
     /** Refreshes from a user action (the toolbar refresh button or Retry). */

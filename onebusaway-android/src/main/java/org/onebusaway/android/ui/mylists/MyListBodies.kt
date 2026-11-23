@@ -18,11 +18,18 @@ package org.onebusaway.android.ui.mylists
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.ui.common.Shortcuts
+import org.onebusaway.android.ui.compose.components.RenameStopDialog
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.nav.StopReveal
 import org.onebusaway.android.ui.search.RouteSearchContent
 import org.onebusaway.android.ui.search.RouteSearchResult
@@ -40,23 +47,41 @@ import org.onebusaway.android.util.GeoPoint
  * search destination still resolves the host via [findActivity] for its schedule/shortcut actions.
  */
 
+/**
+ * A stop list. [actions] gets each row with an `onRename` that raises this list's rename dialog
+ * (#2414) — the dialog is the list's, not the caller's, since every stop list can rename. The rename
+ * saves through the same [FocusBannerViewModel] the map banner and arrivals board do, so every surface
+ * shares one write path.
+ */
 @Composable
 fun StopListDestination(
     viewModel: MyListViewModel<StopListItem>,
     @StringRes emptyText: Int,
     onClick: (StopListItem) -> Unit,
-    actions: (StopListItem) -> List<RowAction>,
+    actions: (stop: StopListItem, onRename: () -> Unit) -> List<RowAction>,
     // Long-pressing an arrival badge starts or stops that bus's live countdown (#2166). Only the
     // starred-stops lists pass it — they are the only ones that render arrival badges at all.
     onToggleTracking: ((ArrivalBadge) -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val stopNames: FocusBannerViewModel = hiltViewModel()
+    var renaming by remember { mutableStateOf<StopListItem?>(null) }
     MyListContent(state, emptyText = stringResource(emptyText), itemKey = { it.id }) { stop ->
         StopRow(
             stop,
             onClick = { onClick(stop) },
-            actions = actions(stop),
+            actions = actions(stop) { renaming = stop },
             onToggleTracking = onToggleTracking
+        )
+    }
+    renaming?.let { stop ->
+        RenameStopDialog(
+            currentName = stop.name,
+            officialName = stop.officialName,
+            onSave = {
+                stopNames.renameStop(FocusedStop(stop.id, stop.officialName, point = GeoPoint(stop.lat, stop.lon)), it)
+            },
+            onDismiss = { renaming = null }
         )
     }
 }

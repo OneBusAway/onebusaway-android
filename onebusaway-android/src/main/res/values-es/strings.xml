@@ -254,6 +254,9 @@
     <string name="stop_info_option_refresh">Refrescar</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
+    <string name="stop_info_option_editname">Editar el nombre de la parada</string>
+    <string name="stop_info_save">Guardar</string>
+    <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
     <string name="stop_info_option_hide_alerts">Ocultar alertas</string>
     <string name="stop_info_canceled">CANCELADO</string>
     <string name="stop_info_canceled_arrival">Llegada cancelada</string>

@@ -165,7 +165,8 @@ class LegacyDataImporter(
                     useCount = int("use_count") ?: 0,
                     latitude = dbl("latitude") ?: 0.0,
                     longitude = dbl("longitude") ?: 0.0,
-                    userName = str("user_name"),
+                    // An empty name is no name (#2414): normalized here, where it enters.
+                    userName = customStopName(str("user_name")),
                     accessTime = long("access_time"),
                     favorite = int("favorite"),
                     regionId = long("region_id")

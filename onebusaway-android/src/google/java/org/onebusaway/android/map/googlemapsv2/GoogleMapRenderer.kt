@@ -697,7 +697,7 @@ class GoogleMapRenderer(
                     .icon(dataAgeIcon(fillColor))
                     .anchor(0.5f, 0.5f)
                     .zIndex(DATA_AGE_Z_INDEX)
-                    .title(MOST_RECENT_DATA_TITLE)
+                    .title(context.getString(R.string.marker_most_recent_data))
                     .snippet(formatDataAge(context.resources, ageSeconds))
             )
             mostRecentDataMarker = marker
@@ -968,8 +968,6 @@ class GoogleMapRenderer(
         private const val HINT_DASH_LENGTH_PX = 24f
         private const val TRAIL_DASH_LENGTH_PX = HINT_DASH_LENGTH_PX * 2f
         private const val DASH_GAP_LENGTH_PX = 16f
-
-        private const val MOST_RECENT_DATA_TITLE = "Most recent data"
 
         // Comfortably covers a busy route's live working set — a vehicle type's 8 heading octants across a
         // handful of route colors, times a few route types, plus the fast-estimate + dot icons

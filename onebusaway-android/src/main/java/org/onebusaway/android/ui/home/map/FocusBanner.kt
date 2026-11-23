@@ -78,7 +78,10 @@ import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
+import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
+import org.onebusaway.android.ui.compose.components.stopNamePlaceholders
+import org.onebusaway.android.ui.compose.components.stopNameText
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
@@ -140,7 +143,12 @@ data class StopFocusMenu(
      * there is nothing to route to yet; that is the same beat the banner's star waits on, and it has
      * passed by the time the menu itself is up in every entry point but that one.
      */
-    val onNavigateHere: (() -> Unit)?
+    val onNavigateHere: (() -> Unit)?,
+    /**
+     * Give the stop a name of the rider's own (#2414). Null on the same condition as [onNavigateHere]:
+     * naming a stop records it in the stops table, which needs its location.
+     */
+    val onRename: (() -> Unit)? = null
 )
 
 /**
@@ -152,6 +160,8 @@ sealed interface FocusBannerState {
 
     data class Stop(
         val title: String,
+        /** [title] is the rider's own name for the stop rather than its official one (#2414). */
+        val isCustomName: Boolean = false,
         val direction: String?,
         val stopCode: String?,
         override val isFavorite: Boolean,
@@ -292,7 +302,7 @@ private fun StopFocusBanner(
                 onClick = onRecenter
             )
         ) {
-            ShrinkToFitStopTitle(state.title)
+            ShrinkToFitStopTitle(state.title, isCustomName = state.isCustomName)
             val wheelchairGlyph = wheelchairGlyph(state.wheelchairBoarding)
             if (subtitle != null || wheelchairGlyph != null) {
                 Row(
@@ -352,32 +362,39 @@ private fun StopFocusBanner(
  * showed.
  */
 @Composable
-private fun ShrinkToFitStopTitle(title: String) {
+private fun ShrinkToFitStopTitle(title: String, isCustomName: Boolean) {
     val fullStyle = MaterialTheme.typography.titleLarge
     val floorSize = MaterialTheme.typography.titleMedium.fontSize
     val textMeasurer = rememberTextMeasurer()
     var maxWidthPx by remember { mutableIntStateOf(0) }
+    // The custom-name glyph (#2414) is measured as the placeholder it renders as, so the fit counts its width.
+    val text = remember(title, isCustomName) { stopNameText(title, isCustomName) }
+    val placeholders = stopNamePlaceholders(isCustomName)
 
     fun fitsWithinLineCap(fontSize: TextUnit) = maxWidthPx <= 0 ||
         textMeasurer.measure(
-            text = title,
+            text = text,
             style = fullStyle.copy(fontSize = fontSize),
+            placeholders = placeholders,
             constraints = Constraints(maxWidth = maxWidthPx)
         ).lineCount <= MAX_TITLE_LINES
 
-    val resolvedSize = remember(title, maxWidthPx) {
+    val resolvedSize = remember(text, maxWidthPx) {
         var candidate = fullStyle.fontSize
         while (candidate > floorSize && !fitsWithinLineCap(candidate)) {
             candidate = (candidate.value - 1).sp
         }
         candidate
     }
-    Text(
-        text = title,
+    StopNameText(
+        name = title,
+        isCustomName = isCustomName,
         style = fullStyle.copy(fontSize = resolvedSize),
         maxLines = MAX_TITLE_LINES,
         overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.fillMaxWidth().onSizeChanged { maxWidthPx = it.width }
+        modifier = Modifier
+            .fillMaxWidth()
+            .onSizeChanged { maxWidthPx = it.width }
     )
 }
 
@@ -608,8 +625,9 @@ private fun HeaderIconButton(
 
 /**
  * The focused stop's overflow: the stop actions that are neither frequent enough for their own icon nor
- * expressible on the map: a trip planned to the stop, the mapless board, a home-screen shortcut, a
- * problem report against the stop, and the night-light flasher a rider holds up to a driver.
+ * expressible on the map: a trip planned to the stop, the mapless board, a name of the rider's own, a
+ * home-screen shortcut, a problem report against the stop, and the night-light flasher a rider holds up
+ * to a driver.
  *
  * "Navigate here" leads because it is the one item a rider looking at a stop is likely to want (#2272);
  * the rest answer situations, not intentions.
@@ -633,6 +651,12 @@ private fun StopMenuAction(menu: StopFocusMenu, expanded: Boolean, onExpandedCha
             MenuRow(R.string.view_arrivals_only) {
                 onExpandedChange(false)
                 menu.onShowArrivals()
+            }
+            menu.onRename?.let { rename ->
+                MenuRow(R.string.stop_info_option_editname) {
+                    onExpandedChange(false)
+                    rename()
+                }
             }
             MenuRow(R.string.my_context_create_shortcut) {
                 onExpandedChange(false)

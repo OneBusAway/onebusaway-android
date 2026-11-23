@@ -35,6 +35,7 @@ import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
+import org.onebusaway.android.database.oba.StopNamesRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
@@ -128,6 +129,8 @@ class FocusBannerViewModelTest {
 private abstract class FakeStopDaoBase : StopDao {
     override suspend fun userInfo(stopId: String): StopUserInfoRow? = null
     override suspend fun setFavorite(stopId: String, favorite: Int) = Unit
+    override suspend fun setUserName(stopId: String, userName: String?) = Unit
+    override fun names(stopId: String): Flow<StopNamesRow?> = flowOf(null)
     override suspend fun userInfoMap(): List<StopUserInfoMapRow> = emptyList()
     override suspend fun location(stopId: String): StopLocationRow? = null
     override suspend fun nameForStop(stopId: String): String? = null

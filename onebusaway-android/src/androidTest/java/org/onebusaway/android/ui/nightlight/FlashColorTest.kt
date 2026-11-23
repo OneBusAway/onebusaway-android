@@ -22,22 +22,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
  * The night light must not flash until the user has accepted the epilepsy intro (#2358): the intro
  * dialog leaves the activity RESUMED, so [rememberFlashColor]'s `accepted` input is the only thing
- * holding the strobe back while the warning is on screen.
+ * holding the strobe back while the warning is on screen. Once it flashes, the screen's Start/Stop
+ * control must say which state it's in (#2424).
  */
 @RunWith(AndroidJUnit4::class)
 class FlashColorTest {
@@ -98,6 +105,49 @@ class FlashColorTest {
         compose.runOnIdle { paused = true }
         compose.mainClock.advanceTimeBy(STEP_MS)
         assertEquals(setOf(COLOR_DARK), colorsOver(1_000, color))
+    }
+
+    /**
+     * The Start/Stop Light button stays on screen in both states and flips its label, and a tap
+     * anywhere on the light toggles it too. A stopped light says so (#2424).
+     */
+    @Test
+    fun stopAndStartLight() {
+        // The flash loop never idles, so step the clock by hand rather than let the rule chase it.
+        compose.mainClock.autoAdvance = false
+        compose.setContent { NightLightScreen(accepted = true, onBack = {}, onCreateShortcut = {}) }
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val stopped = context.getString(R.string.night_light_stopped)
+        val stopLight = context.getString(R.string.night_light_stop_light)
+        val startLight = context.getString(R.string.night_light_start_light)
+
+        fun assertFlashing() {
+            compose.onNodeWithText(stopped).assertDoesNotExist()
+            compose.onNodeWithText(stopLight).assertExists()
+            compose.onNodeWithText(startLight).assertDoesNotExist()
+        }
+
+        fun assertStopped() {
+            compose.onNodeWithText(stopped).assertExists()
+            compose.onNodeWithText(startLight).assertExists()
+            compose.onNodeWithText(stopLight).assertDoesNotExist()
+        }
+
+        fun SemanticsNodeInteraction.tap() {
+            performClick()
+            compose.mainClock.advanceTimeByFrame()
+        }
+        assertFlashing()
+
+        compose.onNodeWithText(stopLight).tap()
+        assertStopped()
+        compose.onNodeWithText(startLight).tap()
+        assertFlashing()
+
+        compose.onNodeWithTag(FLASH_AREA_TEST_TAG).tap()
+        assertStopped()
+        compose.onNodeWithTag(FLASH_AREA_TEST_TAG).tap()
+        assertFlashing()
     }
 
     private class ResumedLifecycleOwner : LifecycleOwner {

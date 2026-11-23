@@ -61,8 +61,8 @@ android {
         // year, then any patch on it. 26.2.0 is the second release of 2026. The minor is NOT the
         // month: 26.1.0 shipped in March. See "Version numbering" in docs/RELEASING.md, and bump it
         // by hand.
-        versionCode = 206
-        versionName = "26.4.0"
+        versionCode = 153
+        versionName = "26.4.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

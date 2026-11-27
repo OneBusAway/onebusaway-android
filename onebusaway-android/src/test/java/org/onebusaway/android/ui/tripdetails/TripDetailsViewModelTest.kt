@@ -32,6 +32,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.api.RateLimitedException
 import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.TripMapReveal
 import retrofit2.HttpException
@@ -59,7 +61,17 @@ private class FakeTripDetailsRepository(
 }
 
 // The view model under test, with no rate limit unless a test sets one.
-private fun tripDetailsViewModel(savedState: SavedStateHandle, repository: TripDetailsRepository, rateLimit: ObaRateLimit = ObaRateLimit { null }) = TripDetailsViewModel(savedState, repository, rateLimit)
+private fun tripDetailsViewModel(
+    savedState: SavedStateHandle,
+    repository: TripDetailsRepository,
+    rateLimit: ObaRateLimit = ObaRateLimit { null },
+    clock: ElapsedClock = ElapsedClock { ElapsedTime(1_000L) }
+) = TripDetailsViewModel(savedState, repository, rateLimit, clock)
+
+// A refused load exactly as the real repository reports it: wrapped in the rider-facing message.
+private fun asRepositoryFailure(failure: Throwable) = tripLoadFailure(failure) { COMM_ERROR }
+
+private const val COMM_ERROR = "Sorry, there was a communication error"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripDetailsViewModelTest {
@@ -120,7 +132,7 @@ class TripDetailsViewModelTest {
 
     @Test
     fun `a rate-limited first load stays Loading and retries when the limit lifts`() = runTest {
-        val refused = IOException("Sorry, there was a communication error", RateLimitedException(5.seconds))
+        val refused = asRepositoryFailure(RateLimitedException(5.seconds))
         val repository = FakeTripDetailsRepository(Result.failure(refused))
         val viewModel = tripDetailsViewModel(handle(), repository, rateLimit = { 5.seconds })
 
@@ -137,14 +149,69 @@ class TripDetailsViewModelTest {
     }
 
     @Test
-    fun `a 429 that arrives after the cooldown ended retries right away`() = runTest {
-        val refused = IOException("Sorry, there was a communication error", HttpException(Response.error<Unit>(429, "".toResponseBody())))
+    fun `a rate limit that persists gets one early retry, then shows the error and waits the full period`() = runTest {
+        val refused = asRepositoryFailure(RateLimitedException(5.seconds))
+        val repository = FakeTripDetailsRepository(Result.failure(refused))
+        val viewModel = tripDetailsViewModel(handle(), repository, rateLimit = { 5.seconds })
+
+        viewModel.refresh()
+        assertEquals(TripDetailsUiState.Loading, viewModel.state.value)
+        assertEquals(5.seconds, viewModel.earlyRetryAfter)
+
+        // The early retry is refused too: stop asking every cooldown, and say why nothing loaded.
+        viewModel.refresh()
+        assertEquals(TripDetailsUiState.Error(COMM_ERROR), viewModel.state.value)
+        assertNull("a limit that persists doesn't speed the page up", viewModel.earlyRetryAfter)
+
+        viewModel.refresh()
+        assertEquals(TripDetailsUiState.Error(COMM_ERROR), viewModel.state.value)
+        assertNull(viewModel.earlyRetryAfter)
+    }
+
+    @Test
+    fun `a new streak of rate limits earns a new early retry`() = runTest {
+        val refused = asRepositoryFailure(RateLimitedException(5.seconds))
+        val repository = FakeTripDetailsRepository(Result.failure(refused))
+        val viewModel = tripDetailsViewModel(handle(), repository, rateLimit = { 5.seconds })
+        viewModel.refresh()
+        viewModel.refresh()
+        assertNull(viewModel.earlyRetryAfter)
+
+        // A different failure ends the streak.
+        repository.result = Result.failure(IOException("No network"))
+        viewModel.refresh()
+        assertEquals(TripDetailsUiState.Error("No network"), viewModel.state.value)
+
+        repository.result = Result.failure(refused)
+        viewModel.refresh()
+        assertEquals(TripDetailsUiState.Loading, viewModel.state.value)
+        assertEquals(5.seconds, viewModel.earlyRetryAfter)
+    }
+
+    @Test
+    fun `a 429 that arrives after the cooldown ended shows the error and waits the full period`() = runTest {
+        // The gate counts its cooldown from when the request was sent, so a slow 429 finds it open:
+        // there is no wait to read off it, and the server has only just refused.
+        val refused = asRepositoryFailure(HttpException(Response.error<Unit>(429, "".toResponseBody())))
         val viewModel = tripDetailsViewModel(handle(), FakeTripDetailsRepository(Result.failure(refused)), rateLimit = { null })
 
         viewModel.refresh()
 
-        assertEquals(TripDetailsUiState.Loading, viewModel.state.value)
-        assertEquals(Duration.ZERO, viewModel.earlyRetryAfter)
+        assertEquals(TripDetailsUiState.Error(COMM_ERROR), viewModel.state.value)
+        assertNull("never an immediate re-request", viewModel.earlyRetryAfter)
+    }
+
+    @Test
+    fun `the time since the last response is measured on the monotonic clock`() = runTest {
+        var now = ElapsedTime(1_000L)
+        val viewModel = tripDetailsViewModel(handle(), FakeTripDetailsRepository(Result.success(data())), clock = { now })
+        assertNull("nothing has loaded yet", viewModel.sinceLastResponse())
+
+        viewModel.refresh()
+        assertEquals(Duration.ZERO, viewModel.sinceLastResponse())
+
+        now += 8.seconds
+        assertEquals(8.seconds, viewModel.sinceLastResponse())
     }
 
     @Test
@@ -154,7 +221,7 @@ class TripDetailsViewModelTest {
         viewModel.refresh()
         assertEquals(TripDetailsUiState.Error("No network"), viewModel.state.value)
 
-        repository.result = Result.failure(RateLimitedException(5.seconds))
+        repository.result = Result.failure(asRepositoryFailure(RateLimitedException(5.seconds)))
         viewModel.refresh()
 
         assertEquals(TripDetailsUiState.Loading, viewModel.state.value)
@@ -182,7 +249,7 @@ class TripDetailsViewModelTest {
         val viewModel = tripDetailsViewModel(handle(), repository, rateLimit = { 5.seconds })
         viewModel.refresh()
 
-        repository.result = Result.failure(RateLimitedException(5.seconds))
+        repository.result = Result.failure(asRepositoryFailure(RateLimitedException(5.seconds)))
         viewModel.refresh()
 
         assertTrue(viewModel.state.value is TripDetailsUiState.Content)

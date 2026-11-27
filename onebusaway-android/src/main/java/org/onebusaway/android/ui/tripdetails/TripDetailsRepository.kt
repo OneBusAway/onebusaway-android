@@ -32,6 +32,7 @@ import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.api.data.TripDetails
 import org.onebusaway.android.api.data.TripDetailsDataSource
+import org.onebusaway.android.api.isRateLimited
 import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
@@ -91,6 +92,20 @@ interface TripDetailsRepository {
     fun lastLoadedTime(): Long?
 }
 
+/**
+ * A trip load that failed with nothing to fall back on. Its message is the rider-facing text;
+ * [rateLimited] says the server refused it for now (see [isRateLimited]), which
+ * [TripDetailsViewModel] waits out rather than reports (#2416).
+ */
+class TripLoadException(message: String, val rateLimited: Boolean, cause: Throwable?) : IOException(message, cause)
+
+/** The [TripLoadException] for [failure], with the text [messageFor] gives for its OBA code. */
+internal fun tripLoadFailure(failure: Throwable?, messageFor: (code: Int) -> String) = TripLoadException(
+    message = messageFor((failure as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION),
+    rateLimited = failure?.isRateLimited == true,
+    cause = failure
+)
+
 /** The before/destination stop ids the destination-reminder flow needs for a chosen trip position. */
 data class DestinationReminderStops(val beforeStopId: String, val destinationStopId: String)
 
@@ -132,14 +147,7 @@ class DefaultTripDetailsRepository @Inject constructor(
             Result.success(toData(snapshot, stopId, scrollMode, destinationId, userInfo))
         }
             ?: Result.failure(
-                IOException(
-                    ObaRequestErrors.getRouteErrorString(
-                        context,
-                        (result.exceptionOrNull() as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
-                    ),
-                    // Kept so the view model can tell a rate limit from a real failure (#2416).
-                    result.exceptionOrNull()
-                )
+                tripLoadFailure(result.exceptionOrNull()) { code -> ObaRequestErrors.getRouteErrorString(context, code) }
             )
     }
 

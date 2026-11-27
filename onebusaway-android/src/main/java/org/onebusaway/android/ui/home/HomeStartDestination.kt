@@ -64,15 +64,22 @@ internal fun Intent.trackedStopBoardRoute(prefs: PreferencesRepository): String?
     return NavRoutes.arrivals(stop.id, stop.name, route.routeId, route.headsign)
 }
 
-/** Explicit destinations win over the remembered section; only an ordinary launcher opening uses it. */
-internal fun launchDestination(intent: Intent, prefs: PreferencesRepository): String = IntentRouteMapper.routeForIntent(intent) ?: intent.trackedStopBoardRoute(prefs) ?: if (
+/**
+ * Explicit destinations win over the remembered section. A plain cold launcher opening uses that
+ * section; a warm launcher return keeps the current screen (null) instead of resetting navigation.
+ */
+internal fun launchDestination(
+    intent: Intent,
+    prefs: PreferencesRepository,
+    isColdLaunch: Boolean = true
+): String? = IntentRouteMapper.routeForIntent(intent) ?: intent.trackedStopBoardRoute(prefs) ?: if (
     intent.action == Intent.ACTION_MAIN &&
     intent.hasCategory(Intent.CATEGORY_LAUNCHER) &&
     intent.data == null &&
     !intent.hasExtra(MapParams.STOP_ID) &&
     !intent.hasExtra(MapParams.ROUTE_ID)
 ) {
-    prefs.homeStartDestination()
+    if (isColdLaunch) prefs.homeStartDestination() else null
 } else {
     NavRoutes.HOME
 }

@@ -104,7 +104,6 @@ class BoardableRoutesTest {
         mode = TransitMode.BUS,
         routeColorHex = null,
         headsign = headsign,
-        reachStop = null,
         boardTime = ServerTime(0L),
         exitTime = ServerTime(60_000L),
         durationMinutes = 1,

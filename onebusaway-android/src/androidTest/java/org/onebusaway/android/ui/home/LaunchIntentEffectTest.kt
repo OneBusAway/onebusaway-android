@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,12 +32,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.test.core.app.ApplicationProvider
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.nav.DeepLinkUris
 import org.onebusaway.android.ui.nav.LAUNCH_ROOT
@@ -51,6 +58,18 @@ class LaunchIntentEffectTest {
     private lateinit var nav: NavHostController
     private var ready = false
     private val handled = mutableListOf<Intent>()
+    private val prefs = PreferencesEntryPoint.get(ApplicationProvider.getApplicationContext<Context>())
+    private var savedHomeSection = 0
+
+    @Before
+    fun saveHomeSection() {
+        savedHomeSection = prefs.getInt(HOME_SECTION_KEY, 0)
+    }
+
+    @After
+    fun restoreHomeSection() {
+        prefs.setInt(HOME_SECTION_KEY, savedHomeSection)
+    }
 
     @Test
     fun shortcutSavedBeforeCollectionIsRoutedAfterRecreation() {
@@ -137,6 +156,115 @@ class LaunchIntentEffectTest {
         }
     }
 
+    @Test
+    fun warmLauncherReturnKeepsSecondStopAndItsEntryState() {
+        startAtSecondStop()
+        val entry = nav.currentBackStackEntry
+        compose.runOnIdle { entry!!.savedStateHandle["retained"] = "board state" }
+        returnFromBackground(launcherIntent())
+        assertSecondStop()
+        compose.runOnIdle {
+            assertSame(entry, nav.currentBackStackEntry)
+            assertEquals("board state", entry!!.savedStateHandle.get<String>("retained"))
+        }
+    }
+
+    @Test
+    fun warmLauncherReturnKeepsTripStatusAndItsBackStack() {
+        startAtSecondStop()
+        compose.runOnIdle { nav.navigate(NavRoutes.tripDetails("selected-trip", "second-stop")) }
+        compose.onNodeWithText("Trip status").assertIsDisplayed()
+        val entry = nav.currentBackStackEntry
+        returnFromBackground(launcherIntent())
+        compose.onNodeWithText("Trip status").assertIsDisplayed()
+        compose.runOnIdle {
+            assertSame(entry, nav.currentBackStackEntry)
+            assertEquals("selected-trip", nav.currentBackStackEntry!!.arguments!!.getString(NavRoutes.ARG_TRIP_ID))
+            assertTrue(nav.popBackStack())
+        }
+        assertSecondStop()
+    }
+
+    @Test
+    fun ordinaryBackgroundResumeKeepsSecondStop() {
+        startAtSecondStop()
+        returnFromBackground()
+        assertSecondStop()
+    }
+
+    @Test
+    fun warmLauncherReturnAndSavedStateRestoreKeepSecondStop() {
+        val intent = stopIntent("first-stop")
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent { Harness(intent) }
+        compose.runOnIdle { owner.registry.currentState = Lifecycle.State.RESUMED }
+        compose.onNodeWithText("Arrivals board").assertIsDisplayed()
+        compose.runOnIdle { nav.navigateFromHome(NavRoutes.arrivals("second-stop")) }
+        returnFromBackground(launcherIntent())
+        restoration.emulateSavedInstanceStateRestore()
+        compose.runOnIdle { owner.registry.currentState = Lifecycle.State.RESUMED }
+        assertSecondStop()
+    }
+
+    @Test
+    fun coldLauncherUsesRememberedSectionButWarmReturnKeepsBoard() {
+        prefs.rememberHomeSection(NavRoutes.MY_REMINDERS)
+        compose.setContent { Harness(launcherIntent()) }
+        compose.runOnIdle { owner.registry.currentState = Lifecycle.State.RESUMED }
+        compose.onNodeWithText("Reminders").assertIsDisplayed()
+        compose.runOnIdle { nav.navigateFromHome(NavRoutes.arrivals("second-stop")) }
+        returnFromBackground(launcherIntent())
+        assertSecondStop()
+    }
+
+    @Test
+    fun warmExplicitRequestsStillOpenTheMap() {
+        startAtSecondStop()
+        // Even MAIN/LAUNCHER intents can carry an explicit navigation request. Do not drop these,
+        // or blanket-ignore requests that resolve to HOME (map buttons and tracking notifications).
+        val requests = listOf(
+            launcherIntent().putExtra(NavRoutes.EXTRA_NAV_ROUTE, NavRoutes.HOME),
+            launcherIntent().putExtra(MapParams.STOP_ID, "map-stop"),
+            launcherIntent().putExtra(MapParams.ROUTE_ID, "map-route"),
+            Intent().putExtra(MapParams.STOP_ID, "map-stop")
+        )
+        requests.forEach { request ->
+            returnFromBackground(request)
+            compose.onNodeWithText("Map screen").assertIsDisplayed()
+            compose.runOnIdle {
+                assertSame(request, handled.last())
+                nav.navigateFromHome(NavRoutes.arrivals("second-stop"))
+            }
+        }
+    }
+
+    private fun startAtSecondStop() {
+        compose.setContent { Harness(stopIntent("first-stop")) }
+        compose.runOnIdle { owner.registry.currentState = Lifecycle.State.RESUMED }
+        compose.onNodeWithText("Arrivals board").assertIsDisplayed()
+        compose.runOnIdle { nav.navigateFromHome(NavRoutes.arrivals("second-stop")) }
+        assertSecondStop()
+    }
+
+    private fun assertSecondStop() {
+        compose.onNodeWithText("Arrivals board").assertIsDisplayed()
+        compose.runOnIdle {
+            assertEquals("second-stop", nav.currentBackStackEntry!!.arguments!!.getString(NavRoutes.ARG_STOP_ID))
+        }
+    }
+
+    private fun returnFromBackground(intent: Intent? = null) {
+        compose.runOnIdle {
+            owner.registry.currentState = Lifecycle.State.CREATED
+            intent?.let(channel::submit)
+        }
+        compose.runOnIdle { owner.registry.currentState = Lifecycle.State.RESUMED }
+    }
+
+    private fun launcherIntent() = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+
+    private fun stopIntent(id: String) = Intent(Intent.ACTION_VIEW, DeepLinkUris.STOPS.buildUpon().appendPath(id).build())
+
     @Composable
     private fun Harness(intent: Intent) {
         // Both objects are recreated with the composition, as in a new HomeActivity instance.
@@ -151,6 +279,8 @@ class LaunchIntentEffectTest {
                     if (launchReady) Text("Map screen")
                 }
                 composable(NavRoutes.ARRIVALS) { Text("Arrivals board") }
+                composable(NavRoutes.TRIP_DETAILS) { Text("Trip status") }
+                composable(NavRoutes.MY_REMINDERS) { Text("Reminders") }
             }
         }
     }

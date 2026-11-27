@@ -31,6 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.IntentCompat
+import androidx.lifecycle.DEFAULT_ARGS_KEY
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -134,6 +137,14 @@ class HomeActivity : AppCompatActivity() {
     // more: the pin is read from inside the results sheet *and* from the resume FAB over the map, and
     // those two must never be looking at separate copies of it.
     private val pinnedTripViewModel: PinnedTripViewModel by viewModels()
+
+    // Exported launches can carry another app's Parcelable classes (#2327). SavedStateHandle reads
+    // every default argument, so only seed the map fields we own; leave navigation extras on the
+    // Intent and retain the superclass's registry/store owners for real saved-state restoration.
+    override val defaultViewModelCreationExtras: CreationExtras
+        get() = MutableCreationExtras(super.defaultViewModelCreationExtras).apply {
+            this[DEFAULT_ARGS_KEY] = homeViewModelArgs(intent?.extras)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

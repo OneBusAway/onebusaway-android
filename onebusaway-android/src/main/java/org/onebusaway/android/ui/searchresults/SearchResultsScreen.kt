@@ -153,7 +153,8 @@ private fun StopResultRow(
             name = stop.name,
             direction = stop.direction,
             isFavorite = stop.isFavorite,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            isCustomName = stop.isCustomName
         )
     }
 }

@@ -16,7 +16,9 @@
 package org.onebusaway.android.ui.tripplan
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
@@ -37,7 +39,7 @@ class TerminalPlaceNamesTest {
 
     @Test
     fun `names the first leg's origin and the last leg's destination`() {
-        val named = listOf(twoLegs).withTerminalPlaceNames("Pike Place Market", "Sea-Tac Airport")
+        val named = listOf(twoLegs).withTerminalPlaceNames(TerminalName("Pike Place Market"), TerminalName("Sea-Tac Airport"))
 
         val legs = named.single().legs
         assertEquals("Pike Place Market", legs.first().from.name)
@@ -49,7 +51,7 @@ class TerminalPlaceNamesTest {
 
     @Test
     fun `every itinerary is named, since they all share the trip's two ends`() {
-        val named = listOf(twoLegs, twoLegs, twoLegs).withTerminalPlaceNames("Pike Place Market", "Sea-Tac Airport")
+        val named = listOf(twoLegs, twoLegs, twoLegs).withTerminalPlaceNames(TerminalName("Pike Place Market"), TerminalName("Sea-Tac Airport"))
 
         assertEquals(3, named.size)
         named.forEach { assertEquals("Pike Place Market", it.legs.first().from.name) }
@@ -59,14 +61,29 @@ class TerminalPlaceNamesTest {
     fun `a single-leg trip is both of its own terminals`() {
         val walkOnly = listOf(TripItinerary(legs = listOf(leg("Origin", "Destination"))))
 
-        val leg = walkOnly.withTerminalPlaceNames("Pike Place Market", "Sea-Tac Airport").single().legs.single()
+        val leg = walkOnly.withTerminalPlaceNames(TerminalName("Pike Place Market"), TerminalName("Sea-Tac Airport")).single().legs.single()
         assertEquals("Pike Place Market", leg.from.name)
         assertEquals("Sea-Tac Airport", leg.to.name)
     }
 
     @Test
+    fun `a custom stop name is stamped as one, on its own end only`() {
+        val named = listOf(twoLegs).withTerminalPlaceNames(
+            TerminalName("Pike Place Market"),
+            TerminalName("Home", isCustomName = true)
+        )
+
+        val legs = named.single().legs
+        assertEquals("Home", legs.last().to.name)
+        assertTrue(legs.last().to.isCustomName)
+        assertFalse(legs.first().from.isCustomName)
+        // The interior of the trip is the transit network's own names, never the rider's.
+        assertFalse(legs.first().to.isCustomName)
+    }
+
+    @Test
     fun `a name we do not have leaves OTP's own name alone`() {
-        val named = listOf(twoLegs).withTerminalPlaceNames(null, "  ")
+        val named = listOf(twoLegs).withTerminalPlaceNames(null, TerminalName("  "))
 
         val legs = named.single().legs
         assertEquals("Origin", legs.first().from.name)
@@ -82,6 +99,6 @@ class TerminalPlaceNamesTest {
     @Test
     fun `a legless itinerary has no terminals to name`() {
         val empty = listOf(TripItinerary())
-        assertEquals(empty, empty.withTerminalPlaceNames("Pike Place Market", "Sea-Tac Airport"))
+        assertEquals(empty, empty.withTerminalPlaceNames(TerminalName("Pike Place Market"), TerminalName("Sea-Tac Airport")))
     }
 }

@@ -123,7 +123,8 @@ internal class RouteVehiclePoller(
     /**
      * (Re)start every poll after [initialDelayMs]. Each route reloads every [VEHICLE_REFRESH_PERIOD_MS]
      * measured from its own load's completion (so network time is excluded), matching the legacy
-     * `postDelayed`-after-`onLoadFinished` cadence, and continues on that cadence even if a load fails.
+     * `postDelayed`-after-`onLoadFinished` cadence. A failed load doesn't end the poll: it retries on
+     * the repository's backoff ([org.onebusaway.android.extrapolation.data.nextPollDelayMs]).
      */
     private fun launchPolls(routeId: String, extraRouteIds: List<String>, initialDelayMs: Long) {
         cancelJobs()

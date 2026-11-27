@@ -268,3 +268,26 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         )
     }
 }
+
+/**
+ * Adds `stop_hidden_routes`, the routes the rider hid from each stop's arrivals board (#2366), and
+ * `legacy_stop_route_filters`, where the legacy import parks an old allow-list filter until the stop's
+ * first load converts it. Purely additive and both created empty: [MIGRATION_6_7] dropped this
+ * database's own `stop_routes_filter` (which only ever reached development builds — every shipped
+ * filter lived in the legacy ContentProvider file, which the importer reads). Verified by
+ * AppDatabaseMigrationTest.
+ */
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `stop_hidden_routes` " +
+                "(`stop_id` TEXT NOT NULL, `route_id` TEXT NOT NULL, " +
+                "PRIMARY KEY(`stop_id`, `route_id`))"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `legacy_stop_route_filters` " +
+                "(`stop_id` TEXT NOT NULL, `route_id` TEXT NOT NULL, " +
+                "PRIMARY KEY(`stop_id`, `route_id`))"
+        )
+    }
+}

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,6 +64,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -78,6 +81,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.components.CustomStopNameGlyph
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -142,8 +146,8 @@ private val ACTION_BAR_START_INSET = CONTENT_KEYLINE - SEGMENT_TEXT_INSET
  */
 private val TRAILING_GUTTER = 4.dp
 
-/** Clear space between the endpoint rows' content and the reverse button beside them. */
-private val REVERSE_CLEARANCE = 4.dp
+/** Clear space between the endpoint rows' content and the close/reverse buttons beside them. */
+private val TRAILING_BUTTON_CLEARANCE = 4.dp
 
 /**
  * The shape the card's two bands share: full width, inset at the trailing edge by [TRAILING_GUTTER].
@@ -195,6 +199,9 @@ object TripPlanTestTags {
     /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
 
+    /** The leave-directions button, beside the origin row (#2337). */
+    const val CLOSE = "tripPlanClose"
+
     /** The action bar's re-plan-this-same-trip button. */
     const val REFRESH = "tripPlanRefresh"
 
@@ -238,8 +245,8 @@ val TripEndpointSlot.tagPrefix: String
  * That band doubles as the form's action bar, carrying the mode pickers and additional-preferences as
  * well. It's the reason the endpoint rows carry no per-field chrome: everything acting on the trip's
  * *terms* lives on one line, and nothing acts on a single endpoint (see [EndpointRow]). The one action
- * on the endpoints themselves — reverse — sits beside the pair, centred on the divider between them.
- * The card measures 146dp against the old layout's 216dp.
+ * on the endpoints themselves — reverse — sits beside the pair, in a trailing column it shares with
+ * close. The card measures 146dp against the old layout's 216dp.
  *
  * Stateless and driven by [TripPlanFormState]; the date/time/current-location actions are platform
  * interactions launched by the host.
@@ -260,13 +267,13 @@ fun TripPlanForm(
     onReverse: () -> Unit,
     onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Row(modifier = Modifier.formBand(), verticalAlignment = Alignment.CenterVertically) {
-            // The rows take the width the button doesn't, rather than running full width beneath it —
-            // which is what stops a long place name, and the divider, from sliding under the button.
-            // Centring the sibling button against the resulting block lands it on that divider.
+        Row(modifier = Modifier.formBand()) {
+            // The rows take the width the buttons don't, rather than running full width beneath them —
+            // which is what stops a long place name, and the divider, from sliding under a button.
             Column(Modifier.weight(1f)) {
                 // One row per endpoint, in TripEndpointSlot's declaration order (origin above
                 // destination) — the enum is the list of rows.
@@ -274,7 +281,7 @@ fun TripPlanForm(
                     if (index > 0) {
                         // Inset past the rail so the hairline starts where the text does, leaving the
                         // origin and destination glyphs reading as one continuous column.
-                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = REVERSE_CLEARANCE)
+                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = TRAILING_BUTTON_CLEARANCE)
                     }
                     EndpointRow(
                         slot = slot,
@@ -287,12 +294,30 @@ fun TripPlanForm(
                     )
                 }
             }
-            FormIconButton(
-                painter = painterResource(R.drawable.ic_swap_direction),
-                contentDescription = stringResource(R.string.tripplanner_reverse),
-                onClick = onReverse,
-                modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
-            )
+            // The trailing column: close level with the origin row, reverse level with the destination.
+            // Close is the card's one visible way out of directions (#2337) — Back walks out a step at a
+            // time and is no use to a rider who can't make the gesture — and this column is the only
+            // place on the card with room for it. Each button is centred in a box the height of the row
+            // beside it, with the divider's own thickness between, so the two stay level with their rows.
+            Column {
+                TrailingButtonSlot {
+                    FormIconButton(
+                        painter = rememberVectorPainter(AppIcons.Close),
+                        contentDescription = stringResource(R.string.directions_close),
+                        onClick = onClose,
+                        modifier = Modifier.testTag(TripPlanTestTags.CLOSE)
+                    )
+                }
+                Spacer(Modifier.height(DividerDefaults.Thickness))
+                TrailingButtonSlot {
+                    FormIconButton(
+                        painter = painterResource(R.drawable.ic_swap_direction),
+                        contentDescription = stringResource(R.string.tripplanner_reverse),
+                        onClick = onReverse,
+                        modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
+                    )
+                }
+            }
         }
         // Full-width, unlike the one above: this one separates the endpoints from the actions, rather
         // than separating two members of the same group.
@@ -315,6 +340,12 @@ fun TripPlanForm(
             onAdvancedSettings = onAdvancedSettings
         )
     }
+}
+
+/** One endpoint row's height of the trailing column, its button centred level with that row. */
+@Composable
+private fun TrailingButtonSlot(content: @Composable () -> Unit) {
+    Box(Modifier.height(ENDPOINT_ROW_HEIGHT), contentAlignment = Alignment.Center) { content() }
 }
 
 /**
@@ -430,6 +461,17 @@ private fun EndpointRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             EndpointRail(endpoint = endpoint, slot = slot)
+            // A renamed stop's name, marked as the rider's own (#2414). Beside the field rather than in
+            // it, since an editable field can't hold inline content; it goes the moment the rider types,
+            // because the endpoint is then their query rather than the stop.
+            if (endpoint.isCustomName) {
+                CustomStopNameGlyph(
+                    contentDescription = stringResource(R.string.stop_info_custom_name_description, endpointText),
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(with(LocalDensity.current) { MaterialTheme.typography.bodyLarge.fontSize.toDp() })
+                )
+            }
             BasicTextField(
                 value = field,
                 onValueChange = { value ->
@@ -481,7 +523,7 @@ private fun EndpointRow(
                     }
                 }
             )
-            Spacer(Modifier.width(REVERSE_CLEARANCE))
+            Spacer(Modifier.width(TRAILING_BUTTON_CLEARANCE))
         }
 
         // The two ways to fill an endpoint that aren't typing. They used to be permanent icon buttons on
@@ -684,7 +726,9 @@ private fun TripActionBar(
         modifier = Modifier
             .formBand()
             .padding(start = ACTION_BAR_START_INSET)
-            .height(ACTION_BAR_HEIGHT)
+            // A minimum: a pinned trip's two-line callout (time over day, #2337) may need more at a
+            // large font scale, and the bar grows for it rather than clipping the day.
+            .heightIn(min = ACTION_BAR_HEIGHT)
             // The scripted tour's "narrow it down" step rings this row (#2164) — the when/mode/advanced
             // controls, not the endpoints above them.
             .tutorialAnchor(LocalTutorialState.current, ScriptedTutorial.KEY_TRIP_OPTIONS),
@@ -871,7 +915,8 @@ private fun WhenTimeSegment(
     val nowLabel = stringResource(R.string.trip_plan_now)
     Box(modifier) {
         SegmentButton(
-            text = if (departNow) nowLabel else whenLabel(dayRelation, dateLabel, timeLabel),
+            text = if (departNow) nowLabel else timeLabel,
+            subtext = if (departNow) null else dayLabel(dayRelation, dateLabel),
             emphasized = false,
             testTag = TripPlanTestTags.WHEN_TIME,
             onClick = { expanded = true }
@@ -933,31 +978,40 @@ private fun WhenTimeSegment(
 }
 
 /**
- * A pinned instant as the callout states it (#2185): the time first, then the day — but only when the
- * day needs saying at all. Most pinned trips are for later today, where the date was pure noise
- * crowding out the one part the rider is reading for; tomorrow has a word, so it gets the word; and
- * anything further out falls back to its date. The full instant is still one tap away, at the head of
- * the menu this segment opens.
+ * The day a pinned instant's callout names under its time (#2185), or null when the day needs no saying.
+ * Most pinned trips are for later today, where the date was pure noise crowding out the one part the
+ * rider is reading for; tomorrow has a word, so it gets the word; and anything further out falls back
+ * to its date. The full instant is still one tap away, at the head of the menu this segment opens.
+ *
+ * A line of its own rather than a suffix on the time (#2337): as a suffix it was the part the bar's
+ * ellipsis cut, so a trip on another day read as a bare time — "10:45…" — with nothing on screen saying
+ * which day it was for.
  */
 @Composable
-private fun whenLabel(dayRelation: TripDay, dateLabel: String, timeLabel: String): String = when (dayRelation) {
-    TripDay.TODAY -> timeLabel
-    TripDay.TOMORROW -> stringResource(R.string.trip_plan_time_tomorrow, timeLabel)
-    TripDay.OTHER -> stringResource(R.string.trip_plan_time_date, timeLabel, dateLabel)
+private fun dayLabel(dayRelation: TripDay, dateLabel: String): String? = when (dayRelation) {
+    TripDay.TODAY -> null
+    TripDay.TOMORROW -> stringResource(R.string.trip_plan_date_tomorrow)
+    TripDay.OTHER -> dateLabel
 }
 
-/** One tappable half of the "when" sentence: text plus a small chevron, on a rounded press surface. */
+/**
+ * One tappable half of the "when" sentence: text plus a small chevron, on a rounded press surface.
+ * [subtext], when present, is a quieter second line under [text] — the pinned trip's day — each line
+ * with the slot's full width to itself, so neither can push the other into the ellipsis.
+ */
 @Composable
 private fun SegmentButton(
     text: String,
     emphasized: Boolean,
     testTag: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    subtext: String? = null
 ) {
     Row(
         modifier = modifier
-            .height(32.dp)
+            // A minimum, not a fixed height: a two-line label grows the button rather than clipping.
+            .heightIn(min = 32.dp)
             // The value is the label, so TalkBack reads it as-is; the click label supplies the verb the
             // bare text can't ("Depart" alone doesn't say it's changeable).
             .clickable(onClickLabel = stringResource(R.string.trip_plan_change_when), onClick = onClick)
@@ -966,15 +1020,25 @@ private fun SegmentButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
-        )
+        Column(Modifier.weight(1f, fill = false)) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            subtext?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
         Icon(
             imageVector = AppIcons.KeyboardArrowDown,
             contentDescription = null,
@@ -1029,7 +1093,7 @@ private fun TripPlanFormPreview() {
             onPickDateTime = {},
             availableStreetModes = StreetMode.entries,
             onVehicleModeSelected = {}, onStreetModeSelected = {},
-            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}
+            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}, onClose = {}
         )
     }
 }

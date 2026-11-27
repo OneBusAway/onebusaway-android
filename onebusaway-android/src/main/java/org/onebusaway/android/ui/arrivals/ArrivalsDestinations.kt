@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals
 
 import android.content.Intent
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,22 +30,22 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,7 +57,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
@@ -64,7 +64,9 @@ import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.ui.arrivals.components.rememberArrivalDisplayMode
 import org.onebusaway.android.ui.common.Shortcuts
+import org.onebusaway.android.ui.compose.components.RenameStopDialog
 import org.onebusaway.android.ui.compose.components.SearchableTopAppBar
+import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.FocusedStop
@@ -122,22 +124,14 @@ private fun ArrivalsBoard(
     )
     val activity = context.findActivity()
     val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val undoSnackbar = rememberUndoSnackbar(snackbar)
     val handler = remember(viewModel, navController) {
         createArrivalActionHandler(
             activity = activity,
             viewModel = viewModel,
             currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
             revealRoute = { _, request -> navController.showRouteMapFromArrivals(request) },
-            showUndoSnackbar = { message, action, undo ->
-                scope.launch {
-                    if (snackbar.showSnackbar(activity.getString(message), action?.let(activity::getString)) ==
-                        SnackbarResult.ActionPerformed
-                    ) {
-                        undo?.invoke()
-                    }
-                }
-            },
+            showUndoSnackbar = undoSnackbar::show,
             onShowTrip = { trip, stop ->
                 navController.navigate(NavRoutes.tripDetails(trip, stop, TripDetailsLauncher.SCROLL_MODE_STOP))
             },
@@ -146,16 +140,22 @@ private fun ArrivalsBoard(
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val content = state as? ArrivalsUiState.Content
-    val title = initialName ?: content?.header?.name ?: stringResource(R.string.arrivals_board_title)
+    // Share the existing optimistic, import-gated stop favorite implementation with the map banner.
+    val favorites: FocusBannerViewModel = hiltViewModel()
+    // The stop's stored names, live, so a rename made on the map shows here too (#2414).
+    val storedNames by remember(stopId) { favorites.stopNames(stopId) }.collectAsStateWithLifecycle(null)
+    val customName = storedNames?.customName
+    // The official name: the loaded arrivals', else the one the board was opened with.
+    val officialName = content?.header?.name?.takeIf { it.isNotBlank() } ?: initialName
+    val title = customName ?: officialName ?: stringResource(R.string.arrivals_board_title)
     val prefs = remember { PreferencesEntryPoint.get(context) }
     var displayMode by rememberArrivalDisplayMode(stopId) { prefs.arrivalDisplayDefault() }
     val listState = rememberLazyListState()
     val callbacks = rememberArrivalRowCallbacks(handler, viewModel, mapless = true)
-    // Share the existing optimistic, import-gated stop favorite implementation with the map banner.
-    val favorites: FocusBannerViewModel = hiltViewModel()
     val favoriteIds by favorites.favoriteStopIds.collectAsStateWithLifecycle()
     val favoritesReady by favorites.stopFavoritesReady.collectAsStateWithLifecycle()
     var menuOpen by remember { mutableStateOf(false) }
+    var renameOpen by remember { mutableStateOf(false) }
     val point = content?.let { GeoPoint(it.stopLat, it.stopLon) }
     // Wait for endpoint resolution. Active(null) is a configured custom API URL and can poll
     // without a region; Resolving/NeedsManualChoice/Failed must still wait.
@@ -165,17 +165,34 @@ private fun ArrivalsBoard(
 
     Scaffold(
         modifier = Modifier.testTag("arrivals_board"),
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { UndoSnackbarHost(snackbar) },
         topBar = {
+            val optionsLabel = stringResource(R.string.stop_info_item_options_title)
             SearchableTopAppBar(
-                title = title,
+                title = {
+                    StopNameText(
+                        title,
+                        isCustomName = customName != null,
+                        // The stop name opens the stop's menu, as the map banner's does. A tap does
+                        // nothing, so it's a gesture handler rather than a clickable, which would also
+                        // announce a tap action to TalkBack.
+                        modifier = Modifier
+                            .pointerInput(Unit) { detectTapGestures(onLongPress = { menuOpen = true }) }
+                            .semantics {
+                                onLongClick(optionsLabel) {
+                                    menuOpen = true
+                                    true
+                                }
+                            }
+                    )
+                },
                 onSearch = { navController.navigate(NavRoutes.search(it)) },
                 onBack = { navController.navigateUpFromArrivals(prefs.homeStartDestination()) }
             ) {
                 IconButton(
                     enabled = favoritesReady && point != null,
                     onClick = {
-                        favorites.toggleStopFavorite(FocusedStop(stopId, title, content?.stopCode, point))
+                        favorites.toggleStopFavorite(FocusedStop(stopId, officialName, content?.stopCode, point))
                     }
                 ) {
                     Icon(
@@ -183,7 +200,7 @@ private fun ArrivalsBoard(
                         stringResource(if (stopId in favoriteIds) R.string.stop_remove_star else R.string.stop_add_star)
                     )
                 }
-                IconButton(onClick = { navController.showStopMapFromArrivals(StopReveal(stopId, initialName ?: content?.header?.name, point)) }) {
+                IconButton(onClick = { navController.showStopMapFromArrivals(StopReveal(stopId, officialName, point)) }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_action_location_map),
                         contentDescription = stringResource(R.string.home_map)
@@ -198,9 +215,14 @@ private fun ArrivalsBoard(
                             menuOpen = false
                             viewModel.manualRefresh()
                         })
+                        // Naming a stop records it in the stops table, which needs its location (#2414).
+                        DropdownMenuItem(text = { Text(stringResource(R.string.stop_info_option_editname)) }, enabled = point != null, onClick = {
+                            menuOpen = false
+                            renameOpen = true
+                        })
                         DropdownMenuItem(text = { Text(stringResource(R.string.my_context_create_shortcut)) }, onClick = {
                             menuOpen = false
-                            Shortcuts.createStopShortcut(context, title, StopLauncher.Builder(context, stopId).setStopName(title))
+                            Shortcuts.createStopShortcut(context, title, StopLauncher.Builder(context, stopId).setStopName(officialName))
                         })
                         DropdownMenuItem(text = { Text(stringResource(R.string.stop_info_option_add_widget)) }, onClick = {
                             menuOpen = false
@@ -248,9 +270,18 @@ private fun ArrivalsBoard(
                     listState = listState,
                     displayMode = displayMode,
                     onDisplayModeChange = { displayMode = it },
-                    modeSwitchModifier = Modifier.padding(top = 3.dp, end = 3.dp)
+                    modeSwitchModifier = Modifier.padding(top = 3.dp, end = 3.dp),
+                    routeFilter = rememberRouteFilterCallbacks(viewModel, handler)
                 )
             }
         }
+    }
+    if (renameOpen && point != null) {
+        RenameStopDialog(
+            currentName = title,
+            officialName = officialName,
+            onSave = { favorites.renameStop(FocusedStop(stopId, officialName, content.stopCode, point), it) },
+            onDismiss = { renameOpen = false }
+        )
     }
 }

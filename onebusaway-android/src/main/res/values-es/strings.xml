@@ -126,6 +126,8 @@
     <string name="bus_options_menu_show_trip_details">Mostrar el estado del viaje</string>
     <string name="bus_options_menu_set_reminder">Adicionar un recordatorio</string>
     <string name="bus_options_menu_show_route_schedule">Mostrar el horario de la ruta</string>
+    <string name="bus_options_menu_show_only_this_route">Mostrar solamente esta ruta</string>
+    <string name="bus_options_menu_show_all_routes">Mostrar todas las rutas</string>
     <string name="bus_options_menu_report_trip_problem">Reportar un problema con el viaje</string>
 
     <!--  Stop Info -->
@@ -252,6 +254,9 @@
     <string name="stop_info_option_refresh">Refrescar</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
+    <string name="stop_info_option_editname">Editar el nombre de la parada</string>
+    <string name="stop_info_save">Guardar</string>
+    <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
     <string name="stop_info_option_hide_alerts">Ocultar alertas</string>
     <string name="stop_info_canceled">CANCELADO</string>
     <string name="stop_info_canceled_arrival">Llegada cancelada</string>
@@ -728,9 +733,8 @@
     <!-- Night Light -->
     <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>
     <string name="night_light_dialog_message">¿Cansado de ver pasar tu bus porque el conductor
-        no te podía ver en la oscuridad? ¡Enciende la luz parpadeante para la noche y hazte visible!
-        \n\nADVERTENCIA: esta función puede provocar convulsiones en personas con epilepsia fotosensible. Se aconseja la discreción del usuario.
-    </string>
+        no te podía ver en la oscuridad? ¡Enciende la luz parpadeante para la noche y hazte visible!</string>
+    <string name="night_light_dialog_warning">ADVERTENCIA: esta función puede provocar convulsiones en personas con epilepsia fotosensible. Se aconseja la discreción del usuario.</string>
     <string name="night_light_create_shortcut">Crear un acceso directo</string>
     <string name="night_light_start">Iniciar luz de noche</string>
     <string name="night_light_cancel">Cancelar luz de noche</string>
@@ -841,6 +845,8 @@
     <!-- Transit instruction start -->
     <string name="step_by_step_transit_get_on">Subir en</string>
     <string name="step_by_step_transit_get_off">Bajarte en</string>
+    <string name="directions_get_on_at">Subir en</string>
+    <string name="directions_get_off_at">Bajarte en</string>
     <!--                This is exactly the formula that should be used, because the app won't include
                     the destination stop under this text, so would be best to avoid expressions like
                      "stops to destination". For example in the trip Barcelona/Paris/London/New York,

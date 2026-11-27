@@ -16,9 +16,13 @@
 package org.onebusaway.android.ui.tripresults
 
 import androidx.compose.material3.Text
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -36,7 +40,8 @@ import org.onebusaway.android.util.GeoPoint
  * map (a transit leg → its route via `onFocusRouteLeg`; a walk leg → its polyline via `onFocusLeg`); its
  * minor events — a walk's turn steps, a ride's intermediate stops — expand only via the leg's own chevron
  * control, never as a side effect of the map-focus tap (#2040). A revealed step/stop then focuses its own
- * point. A transit leg's Board stop shows its live ETA strip. Drives the real click wiring by node text
+ * point. A transit leg's stops open as stops of their own from a long press, and its Board stop can show
+ * its live departures. Drives the real click wiring by node text
  * (and, for the chevron, its content description), not coordinates.
  */
 class DirectionRowFocusTest {
@@ -83,7 +88,6 @@ class DirectionRowFocusTest {
         mode = TransitMode.BUS,
         routeColorHex = "1B6EF3",
         headsign = "Rainier Beach",
-        reachStop = ReachStop.OnArrival(ServerTime(3 * 60_000L)),
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,
@@ -208,17 +212,50 @@ class DirectionRowFocusTest {
     }
 
     @Test
-    fun transitLeg_showsTheBoardStopEtaStrip() {
+    fun transitLeg_showsTheBoardStopEtaStrip_onlyOnceOpened() {
         composeRule.setContent {
             TripResultsList(
                 state = fullState,
                 stopEtaStrip = { _, stop -> Text("ETASTRIP@${stop.name}") }
             )
         }
+        val show = context.getString(R.string.directions_show_realtime_arrivals)
+        val hide = context.getString(R.string.directions_hide_realtime_arrivals)
 
-        // The Board strip is shown; the Alight stop has no ETA strip.
+        // Collapsed by default (#2347), and only the Board stop offers it.
+        composeRule.onNodeWithText("ETASTRIP@${routeLeg.board?.name}").assertDoesNotExist()
+        composeRule.onAllNodesWithText(show).assertCountEquals(1)
+
+        composeRule.onNodeWithText(show).performClick()
         composeRule.onNodeWithText("ETASTRIP@${routeLeg.board?.name}").assertExists()
         composeRule.onNodeWithText("ETASTRIP@${routeLeg.alight?.name}").assertDoesNotExist()
+
+        composeRule.onNodeWithText(hide).performClick()
+        composeRule.onNodeWithText("ETASTRIP@${routeLeg.board?.name}").assertDoesNotExist()
+    }
+
+    @Test
+    fun longPressingABoardOrExitStop_offersToGoToThatStop() {
+        val opened = mutableListOf<RouteStopRef>()
+        composeRule.setContent {
+            TripResultsList(state = fullState, onOpenStop = { opened += it })
+        }
+        val goToStop = context.getString(R.string.directions_stop_go_to)
+
+        composeRule.onNodeWithText(routeLeg.board!!.name!!).performTouchInput { longClick() }
+        composeRule.onNodeWithText(goToStop).performClick()
+        composeRule.onNodeWithText(routeLeg.alight!!.name!!).performTouchInput { longClick() }
+        composeRule.onNodeWithText(goToStop).performClick()
+
+        assertEquals(listOf(routeLeg.board, routeLeg.alight), opened)
+    }
+
+    @Test
+    fun withNoStopOpener_aLongPressOffersNothing() {
+        composeRule.setContent { TripResultsList(state = fullState) }
+
+        composeRule.onNodeWithText(routeLeg.board!!.name!!).performTouchInput { longClick() }
+        composeRule.onNodeWithText(context.getString(R.string.directions_stop_go_to)).assertDoesNotExist()
     }
 
     @Test

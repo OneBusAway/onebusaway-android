@@ -35,20 +35,28 @@ import org.onebusaway.android.util.GeoPoint
  * rather than a base class.
  */
 
+// The official name: the arrivals board overlays the rider's own from the store, with its glyph (#2414).
 private fun AppCompatActivity.stopLauncherBuilder(stop: StopListItem) = StopLauncher.Builder(this, stop.id)
-    .setStopName(stop.name)
+    .setStopName(stop.officialNameOrName)
 
-/** This row as a "show me this stop" request, complete: a saved stop knows its own name and location. */
-internal fun StopListItem.toStopReveal() = StopReveal(id, name, GeoPoint(lat, lon))
+/**
+ * This row as a "show me this stop" request, complete: a saved stop knows its own name and location.
+ * The official name, since the map overlays the rider's own from the store, with its glyph (#2414).
+ */
+internal fun StopListItem.toStopReveal() = StopReveal(id, officialNameOrName, GeoPoint(lat, lon))
+
+private val StopListItem.officialNameOrName: String get() = officialName?.takeIf { it.isNotBlank() } ?: name
 
 /**
  * A stop row's long-press actions; [removeLabel] is the only per-list delta.
  *
- * Tapping the row opens arrivals; the map remains an explicit context action.
+ * Tapping the row opens arrivals; the map remains an explicit context action. [onRename] raises the
+ * list's rename dialog (#2414).
  */
 internal fun AppCompatActivity.stopActions(
     stop: StopListItem,
     @StringRes removeLabel: Int,
+    onRename: () -> Unit,
     onRemove: () -> Unit
 ): List<RowAction> = listOf(
     RowAction(getString(R.string.my_context_showonmap)) {
@@ -61,6 +69,7 @@ internal fun AppCompatActivity.stopActions(
             }
         )
     },
+    RowAction(getString(R.string.stop_info_option_editname), onRename),
     RowAction(getString(R.string.my_context_create_shortcut)) {
         Shortcuts.createStopShortcut(this, stop.name, stopLauncherBuilder(stop))
     },

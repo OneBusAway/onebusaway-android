@@ -19,21 +19,16 @@ import android.content.Context
 import android.text.SpannableString
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
-import android.text.style.StrikethroughSpan
 import android.util.Log
-import androidx.core.content.ContextCompat
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
 import java.util.Locale
-import kotlin.time.Duration.Companion.milliseconds
 import org.onebusaway.android.R
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.PreferenceUtils
-import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * @author Khoa Tran
@@ -258,83 +253,6 @@ object ConversionUtils {
                 else -> TextUtils.concat(spannableTime, ", ", dateFormat.format(displayDate))
             }
         }
-    }
-
-    fun getTimeUpdated(
-        applicationContext: Context,
-        oldTime: Long,
-        newTime: Long,
-        today: LocalDate = LocalDate.now(ZoneId.systemDefault())
-    ): CharSequence {
-        // See getTimeWithContext: times render in the device's local zone; java.time for the date math,
-        // android.text.format.DateFormat (fed a converted java.util.Date) for the localized,
-        // device-12/24h-aware string.
-        // getTimeFormat/getDateFormat already return formatters in the device's default zone.
-        val timeFormat = android.text.format.DateFormat.getTimeFormat(applicationContext)
-        val dateFormat = android.text.format.DateFormat.getDateFormat(applicationContext)
-
-        val zone = ZoneId.systemDefault()
-        val oldLocal = wallClock(oldTime, zone, round = false)
-        val newLocal = wallClock(newTime, zone, round = false)
-        val oldDisplay = Date.from(oldLocal.toInstant())
-        val newDisplay = Date.from(newLocal.toInstant())
-
-        var beforeDateString: CharSequence = ""
-        var newDateString: CharSequence = ""
-
-        val oldDateString: SpannableString
-        if (isTomorrow(newLocal.toLocalDate(), today)) {
-            oldDateString = SpannableString(
-                applicationContext.resources.getString(R.string.time_connector_next_day) + " "
-            )
-        } else {
-            beforeDateString =
-                applicationContext.resources.getString(R.string.time_connector_before_date) + " "
-            oldDateString = SpannableString(dateFormat.format(newDisplay) + " ")
-        }
-
-        if (newLocal.dayOfMonth != oldLocal.dayOfMonth) {
-            beforeDateString =
-                applicationContext.resources.getString(R.string.time_connector_before_date) + " "
-            newDateString = dateFormat.format(newDisplay) + " "
-            oldDateString.setSpan(StrikethroughSpan(), 0, oldDateString.length - 1, 0)
-        }
-
-        val beforeTimeString: CharSequence =
-            applicationContext.resources.getString(R.string.time_connector_before_time) + " "
-
-        // Drawn as the text color of the updated time at a normal size, so it takes the text tier.
-        // Before #2043 it passed a *millisecond* delta to a helper whose parameter was documented as
-        // minutes; that was harmless only because the helper was a bare sign test. The deviation is
-        // now an explicit Duration, so the units can't drift silently again.
-        val color = ContextCompat.getColor(
-            applicationContext,
-            ScheduleDeviation.textColor(
-                isRealtime = true,
-                deviation = (newTime - oldTime).milliseconds
-            )
-        )
-
-        val newTimeString = SpannableString(timeFormat.format(newDisplay) + " ")
-        newTimeString.setSpan(ForegroundColorSpan(color), 0, newTimeString.length, 0)
-
-        val oldTimeString: SpannableString =
-            if (oldLocal.hour != newLocal.hour || oldLocal.minute != newLocal.minute) {
-                SpannableString(timeFormat.format(oldDisplay) + " ").apply {
-                    setSpan(StrikethroughSpan(), 0, length - 1, 0)
-                }
-            } else {
-                SpannableString(" ")
-            }
-
-        return TextUtils.concat(
-            beforeDateString,
-            newDateString,
-            oldDateString,
-            beforeTimeString,
-            oldTimeString,
-            newTimeString
-        )
     }
 
     /**

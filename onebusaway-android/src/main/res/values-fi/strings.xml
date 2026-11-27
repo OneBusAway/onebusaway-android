@@ -124,6 +124,8 @@
     <string name="bus_options_menu_show_trip_details">Näytä matkan tilanne</string>
     <string name="bus_options_menu_set_reminder">Aseta muistutus</string>
     <string name="bus_options_menu_show_route_schedule">Näytä reitin aikataulu</string>
+    <string name="bus_options_menu_show_only_this_route">Näytä vain tämä reitti</string>
+    <string name="bus_options_menu_show_all_routes">Näytä kaikki linjat</string>
     <string name="bus_options_menu_report_trip_problem">Ilmoita matkan ongelmasta</string>
 
     <!--  Stop Info -->
@@ -215,6 +217,9 @@
     <string name="menu_option_sort_by">Järjestä</string>
     <string name="stop_info_option_refresh">Päivitä</string>
     <string name="stop_info_option_night_light">Yövalo</string>
+    <string name="stop_info_option_editname">Muokkaa nimeä</string>
+    <string name="stop_info_save">Tallenna</string>
+    <string name="stop_info_official_stop_name_label">Virallinen nimi: %1$s</string>
     <string name="stop_info_option_hide_alerts">Piilota aktiiviset hälytykset</string>
     <string name="stop_info_option_report_problem">Ilmoita pysäkkiongelma</string>
     <string name="stop_info_canceled">PERUTTU</string>
@@ -575,9 +580,8 @@
     <!-- Night Light -->
     <string name="night_light_dialog_title">Älä myöhästy bussista enää öisin!</string>
     <string name="night_light_dialog_message">Kyllästyttääkö kun bussikuski ei huomaa sinua pimeässä
-        ja ajaa ohitsesi? Näytä bussille vilkkuvaa Yövaloa ja tule huomatuksi!
-        \n\nVAROITUS: Tämä ominaisuus voi aiheuttaa kohtauksia ihmisille, joilla on valoherkkä epilepsia. Käyttäjän harkintaa suositellaan.
-    </string>
+        ja ajaa ohitsesi? Näytä bussille vilkkuvaa Yövaloa ja tule huomatuksi!</string>
+    <string name="night_light_dialog_warning">VAROITUS: Tämä ominaisuus voi aiheuttaa kohtauksia ihmisille, joilla on valoherkkä epilepsia. Käyttäjän harkintaa suositellaan.</string>
     <string name="night_light_create_shortcut">Luo pikakuvake</string>
     <string name="night_light_start">Käynnistä</string>
     <string name="night_light_cancel">Peruuta</string>
@@ -783,6 +787,8 @@
     <!-- Step by step transit directions -->
     <string name="step_by_step_transit_get_on">Nouse kyytiin</string>
     <string name="step_by_step_transit_get_off">Poistu</string>
+    <string name="directions_get_on_at">Nouse kyytiin pysäkillä</string>
+    <string name="directions_get_off_at">Jää pois pysäkillä</string>
     <string name="step_by_step_transit_stops_in_between">pysäkkiä välissä</string>
     <string name="step_by_step_transit_stops_in_between_singular">pysäkki välissä</string>
     <string name="step_by_step_transit_connector_stop_name">Pysäkillä</string>

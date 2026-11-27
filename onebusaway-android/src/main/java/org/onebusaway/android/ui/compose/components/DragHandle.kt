@@ -27,12 +27,17 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 
-// The drag handle's geometry — the visible bar plus the vertical padding above and below it. Shared by
-// every bottom-sheet grab bar (the arrivals sheet, the directions sheet) and their peek-height math, so
-// the handles can't drift apart.
+// The drag handle's geometry — the visible bar plus the vertical padding above and below it. The bar is
+// shared by every bottom-sheet grab bar; this compact band is the arrivals sheet's, and its peek-height
+// math reads it.
 val DRAG_HANDLE_BAR_HEIGHT = 4.dp
 val DRAG_HANDLE_VERTICAL_PADDING = 9.dp
 val DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_VERTICAL_PADDING * 2
+
+// [SheetDragHandle]'s band: Material 3's standard bottom-sheet handle (`BottomSheetDefaults.DragHandle`
+// pads its 4dp bar by 22dp above and below), a 48dp band that is also the minimum touch target (#2354).
+val SHEET_DRAG_HANDLE_VERTICAL_PADDING = 22.dp
+val SHEET_DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + SHEET_DRAG_HANDLE_VERTICAL_PADDING * 2
 
 /**
  * The short tinted grab-bar pill drawn inside a bottom-sheet drag handle — a muted grey matching the
@@ -51,18 +56,18 @@ fun DragHandleBar(modifier: Modifier = Modifier) {
 }
 
 /**
- * [DragHandleBar] centred in the shared [DRAG_HANDLE_HEIGHT] band — the handle to hand a Material
- * `BottomSheetScaffold` as its `sheetDragHandle`. The scaffold wraps whatever it's given with the sheet's
- * tap-to-toggle and expand/collapse accessibility actions, so this only has to supply the geometry;
- * sizing the band here (rather than using `BottomSheetDefaults.DragHandle`, whose 48dp band read as an
- * oversized grab strip next to the arrivals sheet — #2240) keeps a handle-only peek height computable
- * from an app-owned constant instead of one of M3's private ones, and keeps the two sheets' handles the
- * same size.
+ * [DragHandleBar] centred in the [SHEET_DRAG_HANDLE_HEIGHT] band — the handle to hand a Material
+ * `BottomSheetScaffold` as its `sheetDragHandle` (the directions sheet's). The scaffold wraps whatever it's
+ * given with the sheet's tap-to-toggle and expand/collapse accessibility actions, so this only has to
+ * supply the geometry. The band is M3's standard 48dp (#2354), a full touch target, where the arrivals
+ * sheet's is the compact [DRAG_HANDLE_HEIGHT] (#2240); it is sized here rather than by using
+ * `BottomSheetDefaults.DragHandle` so a handle-only peek height stays computable from an app-owned
+ * constant instead of one of M3's private ones, and so the bar keeps the app's tint.
  */
 @Composable
 fun SheetDragHandle(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.padding(vertical = DRAG_HANDLE_VERTICAL_PADDING),
+        modifier = modifier.padding(vertical = SHEET_DRAG_HANDLE_VERTICAL_PADDING),
         contentAlignment = Alignment.Center
     ) {
         DragHandleBar()

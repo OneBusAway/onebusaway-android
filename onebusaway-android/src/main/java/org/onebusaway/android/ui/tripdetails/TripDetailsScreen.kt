@@ -75,6 +75,7 @@ import org.onebusaway.android.ui.arrivals.components.RealtimeIndicator
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.TripMapReveal
@@ -225,7 +226,7 @@ private fun TripStopList(
                 vehicleColor = vehicleColor,
                 textColor = if (stop.isPassed) passedColor else notPassedColor,
                 isRealtime = content.header.isRealtime,
-                onClick = { onStopClick(stop.stopId, stop.name, stop.direction) },
+                onClick = { onStopClick(stop.stopId, stop.officialName, stop.direction) },
                 // Legacy: only stops past the first two can anchor a reminder (need a "before" stop)
                 onLongClick = onSetDestinationReminder
                     ?.takeIf { i > 1 }
@@ -330,8 +331,9 @@ private fun TripStopRow(
                 .weight(1f)
                 .padding(end = 16.dp, top = 12.dp, bottom = 12.dp)
         ) {
-            Text(
-                text = stop.name,
+            StopNameText(
+                name = stop.name,
+                isCustomName = stop.isCustomName,
                 style = MaterialTheme.typography.bodyLarge,
                 color = textColor,
                 maxLines = 1,

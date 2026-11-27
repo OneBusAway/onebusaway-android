@@ -111,6 +111,17 @@ class ArrivalRowCallbacks(
 )
 
 /**
+ * A row's per-stop route-filter menu items (#2366), each pre-bound to the row's route; a null item isn't
+ * offered. Only the stop's own arrivals board passes these — the other hosts that draw this row
+ * (directions, nearby, the transit-centre drawer) have no stop filter to change.
+ */
+class RouteFilterActions(
+    val onShowOnly: (() -> Unit)?,
+    val onHide: (() -> Unit)?,
+    val onShowAll: (() -> Unit)?
+)
+
+/**
  * The shaded rounded card that wraps each arrival row (and the report-flow picker rows),
  * matching the legacy MaterialCardView. Pass [onClick] to make the whole card a single tap target
  * (the picker); leave it null when the card holds its own buttons (the interactive list row).
@@ -331,7 +342,8 @@ internal fun etaPillFocus(tripId: String?, rimColor: Int?): EtaPillFocus? {
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
  * - Long-pressing the row body (badge included) opens the route-level menu: "Show route on map"
  *   (always, framing the whole route as if searched — [ArrivalRowCallbacks.onShowRouteOnMap]) plus
- *   "Show route schedule" when the route has a schedule URL.
+ *   "Show route schedule" when the route has a schedule URL, and — on a stop's own board — the
+ *   per-stop route filter ([RouteFilterActions]).
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
  * trip's actions drive the badge color and the route menu. [anchors] carries the onboarding spotlight
@@ -385,7 +397,9 @@ fun RouteArrivalRow(
     // stop-scoped surface, where the stop is already the screen's subject and naming it again is noise.
     stopLabel: String? = null,
     /** One trip per card, sharing the route and trip actions with grouped rows. */
-    chronological: Boolean = false
+    chronological: Boolean = false,
+    /** The stop board's route-filter items for this row's menu (#2366); null on hosts without one. */
+    routeFilter: RouteFilterActions? = null
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -550,7 +564,8 @@ fun RouteArrivalRow(
                 onShowRouteOnMap = { callbacks.onShowRouteOnMap(representative) },
                 onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } },
                 onToggleTracking = { callbacks.onToggleTracking(representative) },
-                tracked = tracked
+                tracked = tracked,
+                routeFilter = routeFilter
             )
         }
     }
@@ -588,8 +603,9 @@ private val TRACKED_MARK_END_INSET = 3.dp
 
 /** The route-level long-press menu: show the whole route on the map (always), start or stop this
  *  row's live countdown notification (#2166), and — when [onShowSchedule] is non-null (the route has
- *  a schedule) — open its schedule. A dumb view: every action arrives pre-bound, and [tracked] only
- *  picks the tracking item's wording.
+ *  a schedule) — open its schedule. On a stop's own board, [routeFilter] adds the per-stop filter
+ *  items (#2366). A dumb view: every action arrives pre-bound, and [tracked] only picks the tracking
+ *  item's wording.
  *  The route's star lives as the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on
  *  each pill's long-press menu ([TripActionsMenu]). */
 @Composable
@@ -599,7 +615,8 @@ internal fun RouteActionsMenu(
     onShowRouteOnMap: () -> Unit,
     onShowSchedule: (() -> Unit)?,
     onToggleTracking: () -> Unit,
-    tracked: Boolean
+    tracked: Boolean,
+    routeFilter: RouteFilterActions?
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(
@@ -628,6 +645,24 @@ internal fun RouteActionsMenu(
             MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
                 onDismiss()
                 onShowSchedule()
+            }
+        }
+        routeFilter?.onShowOnly?.let { showOnly ->
+            MenuRow(R.string.bus_options_menu_show_only_this_route, ImageVector.vectorResource(R.drawable.ic_filter_list)) {
+                onDismiss()
+                showOnly()
+            }
+        }
+        routeFilter?.onHide?.let { hide ->
+            MenuRow(R.string.bus_options_menu_hide_route, ImageVector.vectorResource(R.drawable.ic_close)) {
+                onDismiss()
+                hide()
+            }
+        }
+        routeFilter?.onShowAll?.let { showAll ->
+            MenuRow(R.string.bus_options_menu_show_all_routes, ImageVector.vectorResource(R.drawable.ic_filter_list_off)) {
+                onDismiss()
+                showAll()
             }
         }
     }

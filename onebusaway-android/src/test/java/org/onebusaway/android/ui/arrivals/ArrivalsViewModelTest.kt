@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -26,9 +27,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.api.net.ObaRateLimit
 import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.ServerTime
@@ -41,7 +44,7 @@ import org.onebusaway.android.ui.compose.components.AlertSeverity
  * saves threading the same throwaway store through every construction. Named for the type it
  * returns, so it shadows the constructor and the call sites read unchanged.
  */
-private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository) = ArrivalsViewModel(stopId, repository, TrackedRouteStore(FakePreferencesRepository()))
+private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository, rateLimit: ObaRateLimit = ObaRateLimit { null }) = ArrivalsViewModel(stopId, repository, TrackedRouteStore(FakePreferencesRepository()), rateLimit)
 
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
 private data class FavoriteRouteCall(
@@ -83,6 +86,9 @@ private class FakeArrivalsRepository(
      *  for a star toggle from any surface. */
     val favoriteRoutes = MutableStateFlow<Set<String>>(emptySet())
 
+    /** The routes hidden at the stop (#2366); [setHiddenRoutes] writes it as the real store would. */
+    val hiddenRoutes = MutableStateFlow<Set<String>>(emptySet())
+
     override suspend fun getArrivals(
         stopId: String,
         minutesAfter: Int
@@ -105,6 +111,12 @@ private class FakeArrivalsRepository(
     override fun favoriteRouteIds(): Flow<Set<String>> = favoriteRoutes
 
     override fun alertHideState(): Flow<AlertHideState> = hideState
+
+    override fun hiddenRouteIds(stopId: String): Flow<Set<String>> = hiddenRoutes
+
+    override suspend fun setHiddenRoutes(stopId: String, routeIds: Set<String>) {
+        hiddenRoutes.value = routeIds
+    }
 
     override suspend fun hideAlerts(ids: List<String>) {
         hiddenAlertIds = ids
@@ -141,7 +153,8 @@ class ArrivalsViewModelTest {
         minutesAfter: Int = 65,
         isStale: Boolean = false,
         favorite: Boolean = false,
-        hideAlertsByDefault: Boolean = false
+        hideAlertsByDefault: Boolean = false,
+        stopRouteIds: Set<String> = emptySet()
     ) = ArrivalsData(
         arrivals = emptyList(),
         routeGroups = emptyList(),
@@ -154,7 +167,8 @@ class ArrivalsViewModelTest {
         hideAlertsByDefault = hideAlertsByDefault,
         stopCode = null,
         stopLat = 0.0,
-        stopLon = 0.0
+        stopLon = 0.0,
+        stopRouteIds = stopRouteIds
     )
 
     @Test
@@ -187,6 +201,35 @@ class ArrivalsViewModelTest {
         viewModel.refresh()
 
         assertEquals(ArrivalsUiState.Error("No network"), viewModel.state.value)
+    }
+
+    @Test
+    fun `the first stale refresh under a rate limit schedules one early retry per streak`() = runTest {
+        val repository = FakeArrivalsRepository(Result.failure(IOException("refused")))
+        val viewModel = ArrivalsViewModel("1_100", repository, rateLimit = { 5.seconds })
+
+        viewModel.refresh()
+        assertEquals("retry when the limit lifts", 5.seconds, viewModel.earlyRetryAfter)
+
+        viewModel.refresh()
+        assertNull("a limit that persists doesn't speed the board up", viewModel.earlyRetryAfter)
+
+        repository.result = Result.success(data())
+        viewModel.refresh()
+        assertNull(viewModel.earlyRetryAfter)
+
+        repository.result = Result.failure(IOException("refused"))
+        viewModel.refresh()
+        assertEquals("a new streak earns a new early retry", 5.seconds, viewModel.earlyRetryAfter)
+    }
+
+    @Test
+    fun `a stale refresh with no rate limit waits the full period`() = runTest {
+        val viewModel = ArrivalsViewModel("1_100", FakeArrivalsRepository(Result.failure(IOException("offline"))))
+
+        viewModel.refresh()
+
+        assertNull(viewModel.earlyRetryAfter)
     }
 
     @Test
@@ -498,5 +541,46 @@ class ArrivalsViewModelTest {
         val content = viewModel.state.value as ArrivalsUiState.Content
         assertEquals(listOf("a1"), content.alerts.map { it.situationId })
         assertEquals(0, content.hiddenAlertCount)
+    }
+
+    // --- The per-stop route filter (#2366) --------------------------------------------------------
+
+    private suspend fun filterViewModel(): Pair<ArrivalsViewModel, FakeArrivalsRepository> {
+        val repository = FakeArrivalsRepository(Result.success(data(stopRouteIds = setOf("A", "B", "C"))))
+        val viewModel = ArrivalsViewModel("1_100", repository)
+        viewModel.refresh()
+        return viewModel to repository
+    }
+
+    private val ArrivalsViewModel.hiddenRouteIds get() = (state.value as ArrivalsUiState.Content).hiddenRouteIds
+
+    @Test
+    fun `show only this route hides every other route the stop serves`() = runTest {
+        val (viewModel, _) = filterViewModel()
+
+        viewModel.showOnlyRoute("B")
+
+        assertEquals(setOf("A", "C"), viewModel.hiddenRouteIds)
+    }
+
+    @Test
+    fun `hiding routes accumulates and show all clears them`() = runTest {
+        val (viewModel, _) = filterViewModel()
+
+        viewModel.hideRoute("A")
+        viewModel.hideRoute("C")
+        assertEquals(setOf("A", "C"), viewModel.hiddenRouteIds)
+
+        viewModel.showAllRoutes()
+        assertEquals(emptySet<String>(), viewModel.hiddenRouteIds)
+    }
+
+    @Test
+    fun `a stored hidden route the stop no longer serves isn't reported hidden`() = runTest {
+        val (viewModel, repository) = filterViewModel()
+
+        repository.hiddenRoutes.value = setOf("A", "withdrawn")
+
+        assertEquals(setOf("A"), viewModel.hiddenRouteIds)
     }
 }

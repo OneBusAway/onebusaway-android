@@ -153,6 +153,92 @@ class StopDaoMergeTest {
     }
 
     @Test
+    fun setUserNameEnsuringRow_namesAStopWithNoRow_withoutStarringIt() = runBlocking {
+        // Renaming a stop focused before its arrivals loaded creates its row, like starring (#2414).
+        dao.setUserNameEnsuringRow(identity(), userName = "Home")
+
+        val s = dao.getStop("s1")!!
+        assertEquals("Home", s.userName)
+        assertEquals("Main St", s.name)
+        assertEquals(false, s.isFavorite)
+        assertEquals(StopNamesRow("Main St", "Home"), dao.names("s1").first())
+    }
+
+    @Test
+    fun setUserNameEnsuringRow_officialNameOnAbsentRow_insertsNothing() = runBlocking {
+        dao.setUserNameEnsuringRow(identity(), userName = "Main St")
+
+        assertEquals(null, dao.getStop("s1"))
+    }
+
+    @Test
+    fun renamingAnExistingRow_setsAndClears_leavingStarAndUseCountAlone() = runBlocking {
+        dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
+        dao.setFavorite("s1", 1)
+
+        dao.setUserNameEnsuringRow(identity(), userName = "Home")
+        assertEquals("Home", dao.getStop("s1")!!.userName)
+
+        // Saving the official name back is "use the official name", not a custom name equal to it.
+        dao.setUserNameEnsuringRow(identity(), userName = "Main St")
+        val s = dao.getStop("s1")!!
+        assertEquals(null, s.userName)
+        assertEquals(1, s.favorite)
+        assertEquals(1, s.useCount)
+        assertEquals(100L, s.accessTime)
+    }
+
+    @Test
+    fun starToggle_preservesCustomName() = runBlocking {
+        dao.setUserNameEnsuringRow(identity(), userName = "Home")
+
+        dao.setFavoriteEnsuringRow(identity(), favorite = 1)
+        dao.setFavoriteEnsuringRow(identity(), favorite = 0)
+
+        assertEquals("Home", dao.getStop("s1")!!.userName)
+    }
+
+    @Test
+    fun listRows_carryTheOfficialNameBesideTheCustomOne() = runBlocking {
+        dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
+        dao.setFavorite("s1", 1)
+        dao.setUserNameEnsuringRow(identity(), userName = "Home")
+
+        val row = dao.starredByName(regionId = 1L).first().single()
+
+        assertEquals("Home", row.uiName)
+        assertEquals("Main St", row.name)
+        assertEquals("Home", row.userName)
+    }
+
+    @Test
+    fun aBlankUserName_isNoCustomName() = runBlocking {
+        // Only a non-normalizing writer (a legacy import) can leave "", but it must read as no name.
+        dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
+        dao.setFavorite("s1", 1)
+        dao.setUserName("s1", "")
+
+        assertEquals("Main St", dao.starredByName(regionId = 1L).first().single().uiName)
+        assertEquals(null, dao.names("s1").first()?.customName)
+
+        // 26.1.0 only refused an empty name, so a legacy row can hold spaces: no name either.
+        dao.setUserName("s1", "   ")
+        assertEquals("Main St", dao.starredByName(regionId = 1L).first().single().uiName)
+        assertEquals(null, dao.names("s1").first()?.customName)
+    }
+
+    private fun identity() = StopRecord(
+        id = "s1",
+        code = "100",
+        name = "Main St",
+        direction = "",
+        useCount = 0,
+        latitude = 47.0,
+        longitude = -122.0,
+        regionId = 1L
+    )
+
+    @Test
     fun starredByName_scopesToRegion_andProjectsUiName() = runBlocking {
         // region 1, with a custom name (UI_NAME should be the user name)
         dao.markStopUsed("s1", "1", "Alpha", "N", 1.0, 1.0, regionId = 1L, now = 1)

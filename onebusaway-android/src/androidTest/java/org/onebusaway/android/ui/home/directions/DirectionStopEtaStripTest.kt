@@ -20,10 +20,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
-import org.onebusaway.android.ui.tripresults.ReachStop
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.util.GeoPoint
@@ -59,7 +57,6 @@ class DirectionStopEtaStripTest {
         DirectionStopEtaStrip(
             routeLeg = routeLeg,
             stop = stop,
-            reachStop = ReachStop.OnArrival(ServerTime(4 * 60_000L)),
             arrivalsViewModelFactory = failingFactory,
             onShowTrip = { _, _ -> },
             onEditReminder = {},

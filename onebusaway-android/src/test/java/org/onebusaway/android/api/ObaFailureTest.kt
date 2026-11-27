@@ -16,6 +16,7 @@
 package org.onebusaway.android.api
 
 import java.io.IOException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
@@ -108,6 +109,35 @@ class ObaFailureTest {
         assertTrue(ObaApiException(404).isNotFound)
         assertFalse(ObaApiException(500).isNotFound)
         assertFalse(IOException("connection reset").isNotFound)
+    }
+
+    @Test
+    fun theEdgeLimitersNonEnvelope429CountsAsRateLimited() {
+        // Verbatim body from api.pugetsound.onebusaway.org's AWS edge (`Server: awselb/2.0`), 2026-10-23.
+        val edge = httpError(
+            429,
+            """{"message": "Too frequent requests.","info": "Email oba_api_key@soundtransit.org to request an api key."}"""
+        )
+
+        val normalized = edge.asObaFailure(json)
+
+        assertSame("not an OBA envelope, so it stays transport", edge, normalized)
+        assertTrue(normalized.isRateLimited)
+    }
+
+    @Test
+    fun onlyA429OrALocalRefusalCountsAsRateLimited() {
+        assertTrue(ObaApiException(429).isRateLimited)
+        assertTrue("refused locally, while cooling down from one", RateLimitedException(5.seconds).isRateLimited)
+        assertFalse(ObaApiException(500).isRateLimited)
+        assertFalse(httpError(503, "").isRateLimited)
+        assertFalse(IOException("connection reset").isRateLimited)
+    }
+
+    @Test
+    fun aLocalRefusalCarriesNoStackTrace() {
+        // Every data source logs each failure; a cooldown's refusals mustn't flood logcat with traces.
+        assertEquals(0, RateLimitedException(5.seconds).stackTrace.size)
     }
 
     private fun httpError(code: Int, body: String) = HttpException(

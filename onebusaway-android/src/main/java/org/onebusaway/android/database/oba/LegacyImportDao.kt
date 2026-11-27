@@ -34,7 +34,11 @@ data class LegacyData(
     val regions: List<RegionRecord>,
     val regionBounds: List<RegionBoundRecord>,
     val open311Servers: List<Open311ServerRecord>,
-    val navStops: List<NavStopRecord>
+    val navStops: List<NavStopRecord>,
+    /** The routes hidden per stop (#2366) — only a Room-format backup carries these. */
+    val stopHiddenRoutes: List<StopHiddenRouteRecord>,
+    /** Old allow-list route filters awaiting conversion (#2366); see [LegacyStopRouteFilterRecord]. */
+    val legacyStopRouteFilters: List<LegacyStopRouteFilterRecord>
 )
 
 /**
@@ -85,6 +89,12 @@ interface LegacyImportDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNavStops(rows: List<NavStopRecord>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStopHiddenRoutes(rows: List<StopHiddenRouteRecord>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLegacyStopRouteFilters(rows: List<LegacyStopRouteFilterRecord>)
+
     // Survey + wide-alert tables — only present in a full Room-format backup (see [replaceAll]).
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStudies(rows: List<Study>)
@@ -121,6 +131,12 @@ interface LegacyImportDao {
 
     @Query("DELETE FROM nav_stops")
     suspend fun clearNavStops()
+
+    @Query("DELETE FROM stop_hidden_routes")
+    suspend fun clearStopHiddenRoutes()
+
+    @Query("DELETE FROM legacy_stop_route_filters")
+    suspend fun clearLegacyStopRouteFilters()
 
     @Query("DELETE FROM surveys")
     suspend fun clearSurveys()
@@ -165,6 +181,8 @@ interface LegacyImportDao {
         clearTripAlerts()
         clearServiceAlerts()
         clearNavStops()
+        clearStopHiddenRoutes()
+        clearLegacyStopRouteFilters()
 
         insertRegions(data.regions)
         insertRegionBounds(data.regionBounds)
@@ -175,5 +193,7 @@ interface LegacyImportDao {
         insertTripAlerts(data.tripAlerts)
         insertServiceAlerts(data.serviceAlerts)
         insertNavStops(data.navStops)
+        insertStopHiddenRoutes(data.stopHiddenRoutes)
+        insertLegacyStopRouteFilters(data.legacyStopRouteFilters)
     }
 }

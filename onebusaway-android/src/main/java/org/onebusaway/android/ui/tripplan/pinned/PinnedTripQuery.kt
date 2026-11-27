@@ -79,7 +79,9 @@ internal data class PinnedEndpoint(
     val text: String? = null,
     val lat: Double? = null,
     val lon: Double? = null,
-    val isTransit: Boolean = false
+    val isTransit: Boolean = false,
+    // Defaulted, so a pin saved before custom stop names (#2414) still reads.
+    val isCustomName: Boolean = false
 ) {
     @Serializable
     enum class Kind {
@@ -139,7 +141,7 @@ internal fun PinnedTripQuery.toParamsOrNull(): TripPlanParams? {
 private fun TripEndpoint.toPinnedEndpoint(): PinnedEndpoint = when (this) {
     is TripEndpoint.FreeText -> PinnedEndpoint(PinnedEndpoint.Kind.FREE_TEXT, text = query)
     is TripEndpoint.Geocoded ->
-        PinnedEndpoint(PinnedEndpoint.Kind.GEOCODED, displayName, lat, lon, isTransit)
+        PinnedEndpoint(PinnedEndpoint.Kind.GEOCODED, displayName, lat, lon, isTransit, isCustomName)
     is TripEndpoint.AddressBook ->
         PinnedEndpoint(PinnedEndpoint.Kind.ADDRESS_BOOK, displayName, lat, lon)
     is TripEndpoint.CurrentLocation ->
@@ -149,7 +151,7 @@ private fun TripEndpoint.toPinnedEndpoint(): PinnedEndpoint = when (this) {
 
 private fun PinnedEndpoint.toEndpointOrNull(): TripEndpoint? = when (kind) {
     PinnedEndpoint.Kind.FREE_TEXT -> TripEndpoint.FreeText(text.orEmpty())
-    PinnedEndpoint.Kind.GEOCODED -> TripEndpoint.Geocoded(text.orEmpty(), lat, lon, isTransit)
+    PinnedEndpoint.Kind.GEOCODED -> TripEndpoint.Geocoded(text.orEmpty(), lat, lon, isTransit, isCustomName)
     PinnedEndpoint.Kind.ADDRESS_BOOK -> TripEndpoint.AddressBook(text.orEmpty(), lat, lon)
     PinnedEndpoint.Kind.CURRENT_LOCATION -> TripEndpoint.CurrentLocation(lat, lon)
     // The only shape whose coordinates are structurally required; see the KDoc on toParamsOrNull.

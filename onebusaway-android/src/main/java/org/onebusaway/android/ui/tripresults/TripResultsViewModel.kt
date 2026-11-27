@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.time.ServerTime
 
 /**
  * Holds the trip-planning results: the option cards, which one is selected, and the selected
@@ -52,7 +51,6 @@ class TripResultsViewModel @Inject constructor(
     private var plan: List<TripItinerary>? = null
     private var seededGeneration: Long? = null
     private var selectedIndex: Int = 0
-    private var plannedStart: ServerTime? = null
 
     /**
      * Seeds a new plan, or applies an explicit resume's [resumeIndex] even to the plan already seeded.
@@ -67,14 +65,12 @@ class TripResultsViewModel @Inject constructor(
     fun seedPlan(
         generation: Long,
         itineraries: List<TripItinerary>,
-        resumeIndex: Int?,
-        plannedStart: ServerTime? = null
+        resumeIndex: Int?
     ): Boolean {
         if (generation == seededGeneration && resumeIndex == null) return false
         seededGeneration = generation
         plan = itineraries
         selectedIndex = (resumeIndex ?: 0).coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        this.plannedStart = plannedStart
         load()
         return true
     }
@@ -102,7 +98,7 @@ class TripResultsViewModel @Inject constructor(
                 onSuccess = { options ->
                     val selected = currentItinerary()
                     val directions = selected
-                        ?.let { repository.directionsFor(it, plannedStart).getOrDefault(emptyList()) }
+                        ?.let { repository.directionsFor(it).getOrDefault(emptyList()) }
                         .orEmpty()
                     _state.value = TripResultsUiState.Success(
                         options = options,

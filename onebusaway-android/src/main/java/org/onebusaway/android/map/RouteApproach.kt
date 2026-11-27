@@ -39,8 +39,8 @@ import org.onebusaway.android.util.GeoPoint
  * boarding stop's offset can't make that mistake: no piece has to be chosen, because the trip
  * already names its own path.
  *
- * Everything here is already fetched — `DefaultTripObservationRepository.prefetchSchedulesAndShapes`
- * backfills the schedule and shape of every active trip in each `trips-for-route` poll — so this
+ * Everything here is already fetched — `DefaultTripObservationRepository.routeVehiclesStream` stores
+ * the schedule and shape of every active trip in each `trips-for-route` poll — so this
  * costs no request, only a read of what the poll already warmed.
  *
  * Pure JVM logic over [RideTrip]'s schedule and shape, like [rideSelection], so it stays unit-testable

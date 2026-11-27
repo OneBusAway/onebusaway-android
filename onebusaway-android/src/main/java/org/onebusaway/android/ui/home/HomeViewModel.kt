@@ -1174,8 +1174,10 @@ class HomeViewModel @Inject constructor(
     fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) = emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
 
     /**
-     * Leave directions focus. Private: the only way out is [navigateBackInDirections]'s last step, so a
-     * control can't jump straight out of a focused leg — exactly the behaviour #2075 removed.
+     * Leave directions focus. Private: the ways out are [navigateBackInDirections]'s last step, the form's
+     * close button ([closeDirections]), and the answers to the modals over the trip. An *implicit* gesture —
+     * a background tap — therefore can't jump straight out of a focused leg, exactly the behaviour #2075
+     * removed; only a control that says "leave" in so many words does.
      *
      * [backward] says which way the gesture travels, and that is what decides the undo history.
      *
@@ -1282,7 +1284,7 @@ class HomeViewModel @Inject constructor(
     /**
      * The rider confirmed the staged exit: leave directions, dropping the trip. The guard is what keeps
      * this from becoming a public door around [exitDirections] being private — without it a control
-     * could call it from a drilled-into leg and jump straight out, the behaviour #2075 removed.
+     * could call it from a drilled-into leg and jump straight out, skipping the confirmation.
      */
     fun confirmExitDirections() {
         if (!_pendingDirectionsExit.value) return
@@ -1321,6 +1323,26 @@ class HomeViewModel @Inject constructor(
         // The false guard is belt-and-braces: reaching a leg sub-focus always pushed the overview it was
         // entered from, so there is history to pop.
         if (directionsSubFocus != null && navigateBackFocus()) return
+        if (stageDirectionsExitConfirmation(_currentFocus.value, CurrentFocus.None, backward = true)) return
+        exitDirections(backward = true)
+    }
+
+    /**
+     * The directions form's close button (#2337): leave directions whole, from wherever in it the rider
+     * is. With a trip drawn, the exit still waits on the rider's confirmation (#2140) — a close button is
+     * no less able to cost them their plan than Back.
+     *
+     * Deliberately *not* [navigateBackInDirections]. Back is a ladder, and from a drilled-into leg its
+     * first rung only steps out to the overview — the "backs up one step" a rider who wants out reads as
+     * the control not working. The button is the one-tap exit the old trip-plan screen's up arrow was.
+     * Unwinds rather than moves forward ([exitDirections] with `backward`), so the next Back doesn't walk
+     * straight back into the trip just closed.
+     *
+     * Ignored once directions is gone: a second tap can land before recomposition removes the form, and
+     * a backward exit from outside directions would pop the focus the first tap just restored.
+     */
+    fun closeDirections() {
+        if (_currentFocus.value !is CurrentFocus.Directions) return
         if (stageDirectionsExitConfirmation(_currentFocus.value, CurrentFocus.None, backward = true)) return
         exitDirections(backward = true)
     }

@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -369,6 +370,14 @@ fun MapFeature(
             .distinctUntilChanged()
             .collect { mapViewModel.host.setTopChromeInset(it) }
     }
+    // The same for the bottom edge: the navigation bar is the map's baseline bottom inset (#2337), so the
+    // Google logo and framed content clear the bar the edge-to-edge map draws behind.
+    val navigationBars = WindowInsets.navigationBars
+    LaunchedEffect(mapViewModel, navigationBars, density) {
+        snapshotFlow { navigationBars.getBottom(density) }
+            .distinctUntilChanged()
+            .collect { mapViewModel.host.setNavigationBarInset(it) }
+    }
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.mapDirectives.collect { directive ->
             when (directive) {
@@ -622,7 +631,7 @@ fun MapFeature(
         onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
         onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) },
         onHideRentalButton = {
-            PreferenceUtils.saveBoolean(resources.getString(R.string.preference_key_show_rental_button), false)
+            mapViewModel.setRentalButtonShown(false)
             // The button is the only signpost to itself, so hiding it without saying where it went
             // would look like a bug. The toast names Settings, which is the one way back.
             Toast.makeText(context, R.string.layers_rentals_hidden_toast, Toast.LENGTH_LONG).show()

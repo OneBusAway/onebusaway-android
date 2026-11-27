@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import java.time.LocalDate
 import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.time.ServerTime
 
 /**
  * A JVM-pure projection of a trip-plan endpoint (a [org.onebusaway.android.directions.util.CustomAddress]),
@@ -39,6 +39,9 @@ sealed interface TripEndpoint {
 
     /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
     val isTransit: Boolean get() = false
+
+    /** [displayText] is the rider's own name for a stop, shown with the custom-name glyph (#2414). */
+    val isCustomName: Boolean get() = false
 
     /**
      * This endpoint *is* the device's own position, which the map already marks with the location
@@ -73,7 +76,8 @@ sealed interface TripEndpoint {
         override val lat: Double?,
         override val lon: Double?,
         /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
-        override val isTransit: Boolean = false
+        override val isTransit: Boolean = false,
+        override val isCustomName: Boolean = false
     ) : TripEndpoint
 
     /** An address-book (contacts) pick; may still need server-side geocoding (null coordinates). */
@@ -105,10 +109,11 @@ sealed interface TripEndpoint {
             name: String?,
             lat: Double,
             lon: Double,
-            isTransit: Boolean = false
+            isTransit: Boolean = false,
+            isCustomName: Boolean = false
         ): TripEndpoint = name
             ?.takeIf { it.isNotBlank() }
-            ?.let { Geocoded(displayName = it, lat = lat, lon = lon, isTransit = isTransit) }
+            ?.let { Geocoded(displayName = it, lat = lat, lon = lon, isTransit = isTransit, isCustomName = isCustomName) }
             ?: MapPoint(lat = lat, lon = lon)
     }
 }
@@ -152,7 +157,19 @@ data class AdvancedSettings(
 enum class TripDay {
     TODAY,
     TOMORROW,
-    OTHER
+    OTHER;
+
+    companion object {
+        /**
+         * The one rule for naming [day] against [today], shared by the form's callout and the results'
+         * day labels (#2337) so the two can't disagree about which day a trip is on.
+         */
+        fun of(day: LocalDate, today: LocalDate): TripDay = when (day) {
+            today -> TODAY
+            today.plusDays(1) -> TOMORROW
+            else -> OTHER
+        }
+    }
 }
 
 /** A fully-specified plan request handed to [TripPlanRepository]. */
@@ -168,20 +185,7 @@ data class TripPlanParams(
     val walkPreference: WalkPreference = WalkPreference.MEDIUM,
     val cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
     val bikePreference: BikePreference = BikePreference.MEDIUM
-) {
-    /**
-     * When the plan puts the rider at its starting point: the requested departure of a depart-at plan,
-     * and null for an arrive-by one, which fixes when the trip *ends* and says nothing about when the
-     * rider sets out. The trip log uses it as when the rider is at the first stop of an itinerary that
-     * opens on transit (#2228) — the plan's own "you get here" for a ride nothing precedes.
-     *
-     * Minted as [ServerTime] because it is the instant the plan was made against ([dateTimeMillis] is
-     * what the planner is asked to depart at), and the plan's leg times come back on that same timeline
-     * as server-domain instants; it is compared only with those and with the stop's arrival predictions.
-     */
-    val plannedStart: ServerTime?
-        get() = if (arriving) null else ServerTime(dateTimeMillis)
-}
+)
 
 /** The trip-plan form (origin/destination, when, and the advanced options). */
 data class TripPlanFormState(

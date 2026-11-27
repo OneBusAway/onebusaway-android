@@ -8,6 +8,7 @@
 package org.onebusaway.android.ui.tripplan.pinned
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,6 +34,7 @@ class PinnedTripQueryTest {
             TripEndpoint.FreeText("half typed"),
             TripEndpoint.Geocoded("Pike Place Market", 47.60, -122.34, isTransit = false),
             TripEndpoint.Geocoded("Westlake Station", 47.61, -122.33, isTransit = true),
+            TripEndpoint.Geocoded("Home", 47.61, -122.33, isTransit = true, isCustomName = true),
             TripEndpoint.AddressBook("Home", 47.62, -122.32),
             TripEndpoint.CurrentLocation(47.63, -122.31),
             TripEndpoint.MapPoint(47.64, -122.30)
@@ -109,6 +111,16 @@ class PinnedTripQueryTest {
         val restored = query.toParamsOrNull()!!
         assertEquals(WalkPreference.MEDIUM, restored.walkPreference)
         assertEquals(VehicleMode.ALL_TRANSIT, restored.modes.vehicle)
+    }
+
+    @Test
+    fun `a pin saved before custom stop names reads as an official name`() {
+        // A payload written by a build that predates the field (#2414) simply lacks it.
+        val encoded = PinnedTripJson.encode(params().toPinnedQuery(departNow = false))
+            .replace(""","isCustomName":false""", "")
+
+        assertFalse(encoded.contains("isCustomName"))
+        assertEquals(params(), PinnedTripJson.decode(encoded)?.toParamsOrNull())
     }
 
     @Test

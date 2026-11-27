@@ -17,13 +17,16 @@ package org.onebusaway.android.ui.tripplan
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
@@ -37,11 +40,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -330,14 +334,41 @@ class TripPlanFormRenderTest {
     fun aTripTomorrowNamesTheDayInWords() {
         renderForm(pinnedOn(TripDay.TOMORROW))
 
-        composeRule.onNodeWithText("3:45 PM, tomorrow").assertIsDisplayed()
+        composeRule.onNodeWithText("3:45 PM").assertIsDisplayed()
+        composeRule.onNodeWithText("Tomorrow").assertIsDisplayed()
     }
 
     @Test
     fun aTripFurtherOutFallsBackToItsDate() {
         renderForm(pinnedOn(TripDay.OTHER))
 
-        composeRule.onNodeWithText("3:45 PM, June 10").assertIsDisplayed()
+        composeRule.onNodeWithText("3:45 PM").assertIsDisplayed()
+        composeRule.onNodeWithText("June 10").assertIsDisplayed()
+    }
+
+    /**
+     * The day survives the bar's squeeze (#2337). As a suffix on the time it was what the ellipsis cut,
+     * so a trip on another day read as a bare time — "10:45…" — with nothing saying which day. On its
+     * own line under the time, a long date in the narrowest card still shows whole.
+     */
+    @Test
+    fun aPinnedDayIsNotCutOffByTheBar() {
+        renderForm(
+            plannedState.copy(
+                departNow = false,
+                dayRelation = TripDay.OTHER,
+                dateLabel = "September 24",
+                timeLabel = "10:45 AM"
+            ),
+            fullCardWidth = true
+        )
+
+        for (text in listOf("10:45 AM", "September 24")) {
+            val node = composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
+            val layouts = mutableListOf<TextLayoutResult>()
+            node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+            assertFalse("\"$text\" should show whole, not ellipsized", layouts.single().isLineEllipsized(0))
+        }
     }
 
     /**
@@ -449,44 +480,50 @@ class TripPlanFormRenderTest {
     }
 
     /**
-     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110):
-     * clear of both fields and centred across the pair, which puts it on the divider between them.
-     * Position is the whole point of the move, so it's asserted rather than left to the eye.
+     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110);
+     * close shares that trailing column (#2337), level with the origin row, which puts reverse level with
+     * the destination. Clear of both fields, and each centred on its own row. Position is the whole point,
+     * so it's asserted rather than left to the eye.
      */
     @Test
-    fun reverseSitsBetweenTheTwoEndpointFields() {
+    fun closeAndReverseSitLevelWithTheOriginAndDestinationRows() {
         renderForm(plannedState)
 
-        val button = bounds(TripPlanTestTags.REVERSE)
+        val close = bounds(TripPlanTestTags.CLOSE)
+        val reverse = bounds(TripPlanTestTags.REVERSE)
         val from = bounds(FROM_FIELD)
         val to = bounds(TO_FIELD)
 
-        assertTrue(
-            "reverse should sit clear of both fields, but started at ${button.left} against " +
-                "${from.right} and ${to.right}",
-            button.left >= from.right && button.left >= to.right
-        )
-        // Compare the rendered pixel centres exactly; any different pixel is a real misalignment.
-        val buttonCenter = (button.top + button.bottom) / 2f
-        val betweenRows = (from.bottom + to.top) / 2f
-        val buttonCenterPx = with(composeRule.density) { buttonCenter.toPx() }.roundToInt()
-        val dividerCenterPx = with(composeRule.density) { betweenRows.toPx() }.roundToInt()
-        assertEquals(
-            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
-            dividerCenterPx,
-            buttonCenterPx
-        )
+        for ((name, button) in listOf("close" to close, "reverse" to reverse)) {
+            assertTrue(
+                "$name should sit clear of both fields, but started at ${button.left} against " +
+                    "${from.right} and ${to.right}",
+                button.left >= from.right && button.left >= to.right
+            )
+        }
+        // Each field fills its row's height, so its vertical span is the row's. A button is level with
+        // its row when it lies inside that span and is centred on it — to within a dp, not a pixel:
+        // centring a 40dp button in a 48dp slot lands on a half pixel at fractional densities, and the
+        // two roundings needn't agree. A button drifted onto the divider or the other row still fails.
+        for ((name, button, row) in listOf(Triple("close", close, from), Triple("reverse", reverse, to))) {
+            assertTrue(
+                "$name should lie within its row ${row.top}..${row.bottom}, but spans ${button.top}..${button.bottom}",
+                button.top >= row.top && button.bottom <= row.bottom
+            )
+            val offset = (button.top + button.bottom) / 2 - (row.top + row.bottom) / 2
+            assertTrue("$name should be centred on its row, but is off by $offset", offset.value.absoluteValue < 1f)
+        }
     }
 
     /**
-     * Reverse and additional-preferences sit in one trailing column, across two bands that lay
+     * Close, reverse and additional-preferences sit in one trailing column, across two bands that lay
      * themselves out independently. The form spells that out — both bands take their width and their
      * trailing gutter from one shared modifier, and every button one size — but nothing makes a band
      * keep using either, so the alignment is still the part of the move most able to drift, and the
      * part worth pinning.
      */
     @Test
-    fun reverseIsColumnAlignedWithTheActionBarsTrailingButton() {
+    fun trailingButtonsAreColumnAlignedWithTheActionBar() {
         renderForm(plannedState)
 
         assertEquals(
@@ -494,6 +531,22 @@ class TripPlanFormRenderTest {
             bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
             bounds(TripPlanTestTags.REVERSE).right
         )
+        assertEquals(
+            "close should share a trailing edge with additional-preferences",
+            bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
+            bounds(TripPlanTestTags.CLOSE).right
+        )
+    }
+
+    /** Leaving directions is the host's; what's checked here is the ask (#2337). */
+    @Test
+    fun tappingCloseFiresTheCloseCallback() {
+        var closed = false
+        renderForm(state = { plannedState }, onClose = { closed = true })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.CLOSE).performClick()
+
+        assertTrue("tapping close should ask the host to leave directions", closed)
     }
 
     /** The form is stateless, so the swap itself is the host's; what's checked here is the ask. */
@@ -605,12 +658,19 @@ class TripPlanFormRenderTest {
     /** [plannedState] with its trip pinned to an instant that falls on [day]. */
     private fun pinnedOn(day: TripDay) = plannedState.copy(departNow = false, dayRelation = day)
 
+    /**
+     * [fullCardWidth] lays the form out at [cardWidth] even on a screen narrower than it — CI's emulator
+     * is 320dp, which otherwise caps the form there. A test that measures what fits the card needs it;
+     * it spills past the window's right edge, so it's off for the tests that capture pixels.
+     */
     private fun renderForm(
         state: TripPlanFormState,
-        onToQueryChange: (String) -> Unit = {}
+        onToQueryChange: (String) -> Unit = {},
+        fullCardWidth: Boolean = false
     ) = renderForm(
         state = { state },
-        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) }
+        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) },
+        fullCardWidth = fullCardWidth
     )
 
     /** [state] is a lambda so a test can back it with its own mutable state and observe writes. */
@@ -623,11 +683,14 @@ class TripPlanFormRenderTest {
         onStreetModeSelected: (StreetMode) -> Unit = {},
         onReverse: () -> Unit = {},
         onRefresh: () -> Unit = {},
-        onPickDateTime: () -> Unit = {}
+        onPickDateTime: () -> Unit = {},
+        onClose: () -> Unit = {},
+        fullCardWidth: Boolean = false
     ) {
+        val unbounded = if (fullCardWidth) Modifier.wrapContentWidth(Alignment.Start, unbounded = true) else Modifier
         composeRule.setContent {
             ObaTheme {
-                Box(Modifier.width(cardWidth).testTag(FORM)) {
+                Box(unbounded.width(cardWidth).testTag(FORM)) {
                     TripPlanForm(
                         state = state(),
                         onQueryChange = onQueryChange,
@@ -642,7 +705,8 @@ class TripPlanFormRenderTest {
                         onStreetModeSelected = onStreetModeSelected,
                         onReverse = onReverse,
                         onRefresh = onRefresh,
-                        onAdvancedSettings = {}
+                        onAdvancedSettings = {},
+                        onClose = onClose
                     )
                 }
             }

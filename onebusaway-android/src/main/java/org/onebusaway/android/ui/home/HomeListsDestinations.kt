@@ -90,8 +90,8 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
                 vm,
                 emptyText = R.string.my_no_starred_stops,
                 onClick = { navController.showArrivals(it.toStopReveal()) },
-                actions = {
-                    host.stopActions(it, R.string.my_context_remove_star) { vm.remove(it.id) }
+                actions = { stop, onRename ->
+                    host.stopActions(stop, R.string.my_context_remove_star, onRename) { vm.remove(stop.id) }
                 },
                 onToggleTracking = host.badgeTracking()
             )

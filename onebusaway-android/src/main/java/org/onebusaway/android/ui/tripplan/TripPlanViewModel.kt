@@ -206,13 +206,13 @@ class TripPlanViewModel @Inject constructor(
      * Best-effort: a failed, timed-out, or empty lookup returns null and the timeline keeps OTP's name,
      * so a plan is never blocked or failed by geocoding.
      */
-    private suspend fun placeNameOf(endpoint: TripEndpoint): String? {
-        endpoint.displayText?.takeIf { it.isNotBlank() }?.let { return it }
+    private suspend fun placeNameOf(endpoint: TripEndpoint): TerminalName? {
+        endpoint.displayText?.takeIf { it.isNotBlank() }?.let { return TerminalName(it, endpoint.isCustomName) }
         val lat = endpoint.lat ?: return null
         val lon = endpoint.lon ?: return null
-        reverseNames[lat to lon]?.let { return it }
+        reverseNames[lat to lon]?.let { return TerminalName(it) }
         val name = withTimeoutOrNull(REVERSE_GEOCODE_TIMEOUT) { geocode.reverse(lat, lon).getOrNull() }
-        return name?.also { reverseNames[lat to lon] = it }
+        return name?.also { reverseNames[lat to lon] = it }?.let { TerminalName(it) }
     }
 
     /** Types into [slot]'s field, which starts a debounced autocomplete lookup for it. */
@@ -586,13 +586,7 @@ class TripPlanViewModel @Inject constructor(
      */
     private fun dayRelationOf(instant: WallTime, now: WallTime): TripDay {
         val zone = ZoneId.systemDefault()
-        val day = instant.toLocalDate(zone)
-        val today = now.toLocalDate(zone)
-        return when (day) {
-            today -> TripDay.TODAY
-            today.plusDays(1) -> TripDay.TOMORROW
-            else -> TripDay.OTHER
-        }
+        return TripDay.of(day = instant.toLocalDate(zone), today = now.toLocalDate(zone))
     }
 
     /** The calendar day this instant falls on in [zone] — an unwrap for java.time, which wants millis. */
@@ -618,6 +612,12 @@ class TripPlanViewModel @Inject constructor(
 }
 
 /**
+ * What to call one end of a plan, and whether [name] is the rider's own for a stop (#2414). Paired so
+ * the flag can only come from the name it describes — a reverse-geocoded one is never custom.
+ */
+internal data class TerminalName(val name: String, val isCustomName: Boolean = false)
+
+/**
  * Names the trip's two ends on the itineraries themselves — the first leg's origin and the last leg's
  * destination — leaving OTP's own name wherever we have nothing better (#2006).
  *
@@ -631,9 +631,9 @@ class TripPlanViewModel @Inject constructor(
  *
  * Top-level and `internal` so this stays JVM-unit-testable, like the OTP-side [otpPlanUrl].
  */
-internal fun List<TripItinerary>.withTerminalPlaceNames(origin: String?, destination: String?): List<TripItinerary> {
-    val originName = origin?.takeIf { it.isNotBlank() }
-    val destinationName = destination?.takeIf { it.isNotBlank() }
+internal fun List<TripItinerary>.withTerminalPlaceNames(origin: TerminalName?, destination: TerminalName?): List<TripItinerary> {
+    val originName = origin?.takeIf { it.name.isNotBlank() }
+    val destinationName = destination?.takeIf { it.name.isNotBlank() }
     if (originName == null && destinationName == null) return this
     return map { itinerary ->
         if (itinerary.legs.isEmpty()) {
@@ -641,10 +641,12 @@ internal fun List<TripItinerary>.withTerminalPlaceNames(origin: String?, destina
         } else {
             val legs = itinerary.legs.toMutableList()
             // A single-leg trip is both terminals, so these apply in order to the same leg.
-            originName?.let { legs[0] = legs[0].let { leg -> leg.copy(from = leg.from.copy(name = it)) } }
+            originName?.let {
+                legs[0] = legs[0].let { leg -> leg.copy(from = leg.from.copy(name = it.name, isCustomName = it.isCustomName)) }
+            }
             destinationName?.let {
                 val last = legs.lastIndex
-                legs[last] = legs[last].let { leg -> leg.copy(to = leg.to.copy(name = it)) }
+                legs[last] = legs[last].let { leg -> leg.copy(to = leg.to.copy(name = it.name, isCustomName = it.isCustomName)) }
             }
             itinerary.copy(legs = legs)
         }

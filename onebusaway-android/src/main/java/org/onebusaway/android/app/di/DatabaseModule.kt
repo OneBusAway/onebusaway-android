@@ -27,6 +27,7 @@ import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.MIGRATION_10_11
 import org.onebusaway.android.database.MIGRATION_11_12
 import org.onebusaway.android.database.MIGRATION_12_13
+import org.onebusaway.android.database.MIGRATION_13_14
 import org.onebusaway.android.database.MIGRATION_1_2
 import org.onebusaway.android.database.MIGRATION_2_3
 import org.onebusaway.android.database.MIGRATION_3_4
@@ -47,6 +48,7 @@ import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopHiddenRouteDao
 import org.onebusaway.android.database.oba.TripDao
 import org.onebusaway.android.database.survey.dao.StudiesDao
 import org.onebusaway.android.database.survey.dao.SurveysDao
@@ -82,7 +84,8 @@ object DatabaseModule {
         MIGRATION_9_10,
         MIGRATION_10_11,
         MIGRATION_11_12,
-        MIGRATION_12_13
+        MIGRATION_12_13,
+        MIGRATION_13_14
     ).build()
 
     @Provides
@@ -111,6 +114,9 @@ object DatabaseModule {
 
     @Provides
     fun providePinnedTripDao(db: AppDatabase): PinnedTripDao = db.pinnedTripDao()
+
+    @Provides
+    fun provideStopHiddenRouteDao(db: AppDatabase): StopHiddenRouteDao = db.stopHiddenRouteDao()
 
     @Provides
     fun provideStudiesDao(db: AppDatabase): StudiesDao = db.studiesDao()

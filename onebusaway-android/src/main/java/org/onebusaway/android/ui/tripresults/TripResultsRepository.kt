@@ -33,7 +33,6 @@ import org.onebusaway.android.directions.model.substitutableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.parseObaHexColor
@@ -50,11 +49,8 @@ interface TripResultsRepository {
     /** Summarizes each itinerary into an option card ([ItineraryOption]). */
     suspend fun summarize(itineraries: List<TripItinerary>): Result<List<ItineraryOption>>
 
-    /**
-     * Builds the trip-log timeline entries for a single itinerary. [plannedStart] is
-     * [org.onebusaway.android.ui.tripplan.TripPlanParams.plannedStart], or null when the plan doesn't say.
-     */
-    suspend fun directionsFor(itinerary: TripItinerary, plannedStart: ServerTime?): Result<List<TripLogEntry>>
+    /** Builds the trip-log timeline entries for a single itinerary. */
+    suspend fun directionsFor(itinerary: TripItinerary): Result<List<TripLogEntry>>
 }
 
 class DefaultTripResultsRepository @Inject constructor(
@@ -84,10 +80,7 @@ class DefaultTripResultsRepository @Inject constructor(
         streetDistanceMeters = itinerary.legs.streetDistancesMeters()
     )
 
-    override suspend fun directionsFor(
-        itinerary: TripItinerary,
-        plannedStart: ServerTime?
-    ): Result<List<TripLogEntry>> = withContext(Dispatchers.IO) {
+    override suspend fun directionsFor(itinerary: TripItinerary): Result<List<TripLogEntry>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
             // The legacy generator supplies the localized step / intermediate-stop text (needs a Context
             // for resources); the pure builder re-shapes its flat output — plus the legs' structured
@@ -99,7 +92,7 @@ class DefaultTripResultsRepository @Inject constructor(
             // the chain leader, #2000); the builder folds the same continuation legs into the leader's
             // Transit entry so the two agree.
             val routeLegRefs = resolveRouteLegRefs(itinerary.legs, itinerary.substitutableRoutes())
-            TripLogBuilder.build(itinerary.legs, flat, routeLegRefs, plannedStart)
+            TripLogBuilder.build(itinerary.legs, flat, routeLegRefs)
         }
     }
 

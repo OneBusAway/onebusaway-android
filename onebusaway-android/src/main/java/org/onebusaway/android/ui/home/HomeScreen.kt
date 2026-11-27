@@ -21,13 +21,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DrawerState
@@ -38,9 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
@@ -79,12 +81,15 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.StopLauncher
+import org.onebusaway.android.ui.arrivals.UndoSnackbarHost
 import org.onebusaway.android.ui.arrivals.components.etaPillFocus
+import org.onebusaway.android.ui.arrivals.rememberUndoSnackbar
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
+import org.onebusaway.android.ui.compose.components.RenameStopDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -93,7 +98,9 @@ import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
+import org.onebusaway.android.ui.home.chrome.NavigationBarStrip
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
+import org.onebusaway.android.ui.home.chrome.navigationBarStripHeight
 import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
@@ -154,6 +161,7 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.ui.widget.StopTimesWidgetConfigActivity
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.MyTextUtils
 
 /**
  * The home screen's tap/UI callbacks, bundled into one holder (mirrors [org.onebusaway.android.ui.survey.SurveyCallbacks]) so
@@ -188,7 +196,9 @@ class HomeCallbacks(
     val onNightLight: () -> Unit,
     val onLearnMore: () -> Unit,
     val onOpenSurvey: (url: String) -> Unit,
-    val onShowArrivals: (FocusedStop) -> Unit = {}
+    val onShowArrivals: (FocusedStop) -> Unit = {},
+    // A stop opened as a page of its own, the way the rider's "Open search results in" choice says.
+    val onOpenStop: (FocusedStop) -> Unit = {}
 )
 
 /**
@@ -313,6 +323,7 @@ fun HomeScreen(
                     mapViewModel.setCenterPickActive(pickTarget != null)
                 }
                 val snackbarHostState = remember { SnackbarHostState() }
+                val undoSnackbar = rememberUndoSnackbar(snackbarHostState)
                 // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
                 // My-tab lists, via rememberListVm) so MapTopChrome stays a pure, VM-free chrome composable;
                 // empty until it resolves.
@@ -463,16 +474,7 @@ fun HomeScreen(
                     },
                     onShowTrip = onShowTrip,
                     onEditReminder = onEditReminder,
-                    showUndoSnackbar = { messageRes, actionRes, onAction ->
-                        scope.launch {
-                            val result = snackbarHostState.showSnackbar(
-                                message = resources.getString(messageRes),
-                                actionLabel = actionRes?.let { resources.getString(it) },
-                                duration = SnackbarDuration.Short
-                            )
-                            if (result == SnackbarResult.ActionPerformed) onAction?.invoke()
-                        }
-                    }
+                    showUndoSnackbar = undoSnackbar::show
                 )
                 val arrivalsState = arrivalsSession?.viewModel?.state
                     ?.collectAsStateWithLifecycle()?.value ?: ArrivalsUiState.Loading
@@ -496,7 +498,7 @@ fun HomeScreen(
                     revealRoute = { _, request -> homeViewModel.focusDirectionsRouteVehicleInFocusedLeg(request) },
                     onShowTrip = onShowTrip,
                     onEditReminder = onEditReminder,
-                    showUndoSnackbar = { _, _, _ -> }
+                    showUndoSnackbar = { _, _ -> }
                 )
                 // Reduced to the map's own shape here rather than in the view model, which stays free of
                 // UI types (an ArrivalInfo needs a Context to build, which is what keeps HomeViewModel's
@@ -516,10 +518,28 @@ fun HomeScreen(
                     homeViewModel.onRideArrivals(stopId, rideArrivalGroups ?: return@LaunchedEffect)
                 }
                 var serviceAlertsVisible by remember(stopFocus?.stop?.id) { mutableStateOf(false) }
+                var renameStopVisible by remember(stopFocus?.stop?.id) { mutableStateOf(false) }
+                // The focused stop's stored names (#2414). Read live rather than off the arrivals load, so
+                // a rename shows the moment it's saved instead of on the next poll.
+                val storedStopNames by remember(stopFocus?.stop?.id) {
+                    stopFocus?.stop?.id?.let(focusBannerViewModel::stopNames) ?: flowOf(null)
+                }.collectAsStateWithLifecycle(null)
+                val stopUserName = storedStopNames?.customName
+                // The official name: the loaded arrivals', else the stored one, else the focus's own. The
+                // focus's is last because a stop revealed from a search result carries the name shown
+                // there, which may be the rider's, and a map tap carries the server's unformatted one.
+                val officialStopTitle = stopFocus?.let { focus ->
+                    arrivalsContent?.header?.name?.takeIf { it.isNotBlank() }
+                        ?: storedStopNames?.name?.takeIf { it.isNotBlank() }
+                        // Formatted as the other two already are, so a rename compares like with like.
+                        ?: MyTextUtils.formatDisplayText(focus.stop.name).orEmpty()
+                }
+                // The stop as the banner, its rename dialog and its shortcut all name it.
+                val stopTitle = stopUserName ?: officialStopTitle.orEmpty()
                 val focusBannerState: FocusBannerState? = when (currentFocus) {
                     is CurrentFocus.Stop -> FocusBannerState.Stop(
-                        title = arrivalsContent?.header?.name?.takeIf { it.isNotBlank() }
-                            ?: currentFocus.stop.name.orEmpty(),
+                        title = stopTitle,
+                        isCustomName = stopUserName != null,
                         direction = arrivalsContent?.header?.direction,
                         stopCode = arrivalsContent?.stopCode ?: currentFocus.stop.code,
                         // Star state + toggle come from the favorites store keyed by stop id, so the star
@@ -565,7 +585,9 @@ fun HomeScreen(
                                         name = banner.title,
                                         lat = at.latitude,
                                         lon = at.longitude,
-                                        isTransit = true
+                                        isTransit = true,
+                                        // A renamed stop keeps its custom-name glyph in the plan (#2414).
+                                        isCustomName = banner.isCustomName
                                     ),
                                     homeViewModel,
                                     mapViewModel,
@@ -587,9 +609,12 @@ fun HomeScreen(
                 // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
                 // How much of the window it may cover is a property of what the sheet holds — see
                 // [HomeSheetContent.peekHeightFraction] for why the two drawers differ.
+                // Raised by the navigation bar's strip where there is one (#2337), so the cap is the same
+                // share of the window *above* the strip rather than losing a bar's height to it.
+                val stripDp = navigationBarStripHeight()
                 val capPeekDp = with(density) {
                     val height = LocalWindowInfo.current.containerSize.height
-                    (height * sheetContent.peekHeightFraction).toDp()
+                    (height * sheetContent.peekHeightFraction).toDp() + stripDp
                 }
 
                 // The full collapsed peek: the fixed cap while loading or still opening, then min(content, cap)
@@ -683,7 +708,7 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxSize(),
                             scaffoldState = scaffoldState,
                             snackbarHost = {
-                                SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
+                                UndoSnackbarHost(snackbarHostState, Modifier.navigationBarsPadding())
                             },
                             // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
                             sheetPeekHeight = visiblePeekDp,
@@ -897,8 +922,14 @@ fun HomeScreen(
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
                                 // MapTopChrome is drawn LAST so the menu + search FABs stay on top of (and tappable
                                 // above) every overlay — including the route-mode header, which now floats as a card
-                                // below the FAB row rather than covering it.
-                                Box(Modifier.fillMaxSize()) {
+                                // below the FAB row rather than covering it. The layer clears the side system
+                                // insets — a landscape 3-button bar or a camera cutout — so no control sits
+                                // under them (#2337); the map itself still runs edge to edge beneath.
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                                ) {
                                     // Every top-of-map overlay sits below the chrome row via one shared inset
                                     // (status bar + clearance), so no individual overlay has to know the FAB-row height.
                                     Box(Modifier.fillMaxSize().mapTopChromeOverlayInset()) {
@@ -944,11 +975,14 @@ fun HomeScreen(
                                                         onNightLight = callbacks.onNightLight,
                                                         onCreateShortcut = {
                                                             stopFocus?.stop?.let { stop ->
-                                                                val name = stop.name?.takeIf { it.isNotBlank() } ?: stop.id
+                                                                // Labelled as the banner names the stop, the
+                                                                // rider's own name included (#2414); the board
+                                                                // it opens resolves its own title.
+                                                                val name = stopTitle.takeIf { it.isNotBlank() } ?: stop.id
                                                                 Shortcuts.createStopShortcut(
                                                                     app,
                                                                     name,
-                                                                    StopLauncher.Builder(app, stop.id).setStopName(stop.name)
+                                                                    StopLauncher.Builder(app, stop.id).setStopName(officialStopTitle)
                                                                 )
                                                             }
                                                         },
@@ -964,7 +998,10 @@ fun HomeScreen(
                                                                 )
                                                             }
                                                         },
-                                                        onNavigateHere = navigateToFocusedStop
+                                                        onNavigateHere = navigateToFocusedStop,
+                                                        onRename = stopFocus?.stop?.point?.let {
+                                                            { renameStopVisible = true }
+                                                        }
                                                     )
                                                 },
                                                 // The direction menu calls straight into the map VM (which
@@ -1030,6 +1067,7 @@ fun HomeScreen(
                                                 viewModel = tripPlanViewModel,
                                                 state = tripPlanFormState,
                                                 onPickEndpoint = { pickTarget = it },
+                                                onClose = homeViewModel::closeDirections,
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
                                                     .statusBarsPadding()
@@ -1072,9 +1110,16 @@ fun HomeScreen(
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
-                                            // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
-                                            // ruled at how the plan gets the rider to the stop (#2125): a transfer's
-                                            // arrival, or — for the first ride — the walk from now (#2227).
+                                            // A ride's stop, from its name's long-press menu, opens as a page of
+                                            // its own (#2347): the arrivals list or the stop on the map, as the
+                                            // rider's "Open search results in" choice says.
+                                            onOpenStop = { stop ->
+                                                stop.stopId?.let { id ->
+                                                    callbacks.onOpenStop(FocusedStop(id = id, name = stop.name, code = stop.stopCode, point = stop.point))
+                                                }
+                                            },
+                                            // Each ride's Board row can open its stop's live departures behind
+                                            // "Show realtime arrivals" (#2347): a plain strip, no rule over it.
                                             stopEtaStrip = { ride, stop ->
                                                 // The focused leg's boarding stop: the one strip that reads the
                                                 // hoisted session rather than opening a second one on the stop the
@@ -1085,7 +1130,6 @@ fun HomeScreen(
                                                 DirectionStopEtaStrip(
                                                     routeLeg = ride.routeLeg,
                                                     stop = stop,
-                                                    reachStop = ride.reachStop,
                                                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                                                     onShowTrip = onShowTrip,
                                                     onEditReminder = onEditReminder,
@@ -1106,6 +1150,7 @@ fun HomeScreen(
                                             // size: the sheet now hosts a full-screen scaffold over the
                                             // map, so the composable's own bounds are the whole screen.
                                             onSheetHeightPx = { directionsSheetHeightPx = it },
+                                            formBottomPx = directionsFormBottomPx,
                                             // A route label tapped on the drawn itinerary (#2101): the
                                             // sheet resolves it to the ride it names and focuses it —
                                             // the first in travel order where one label covers the
@@ -1202,6 +1247,16 @@ fun HomeScreen(
                                 }
                             }
                         }
+                    }
+
+                    val renamedStop = stopFocus?.stop
+                    if (renameStopVisible && renamedStop != null) {
+                        RenameStopDialog(
+                            currentName = stopTitle,
+                            officialName = officialStopTitle,
+                            onSave = { focusBannerViewModel.renameStop(renamedStop, it) },
+                            onDismiss = { renameStopVisible = false }
+                        )
                     }
 
                     if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {
@@ -1367,7 +1422,14 @@ private fun HomeDrawer(
                 }
             )
         },
-        content = content
+        content = {
+            Box(Modifier.fillMaxSize()) {
+                content()
+                // The navigation bar's strip, over the map and its sheets alike (#2337) — but under the
+                // drawer panel, which is its own surface down to the bottom edge.
+                NavigationBarStrip()
+            }
+        }
     )
 }
 

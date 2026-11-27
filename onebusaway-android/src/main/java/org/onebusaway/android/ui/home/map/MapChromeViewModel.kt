@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.demo.DemoModeState
+import org.onebusaway.android.map.rental.RENTALS_VISIBLE_BY_DEFAULT
+import org.onebusaway.android.map.rental.RENTAL_BUTTON_SHOWN_BY_DEFAULT
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -69,9 +71,10 @@ class MapChromeViewModel @Inject constructor(
             // The three rental preferences are combined first so the outer combine stays inside the
             // typed five-flow overload — seven inputs would fall back to the untyped vararg form.
             val rentals = combine(
-                // Off by default — see RENTALS_VISIBLE_BY_DEFAULT; this must agree with it, or the
-                // button's tint and the drawn map disagree on a fresh install.
-                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, false),
+                prefsRepo.observeBoolean(
+                    R.string.preference_key_layer_bikeshare_visible,
+                    RENTALS_VISIBLE_BY_DEFAULT
+                ),
                 prefsRepo.observeBoolean(
                     R.string.preference_key_layer_bikes_visible,
                     RentalLayer.BIKES.defaultVisible
@@ -81,10 +84,12 @@ class MapChromeViewModel @Inject constructor(
                     RentalLayer.SCOOTERS.defaultVisible
                 )
             ) { master, bikes, scooters -> Triple(master, bikes, scooters) }
-            // The button's own visibility is a fourth, independent preference: a rider can hide the
-            // control (long-press, or Settings) without that touching which layers are switched on, so
-            // showing it again brings back exactly what they had.
-            val buttonShown = prefsRepo.observeBoolean(R.string.preference_key_show_rental_button, true)
+            // The button's own visibility is a fourth preference, which hides the layer with it — see
+            // drawnRentalLayers.
+            val buttonShown = prefsRepo.observeBoolean(
+                R.string.preference_key_show_rental_button,
+                RENTAL_BUTTON_SHOWN_BY_DEFAULT
+            )
             combine(
                 prefsRepo.observeBoolean(R.string.preference_key_show_zoom_controls, false),
                 prefsRepo.observeBoolean(R.string.preference_key_left_hand_mode, false),

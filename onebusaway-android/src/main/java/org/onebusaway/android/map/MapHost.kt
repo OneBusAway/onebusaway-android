@@ -260,6 +260,8 @@ class MapHost(
 
     fun setDirectionsBottomInset(px: Int) = renderState.setDirectionsBottomInset(px)
 
+    fun setNavigationBarInset(px: Int) = renderState.setNavigationBarInset(px)
+
     /** See [MapRenderState.setCenterPickActive]: no padding while the centre crosshair is being aimed. */
     fun setCenterPickActive(active: Boolean) = renderState.setCenterPickActive(active)
 

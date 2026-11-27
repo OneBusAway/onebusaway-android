@@ -20,6 +20,11 @@ import android.content.Context
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
+import java.text.FieldPosition
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import kotlin.math.abs
 import org.onebusaway.android.R
 
@@ -45,6 +50,31 @@ object DisplayFormat {
             DateUtils.FORMAT_NO_NOON or
             DateUtils.FORMAT_NO_MIDNIGHT
     )
+
+    /**
+     * A clock time as emphasized time parts and an un-emphasized AM/PM marker, like [formatEtaParts], so
+     * the marker can be shrunk. One part in 24-hour time. Uses the locale's `hm`/`Hm` pattern, which is
+     * what [formatTime] resolves to.
+     */
+    fun formatTimeParts(context: Context, time: Long): List<EtaPart> {
+        val locale = Locale.getDefault()
+        val skeleton = if (android.text.format.DateFormat.is24HourFormat(context)) "Hm" else "hm"
+        return formatTimeParts(time, android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton), locale, TimeZone.getDefault())
+    }
+
+    /** Pure core of [formatTimeParts]. The formatter's [FieldPosition] locates the marker wherever the locale puts it. */
+    @VisibleForTesting
+    fun formatTimeParts(time: Long, pattern: String, locale: Locale, timeZone: TimeZone): List<EtaPart> {
+        val marker = FieldPosition(java.text.DateFormat.AM_PM_FIELD)
+        val text = SimpleDateFormat(pattern, locale).apply { this.timeZone = timeZone }
+            .format(Date(time), StringBuffer(), marker)
+            .toString()
+        return listOf(
+            EtaPart(text.substring(0, marker.beginIndex), emphasized = true),
+            EtaPart(text.substring(marker.beginIndex, marker.endIndex), emphasized = false),
+            EtaPart(text.substring(marker.endIndex), emphasized = true)
+        ).filter { it.text.isNotEmpty() }
+    }
 
     /**
      * Takes the number of minutes, and returns a user-readable string

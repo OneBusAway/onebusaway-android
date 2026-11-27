@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home
 
+import android.content.Intent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -157,6 +158,7 @@ import org.onebusaway.android.ui.tutorial.RecordArrivalSpotlightsShown
 import org.onebusaway.android.ui.tutorial.TutorialOverlay
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
+import org.onebusaway.android.ui.widget.StopTimesWidgetConfigActivity
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
@@ -985,6 +987,17 @@ fun HomeScreen(
                                                             }
                                                         },
                                                         onShowArrivals = { stopFocus?.stop?.let(callbacks.onShowArrivals) },
+                                                        onAddWidget = {
+                                                            stopFocus?.stop?.let { stop ->
+                                                                val name = stop.name?.takeIf { it.isNotBlank() } ?: stop.id
+                                                                app.startActivity(
+                                                                    Intent(app, StopTimesWidgetConfigActivity::class.java)
+                                                                        .putExtra(StopTimesWidgetConfigActivity.EXTRA_STOP_ID, stop.id)
+                                                                        .putExtra(StopTimesWidgetConfigActivity.EXTRA_STOP_NAME, name)
+                                                                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                                )
+                                                            }
+                                                        },
                                                         onNavigateHere = navigateToFocusedStop,
                                                         onRename = stopFocus?.stop?.point?.let {
                                                             { renameStopVisible = true }

@@ -46,9 +46,7 @@ class ObaEndpointResolver @Inject constructor(
      * neither is set. A scheme-less custom URL is assumed to be https (#126).
      */
     fun baseUrl(): Uri? {
-        val custom = preferences.getString(R.string.preference_key_oba_api_url, null)
-        val raw = custom?.takeIf { it.isNotEmpty() } ?: regionRepository.region.value?.obaBaseUrl
-            ?: return null
+        val raw = customApiUrl() ?: regionRepository.region.value?.obaBaseUrl ?: return null
         // A scheme-less custom URL is assumed to be https (#126).
         val withScheme = if (raw.toUri().scheme != null) {
             raw
@@ -57,6 +55,9 @@ class ObaEndpointResolver @Inject constructor(
         }
         return withScheme.toUri()
     }
+
+    /** The user-entered custom API URL (as entered), or null. When set, it overrides the region in [baseUrl]. */
+    fun customApiUrl(): String? = preferences.getString(R.string.preference_key_oba_api_url, null)?.takeIf { it.isNotEmpty() }
 
     /** The OBA API key appended to every request. */
     val apiKey: String get() = ObaApi.API_KEY

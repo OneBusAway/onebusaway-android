@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.util
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.util.DisplayFormat.EtaPart
@@ -111,5 +115,39 @@ class DisplayFormatTest {
             ),
             format(-83)
         )
+    }
+
+    // --- formatTimeParts: a clock time with its AM/PM marker split out, for the widget to shrink ---
+
+    private val at2024Utc = 1_767_299_040_000L // 2026-01-01T20:24:00Z
+
+    private fun timeParts(pattern: String, locale: Locale) = DisplayFormat.formatTimeParts(at2024Utc, pattern, locale, TimeZone.getTimeZone("UTC"))
+
+    @Test
+    fun `a 12-hour time splits off its trailing marker`() {
+        assertEquals(
+            listOf(EtaPart("8:24 ", emphasized = true), EtaPart("PM", emphasized = false)),
+            timeParts("h:mm a", Locale.US)
+        )
+    }
+
+    @Test
+    fun `a 24-hour time has no marker to split`() {
+        assertEquals(listOf(EtaPart("20:24", emphasized = true)), timeParts("HH:mm", Locale.US))
+    }
+
+    @Test
+    fun `a marker the locale puts first is found there, not assumed to trail`() {
+        val parts = timeParts("a h:mm", Locale.KOREAN)
+
+        assertEquals(listOf(false, true), parts.map { it.emphasized })
+        assertEquals(" 8:24", parts[1].text)
+    }
+
+    @Test
+    fun `the parts join back into the whole formatted time`() {
+        val whole = SimpleDateFormat("h:mm a", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date(at2024Utc))
+
+        assertEquals(whole, timeParts("h:mm a", Locale.US).joinToString("") { it.text })
     }
 }

@@ -203,4 +203,8 @@
     <color name="md_theme_surfaceContainer">#ECEFE6</color>
     <color name="md_theme_surfaceContainerHigh">#E6E9E0</color>
     <color name="md_theme_surfaceContainerHighest">#E0E4DB</color>
+
+    <!-- Stop Times widget: the header's refresh icon is de-emphasized rather than full white, so it
+         doesn't compete with the bold white title text on the same header. -->
+    <color name="widget_refresh_icon">#CCFFFFFF</color>
 </resources>

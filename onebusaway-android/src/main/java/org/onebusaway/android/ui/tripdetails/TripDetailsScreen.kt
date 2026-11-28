@@ -70,7 +70,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
-import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.RealtimeIndicator
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
@@ -79,21 +78,22 @@ import org.onebusaway.android.ui.compose.components.StopNameText
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.TripMapReveal
+import org.onebusaway.android.ui.nextRefreshPollDelay
 
-/** Refresh interval matching the legacy TripDetailsListFragment (fixed 60s). */
-private const val REFRESH_PERIOD_MS = 60_000L
-
-/** Lifecycle-scoped 60s polling loop (RESUMED-only), mirroring the arrivals screen. */
+/**
+ * The lifecycle-scoped polling loop (RESUMED-only), mirroring the arrivals screen: every 60s, or
+ * sooner for the one early retry a rate-limited first load earns (see [nextRefreshPollDelay]).
+ */
 @Composable
 private fun TripDetailsPolling(viewModel: TripDetailsViewModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val sinceLast = (WallTime.now() - viewModel.lastResponseTime).inWholeMilliseconds
-            delay((REFRESH_PERIOD_MS - sinceLast).coerceIn(0L, REFRESH_PERIOD_MS))
             while (isActive) {
+                // Null before anything has loaded (a fresh screen): poll at once.
+                val sinceLastResponse = viewModel.sinceLastResponse()
+                if (sinceLastResponse != null) delay(nextRefreshPollDelay(sinceLastResponse, viewModel.earlyRetryAfter))
                 viewModel.refresh()
-                delay(REFRESH_PERIOD_MS)
             }
         }
     }
